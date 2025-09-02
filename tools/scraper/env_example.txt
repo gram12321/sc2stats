@@ -1,0 +1,17 @@
+# Liquipedia API Configuration
+LIQUIPEDIA_USER_AGENT=sc2stats/1.0 (contact: your-email@example.com)
+LIQUIPEDIA_API_URL=https://liquipedia.net/starcraft2/api.php
+
+# Rate Limiting and Retry Settings
+RATE_LIMIT_DELAY=1.0
+MAX_RETRIES=5
+
+# Caching Configuration
+CACHE_TTL=3600
+
+# Output and Cache Directories
+OUTPUT_DIR=output
+CACHE_DIR=cache
+
+# Logging Level (DEBUG, INFO, WARNING, ERROR)
+LOG_LEVEL=INFO
