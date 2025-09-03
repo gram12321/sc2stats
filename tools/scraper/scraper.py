@@ -33,13 +33,12 @@ class SC2Scraper:
         
         logger.info("SC2 Scraper initialized")
 
-    def find_subevents(self, tournament_series: str, main_page_content: str = None) -> List[str]:
+    def find_subevents(self, tournament_series: str) -> List[str]:
         """
         Generic subevent detector using MediaWiki API to find all pages in the tournament series.
         
         Args:
             tournament_series: Base tournament series (e.g., "UThermal_2v2_Circuit")
-            main_page_content: Optional main page content (unused in this implementation)
             
         Returns:
             List of subevent slugs relative to the series
@@ -151,27 +150,15 @@ class SC2Scraper:
         
         return tournament_subevents
     
-    def _normalize_match_team_names(self, match: Dict) -> Dict:
-        """Normalize team names in a match to ensure consistent alphabetical ordering."""
-        def normalize_team_name(team_name: str) -> str:
-            if not team_name or ' + ' not in team_name:
-                return team_name
-            players = [name.strip() for name in team_name.split(' + ')]
-            if len(players) == 2:
-                normalized_players = sorted(players)
-                return f"{normalized_players[0]} + {normalized_players[1]}"
+    def _normalize_team_name(self, team_name: str) -> str:
+        """Normalize a team name to ensure consistent alphabetical ordering."""
+        if not team_name or ' + ' not in team_name:
             return team_name
-        
-        # Create a copy to avoid modifying the original
-        normalized_match = match.copy()
-        normalized_match["team1_name"] = normalize_team_name(match.get("team1_name", ""))
-        normalized_match["team2_name"] = normalize_team_name(match.get("team2_name", ""))
-        
-        # Also normalize winner name if it exists
-        if "winner_name" in match:
-            normalized_match["winner_name"] = normalize_team_name(match["winner_name"])
-            
-        return normalized_match
+        players = [name.strip() for name in team_name.split(' + ')]
+        if len(players) == 2:
+            normalized_players = sorted(players)
+            return f"{normalized_players[0]} + {normalized_players[1]}"
+        return team_name
     
     def scrape_tournament(self, tournament_slug: str) -> Dict:
         """
@@ -230,21 +217,21 @@ class SC2Scraper:
                 for player in tournament_data["players"]:
                     all_players[player["name"]] = player
                 
-                # Merge teams (avoid duplicates by player combination)
+                # Merge teams (avoid duplicates by normalized player combination)
                 for team in tournament_data["teams"]:
-                    # Normalize team key to match database insertion logic
                     player1 = team['player1_name']
                     player2 = team['player2_name']
+                    
+                    # Create normalized team key and data
                     normalized_players = sorted([player1, player2])
                     team_key = f"{normalized_players[0]}+{normalized_players[1]}"
                     
-                    # Use normalized team data
-                    normalized_team = team.copy()
-                    normalized_team['name'] = f"{normalized_players[0]} + {normalized_players[1]}"
-                    normalized_team['player1_name'] = normalized_players[0]
-                    normalized_team['player2_name'] = normalized_players[1]
-                    
-                    all_teams[team_key] = normalized_team
+                    if team_key not in all_teams:
+                        all_teams[team_key] = {
+                            'name': f"{normalized_players[0]} + {normalized_players[1]}",
+                            'player1_name': normalized_players[0],
+                            'player2_name': normalized_players[1]
+                        }
                 
                 # Add matches with tournament reference and normalize team names
                 for match in tournament_data["matches"]:
@@ -256,7 +243,11 @@ class SC2Scraper:
                     match["match_id"] = f"{tournament_prefix}_{original_match_id}"
                     
                     # Normalize team names to match the normalized teams list
-                    match = self._normalize_match_team_names(match)
+                    match["team1_name"] = self._normalize_team_name(match.get("team1_name", ""))
+                    match["team2_name"] = self._normalize_team_name(match.get("team2_name", ""))
+                    if "winner_name" in match:
+                        match["winner_name"] = self._normalize_team_name(match["winner_name"])
+                    
                     all_matches.append(match)
         
         return {

@@ -25,10 +25,11 @@ def get_or_create_team_id(team_name: str, player_id_map: Dict[str, str],
                          team_id_map: Dict[tuple, str], inserter) -> Optional[str]:
     """
     Get or create a team ID for a given team name.
+    Creates missing players automatically.
     
     Args:
         team_name: Team name in format "Player1 + Player2"
-        player_id_map: Mapping of player names to IDs
+        player_id_map: Mapping of player names to IDs (will be updated)
         team_id_map: Mapping of (player1, player2) tuples to team IDs
         inserter: Database inserter instance
         
@@ -47,14 +48,30 @@ def get_or_create_team_id(team_name: str, player_id_map: Dict[str, str],
     
     player1_name, player2_name = player_names
     
-    # Check if both players exist
-    if player1_name not in player_id_map or player2_name not in player_id_map:
-        missing_players = [p for p in player_names if p not in player_id_map]
-        logger.warning(f"Players not found: {missing_players} in team {team_name}")
-        return None
+    # Create missing players automatically
+    if player1_name not in player_id_map:
+        try:
+            player_id_map[player1_name] = inserter.insert_player(
+                name=player1_name,
+                liquipedia_slug=player1_name.lower().replace(' ', '_')
+            )
+            logger.info(f"🆕 Created missing player: {player1_name}")
+        except Exception as e:
+            logger.error(f"Failed to create player {player1_name}: {e}")
+            return None
+            
+    if player2_name not in player_id_map:
+        try:
+            player_id_map[player2_name] = inserter.insert_player(
+                name=player2_name,
+                liquipedia_slug=player2_name.lower().replace(' ', '_')
+            )
+            logger.info(f"🆕 Created missing player: {player2_name}")
+        except Exception as e:
+            logger.error(f"Failed to create player {player2_name}: {e}")
+            return None
     
     # Normalize team key (sort players alphabetically for consistent ordering)
-    # This ensures "Lambo + MaxPax" and "MaxPax + Lambo" are treated as the same team
     normalized_players = sorted([player1_name, player2_name])
     team_key = (normalized_players[0], normalized_players[1])
     
@@ -64,14 +81,13 @@ def get_or_create_team_id(team_name: str, player_id_map: Dict[str, str],
     
     # Create new team using normalized player order for database consistency
     try:
-        # Use normalized order for database record to maintain consistency
         team_id = inserter.insert_team(
-            name=f"{normalized_players[0]} + {normalized_players[1]}",  # Normalized team name
+            name=f"{normalized_players[0]} + {normalized_players[1]}",
             player1_id=player_id_map[normalized_players[0]],
             player2_id=player_id_map[normalized_players[1]]
         )
         team_id_map[team_key] = team_id
-        logger.info(f"🆕 Created new team: {team_name} with ID: {team_id}")
+        logger.info(f"🆕 Created new team: {normalized_players[0]} + {normalized_players[1]} with ID: {team_id}")
         return team_id
     except Exception as e:
         logger.error(f"Failed to create team {team_name}: {e}")
@@ -378,31 +394,15 @@ def insert_tournament_data(json_file_path: str, config: ScraperConfig) -> bool:
                 )
                 player_id_map[player_name] = player_id
         
-        # Step 2: Insert all teams
+        # Step 2: Pre-create teams from teams list
         teams_data = tournament_data.get('teams', [])
-        logger.info(f"Processing {len(teams_data)} teams")
+        logger.info(f"Pre-processing {len(teams_data)} teams")
         
         for team in teams_data:
-            player1_name = team.get('player1_name', '')
-            player2_name = team.get('player2_name', '')
-            team_name = team.get('name', f"{player1_name} & {player2_name}")
-            
-            if player1_name in player_id_map and player2_name in player_id_map:
-                # Normalize team key for consistency
-                normalized_players = sorted([player1_name, player2_name])
-                team_key = (normalized_players[0], normalized_players[1])
-                
-                if team_key not in team_id_map:
-                    # Use normalized team name and player order
-                    normalized_team_name = f"{normalized_players[0]} + {normalized_players[1]}"
-                    team_id = inserter.insert_team(
-                        name=normalized_team_name,
-                        player1_id=player_id_map[normalized_players[0]],
-                        player2_id=player_id_map[normalized_players[1]]
-                    )
-                    team_id_map[team_key] = team_id
-            else:
-                logger.warning(f"Players not found for team {team_name}: {player1_name}, {player2_name}")
+            team_name = team.get('name', '')
+            if team_name:
+                # Use the same logic as dynamic team creation for consistency
+                get_or_create_team_id(team_name, player_id_map, team_id_map, inserter)
         
         # Step 3: Insert all matches and games
         matches_data = tournament_data.get('matches', [])

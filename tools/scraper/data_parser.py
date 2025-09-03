@@ -18,13 +18,11 @@ logger = logging.getLogger(__name__)
 
 
 class DataParser:
-    """Unified parser for Liquipedia tournament data."""
+    """Wikitext parser for Liquipedia tournament data."""
     
     def __init__(self):
         self.players_cache: Dict[str, Player] = {}
-        self.teams_cache: Dict[tuple, Team] = {}
-        self.players_cache_by_name: Dict[str, Player] = {}  # For enhanced wikitext parsing
-        self.teams_cache_by_key: Dict[str, Team] = {}  # For enhanced wikitext parsing
+        self.teams_cache: Dict[str, Team] = {}
     
     def parse_tournament_from_wikitext(self, tournament_slug: str, wikitext: str) -> Tournament:
         """Parse tournament data from MediaWiki wikitext."""
@@ -58,45 +56,7 @@ class DataParser:
         logger.info(f"Parsed tournament: {tournament.name}")
         return tournament
     
-    def parse_matches_from_lpdb(self, tournament: Tournament, 
-                              match_data: List[Dict[str, Any]],
-                              opponent_data: List[Dict[str, Any]],
-                              game_data: List[Dict[str, Any]]) -> None:
-        """Parse and add match data from LPDB to tournament."""
-        logger.info(f"Parsing {len(match_data)} matches from LPDB")
-        
-        # Group opponent data by match ID
-        opponents_by_match: Dict[str, List[Dict[str, Any]]] = {}
-        for opponent in opponent_data:
-            match_id = opponent.get('matchid', '')
-            if match_id:
-                if match_id not in opponents_by_match:
-                    opponents_by_match[match_id] = []
-                opponents_by_match[match_id].append(opponent)
-        
-        # Group game data by match ID
-        games_by_match: Dict[str, List[Dict[str, Any]]] = {}
-        for game in game_data:
-            match_id = game.get('matchid', '')
-            if match_id:
-                if match_id not in games_by_match:
-                    games_by_match[match_id] = []
-                games_by_match[match_id].append(game)
-        
-        # Process each match
-        for match_raw in match_data:
-            try:
-                match = self._parse_match_from_lpdb(
-                    match_raw, 
-                    opponents_by_match.get(match_raw.get('matchid', ''), []),
-                    games_by_match.get(match_raw.get('matchid', ''), [])
-                )
-                if match:
-                    tournament.add_match(match)
-            except Exception as e:
-                logger.warning(f"Failed to parse match {match_raw.get('matchid', 'unknown')}: {e}")
-        
-        logger.info(f"Parsed {len(tournament.matches)} matches successfully")
+
     
     def parse_matches_from_wikitext(self, tournament: Tournament, wikitext: str) -> None:
         """Parse matches from wikitext content using enhanced parsing."""
@@ -127,14 +87,14 @@ class DataParser:
                 p1_1, p1_2, p2_1, p2_2 = opponents
                 
                 # Create players
-                player1_1 = self._get_or_create_player_by_name(p1_1.strip())
-                player1_2 = self._get_or_create_player_by_name(p1_2.strip())
-                player2_1 = self._get_or_create_player_by_name(p2_1.strip())
-                player2_2 = self._get_or_create_player_by_name(p2_2.strip())
+                player1_1 = self._get_or_create_player(p1_1.strip())
+                player1_2 = self._get_or_create_player(p1_2.strip())
+                player2_1 = self._get_or_create_player(p2_1.strip())
+                player2_2 = self._get_or_create_player(p2_2.strip())
                 
                 # Create teams
-                team1 = self._get_or_create_team_by_players(f"{player1_1.name} + {player1_2.name}", player1_1, player1_2)
-                team2 = self._get_or_create_team_by_players(f"{player2_1.name} + {player2_2.name}", player2_1, player2_2)
+                team1 = self._get_or_create_team(f"{player1_1.name} + {player1_2.name}", player1_1, player1_2)
+                team2 = self._get_or_create_team(f"{player2_1.name} + {player2_2.name}", player2_1, player2_2)
                 
                 # For duplicate match IDs, add group suffix to distinguish Group A from Group B
                 final_match_id = match_id
@@ -167,8 +127,8 @@ class DataParser:
                 logger.warning(f"⚠️ Failed to parse match {match_id}: {e}")
         
         # Add players and teams to tournament
-        tournament.players.update(self.players_cache_by_name.values())
-        tournament.teams.update(self.teams_cache_by_key.values())
+        tournament.players.update(self.players_cache.values())
+        tournament.teams.update(self.teams_cache.values())
         
         logger.info(f"📊 Parsed {len(tournament.matches)} matches, {len(tournament.players)} players, {len(tournament.teams)} teams")
     
@@ -240,144 +200,30 @@ class DataParser:
         else:
             return TournamentStatus.UPCOMING
     
-    def _parse_match_from_lpdb(self, match_raw: Dict[str, Any], 
-                             opponents: List[Dict[str, Any]],
-                             games: List[Dict[str, Any]]) -> Optional[Match]:
-        """Parse a single match from LPDB data."""
-        match_id = match_raw.get('matchid', '')
-        if not match_id:
-            return None
-        
-        # Parse teams from opponents
-        if len(opponents) < 2:
-            logger.warning(f"Match {match_id} has insufficient opponents: {len(opponents)}")
-            return None
-        
-        try:
-            team1 = self._parse_team_from_opponent(opponents[0])
-            team2 = self._parse_team_from_opponent(opponents[1])
-            
-            if not team1 or not team2:
-                logger.warning(f"Failed to parse teams for match {match_id}")
-                return None
-            
-            # Create match
-            match = Match(
-                match_id=match_id,
-                team1=team1,
-                team2=team2,
-                best_of=int(match_raw.get('bestof', 1)),
-                status=self._parse_match_status(match_raw.get('status', '')),
-                match_date=self._parse_datetime(match_raw.get('date', '')),
-                stage=match_raw.get('stage', '')
-            )
-            
-            # Parse games
-            for i, game_raw in enumerate(sorted(games, key=lambda g: int(g.get('game', 0)))):
-                game = self._parse_game_from_lpdb(game_raw, i + 1, team1, team2)
-                if game:
-                    match.add_game(game)
-            
-            # Determine winner based on games
-            if match.games:
-                team1_wins = sum(1 for game in match.games if game.winner == team1)
-                team2_wins = sum(1 for game in match.games if game.winner == team2)
-                
-                if team1_wins > team2_wins:
-                    match.winner = team1
-                elif team2_wins > team1_wins:
-                    match.winner = team2
-                
-                # Update status if match is completed
-                if team1_wins + team2_wins == len(match.games) and match.winner:
-                    match.status = MatchStatus.COMPLETED
-            
-            return match
-            
-        except Exception as e:
-            logger.warning(f"Error parsing match {match_id}: {e}")
-            return None
+
     
-    def _parse_team_from_opponent(self, opponent: Dict[str, Any]) -> Optional[Team]:
-        """Parse a team from LPDB opponent data."""
-        # Get player names
-        player1_name = opponent.get('p1', '').strip()
-        player2_name = opponent.get('p2', '').strip()
-        
-        if not player1_name or not player2_name:
-            return None
-        
-        # Create or get players from cache
-        player1 = self._get_or_create_player(player1_name)
-        player2 = self._get_or_create_player(player2_name)
-        
-        # Create or get team from cache
-        team_key = tuple(sorted([player1.liquipedia_slug, player2.liquipedia_slug]))
-        if team_key in self.teams_cache:
-            return self.teams_cache[team_key]
-        
-        # Create new team
-        team_name = opponent.get('team', f"{player1.name} + {player2.name}")
-        team = Team(
-            name=team_name,
-            player1=player1,
-            player2=player2
-        )
-        
-        self.teams_cache[team_key] = team
-        return team
+
     
     def _get_or_create_player(self, name: str) -> Player:
         """Get existing player or create new one."""
-        # Use name as slug for now (could be improved with proper slug mapping)
-        slug = name.replace(' ', '_')
+        # Clean up the name (remove any extra formatting)
+        clean_name = re.sub(r'[{}]', '', name).strip()
+        slug = clean_name.lower().replace(' ', '_')
         
         if slug in self.players_cache:
             return self.players_cache[slug]
         
         player = Player(
-            name=name,
-            liquipedia_slug=slug
+            name=clean_name,
+            liquipedia_slug=slug,
+            nationality=None,
+            race=None
         )
         
         self.players_cache[slug] = player
         return player
     
-    def _parse_game_from_lpdb(self, game_raw: Dict[str, Any], game_number: int,
-                            team1: Team, team2: Team) -> Optional[Game]:
-        """Parse a single game from LPDB data."""
-        map_name = game_raw.get('map', '').strip()
-        if not map_name:
-            return None
-        
-        # Determine winner
-        winner = None
-        winner_num = game_raw.get('winner', '')
-        if winner_num == '1':
-            winner = team1
-        elif winner_num == '2':
-            winner = team2
-        
-        # Parse duration
-        duration = None
-        duration_str = game_raw.get('length', '')
-        if duration_str:
-            try:
-                # Assume duration is in format "MM:SS" or just seconds
-                if ':' in duration_str:
-                    parts = duration_str.split(':')
-                    duration = int(parts[0]) * 60 + int(parts[1])
-                else:
-                    duration = int(duration_str)
-            except ValueError:
-                pass
-        
-        return Game(
-            game_number=game_number,
-            map_name=map_name,
-            winner=winner,
-            duration_seconds=duration
-        )
+
     
     def _parse_match_status(self, status: str) -> MatchStatus:
         """Parse match status from string."""
@@ -456,29 +302,14 @@ class DataParser:
         
         return (p1_1, p1_2, p2_1, p2_2)
     
-    def _get_or_create_player_by_name(self, name: str) -> Player:
-        """Get or create a player by name (for enhanced wikitext parsing)."""
-        if name in self.players_cache_by_name:
-            return self.players_cache_by_name[name]
-        
-        # Clean up the name (remove any extra formatting)
-        clean_name = re.sub(r'[{}]', '', name).strip()
-        
-        player = Player(
-            name=clean_name,
-            liquipedia_slug=clean_name.lower().replace(' ', '_'),
-            nationality=None,
-            race=None
-        )
-        
-        self.players_cache_by_name[name] = player
-        return player
+
     
-    def _get_or_create_team_by_players(self, name: str, player1: Player, player2: Player) -> Team:
-        """Get or create a team by players (for enhanced wikitext parsing)."""
-        team_key = f"{player1.name}+{player2.name}"
-        if team_key in self.teams_cache_by_key:
-            return self.teams_cache_by_key[team_key]
+    def _get_or_create_team(self, name: str, player1: Player, player2: Player) -> Team:
+        """Get or create a team by players."""
+        # Create team key using normalized player order
+        team_key = tuple(sorted([player1.liquipedia_slug, player2.liquipedia_slug]))
+        if team_key in self.teams_cache:
+            return self.teams_cache[team_key]
         
         team = Team(
             name=name,
@@ -486,7 +317,7 @@ class DataParser:
             player2=player2
         )
         
-        self.teams_cache_by_key[team_key] = team
+        self.teams_cache[team_key] = team
         return team
     
     def _create_match_from_wikitext(self, tournament: Tournament, match_id: str, team1: Team, team2: Team, match_content: str) -> Match:
