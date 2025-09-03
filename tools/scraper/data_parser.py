@@ -98,7 +98,10 @@ class DataParser:
         
         logger.info(f"Found {len(match_ids)} match blocks")
         
-        for match_id in match_ids:
+        # Track processed matches to handle duplicates between groups
+        processed_matches = {}  # unique_key -> match_object
+        
+        for i, match_id in enumerate(match_ids):
             try:
                 # Extract match content
                 match_content = self._extract_match_content(wikitext, match_id)
@@ -108,6 +111,7 @@ class DataParser:
                 # Extract opponents
                 opponents = self._extract_opponents(match_content)
                 if not opponents:
+                    logger.warning(f"⚠️ Failed to extract opponents for match {match_id}")
                     continue
                 
                 p1_1, p1_2, p2_1, p2_2 = opponents
@@ -122,12 +126,32 @@ class DataParser:
                 team1 = self._get_or_create_team_by_players(f"{player1_1.name} + {player1_2.name}", player1_1, player1_2)
                 team2 = self._get_or_create_team_by_players(f"{player2_1.name} + {player2_2.name}", player2_1, player2_2)
                 
+                # For duplicate match IDs, add group suffix to distinguish Group A from Group B
+                final_match_id = match_id
+                if match_id in [m.match_id for m in tournament.matches]:
+                    # This is a duplicate ID - likely Group A vs Group B
+                    if match_id.startswith('M') and match_id[1:].isdigit():
+                        # Determine if this is Group A or Group B based on position in the list
+                        # First 18 M matches are Group A, second 18 are Group B
+                        group_suffix = 'A' if i < 18 else 'B'  # More precise group detection
+                        final_match_id = f"{group_suffix}_{match_id}"
+                        logger.debug(f"🔄 Renamed duplicate {match_id} to {final_match_id} (position {i})")
+                
+                # Create unique key AFTER determining final match ID
+                unique_key = f"{team1.name}_vs_{team2.name}_{final_match_id}"
+                
+                # Skip only if we've seen this exact match before (same teams, same final ID)
+                if unique_key in processed_matches:
+                    logger.warning(f"⚠️ True duplicate match detected: {final_match_id} with teams {team1.name} vs {team2.name}")
+                    continue
+                
                 # Create match
-                match = self._create_match_from_wikitext(tournament, match_id, team1, team2, match_content)
+                match = self._create_match_from_wikitext(tournament, final_match_id, team1, team2, match_content)
                 
                 if match:
+                    processed_matches[unique_key] = match
                     tournament.matches.append(match)
-                    logger.debug(f"✅ Parsed match {match_id}: {team1.name} vs {team2.name}")
+                    logger.debug(f"✅ Parsed match {final_match_id}: {team1.name} vs {team2.name}")
                 
             except Exception as e:
                 logger.warning(f"⚠️ Failed to parse match {match_id}: {e}")
@@ -404,9 +428,9 @@ class DataParser:
     
     def _extract_opponents(self, match_content: str) -> tuple:
         """Extract opponent information from match content."""
-        # Look for opponent1 and opponent2 patterns
-        opponent1_pattern = r'opponent1=\{\{2Opponent\|p1=([^|]+)\|p2=([^|}]+)'
-        opponent2_pattern = r'opponent2=\{\{2Opponent\|p1=([^|]+)\|p2=([^|}]+)'
+        # Look for opponent1 and opponent2 patterns - handle race info between p1 and p2
+        opponent1_pattern = r'opponent1=\{\{2Opponent\|p1=([^|]+)(?:\|p1race=[^|]+)?\|p2=([^|}]+)'
+        opponent2_pattern = r'opponent2=\{\{2Opponent\|p1=([^|]+)(?:\|p1race=[^|]+)?\|p2=([^|}]+)'
         
         opponent1_match = re.search(opponent1_pattern, match_content)
         opponent2_match = re.search(opponent2_pattern, match_content)
@@ -517,23 +541,32 @@ class DataParser:
         """Extract games from match content."""
         games = []
         
-        # Find all map entries
-        map_pattern = r'map(\d+)=\{\{Map\|map=([^|}]+)\|winner=(\d+)[^}]*\}\}'
+        # Find all map entries - Updated regex to handle parameters between {{Map| and map=
+        # and handle winner=skip cases
+        map_pattern = r'map(\d+)=\{\{Map\|[^}]*?map=([^|}]+)[^}]*?\|winner=([^|}]+)[^}]*\}\}'
         map_matches = re.findall(map_pattern, match_content)
         
         for game_num_str, map_name, winner_str in map_matches:
             try:
                 game_number = int(game_num_str)
-                winner_num = int(winner_str)
                 
-                # Determine winner
+                # Handle different winner formats
                 winner = None
-                if winner_num == 1:
-                    winner = team1
-                elif winner_num == 2:
-                    winner = team2
-                elif winner_num == 0 or winner_str == "skip":
-                    continue  # Skip this game
+                if winner_str == "skip":
+                    continue  # Skip this game - it wasn't played
+                elif winner_str == "0":
+                    continue  # Skip this game - no winner
+                else:
+                    try:
+                        winner_num = int(winner_str)
+                        if winner_num == 1:
+                            winner = team1
+                        elif winner_num == 2:
+                            winner = team2
+                        else:
+                            continue  # Invalid winner number
+                    except ValueError:
+                        continue  # Invalid winner format
                 
                 game = Game(
                     game_number=game_number,
