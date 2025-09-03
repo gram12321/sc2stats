@@ -40,10 +40,11 @@ class ScraperConfig:
     username: Optional[str] = None
     api_key: Optional[str] = None
     
-    # Supabase database settings
+    # Database settings
     supabase_url: Optional[str] = None
     supabase_anon_key: Optional[str] = None
     supabase_service_key: Optional[str] = None
+    database_url: Optional[str] = None
     enable_database: bool = True
     
     def __post_init__(self):
@@ -85,10 +86,11 @@ def load_scraper_config() -> ScraperConfig:
         username=os.getenv("LIQUIPEDIA_USERNAME"),
         api_key=os.getenv("LIQUIPEDIA_API_KEY"),
         
-        # Supabase database settings
+        # Database settings
         supabase_url=os.getenv("SUPABASE_URL"),
         supabase_anon_key=os.getenv("SUPABASE_ANON_KEY"),
         supabase_service_key=os.getenv("SUPABASE_SERVICE_KEY"),
+        database_url=os.getenv("DATABASE_URL"),
         enable_database=os.getenv("ENABLE_DATABASE", "true").lower() == "true",
     )
 

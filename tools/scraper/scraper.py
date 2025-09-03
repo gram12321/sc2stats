@@ -6,13 +6,31 @@ that can be used to populate the database via MCP tools.
 
 import logging
 import json
-from sc2_scraper import SC2Scraper
+from database_inserter import insert_tournament_data
+from scraper_config import load_scraper_config, ScraperConfig, config
+from liquipedia_client import LiquipediaClient
+from data_parser import DataParser
 
 # Set up logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
+
+logger = logging.getLogger(__name__)
+
+
+class SC2Scraper:
+    """Minimal scraper for SC2 tournament data from Liquipedia."""
+    
+    def __init__(self, scraper_config: ScraperConfig = None):
+        """Initialize the scraper with configuration."""
+        self.config = scraper_config or config
+        self.client = LiquipediaClient(self.config)
+        self.parser = DataParser()
+        
+        logger.info("SC2 Scraper initialized")
+
 
 def main():
     """Scrape the UThermal tournament and output data for database insertion."""
@@ -151,11 +169,11 @@ def main():
         }
         
         # Save to file for inspection
-        with open("tournament_data.json", "w", encoding="utf-8") as f:
+        json_file_path = "output/tournament_data.json"
+        with open(json_file_path, "w", encoding="utf-8") as f:
             json.dump(complete_data, f, indent=2, ensure_ascii=False, default=str)
         
-        print(f"✅ Data saved to tournament_data.json")
-        print(f"💡 Next step: Use MCP tools to insert this data into Supabase")
+        print(f"✅ Data saved to {json_file_path}")
         
         # Show what we have
         print(f"\n📋 Data ready for database insertion:")
@@ -164,6 +182,24 @@ def main():
         print(f"   Teams: {len(teams_data)}")
         print(f"   Matches: {len(matches_data)}")
         print(f"   Total Games: {sum(len(match['games']) for match in matches_data)}")
+        
+        # Attempt database insertion
+        print(f"\n🗄️ Attempting database insertion...")
+        try:
+            config = load_scraper_config()
+            success = insert_tournament_data(json_file_path, config)
+            
+            if success:
+                print(f"✅ Database insertion completed successfully!")
+            else:
+                print(f"⚠️ Database insertion skipped or failed.")
+                print(f"💡 Data is ready in {json_file_path} for MCP-based insertion")
+                
+        except Exception as e:
+            print(f"⚠️ Direct database connection failed: {str(e)[:100]}...")
+            print(f"💡 This is expected if Supabase doesn't allow direct PostgreSQL connections")
+            print(f"💡 Data is ready in {json_file_path} for MCP-based insertion")
+            logging.debug(f"Database insertion failed: {e}", exc_info=True)
         
     except Exception as e:
         print(f"❌ Scraping failed: {e}")

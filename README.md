@@ -2,11 +2,11 @@ For now the task is to create a scraper from liquidpedia. The goal is to scrape 
 
 see @docs/initial_promt.md for basic idea
 
-**Data Storage**: The scraper now saves data directly to a **Supabase PostgreSQL database** instead of JSON files, enabling real-time data access and advanced analytics.
+**Data Storage**: The scraper exports data to JSON files, which are then inserted into **Supabase PostgreSQL database** via direct PostgreSQL connection, enabling efficient bulk data insertion and advanced analytics.
 
 # Enhanced SC2 Stats Scraper
 
-This enhanced scraper system provides robust, async-capable web scraping for Liquipedia tournament data with advanced features like caching, error handling, and batch processing. **Data is stored directly in Supabase for real-time access and analysis.**
+This enhanced scraper system provides robust web scraping for Liquipedia tournament data with advanced features like caching, error handling, and batch processing. **Data is exported to JSON and then inserted into Supabase via direct PostgreSQL connection for efficient data ingestion.**
 
 ## Features
 
@@ -29,10 +29,10 @@ This enhanced scraper system provides robust, async-capable web scraping for Liq
 - **Graceful degradation** on failures
 
 ### 🗄️ **Database Integration**
-- **Direct Supabase integration** for real-time data storage
+- **JSON export** for data persistence and transfer
+- **Direct PostgreSQL connection** for efficient bulk data insertion
 - **Structured data persistence** in PostgreSQL tables
 - **Data validation** and integrity checks
-- **Automatic schema management** and migrations
 
 ### 🔧 **Configuration & Monitoring**
 - **Environment-based configuration**
@@ -57,7 +57,7 @@ EnhancedScraper
 │   ├── Persistent file storage
 │   └── Cache validation and cleanup
 ├── Database Layer
-│   ├── Supabase client integration
+│   ├── Direct PostgreSQL connection
 │   ├── Data transformation & validation
 │   ├── Schema management
 │   └── Transaction handling
@@ -70,10 +70,10 @@ EnhancedScraper
 ## Data Flow
 
 ```
-Liquipedia API → Enhanced Scraper → Data Processing → Supabase Database
-     ↓                    ↓              ↓              ↓
-  Raw Data          Cached Data    Structured    Real-time Access
-  Extraction        Management      Data         for Web Apps
+Liquipedia API → Enhanced Scraper → JSON Export → Direct PostgreSQL → Supabase Database
+     ↓                    ↓              ↓              ↓              ↓
+  Raw Data          Cached Data    Structured    Bulk Insertion    Data Storage
+  Extraction        Management      Data         via psycopg2     for Web Apps
 ```
 
 ## Configuration Options
@@ -85,8 +85,8 @@ Liquipedia API → Enhanced Scraper → Data Processing → Supabase Database
 | `MAX_RETRIES` | `5` | Maximum retry attempts |
 | `CACHE_TTL` | `3600` | Cache time-to-live (seconds) |
 | `SUPABASE_URL` | - | Supabase project URL |
-| `SUPABASE_ANON_KEY` | - | Supabase anonymous key |
-| `SUPABASE_SERVICE_KEY` | - | Supabase service role key (for admin operations) |
+| `SUPABASE_SERVICE_KEY` | - | Supabase service role key (for direct PostgreSQL access) |
+| `DATABASE_URL` | - | Direct PostgreSQL connection string |
 | `CACHE_DIR` | `cache` | Cache storage directory |
 
 ## Database Schema
@@ -99,18 +99,39 @@ The scraper will populate the following Supabase tables:
 - **`games`**: Individual map results, map types, game details
 - **`teams`**: 2v2 team compositions and partnerships
 
+> 📋 **Detailed Schema**: See `docs/database_schema.py` for complete SQL DDL statements and table definitions.
+
+## Architecture Decision
+
+**Why Direct PostgreSQL Connection?**
+
+The scraper uses a direct PostgreSQL connection instead of MCP tools or Supabase client for the following reasons:
+
+- **Performance**: Direct connection provides optimal performance for bulk data insertion
+- **Reliability**: Eliminates dependency on external MCP tool availability
+- **Control**: Full control over SQL queries and transaction management
+- **Simplicity**: Single Python environment handles both scraping and database operations
+
+**Frontend Integration**
+
+The React frontend will use the Supabase client for:
+- Data fetching (one-time, no real-time subscriptions needed)
+- User authentication and RLS policies
+- Client-side data manipulation (filtering, sorting, graph redrawing)
+
+This architecture provides the best of both worlds: efficient bulk insertion from the scraper and rich data access capabilities in the frontend.
+
 ## File Structure
 
 ```
 tools/scraper/
 ├── __init__.py              # Package initialization
-├── config.py                # Configuration management
-├── mediawiki_client.py      # Enhanced MediaWiki API client
-├── fetch_tournament.py      # Tournament data fetcher
-├── enhanced_scraper.py      # Main enhanced scraper class
-├── supabase_client.py       # Supabase database integration
-├── database_schema.py       # Database schema definitions
-├── test_enhanced.py         # Test suite
-├── env_example.txt          # Environment configuration example
+├── scraper_config.py        # Configuration management
+├── liquipedia_client.py     # MediaWiki API client with caching
+├── data_models.py           # Data structures and models
+├── data_parser.py           # Unified parser for wikitext and LPDB data
+├── scraper.py               # Main scraper script (exports to JSON)
+├── database_schema.py       # Database schema definitions (in docs/)
+├── cache/                   # Cached API responses
 └── README.md                # This file
 ```
