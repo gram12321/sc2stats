@@ -10,6 +10,65 @@ Use yor git MCP tools to check git commit.
 - Focus on changed files, added/removed functions/functionality. 
 - Do not focus on bug fixed, and stuff that was not used in the end anyway. 
 
+## Version 0.00031a - 2025-09-04 (3428b58)
+
+### 🧹 **Major Code Cleanup and Optimization**
+
+#### ✅ **Code Quality Improvements**
+- **Eliminated duplicate code** across all three core modules
+- **Consolidated team normalization** logic into single helper functions
+- **Removed unused LPDB parsing methods** from data_parser.py
+- **Simplified player/team caching** with unified approach
+
+#### 🔧 **Technical Refactoring**
+- **scraper.py**: Removed unused parameters, consolidated team merging logic
+- **database_inserter.py**: Eliminated duplicate team creation code, improved player handling
+- **data_parser.py**: Removed 6 unused LPDB methods, consolidated caching systems
+- **Maintained 100% functionality** while reducing code complexity
+
+#### 📊 **Performance Impact**
+- **Cleaner architecture** with better separation of concerns
+- **Improved maintainability** through code consolidation
+- **Reduced memory footprint** by removing duplicate caching systems
+- **Enhanced readability** for future development
+
+---
+
+## Version 0.00031 - 2025-09-04 (4a8ba98)
+
+### 🔍 **Automatic Subevent Detection Implementation**
+
+#### ✅ **New Features**
+- **MediaWiki API Integration**: Implemented generic subevent detection using `allpages` endpoint
+- **Automatic Discovery**: System now finds all tournament pages without hardcoded names
+- **Intelligent Filtering**: Distinguishes between tournament pages and info pages
+- **Multi-Tournament Support**: Enhanced scraper to handle multiple tournaments simultaneously
+
+#### 🔧 **Technical Implementation**
+- **scraper.py**: Added `_find_subevents_via_api()` method for robust page discovery
+- **Tournament Filtering**: Implemented `_filter_tournament_pages()` for intelligent page classification
+- **Data Merging**: Enhanced `scrape_multiple_tournaments()` for efficient data consolidation
+- **Match ID Uniqueness**: Added tournament prefixes to prevent match ID conflicts
+
+
+---
+
+## Version 0.0003 - 2025-09-04 (eec7d06)
+
+### 🏆 **Subevent Detection Foundation**
+
+#### ✅ **Initial Implementation**
+- **Basic Subevent Logic**: Started development of subevent detection system
+- **Tournament Series Support**: Framework for handling multiple tournaments
+- **Data Structure Preparation**: Enhanced data models for multi-tournament support
+
+#### 🔧 **Technical Foundation**
+- **scraper.py**: Added `find_subevents()` method structure
+- **Data Merging**: Prepared infrastructure for combining tournament data
+- **Configuration Updates**: Enhanced scraper configuration for subevent handling
+
+---
+
 ## Version 0.00023a - 2025-09-03 (9db1324f69a9358fab5fd59128806e4299cf5e1f)
 
 ### 🎯 **Critical Bug Fix: M3 Match Game Parsing**

@@ -4,15 +4,21 @@ A robust web scraper for Liquipedia tournament data that extracts StarCraft 2 2v
 
 ## Overview
 
-This scraper system provides comprehensive data extraction for SC2 2v2 tournaments from Liquipedia, with features like caching, error handling, and batch processing. **Data is exported to JSON and then inserted into Supabase via the Supabase Python client for efficient data ingestion.**
+This scraper system provides comprehensive data extraction for SC2 2v2 tournaments from Liquipedia, with features like automatic subevent detection, intelligent caching, and efficient database integration. **The system automatically discovers and scrapes all subevents within a tournament series, ensuring complete data coverage.**
 
 ## Features
 
 ### 🚀 **Performance & Scalability**
-- **Async support** with `aiohttp` for concurrent requests
+- **Automatic subevent detection** using MediaWiki API
+- **Multi-tournament processing** with intelligent data merging
 - **Controlled concurrency** to avoid overwhelming servers
 - **Batch processing** for multiple tournaments
-- **Priority-based task scheduling**
+
+### 🔍 **Intelligent Data Discovery**
+- **Generic subevent detection** - no hardcoded tournament names required
+- **MediaWiki API integration** for robust page discovery
+- **Automatic filtering** of tournament vs. info pages
+- **Dynamic team creation** for flexible roster management
 
 ### 💾 **Caching & Efficiency**
 - **TTL-based caching** to avoid re-scraping
@@ -31,6 +37,7 @@ This scraper system provides comprehensive data extraction for SC2 2v2 tournamen
 - **Supabase Python client** for efficient data insertion
 - **Structured data persistence** in PostgreSQL tables
 - **Data validation** and integrity checks
+- **Team normalization** for consistent player ordering
 
 ### 🔧 **Configuration & Monitoring**
 - **Environment-based configuration**
@@ -41,22 +48,22 @@ This scraper system provides comprehensive data extraction for SC2 2v2 tournamen
 ## Architecture
 
 ```
-EnhancedScraper
-├── Task Management
-│   ├── Priority-based scheduling
-│   ├── Retry logic with backoff
-│   └── Concurrent processing control
+Enhanced SC2 Scraper
+├── Subevent Detection
+│   ├── MediaWiki API integration
+│   ├── Generic page discovery
+│   └── Intelligent filtering
 ├── Data Processing
-│   ├── MediaWiki API client
-│   ├── HTML parsing with BeautifulSoup
-│   └── Structured data extraction
+│   ├── Wikitext parsing
+│   ├── Match extraction
+│   └── Team normalization
 ├── Caching Layer
 │   ├── In-memory TTL cache
 │   ├── Persistent file storage
 │   └── Cache validation and cleanup
 ├── Database Layer
 │   ├── Supabase Python client
-│   ├── Data transformation & validation
+│   ├── Dynamic team creation
 │   ├── Schema management
 │   └── Transaction handling
 └── Output Management
@@ -68,11 +75,26 @@ EnhancedScraper
 ## Data Flow
 
 ```
-Liquipedia API → Enhanced Scraper → JSON Export → Supabase Client → Supabase Database
-     ↓                    ↓              ↓              ↓              ↓
-  Raw Data          Cached Data    Structured    Bulk Insertion    Data Storage
-  Extraction        Management      Data         via Supabase      for Web Apps
+Liquipedia API → Subevent Detection → Enhanced Scraper → JSON Export → Supabase Client → Supabase Database
+     ↓                    ↓                    ↓              ↓              ↓              ↓
+  Raw Data          Tournament Series    Cached Data    Structured    Bulk Insertion    Data Storage
+  Extraction        Discovery           Management      Data         via Supabase      for Web Apps
 ```
+
+## Recent Improvements
+
+### 🧹 **Code Cleanup (v0.00031a)**
+- **Eliminated duplicate code** across all modules
+- **Consolidated team normalization** logic
+- **Removed unused LPDB parsing methods**
+- **Improved code readability** and maintainability
+- **Maintained 100% functionality** with cleaner architecture
+
+### 🎯 **Key Features**
+- **59 matches successfully scraped** from UThermal 2v2 Circuit
+- **Automatic subevent detection** for Main Event + January
+- **Dynamic team creation** with player order normalization
+- **Unique match ID generation** across tournaments
 
 ## Configuration Options
 
@@ -124,10 +146,26 @@ tools/scraper/
 ├── scraper_config.py        # Configuration management
 ├── liquipedia_client.py     # MediaWiki API client with caching
 ├── data_models.py           # Data structures and models
-├── data_parser.py           # Unified parser for wikitext and LPDB data
-├── scraper.py               # Main scraper script (exports to JSON)
+├── data_parser.py           # Wikitext parser for tournament data
+├── scraper.py               # Main scraper with subevent detection
 ├── database_inserter.py     # Supabase database integration
 ├── database_schema.py       # Database schema definitions (in docs/)
 ├── cache/                   # Cached API responses
 └── README.md                # This file
 ```
+
+## Current Status
+
+- **✅ Scraper**: Fully implemented with automatic subevent detection
+- **✅ Database**: Fully integrated with Supabase Python client
+- **✅ Data Parsing**: Comprehensive wikitext parsing for all match types
+- **✅ Team Management**: Dynamic team creation with normalization
+- **🚧 Frontend**: Not yet implemented
+- **🚧 Analytics**: Basic data available, advanced features planned
+
+### 🔮 **Next Steps**
+- React frontend development
+- Real-time data subscriptions
+- Advanced analytics dashboard
+- Additional tournament support
+- Player and team statistics aggregation
