@@ -34,30 +34,30 @@ class SC2Scraper:
 
 def main():
     """Scrape the UThermal tournament and output data for database insertion."""
-    print("🚀 Working SC2 Tournament Scraper")
+    print("Working SC2 Tournament Scraper")
     print("=" * 60)
     
     # Initialize scraper (without database)
     scraper = SC2Scraper()
     
-    print("📋 Scraping UThermal 2v2 Circuit Main Event...")
+    print("Scraping UThermal 2v2 Circuit Main Event...")
     
     try:
         # Get tournament page content
-        page_content = scraper.client.get_page_content("UThermal_2v2_Circuit/Main_Event")
+        page_content = scraper.client.get_page_content("UThermal_2v2_Circuit/1")
         if not page_content:
-            print("❌ Failed to fetch page content")
+            print("Failed to fetch page content")
             return
         
-        print(f"✅ Successfully fetched page content: {len(page_content)} characters")
+        print(f"Successfully fetched page content: {len(page_content)} characters")
         
         # Parse tournament metadata
         tournament = scraper.parser.parse_tournament_from_wikitext(
-            "UThermal_2v2_Circuit/Main_Event", 
+            "UThermal_2v2_Circuit/1", 
             page_content
         )
         
-        print(f"✅ Successfully parsed tournament:")
+        print(f"Successfully parsed tournament:")
         print(f"   Name: {tournament.name}")
         print(f"   Slug: {tournament.liquipedia_slug}")
         print(f"   Start Date: {tournament.start_date}")
@@ -67,17 +67,17 @@ def main():
         print(f"   Status: {tournament.status.value}")
         print(f"   Maps: {len(tournament.maps)} maps")
         if tournament.maps:
-            print(f"     • {', '.join(tournament.maps[:3])}{'...' if len(tournament.maps) > 3 else ''}")
+            print(f"     Maps: {', '.join(tournament.maps[:3])}{'...' if len(tournament.maps) > 3 else ''}")
         
         # Skip LPDB and go directly to wikitext parsing since LPDB API is not working
-        print(f"\n📋 Skipping LPDB (known to be unavailable) and parsing matches from wikitext...")
+        print(f"\nSkipping LPDB (known to be unavailable) and parsing matches from wikitext...")
         
         # Use enhanced wikitext parsing (now integrated into the main parser)
         scraper.parser.parse_matches_from_wikitext(tournament, page_content)
         
         # Show match details
         if tournament.matches:
-            print(f"\n🏆 Match Results:")
+            print(f"\nMatch Results:")
             for i, match in enumerate(tournament.matches[:5]):  # Show first 5
                 team1_names = f"{match.team1.player1.name} + {match.team1.player2.name}"
                 team2_names = f"{match.team2.player1.name} + {match.team2.player2.name}"
@@ -89,14 +89,14 @@ def main():
                     map_names = [game.map_name for game in match.games[:3]]
                     print(f"     Maps: {', '.join(map_names)}{'...' if len(match.games) > 3 else ''}")
         
-        print(f"\n📊 Tournament Summary:")
+        print(f"\nTournament Summary:")
         print(f"   Players: {len(tournament.players)}")
         print(f"   Teams: {len(tournament.teams)}")
         print(f"   Matches: {len(tournament.matches)}")
         print(f"   Total Games: {sum(len(match.games) for match in tournament.matches)}")
         
         # Output data for database insertion
-        print(f"\n💾 Preparing data for database insertion...")
+        print(f"\nPreparing data for database insertion...")
         
         # Convert tournament to database format
         tournament_data = {
@@ -173,10 +173,10 @@ def main():
         with open(json_file_path, "w", encoding="utf-8") as f:
             json.dump(complete_data, f, indent=2, ensure_ascii=False, default=str)
         
-        print(f"✅ Data saved to {json_file_path}")
+        print(f"Data saved to {json_file_path}")
         
         # Show what we have
-        print(f"\n📋 Data ready for database insertion:")
+        print(f"\nData ready for database insertion:")
         print(f"   Tournament: {tournament_data['name']}")
         print(f"   Players: {len(players_data)}")
         print(f"   Teams: {len(teams_data)}")
@@ -184,25 +184,25 @@ def main():
         print(f"   Total Games: {sum(len(match['games']) for match in matches_data)}")
         
         # Attempt database insertion
-        print(f"\n🗄️ Attempting database insertion...")
+        print(f"\nAttempting database insertion...")
         try:
             config = load_scraper_config()
             success = insert_tournament_data(json_file_path, config)
             
             if success:
-                print(f"✅ Database insertion completed successfully!")
+                print(f"Database insertion completed successfully!")
             else:
-                print(f"⚠️ Database insertion skipped or failed.")
-                print(f"💡 Data is ready in {json_file_path} for MCP-based insertion")
+                print(f"Database insertion skipped or failed.")
+                print(f"Data is ready in {json_file_path} for MCP-based insertion")
                 
         except Exception as e:
-            print(f"⚠️ Direct database connection failed: {str(e)[:100]}...")
-            print(f"💡 This is expected if Supabase doesn't allow direct PostgreSQL connections")
-            print(f"💡 Data is ready in {json_file_path} for MCP-based insertion")
+            print(f"Direct database connection failed: {str(e)[:100]}...")
+            print(f"This is expected if Supabase doesn't allow direct PostgreSQL connections")
+            print(f"Data is ready in {json_file_path} for MCP-based insertion")
             logging.debug(f"Database insertion failed: {e}", exc_info=True)
         
     except Exception as e:
-        print(f"❌ Scraping failed: {e}")
+        print(f"Scraping failed: {e}")
         import traceback
         traceback.print_exc()
 

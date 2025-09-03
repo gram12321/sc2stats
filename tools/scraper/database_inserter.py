@@ -284,6 +284,7 @@ def insert_tournament_data(json_file_path: str, config: ScraperConfig) -> bool:
             liquipedia_slug=tournament_info.get('liquipedia_slug', 'unknown'),
             start_date=tournament_info.get('start_date'),
             end_date=tournament_info.get('end_date'),
+            prize_pool=tournament_info.get('prize_pool'),
             location=tournament_info.get('location'),
             status=tournament_info.get('status', 'completed')
         )
