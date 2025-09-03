@@ -1,12 +1,10 @@
-For now the task is to create a scraper from liquidpedia. The goal is to scrape data about 2v2 Starcraft results, based on players, race, maps, and tournaments. We will be starting with the uterman 2v2 circut. https://liquipedia.net/starcraft2/UThermal_2v2_Circuit/Main_Event 
+# SC2 2v2 Stats Scraper
 
-see @docs/initial_promt.md for basic idea
+A robust web scraper for Liquipedia tournament data that extracts StarCraft 2 2v2 tournament information and stores it in a Supabase PostgreSQL database.
 
-**Data Storage**: The scraper exports data to JSON files, which are then inserted into **Supabase PostgreSQL database** via direct PostgreSQL connection, enabling efficient bulk data insertion and advanced analytics.
+## Overview
 
-# Enhanced SC2 Stats Scraper
-
-This enhanced scraper system provides robust web scraping for Liquipedia tournament data with advanced features like caching, error handling, and batch processing. **Data is exported to JSON and then inserted into Supabase via direct PostgreSQL connection for efficient data ingestion.**
+This scraper system provides comprehensive data extraction for SC2 2v2 tournaments from Liquipedia, with features like caching, error handling, and batch processing. **Data is exported to JSON and then inserted into Supabase via the Supabase Python client for efficient data ingestion.**
 
 ## Features
 
@@ -30,7 +28,7 @@ This enhanced scraper system provides robust web scraping for Liquipedia tournam
 
 ### 🗄️ **Database Integration**
 - **JSON export** for data persistence and transfer
-- **Direct PostgreSQL connection** for efficient bulk data insertion
+- **Supabase Python client** for efficient data insertion
 - **Structured data persistence** in PostgreSQL tables
 - **Data validation** and integrity checks
 
@@ -57,7 +55,7 @@ EnhancedScraper
 │   ├── Persistent file storage
 │   └── Cache validation and cleanup
 ├── Database Layer
-│   ├── Direct PostgreSQL connection
+│   ├── Supabase Python client
 │   ├── Data transformation & validation
 │   ├── Schema management
 │   └── Transaction handling
@@ -70,10 +68,10 @@ EnhancedScraper
 ## Data Flow
 
 ```
-Liquipedia API → Enhanced Scraper → JSON Export → Direct PostgreSQL → Supabase Database
+Liquipedia API → Enhanced Scraper → JSON Export → Supabase Client → Supabase Database
      ↓                    ↓              ↓              ↓              ↓
   Raw Data          Cached Data    Structured    Bulk Insertion    Data Storage
-  Extraction        Management      Data         via psycopg2     for Web Apps
+  Extraction        Management      Data         via Supabase      for Web Apps
 ```
 
 ## Configuration Options
@@ -85,13 +83,12 @@ Liquipedia API → Enhanced Scraper → JSON Export → Direct PostgreSQL → Su
 | `MAX_RETRIES` | `5` | Maximum retry attempts |
 | `CACHE_TTL` | `3600` | Cache time-to-live (seconds) |
 | `SUPABASE_URL` | - | Supabase project URL |
-| `SUPABASE_SERVICE_KEY` | - | Supabase service role key (for direct PostgreSQL access) |
-| `DATABASE_URL` | - | Direct PostgreSQL connection string |
+| `SUPABASE_ANON_KEY` | - | Supabase anonymous key |
 | `CACHE_DIR` | `cache` | Cache storage directory |
 
 ## Database Schema
 
-The scraper will populate the following Supabase tables:
+The scraper populates the following Supabase tables:
 
 - **`tournaments`**: Tournament metadata, dates, locations
 - **`players`**: Player information, race preferences, statistics
@@ -103,23 +100,21 @@ The scraper will populate the following Supabase tables:
 
 ## Architecture Decision
 
-**Why Direct PostgreSQL Connection?**
+**Why Supabase Python Client?**
 
-The scraper uses a direct PostgreSQL connection instead of MCP tools or Supabase client for the following reasons:
+The scraper uses the Supabase Python client instead of direct PostgreSQL connections for the following reasons:
 
-- **Performance**: Direct connection provides optimal performance for bulk data insertion
-- **Reliability**: Eliminates dependency on external MCP tool availability
-- **Control**: Full control over SQL queries and transaction management
-- **Simplicity**: Single Python environment handles both scraping and database operations
+- **Simplicity**: Leverages Supabase's built-in authentication and security
+- **Reliability**: Handles connection pooling and retries automatically
+- **Security**: Uses Supabase's RLS policies and authentication
+- **Maintenance**: Easier to maintain and update
 
 **Frontend Integration**
 
 The React frontend will use the Supabase client for:
-- Data fetching (one-time, no real-time subscriptions needed)
+- Data fetching and real-time subscriptions
 - User authentication and RLS policies
 - Client-side data manipulation (filtering, sorting, graph redrawing)
-
-This architecture provides the best of both worlds: efficient bulk insertion from the scraper and rich data access capabilities in the frontend.
 
 ## File Structure
 
@@ -131,6 +126,7 @@ tools/scraper/
 ├── data_models.py           # Data structures and models
 ├── data_parser.py           # Unified parser for wikitext and LPDB data
 ├── scraper.py               # Main scraper script (exports to JSON)
+├── database_inserter.py     # Supabase database integration
 ├── database_schema.py       # Database schema definitions (in docs/)
 ├── cache/                   # Cached API responses
 └── README.md                # This file
