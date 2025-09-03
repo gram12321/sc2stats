@@ -21,6 +21,63 @@ from scraper_config import ScraperConfig
 logger = logging.getLogger(__name__)
 
 
+def get_or_create_team_id(team_name: str, player_id_map: Dict[str, str], 
+                         team_id_map: Dict[tuple, str], inserter) -> Optional[str]:
+    """
+    Get or create a team ID for a given team name.
+    
+    Args:
+        team_name: Team name in format "Player1 + Player2"
+        player_id_map: Mapping of player names to IDs
+        team_id_map: Mapping of (player1, player2) tuples to team IDs
+        inserter: Database inserter instance
+        
+    Returns:
+        Team ID if successful, None otherwise
+    """
+    if not team_name or ' + ' not in team_name:
+        logger.warning(f"Invalid team name format: {team_name}")
+        return None
+    
+    # Parse player names from team name
+    player_names = [name.strip() for name in team_name.split(' + ')]
+    if len(player_names) != 2:
+        logger.warning(f"Expected 2 players in team name, got {len(player_names)}: {team_name}")
+        return None
+    
+    player1_name, player2_name = player_names
+    
+    # Check if both players exist
+    if player1_name not in player_id_map or player2_name not in player_id_map:
+        missing_players = [p for p in player_names if p not in player_id_map]
+        logger.warning(f"Players not found: {missing_players} in team {team_name}")
+        return None
+    
+    # Normalize team key (sort players alphabetically for consistent ordering)
+    # This ensures "Lambo + MaxPax" and "MaxPax + Lambo" are treated as the same team
+    normalized_players = sorted([player1_name, player2_name])
+    team_key = (normalized_players[0], normalized_players[1])
+    
+    # Check if team already exists
+    if team_key in team_id_map:
+        return team_id_map[team_key]
+    
+    # Create new team using normalized player order for database consistency
+    try:
+        # Use normalized order for database record to maintain consistency
+        team_id = inserter.insert_team(
+            name=f"{normalized_players[0]} + {normalized_players[1]}",  # Normalized team name
+            player1_id=player_id_map[normalized_players[0]],
+            player2_id=player_id_map[normalized_players[1]]
+        )
+        team_id_map[team_key] = team_id
+        logger.info(f"🆕 Created new team: {team_name} with ID: {team_id}")
+        return team_id
+    except Exception as e:
+        logger.error(f"Failed to create team {team_name}: {e}")
+        return None
+
+
 class DatabaseError(Exception):
     """Base exception for database operations."""
     pass
@@ -277,17 +334,30 @@ def insert_tournament_data(json_file_path: str, config: ScraperConfig) -> bool:
         
         # Supabase handles transactions automatically
         
-        # Insert tournament
-        tournament_info = tournament_data.get('tournament', {})
-        tournament_id = inserter.insert_tournament(
-            name=tournament_info.get('name', 'Unknown Tournament'),
-            liquipedia_slug=tournament_info.get('liquipedia_slug', 'unknown'),
-            start_date=tournament_info.get('start_date'),
-            end_date=tournament_info.get('end_date'),
-            prize_pool=tournament_info.get('prize_pool'),
-            location=tournament_info.get('location'),
-            status=tournament_info.get('status', 'completed')
-        )
+        # Handle both single tournament (legacy) and multiple tournaments (new format)
+        tournaments_list = tournament_data.get('tournaments', [])
+        single_tournament = tournament_data.get('tournament', {})
+        
+        # If single tournament format, convert to list
+        if single_tournament and not tournaments_list:
+            tournaments_list = [single_tournament]
+        
+        # Insert all tournaments
+        tournament_id_map = {}  # slug -> id
+        for tournament_info in tournaments_list:
+            tournament_id = inserter.insert_tournament(
+                name=tournament_info.get('name', 'Unknown Tournament'),
+                liquipedia_slug=tournament_info.get('liquipedia_slug', 'unknown'),
+                start_date=tournament_info.get('start_date'),
+                end_date=tournament_info.get('end_date'),
+                prize_pool=tournament_info.get('prize_pool'),
+                location=tournament_info.get('location'),
+                status=tournament_info.get('status', 'completed')
+            )
+            tournament_id_map[tournament_info.get('liquipedia_slug', 'unknown')] = tournament_id
+        
+        # Use first tournament as default for matches without explicit tournament reference
+        default_tournament_id = list(tournament_id_map.values())[0] if tournament_id_map else None
         
         # Track inserted entities
         player_id_map = {}  # name -> id
@@ -318,12 +388,17 @@ def insert_tournament_data(json_file_path: str, config: ScraperConfig) -> bool:
             team_name = team.get('name', f"{player1_name} & {player2_name}")
             
             if player1_name in player_id_map and player2_name in player_id_map:
-                team_key = (player1_name, player2_name)
+                # Normalize team key for consistency
+                normalized_players = sorted([player1_name, player2_name])
+                team_key = (normalized_players[0], normalized_players[1])
+                
                 if team_key not in team_id_map:
+                    # Use normalized team name and player order
+                    normalized_team_name = f"{normalized_players[0]} + {normalized_players[1]}"
                     team_id = inserter.insert_team(
-                        name=team_name,
-                        player1_id=player_id_map[player1_name],
-                        player2_id=player_id_map[player2_name]
+                        name=normalized_team_name,
+                        player1_id=player_id_map[normalized_players[0]],
+                        player2_id=player_id_map[normalized_players[1]]
                     )
                     team_id_map[team_key] = team_id
             else:
@@ -339,18 +414,19 @@ def insert_tournament_data(json_file_path: str, config: ScraperConfig) -> bool:
                 team1_name = match.get('team1_name', '')
                 team2_name = match.get('team2_name', '')
                 
-                # Find team IDs by looking up the team names
-                team1_id = None
-                team2_id = None
-                
-                for team_key, team_id in team_id_map.items():
-                    team_display_name = f"{team_key[0]} + {team_key[1]}"
-                    if team_display_name == team1_name:
-                        team1_id = team_id
-                    elif team_display_name == team2_name:
-                        team2_id = team_id
+                # Find or create team IDs dynamically
+                team1_id = get_or_create_team_id(team1_name, player_id_map, team_id_map, inserter)
+                team2_id = get_or_create_team_id(team2_name, player_id_map, team_id_map, inserter)
                 
                 if team1_id and team2_id:
+                    # Determine which tournament this match belongs to
+                    match_tournament_slug = match.get('tournament_slug', '')
+                    match_tournament_id = tournament_id_map.get(match_tournament_slug, default_tournament_id)
+                    
+                    if not match_tournament_id:
+                        logger.warning(f"No tournament found for match {match.get('match_id', 'unknown')}")
+                        continue
+                    
                     # Determine winner
                     winner_id = None
                     winner_name = match.get('winner_name', '')
@@ -361,7 +437,7 @@ def insert_tournament_data(json_file_path: str, config: ScraperConfig) -> bool:
                     
                     # Insert match
                     match_db_id = inserter.insert_match(
-                        tournament_id=tournament_id,
+                        tournament_id=match_tournament_id,
                         match_id=match.get('match_id', f"match_{hash(str(match))}"),
                         team1_id=team1_id,
                         team2_id=team2_id,
