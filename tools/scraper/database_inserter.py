@@ -90,7 +90,17 @@ class SupabaseDatabaseInserter:
             if operation == "insert":
                 response = self.client.table(table).insert(data).execute()
             elif operation == "upsert":
-                response = self.client.table(table).upsert(data).execute()
+                # Handle different tables with appropriate conflict resolution
+                if table == "matches":
+                    response = self.client.table(table).upsert(data, on_conflict="match_id").execute()
+                elif table == "players":
+                    response = self.client.table(table).upsert(data, on_conflict="liquipedia_slug").execute()
+                elif table == "teams":
+                    response = self.client.table(table).upsert(data, on_conflict="player1_id,player2_id").execute()
+                elif table == "tournaments":
+                    response = self.client.table(table).upsert(data, on_conflict="liquipedia_slug").execute()
+                else:
+                    response = self.client.table(table).upsert(data).execute()
             else:
                 raise ValueError(f"Unsupported operation: {operation}")
                 
