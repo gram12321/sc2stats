@@ -1,6 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { useTournaments } from '@/hooks/useData'
+import TournamentMatchesModal from '@/components/TournamentMatchesModal'
 import { Trophy, Calendar, MapPin, DollarSign } from 'lucide-react'
 
 export default function Tournaments() {
@@ -100,7 +101,12 @@ export default function Tournaments() {
               </div>
               
               <div className="flex space-x-2">
-                <Button size="sm" className="flex-1">View Matches</Button>
+                <TournamentMatchesModal 
+                  tournamentId={tournament.id} 
+                  tournamentName={tournament.name}
+                >
+                  <Button size="sm" className="flex-1">View Matches</Button>
+                </TournamentMatchesModal>
                 <Button size="sm" variant="outline" className="flex-1">Results</Button>
               </div>
             </CardContent>
