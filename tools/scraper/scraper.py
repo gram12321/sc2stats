@@ -163,6 +163,42 @@ class SC2Scraper:
             return f"{normalized_players[0]} + {normalized_players[1]}"
         return team_name
     
+    def _merge_teams(self, teams_data: list, all_teams: dict) -> None:
+        """Merge teams data avoiding duplicates by normalized player combination."""
+        for team in teams_data:
+            player1 = team['player1_name']
+            player2 = team['player2_name']
+            
+            # Create normalized team key and data
+            normalized_players = sorted([player1, player2])
+            team_key = f"{normalized_players[0]}+{normalized_players[1]}"
+            
+            if team_key not in all_teams:
+                all_teams[team_key] = {
+                    'name': f"{normalized_players[0]} + {normalized_players[1]}",
+                    'player1_name': normalized_players[0],
+                    'player2_name': normalized_players[1]
+                }
+    
+    def _merge_matches(self, matches_data: list, tournament_slug: str, all_matches: list) -> None:
+        """Merge matches data with tournament reference and normalized team names."""
+        tournament_prefix = tournament_slug.split('/')[-1]  # Get last part (e.g., "Main_Event" or "1")
+        
+        for match in matches_data:
+            match["tournament_slug"] = tournament_slug
+            
+            # Make match IDs unique across tournaments by prefixing with tournament
+            original_match_id = match.get("match_id", "")
+            match["match_id"] = f"{tournament_prefix}_{original_match_id}"
+            
+            # Normalize team names to match the normalized teams list
+            match["team1_name"] = self._normalize_team_name(match.get("team1_name", ""))
+            match["team2_name"] = self._normalize_team_name(match.get("team2_name", ""))
+            if "winner_name" in match:
+                match["winner_name"] = self._normalize_team_name(match["winner_name"])
+            
+            all_matches.append(match)
+    
     def scrape_tournament(self, tournament_slug: str) -> Dict:
         """
         Scrape a single tournament and return structured data.
@@ -225,38 +261,9 @@ class SC2Scraper:
                 for player in tournament_data["players"]:
                     all_players[player["name"]] = player
                 
-                # Merge teams (avoid duplicates by normalized player combination)
-                for team in tournament_data["teams"]:
-                    player1 = team['player1_name']
-                    player2 = team['player2_name']
-                    
-                    # Create normalized team key and data
-                    normalized_players = sorted([player1, player2])
-                    team_key = f"{normalized_players[0]}+{normalized_players[1]}"
-                    
-                    if team_key not in all_teams:
-                        all_teams[team_key] = {
-                            'name': f"{normalized_players[0]} + {normalized_players[1]}",
-                            'player1_name': normalized_players[0],
-                            'player2_name': normalized_players[1]
-                        }
-                
-                # Add matches with tournament reference and normalize team names
-                for match in tournament_data["matches"]:
-                    match["tournament_slug"] = slug
-                    
-                    # Make match IDs unique across tournaments by prefixing with tournament
-                    tournament_prefix = slug.split('/')[-1]  # Get last part (e.g., "Main_Event" or "1")
-                    original_match_id = match.get("match_id", "")
-                    match["match_id"] = f"{tournament_prefix}_{original_match_id}"
-                    
-                    # Normalize team names to match the normalized teams list
-                    match["team1_name"] = self._normalize_team_name(match.get("team1_name", ""))
-                    match["team2_name"] = self._normalize_team_name(match.get("team2_name", ""))
-                    if "winner_name" in match:
-                        match["winner_name"] = self._normalize_team_name(match["winner_name"])
-                    
-                    all_matches.append(match)
+                # Merge teams and matches
+                self._merge_teams(tournament_data["teams"], all_teams)
+                self._merge_matches(tournament_data["matches"], slug, all_matches)
         
         return {
             "tournaments": all_tournaments,
@@ -342,89 +349,87 @@ def main():
     print("Enhanced SC2 Tournament Scraper with Subevent Detection")
     print("=" * 60)
     
-    # Initialize scraper
     scraper = SC2Scraper()
+    tournament_series = "UThermal_2v2_Circuit"
     
     try:
-        # Tournament series to scrape
-        tournament_series = "UThermal_2v2_Circuit"
-        
-        # Step 1: Find subevents automatically
-        subevents = scraper.find_subevents(tournament_series)
-        
-        # Step 2: Add all discovered subevents (including Main Event from API)
-        target_tournaments = []
-        
-        # Add all discovered subevents - no hardcoding, use what API finds
-        for subevent in subevents:
-            subevent_slug = f"{tournament_series}/{subevent}"
-            target_tournaments.append(subevent_slug)
-        
-        print(f"🎯 Scraping {len(target_tournaments)} tournaments...")
-        
-        # Step 3: Scrape all tournaments
-        combined_data = scraper.scrape_multiple_tournaments(target_tournaments)
-        
+        # Scrape all tournaments
+        combined_data = _scrape_all_tournaments(scraper, tournament_series)
         if not combined_data:
             print("❌ Failed to scrape tournament data")
             return
         
-        # Step 4: Show summary
-        print(f"\n📈 Scraping Summary:")
-        print(f"   Tournaments: {len(combined_data['tournaments'])}")
-        print(f"   Players: {len(combined_data['players'])}")
-        print(f"   Teams: {len(combined_data['teams'])}")
-        print(f"   Matches: {len(combined_data['matches'])}")
+        # Show summary and save data
+        _show_scraping_summary(combined_data)
+        json_file_path = _save_tournament_data(combined_data)
         
-        # Show match distribution
-        match_by_tournament = {}
-        for match in combined_data['matches']:
-            slug = match.get('tournament_slug', 'unknown')
-            match_by_tournament[slug] = match_by_tournament.get(slug, 0) + 1
-        
-        print(f"\n   Match Distribution:")
-        for slug, count in match_by_tournament.items():
-            print(f"     {slug}: {count} matches")
-        
-        # Step 5: Prepare final data structure for database insertion
-        # Use the first tournament as primary, but include all match data
-        final_data = {
-            "tournaments": combined_data['tournaments'],
-            "players": combined_data['players'],
-            "teams": combined_data['teams'],
-            "matches": combined_data['matches']
-        }
-        
-        # Step 6: Save to file
-        json_file_path = "../../output/tournament_data.json"
-        with open(json_file_path, "w", encoding="utf-8") as f:
-            json.dump(final_data, f, indent=2, ensure_ascii=False, default=str)
-        
-        print(f"\n💾 Data saved to {json_file_path}")
-        
-        # Step 7: Attempt database insertion
-        print(f"\n🗄️  Attempting database insertion...")
-        try:
-            config = load_scraper_config()
-            success = insert_tournament_data(json_file_path, config)
-            
-            if success:
-                print(f"✅ Database insertion completed successfully!")
-                print(f"   All tournaments and their data have been inserted")
-            else:
-                print(f"⚠️  Database insertion skipped or failed.")
-                print(f"   Data is ready in {json_file_path} for MCP-based insertion")
-                
-        except Exception as e:
-            print(f"❌ Direct database connection failed: {str(e)[:100]}...")
-            print(f"   This is expected if Supabase doesn't allow direct PostgreSQL connections")
-            print(f"   Data is ready in {json_file_path} for MCP-based insertion")
-            logging.debug(f"Database insertion failed: {e}", exc_info=True)
+        # Attempt database insertion
+        _attempt_database_insertion(json_file_path)
         
     except Exception as e:
         print(f"❌ Scraping failed: {e}")
         import traceback
         traceback.print_exc()
+
+
+def _scrape_all_tournaments(scraper: SC2Scraper, tournament_series: str) -> dict:
+    """Find and scrape all tournaments in the series."""
+    subevents = scraper.find_subevents(tournament_series)
+    
+    target_tournaments = [f"{tournament_series}/{subevent}" for subevent in subevents]
+    print(f"🎯 Scraping {len(target_tournaments)} tournaments...")
+    
+    return scraper.scrape_multiple_tournaments(target_tournaments)
+
+
+def _show_scraping_summary(combined_data: dict) -> None:
+    """Display scraping summary and match distribution."""
+    print(f"\n📈 Scraping Summary:")
+    print(f"   Tournaments: {len(combined_data['tournaments'])}")
+    print(f"   Players: {len(combined_data['players'])}")
+    print(f"   Teams: {len(combined_data['teams'])}")
+    print(f"   Matches: {len(combined_data['matches'])}")
+    
+    # Show match distribution
+    match_by_tournament = {}
+    for match in combined_data['matches']:
+        slug = match.get('tournament_slug', 'unknown')
+        match_by_tournament[slug] = match_by_tournament.get(slug, 0) + 1
+    
+    print(f"\n   Match Distribution:")
+    for slug, count in match_by_tournament.items():
+        print(f"     {slug}: {count} matches")
+
+
+def _save_tournament_data(combined_data: dict) -> str:
+    """Save tournament data to JSON file."""
+    json_file_path = "../../output/tournament_data.json"
+    with open(json_file_path, "w", encoding="utf-8") as f:
+        json.dump(combined_data, f, indent=2, ensure_ascii=False, default=str)
+    
+    print(f"\n💾 Data saved to {json_file_path}")
+    return json_file_path
+
+
+def _attempt_database_insertion(json_file_path: str) -> None:
+    """Attempt to insert data into database."""
+    print(f"\n🗄️  Attempting database insertion...")
+    try:
+        config = load_scraper_config()
+        success = insert_tournament_data(json_file_path, config)
+        
+        if success:
+            print(f"✅ Database insertion completed successfully!")
+            print(f"   All tournaments and their data have been inserted")
+        else:
+            print(f"⚠️  Database insertion skipped or failed.")
+            print(f"   Data is ready in {json_file_path} for MCP-based insertion")
+            
+    except Exception as e:
+        print(f"❌ Direct database connection failed: {str(e)[:100]}...")
+        print(f"   This is expected if Supabase doesn't allow direct PostgreSQL connections")
+        print(f"   Data is ready in {json_file_path} for MCP-based insertion")
+        logging.debug(f"Database insertion failed: {e}", exc_info=True)
 
 if __name__ == "__main__":
     main()

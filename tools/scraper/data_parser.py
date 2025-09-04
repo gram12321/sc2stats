@@ -70,61 +70,37 @@ class DataParser:
         
         # Track processed matches to handle duplicates between groups
         processed_matches = {}  # unique_key -> match_object
+        existing_match_ids = set()  # For efficient lookups
         
         for i, match_id in enumerate(match_ids):
             try:
-                # Extract match content
                 match_content = self._extract_match_content(wikitext, match_id)
                 if not match_content:
                     continue
                 
-                # Extract opponents
                 opponents = self._extract_opponents(match_content)
                 if not opponents:
                     logger.warning(f"⚠️ Failed to extract opponents for match {match_id}")
                     continue
                 
-                p1_1, p1_2, p2_1, p2_2 = opponents
+                # Create players and teams
+                team1, team2 = self._create_teams_from_opponents(opponents)
                 
-                # Create players
-                player1_1 = self._get_or_create_player(p1_1.strip())
-                player1_2 = self._get_or_create_player(p1_2.strip())
-                player2_1 = self._get_or_create_player(p2_1.strip())
-                player2_2 = self._get_or_create_player(p2_2.strip())
+                # Handle duplicate match IDs and create final match ID
+                final_match_id = self._generate_final_match_id(tournament, match_id, existing_match_ids, i)
                 
-                # Create teams
-                team1 = self._get_or_create_team(f"{player1_1.name} + {player1_2.name}", player1_1, player1_2)
-                team2 = self._get_or_create_team(f"{player2_1.name} + {player2_2.name}", player2_1, player2_2)
-                
-                # Make match IDs unique across tournaments by prefixing with tournament slug
-                # Also handle duplicate match IDs within the same tournament (Group A vs Group B)
-                final_match_id = f"{tournament.liquipedia_slug.replace('/', '_')}_{match_id}"
-                
-                # Check if this match_id already exists in the tournament (for Group A/B handling)
-                existing_match_ids = [m.match_id.split('_')[-1] for m in tournament.matches]  # Extract original match_id
-                if match_id in existing_match_ids:
-                    # This is a duplicate ID within the same tournament - likely Group A vs Group B
-                    if match_id.startswith('M') and match_id[1:].isdigit():
-                        # Determine if this is Group A or Group B based on position in the list
-                        # First 18 M matches are Group A, second 18 are Group B
-                        group_suffix = 'A' if i < 18 else 'B'  # More precise group detection
-                        final_match_id = f"{tournament.liquipedia_slug.replace('/', '_')}_{group_suffix}_{match_id}"
-                        logger.debug(f"🔄 Renamed duplicate {match_id} to {final_match_id} (position {i})")
-                
-                # Create unique key AFTER determining final match ID
+                # Create unique key to detect true duplicates
                 unique_key = f"{team1.name}_vs_{team2.name}_{final_match_id}"
-                
-                # Skip only if we've seen this exact match before (same teams, same final ID)
                 if unique_key in processed_matches:
-                    logger.warning(f"⚠️ True duplicate match detected: {final_match_id} with teams {team1.name} vs {team2.name}")
+                    logger.warning(f"⚠️ True duplicate match detected: {final_match_id}")
                     continue
                 
-                # Create match
+                # Create and store match
                 match = self._create_match_from_wikitext(tournament, final_match_id, team1, team2, match_content)
-                
                 if match:
                     processed_matches[unique_key] = match
                     tournament.matches.append(match)
+                    existing_match_ids.add(match_id)
                     logger.debug(f"✅ Parsed match {final_match_id}: {team1.name} vs {team2.name}")
                 
             except Exception as e:
@@ -242,29 +218,6 @@ class DataParser:
         else:
             return MatchStatus.SCHEDULED
     
-    def _parse_datetime(self, date_str: str) -> Optional[datetime]:
-        """Parse datetime from various string formats."""
-        if not date_str:
-            return None
-        
-        # Try common datetime formats
-        formats = [
-            '%Y-%m-%d %H:%M:%S',
-            '%Y-%m-%d',
-            '%Y/%m/%d',
-            '%d/%m/%Y',
-            '%m/%d/%Y'
-        ]
-        
-        for fmt in formats:
-            try:
-                return datetime.strptime(date_str, fmt)
-            except ValueError:
-                continue
-        
-        logger.warning(f"Could not parse datetime: {date_str}")
-        return None
-    
     # Enhanced wikitext parsing helper methods
     def _extract_match_content(self, wikitext: str, match_id: str) -> str:
         """Extract the content of a specific match block."""
@@ -320,8 +273,35 @@ class DataParser:
         
         return (p1_1, p1_2, p2_1, p2_2)
     
-
+    def _create_teams_from_opponents(self, opponents: tuple) -> tuple:
+        """Create team objects from opponent data."""
+        p1_1, p1_2, p2_1, p2_2 = opponents
+        
+        # Create players
+        player1_1 = self._get_or_create_player(p1_1.strip())
+        player1_2 = self._get_or_create_player(p1_2.strip())
+        player2_1 = self._get_or_create_player(p2_1.strip())
+        player2_2 = self._get_or_create_player(p2_2.strip())
+        
+        # Create teams
+        team1 = self._get_or_create_team(f"{player1_1.name} + {player1_2.name}", player1_1, player1_2)
+        team2 = self._get_or_create_team(f"{player2_1.name} + {player2_2.name}", player2_1, player2_2)
+        
+        return team1, team2
     
+    def _generate_final_match_id(self, tournament: Tournament, match_id: str, existing_match_ids: set, position: int) -> str:
+        """Generate final match ID handling duplicates and prefixes."""
+        base_id = f"{tournament.liquipedia_slug.replace('/', '_')}_{match_id}"
+        
+        # Handle Group A/B duplicates for Main Event
+        if match_id in existing_match_ids and match_id.startswith('M') and match_id[1:].isdigit():
+            group_suffix = 'A' if position < 18 else 'B'
+            final_id = f"{tournament.liquipedia_slug.replace('/', '_')}_{group_suffix}_{match_id}"
+            logger.debug(f"🔄 Renamed duplicate {match_id} to {final_id} (position {position})")
+            return final_id
+        
+        return base_id
+
     def _get_or_create_team(self, name: str, player1: Player, player2: Player) -> Team:
         """Get or create a team by players."""
         # Create team key using normalized player order
@@ -421,8 +401,8 @@ class DataParser:
         """Extract games from match content."""
         games = []
         
-        # Debug: print match content for investigation  
-        logger.debug(f"Extracting games from match content (first 500 chars): {match_content[:500]}")
+        # Extract games from match content
+        logger.debug(f"Extracting games from match content")
         
         # First try to find detailed map entries with individual game results
         map_pattern = r'map(\d+)=\{\{Map\|[^}]*?map=([^|}]+)[^}]*?\|winner=([^|}]+)[^}]*\}\}'

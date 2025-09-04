@@ -120,24 +120,24 @@ class SupabaseDatabaseInserter:
         if not SUPABASE_AVAILABLE:
             logger.error("Supabase client not available - install with: pip install supabase")
             return False
-            
-        # Use hardcoded values from MCP
-        supabase_url = "https://ruseplseifwuonpbqakh.supabase.co"
-        anon_key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ1c2VwbHNlaWZ3dW9ucGJxYWtoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY4MDU2MTEsImV4cCI6MjA3MjM4MTYxMX0.M8zYJcE8JwvcsCn8wXHzgwZMhPTJ1QoqEmePQMLbmLw"
         
+        self.supabase_url, self.supabase_key = self._get_supabase_credentials()
+        return True
+    
+    def _get_supabase_credentials(self) -> tuple:
+        """Get Supabase credentials from environment or fallback to hardcoded values."""
         # Check environment variables first
         env_url = os.getenv('SUPABASE_URL')
         env_key = os.getenv('SUPABASE_ANON_KEY') or os.getenv('SUPABASE_SERVICE_KEY')
         
         if env_url and env_key:
-            self.supabase_url = env_url
-            self.supabase_key = env_key
-        else:
-            # Use the hardcoded values as fallback
-            self.supabase_url = supabase_url
-            self.supabase_key = anon_key
-            
-        return True
+            return env_url, env_key
+        
+        # Fallback to hardcoded values from MCP
+        return (
+            "https://ruseplseifwuonpbqakh.supabase.co",
+            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ1c2VwbHNlaWZ3dW9ucGJxYWtoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY4MDU2MTEsImV4cCI6MjA3MjM4MTYxMX0.M8zYJcE8JwvcsCn8wXHzgwZMhPTJ1QoqEmePQMLbmLw"
+        )
     
     def connect(self):
         """Establish database connection."""
@@ -330,160 +330,194 @@ def insert_tournament_data(json_file_path: str, config: ScraperConfig) -> bool:
     """
     logger.info(f"Starting database insertion from {json_file_path}")
     
-    # Initialize database inserter
     inserter = SupabaseDatabaseInserter(config)
-    
     if not inserter.enabled:
         logger.warning("Database insertion skipped - not configured")
         return False
     
     try:
-        # Connect to database
         inserter.connect()
-        
-        # Test connection
         if not inserter.test_connection():
             logger.error("Database connection test failed")
             return False
         
-        # Read JSON data
-        logger.info(f"Reading tournament data from {json_file_path}")
-        with open(json_file_path, 'r', encoding='utf-8') as f:
-            tournament_data = json.load(f)
-        
-        # Supabase handles transactions automatically
-        
-        # Handle both single tournament (legacy) and multiple tournaments (new format)
-        tournaments_list = tournament_data.get('tournaments', [])
-        single_tournament = tournament_data.get('tournament', {})
-        
-        # If single tournament format, convert to list
-        if single_tournament and not tournaments_list:
-            tournaments_list = [single_tournament]
-        
-        # Insert all tournaments
-        tournament_id_map = {}  # slug -> id
-        for tournament_info in tournaments_list:
-            tournament_id = inserter.insert_tournament(
-                name=tournament_info.get('name', 'Unknown Tournament'),
-                liquipedia_slug=tournament_info.get('liquipedia_slug', 'unknown'),
-                start_date=tournament_info.get('start_date'),
-                end_date=tournament_info.get('end_date'),
-                prize_pool=tournament_info.get('prize_pool'),
-                location=tournament_info.get('location'),
-                status=tournament_info.get('status', 'completed')
-            )
-            tournament_id_map[tournament_info.get('liquipedia_slug', 'unknown')] = tournament_id
-        
-        # Use first tournament as default for matches without explicit tournament reference
-        default_tournament_id = list(tournament_id_map.values())[0] if tournament_id_map else None
-        
-        # Track inserted entities
-        player_id_map = {}  # name -> id
-        team_id_map = {}    # (player1_name, player2_name) -> id
-        
-        # Step 1: Insert all players
-        players_data = tournament_data.get('players', [])
-        logger.info(f"Processing {len(players_data)} players")
-        
-        for player in players_data:
-            player_name = player.get('name', '')
-            if player_name and player_name not in player_id_map:
-                player_id = inserter.insert_player(
-                    name=player_name,
-                    liquipedia_slug=player.get('liquipedia_slug', player_name.lower().replace(' ', '_')),
-                    nationality=player.get('nationality'),
-                    preferred_race=player.get('preferred_race')
-                )
-                player_id_map[player_name] = player_id
-        
-        # Step 2: Pre-create teams from teams list
-        teams_data = tournament_data.get('teams', [])
-        logger.info(f"Pre-processing {len(teams_data)} teams")
-        
-        for team in teams_data:
-            team_name = team.get('name', '')
-            if team_name:
-                # Use the same logic as dynamic team creation for consistency
-                get_or_create_team_id(team_name, player_id_map, team_id_map, inserter)
-        
-        # Step 3: Insert all matches and games
-        matches_data = tournament_data.get('matches', [])
-        logger.info(f"Processing {len(matches_data)} matches")
-        
-        for match in matches_data:
-            try:
-                # Get team names from the match
-                team1_name = match.get('team1_name', '')
-                team2_name = match.get('team2_name', '')
-                
-                # Find or create team IDs dynamically
-                team1_id = get_or_create_team_id(team1_name, player_id_map, team_id_map, inserter)
-                team2_id = get_or_create_team_id(team2_name, player_id_map, team_id_map, inserter)
-                
-                if team1_id and team2_id:
-                    # Determine which tournament this match belongs to
-                    match_tournament_slug = match.get('tournament_slug', '')
-                    match_tournament_id = tournament_id_map.get(match_tournament_slug, default_tournament_id)
-                    
-                    if not match_tournament_id:
-                        logger.warning(f"No tournament found for match {match.get('match_id', 'unknown')}")
-                        continue
-                    
-                    # Determine winner
-                    winner_id = None
-                    winner_name = match.get('winner_name', '')
-                    if winner_name == team1_name:
-                        winner_id = team1_id
-                    elif winner_name == team2_name:
-                        winner_id = team2_id
-                    
-                    # Insert match
-                    match_db_id = inserter.insert_match(
-                        tournament_id=match_tournament_id,
-                        match_id=match.get('match_id', f"match_{hash(str(match))}"),
-                        team1_id=team1_id,
-                        team2_id=team2_id,
-                        best_of=match.get('best_of'),
-                        winner_id=winner_id,
-                        status=match.get('status', 'completed')
-                    )
-                    
-                    # Insert games for this match
-                    games = match.get('games', [])
-                    for game in games:
-                        game_winner_id = None
-                        game_winner_name = game.get('winner_name', '')
-                        if game_winner_name == team1_name:
-                            game_winner_id = team1_id
-                        elif game_winner_name == team2_name:
-                            game_winner_id = team2_id
-                        
-                        inserter.insert_game(
-                            match_db_id=match_db_id,
-                            game_number=game.get('game_number', 1),
-                            map_name=game.get('map_name', 'Unknown Map'),
-                            winner_id=game_winner_id,
-                            duration_seconds=game.get('duration_seconds')
-                        )
-                else:
-                    logger.warning(f"Could not find team IDs for match: {team1_name} vs {team2_name}")
-                
-            except Exception as e:
-                logger.error(f"Error processing match {match.get('match_id', 'unknown')}: {e}")
-                continue
-        
-        # Supabase commits automatically
-        logger.info("✅ Tournament data successfully inserted into database")
-        
-        return True
+        tournament_data = _load_tournament_data(json_file_path)
+        return _process_tournament_data(inserter, tournament_data)
         
     except Exception as e:
         logger.error(f"Database insertion failed: {e}")
         return False
-        
     finally:
         inserter.disconnect()
+
+
+def _load_tournament_data(json_file_path: str) -> dict:
+    """Load and return tournament data from JSON file."""
+    logger.info(f"Reading tournament data from {json_file_path}")
+    with open(json_file_path, 'r', encoding='utf-8') as f:
+        return json.load(f)
+
+
+def _process_tournament_data(inserter: SupabaseDatabaseInserter, tournament_data: dict) -> bool:
+    """Process and insert all tournament data."""
+    try:
+        # Insert tournaments and get ID mapping
+        tournament_id_map = _insert_tournaments(inserter, tournament_data)
+        default_tournament_id = list(tournament_id_map.values())[0] if tournament_id_map else None
+        
+        # Insert players and teams
+        player_id_map = _insert_players(inserter, tournament_data)
+        team_id_map = _insert_teams(inserter, tournament_data, player_id_map)
+        
+        # Insert matches and games
+        _insert_matches_and_games(inserter, tournament_data, tournament_id_map, 
+                                 default_tournament_id, player_id_map, team_id_map)
+        
+        logger.info("✅ Tournament data successfully inserted into database")
+        return True
+        
+    except Exception as e:
+        logger.error(f"Error processing tournament data: {e}")
+        return False
+
+
+def _insert_tournaments(inserter: SupabaseDatabaseInserter, tournament_data: dict) -> dict:
+    """Insert tournaments and return mapping of slug -> id."""
+    tournaments_list = tournament_data.get('tournaments', [])
+    single_tournament = tournament_data.get('tournament', {})
+    
+    # Convert single tournament format to list if needed
+    if single_tournament and not tournaments_list:
+        tournaments_list = [single_tournament]
+    
+    tournament_id_map = {}
+    for tournament_info in tournaments_list:
+        tournament_id = inserter.insert_tournament(
+            name=tournament_info.get('name', 'Unknown Tournament'),
+            liquipedia_slug=tournament_info.get('liquipedia_slug', 'unknown'),
+            start_date=tournament_info.get('start_date'),
+            end_date=tournament_info.get('end_date'),
+            prize_pool=tournament_info.get('prize_pool'),
+            location=tournament_info.get('location'),
+            status=tournament_info.get('status', 'completed')
+        )
+        tournament_id_map[tournament_info.get('liquipedia_slug', 'unknown')] = tournament_id
+    
+    return tournament_id_map
+
+
+def _insert_players(inserter: SupabaseDatabaseInserter, tournament_data: dict) -> dict:
+    """Insert players and return mapping of name -> id."""
+    players_data = tournament_data.get('players', [])
+    logger.info(f"Processing {len(players_data)} players")
+    
+    player_id_map = {}
+    for player in players_data:
+        player_name = player.get('name', '')
+        if player_name and player_name not in player_id_map:
+            player_id = inserter.insert_player(
+                name=player_name,
+                liquipedia_slug=player.get('liquipedia_slug', player_name.lower().replace(' ', '_')),
+                nationality=player.get('nationality'),
+                preferred_race=player.get('preferred_race')
+            )
+            player_id_map[player_name] = player_id
+    
+    return player_id_map
+
+
+def _insert_teams(inserter: SupabaseDatabaseInserter, tournament_data: dict, player_id_map: dict) -> dict:
+    """Insert teams and return mapping of (player1, player2) -> id."""
+    teams_data = tournament_data.get('teams', [])
+    logger.info(f"Pre-processing {len(teams_data)} teams")
+    
+    team_id_map = {}
+    for team in teams_data:
+        team_name = team.get('name', '')
+        if team_name:
+            get_or_create_team_id(team_name, player_id_map, team_id_map, inserter)
+    
+    return team_id_map
+
+
+def _insert_matches_and_games(inserter: SupabaseDatabaseInserter, tournament_data: dict,
+                             tournament_id_map: dict, default_tournament_id: str,
+                             player_id_map: dict, team_id_map: dict) -> None:
+    """Insert matches and their associated games."""
+    matches_data = tournament_data.get('matches', [])
+    logger.info(f"Processing {len(matches_data)} matches")
+    
+    for match in matches_data:
+        try:
+            _insert_single_match(inserter, match, tournament_id_map, default_tournament_id,
+                               player_id_map, team_id_map)
+        except Exception as e:
+            logger.error(f"Error processing match {match.get('match_id', 'unknown')}: {e}")
+
+
+def _insert_single_match(inserter: SupabaseDatabaseInserter, match: dict,
+                        tournament_id_map: dict, default_tournament_id: str,
+                        player_id_map: dict, team_id_map: dict) -> None:
+    """Insert a single match and its games."""
+    team1_name = match.get('team1_name', '')
+    team2_name = match.get('team2_name', '')
+    
+    team1_id = get_or_create_team_id(team1_name, player_id_map, team_id_map, inserter)
+    team2_id = get_or_create_team_id(team2_name, player_id_map, team_id_map, inserter)
+    
+    if not (team1_id and team2_id):
+        logger.warning(f"Could not find team IDs for match: {team1_name} vs {team2_name}")
+        return
+    
+    # Determine tournament and winner
+    match_tournament_slug = match.get('tournament_slug', '')
+    match_tournament_id = tournament_id_map.get(match_tournament_slug, default_tournament_id)
+    
+    if not match_tournament_id:
+        logger.warning(f"No tournament found for match {match.get('match_id', 'unknown')}")
+        return
+    
+    winner_id = _determine_winner_id(match, team1_name, team2_name, team1_id, team2_id)
+    
+    # Insert match
+    match_db_id = inserter.insert_match(
+        tournament_id=match_tournament_id,
+        match_id=match.get('match_id', f"match_{hash(str(match))}"),
+        team1_id=team1_id,
+        team2_id=team2_id,
+        best_of=match.get('best_of'),
+        winner_id=winner_id,
+        status=match.get('status', 'completed')
+    )
+    
+    # Insert games
+    _insert_match_games(inserter, match, match_db_id, team1_name, team2_name, team1_id, team2_id)
+
+
+def _determine_winner_id(match: dict, team1_name: str, team2_name: str, team1_id: str, team2_id: str) -> Optional[str]:
+    """Determine the winner ID for a match."""
+    winner_name = match.get('winner_name', '')
+    if winner_name == team1_name:
+        return team1_id
+    elif winner_name == team2_name:
+        return team2_id
+    return None
+
+
+def _insert_match_games(inserter: SupabaseDatabaseInserter, match: dict, match_db_id: str,
+                       team1_name: str, team2_name: str, team1_id: str, team2_id: str) -> None:
+    """Insert all games for a match."""
+    games = match.get('games', [])
+    for game in games:
+        game_winner_id = _determine_winner_id(game, team1_name, team2_name, team1_id, team2_id)
+        
+        inserter.insert_game(
+            match_db_id=match_db_id,
+            game_number=game.get('game_number', 1),
+            map_name=game.get('map_name', 'Unknown Map'),
+            winner_id=game_winner_id,
+            duration_seconds=game.get('duration_seconds')
+        )
 
 
 if __name__ == "__main__":
