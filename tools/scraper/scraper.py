@@ -19,6 +19,9 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 
+# Disable verbose httpx logging
+logging.getLogger("httpx").setLevel(logging.WARNING)
+
 logger = logging.getLogger(__name__)
 
 
@@ -31,7 +34,7 @@ class SC2Scraper:
         self.client = LiquipediaClient(self.config)
         self.parser = DataParser()
         
-        logger.info("SC2 Scraper initialized")
+        logger.debug("SC2 Scraper initialized")
 
     def find_subevents(self, tournament_series: str) -> List[str]:
         """
@@ -43,7 +46,7 @@ class SC2Scraper:
         Returns:
             List of subevent slugs relative to the series
         """
-        logger.info(f"🔍 Finding subevents for {tournament_series} using MediaWiki API")
+        logger.debug(f"🔍 Finding subevents for {tournament_series} using MediaWiki API")
         
         # Use MediaWiki API to find all pages with the tournament series prefix
         api_subevents = self._find_subevents_via_api(tournament_series)
@@ -51,12 +54,12 @@ class SC2Scraper:
         # Filter out non-tournament pages
         tournament_subevents = self._filter_tournament_pages(tournament_series, set(api_subevents))
         
-        logger.info(f"✅ Found {len(tournament_subevents)} tournament subevents: {sorted(tournament_subevents)}")
+        logger.debug(f"✅ Found {len(tournament_subevents)} tournament subevents: {sorted(tournament_subevents)}")
         return sorted(tournament_subevents)
     
     def _find_subevents_via_api(self, tournament_series: str) -> List[str]:
         """Find subevents using MediaWiki API to query all pages with the series prefix."""
-        logger.info(f"🌐 Querying MediaWiki API for series: {tournament_series}")
+        logger.debug(f"🌐 Querying MediaWiki API for series: {tournament_series}")
         
         try:
             # Check if we can access the session from our client
@@ -92,7 +95,7 @@ class SC2Scraper:
                     subevent = title.replace(f'{series_with_spaces}/', '', 1)
                     subevents.append(subevent)
             
-            logger.info(f"🎯 API found {len(subevents)} pages: {sorted(subevents)}")
+            logger.debug(f"🎯 API found {len(subevents)} pages: {sorted(subevents)}")
             return subevents
             
         except Exception as e:
@@ -126,13 +129,13 @@ class SC2Scraper:
         
         tournament_subevents = []
         
-        logger.info(f"🔍 Filtering {len(subevents)} potential subevents...")
+        logger.debug(f"🔍 Filtering {len(subevents)} potential subevents...")
         
         for subevent in subevents:
             # Skip if it matches non-tournament patterns
             subevent_lower = subevent.lower()
             if any(pattern in subevent_lower for pattern in non_tournament_patterns):
-                logger.info(f"  📄 Skipping info page: {subevent}")
+                logger.debug(f"  📄 Skipping info page: {subevent}")
                 continue
             
             # Quick content check to verify it's a tournament
@@ -142,9 +145,9 @@ class SC2Scraper:
                 
                 if content and len(content) > 1000 and self._is_likely_tournament_page(content):
                     tournament_subevents.append(subevent)
-                    logger.info(f"  🏆 Confirmed tournament: {subevent}")
+                    logger.debug(f"  🏆 Confirmed tournament: {subevent}")
                 else:
-                    logger.info(f"  📄 Not a tournament: {subevent}")
+                    logger.debug(f"  📄 Not a tournament: {subevent}")
             except Exception as e:
                 logger.warning(f"  ❌ Error checking {subevent}: {e}")
         
@@ -170,7 +173,7 @@ class SC2Scraper:
         Returns:
             Dictionary with tournament data ready for database insertion
         """
-        logger.info(f"Scraping tournament: {tournament_slug}")
+        logger.debug(f"Scraping tournament: {tournament_slug}")
         
         # Get tournament page content
         page_content = self.client.get_page_content(tournament_slug)
@@ -178,12 +181,12 @@ class SC2Scraper:
             logger.error(f"Failed to fetch page content for {tournament_slug}")
             return None
         
-        logger.info(f"Successfully fetched page content: {len(page_content)} characters")
+        logger.debug(f"Successfully fetched page content: {len(page_content)} characters")
         
         # Parse tournament metadata
         tournament = self.parser.parse_tournament_from_wikitext(tournament_slug, page_content)
         
-        logger.info(f"Parsed tournament: {tournament.name}")
+        logger.debug(f"Parsed tournament: {tournament.name}")
         
         # Parse matches from wikitext
         self.parser.parse_matches_from_wikitext(tournament, page_content)
@@ -201,7 +204,7 @@ class SC2Scraper:
         Returns:
             Combined tournament data ready for database insertion
         """
-        logger.info(f"Scraping {len(tournament_slugs)} tournaments")
+        logger.debug(f"Scraping {len(tournament_slugs)} tournaments")
         
         all_tournaments = []
         all_players = {}
@@ -212,7 +215,7 @@ class SC2Scraper:
             # Clear parser caches to avoid conflicts between tournaments
             self.parser.players_cache.clear()
             self.parser.teams_cache.clear()
-            logger.info(f"🧹 Cleared parser caches for {slug}")
+            logger.debug(f"🧹 Cleared parser caches for {slug}")
             
             tournament_data = self.scrape_tournament(slug)
             if tournament_data:
@@ -347,25 +350,19 @@ def main():
         tournament_series = "UThermal_2v2_Circuit"
         
         # Step 1: Find subevents automatically
-        print(f"🔍 Finding subevents for {tournament_series}...")
         subevents = scraper.find_subevents(tournament_series)
         
         # Step 2: Add all discovered subevents (including Main Event from API)
         target_tournaments = []
         
         # Add all discovered subevents - no hardcoding, use what API finds
-        print(f"🔍 Adding all discovered subevents (including Main Event)...")
         for subevent in subevents:
             subevent_slug = f"{tournament_series}/{subevent}"
             target_tournaments.append(subevent_slug)
-            print(f"✅ Added: {subevent_slug}")
         
-        print(f"\n🎯 Scraping {len(target_tournaments)} tournaments:")
-        for slug in target_tournaments:
-            print(f"   - {slug}")
+        print(f"🎯 Scraping {len(target_tournaments)} tournaments...")
         
         # Step 3: Scrape all tournaments
-        print(f"\n📊 Scraping tournament data...")
         combined_data = scraper.scrape_multiple_tournaments(target_tournaments)
         
         if not combined_data:
@@ -378,14 +375,6 @@ def main():
         print(f"   Players: {len(combined_data['players'])}")
         print(f"   Teams: {len(combined_data['teams'])}")
         print(f"   Matches: {len(combined_data['matches'])}")
-        
-        # Show tournament details
-        for i, tournament in enumerate(combined_data['tournaments']):
-            print(f"\n   Tournament {i+1}: {tournament['name']}")
-            print(f"     Slug: {tournament['liquipedia_slug']}")
-            print(f"     Status: {tournament['status']}")
-            if tournament['start_date']:
-                print(f"     Date: {tournament['start_date']}")
         
         # Show match distribution
         match_by_tournament = {}

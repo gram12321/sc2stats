@@ -26,7 +26,7 @@ class DataParser:
     
     def parse_tournament_from_wikitext(self, tournament_slug: str, wikitext: str) -> Tournament:
         """Parse tournament data from MediaWiki wikitext."""
-        logger.info(f"Parsing tournament from wikitext: {tournament_slug}")
+        logger.debug(f"Parsing tournament from wikitext: {tournament_slug}")
         
         # Parse infobox for tournament metadata
         infobox = self._parse_infobox(wikitext)
@@ -53,20 +53,20 @@ class DataParser:
             maps=self._parse_maps(wikitext)
         )
         
-        logger.info(f"Parsed tournament: {tournament.name}")
+        logger.debug(f"Parsed tournament: {tournament.name}")
         return tournament
     
 
     
     def parse_matches_from_wikitext(self, tournament: Tournament, wikitext: str) -> None:
         """Parse matches from wikitext content using enhanced parsing."""
-        logger.info("🔍 Parsing matches from wikitext...")
+        logger.debug("🔍 Parsing matches from wikitext...")
         
         # Find all match blocks first
         match_block_pattern = r'(\w+)=\{\{Match'
         match_ids = re.findall(match_block_pattern, wikitext)
         
-        logger.info(f"Found {len(match_ids)} match blocks")
+        logger.debug(f"Found {len(match_ids)} match blocks")
         
         # Track processed matches to handle duplicates between groups
         processed_matches = {}  # unique_key -> match_object
@@ -100,7 +100,9 @@ class DataParser:
                 # Also handle duplicate match IDs within the same tournament (Group A vs Group B)
                 final_match_id = f"{tournament.liquipedia_slug.replace('/', '_')}_{match_id}"
                 
-                if match_id in [m.match_id for m in tournament.matches]:
+                # Check if this match_id already exists in the tournament (for Group A/B handling)
+                existing_match_ids = [m.match_id.split('_')[-1] for m in tournament.matches]  # Extract original match_id
+                if match_id in existing_match_ids:
                     # This is a duplicate ID within the same tournament - likely Group A vs Group B
                     if match_id.startswith('M') and match_id[1:].isdigit():
                         # Determine if this is Group A or Group B based on position in the list
@@ -132,7 +134,7 @@ class DataParser:
         tournament.players.update(self.players_cache.values())
         tournament.teams.update(self.teams_cache.values())
         
-        logger.info(f"📊 Parsed {len(tournament.matches)} matches, {len(tournament.players)} players, {len(tournament.teams)} teams")
+        logger.debug(f"📊 Parsed {len(tournament.matches)} matches, {len(tournament.players)} players, {len(tournament.teams)} teams")
     
     def _parse_infobox(self, wikitext: str) -> Dict[str, str]:
         """Parse the tournament infobox from wikitext."""

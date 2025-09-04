@@ -10,6 +10,9 @@ import os
 from typing import Dict, List, Optional, Any
 from datetime import datetime
 
+# Disable verbose httpx logging
+logging.getLogger("httpx").setLevel(logging.WARNING)
+
 try:
     from supabase import create_client  # pyright: ignore[reportMissingImports]
     SUPABASE_AVAILABLE = True
@@ -55,7 +58,7 @@ def get_or_create_team_id(team_name: str, player_id_map: Dict[str, str],
                 name=player1_name,
                 liquipedia_slug=player1_name.lower().replace(' ', '_')
             )
-            logger.info(f"🆕 Created missing player: {player1_name}")
+            logger.debug(f"🆕 Created missing player: {player1_name}")
         except Exception as e:
             logger.error(f"Failed to create player {player1_name}: {e}")
             return None
@@ -66,7 +69,7 @@ def get_or_create_team_id(team_name: str, player_id_map: Dict[str, str],
                 name=player2_name,
                 liquipedia_slug=player2_name.lower().replace(' ', '_')
             )
-            logger.info(f"🆕 Created missing player: {player2_name}")
+            logger.debug(f"🆕 Created missing player: {player2_name}")
         except Exception as e:
             logger.error(f"Failed to create player {player2_name}: {e}")
             return None
@@ -87,7 +90,7 @@ def get_or_create_team_id(team_name: str, player_id_map: Dict[str, str],
             player2_id=player_id_map[normalized_players[1]]
         )
         team_id_map[team_key] = team_id
-        logger.info(f"🆕 Created new team: {normalized_players[0]} + {normalized_players[1]} with ID: {team_id}")
+        logger.debug(f"🆕 Created new team: {normalized_players[0]} + {normalized_players[1]} with ID: {team_id}")
         return team_id
     except Exception as e:
         logger.error(f"Failed to create team {team_name}: {e}")
@@ -203,7 +206,7 @@ class SupabaseDatabaseInserter:
         try:
             result = self._execute_query("players", "upsert", data)
             player_id = str(result["id"])
-            logger.info(f"Player '{name}' saved with ID: {player_id}")
+            logger.debug(f"Player '{name}' saved with ID: {player_id}")
             return player_id
         except Exception as e:
             raise DatabaseError(f"Failed to insert/retrieve player: {liquipedia_slug} - {e}")
@@ -222,7 +225,7 @@ class SupabaseDatabaseInserter:
         try:
             result = self._execute_query("teams", "upsert", data)
             team_id = str(result["id"])
-            logger.info(f"Team '{name}' saved with ID: {team_id}")
+            logger.debug(f"Team '{name}' saved with ID: {team_id}")
             return team_id
         except Exception as e:
             raise DatabaseError(f"Failed to insert/retrieve team: {name} - {e}")
@@ -245,7 +248,7 @@ class SupabaseDatabaseInserter:
         try:
             result = self._execute_query("tournaments", "upsert", data)
             tournament_id = str(result["id"])
-            logger.info(f"Tournament '{name}' saved with ID: {tournament_id}")
+            logger.debug(f"Tournament '{name}' saved with ID: {tournament_id}")
             return tournament_id
         except Exception as e:
             raise DatabaseError(f"Failed to insert/retrieve tournament: {liquipedia_slug} - {e}")
@@ -271,7 +274,7 @@ class SupabaseDatabaseInserter:
         try:
             result = self._execute_query("matches", "upsert", data)
             match_db_id = str(result["id"])
-            logger.info(f"Match '{match_id}' saved with ID: {match_db_id}")
+            logger.debug(f"Match '{match_id}' saved with ID: {match_db_id}")
             return match_db_id
         except Exception as e:
             raise DatabaseError(f"Failed to insert/retrieve match: {match_id} - {e}")
@@ -295,7 +298,7 @@ class SupabaseDatabaseInserter:
         try:
             result = self._execute_query("games", "upsert", data)
             game_id = str(result["id"])
-            logger.info(f"Game {game_number} on '{map_name}' saved with ID: {game_id}")
+            logger.debug(f"Game {game_number} on '{map_name}' saved with ID: {game_id}")
             return game_id
         except Exception as e:
             raise DatabaseError(f"Failed to insert game: {map_name} - {e}")

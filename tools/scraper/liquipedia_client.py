@@ -60,7 +60,7 @@ class LiquipediaClient:
             self.memory_cache = None
             self.file_cache_dir = None
             
-        logger.info(f"Initialized Liquipedia client with cache: {config.enable_cache}")
+        logger.debug(f"Initialized Liquipedia client with cache: {config.enable_cache}")
     
     def _get_cache_key(self, method: str, params: Dict[str, Any]) -> str:
         """Generate cache key for request parameters."""
@@ -69,8 +69,10 @@ class LiquipediaClient:
     
     def _get_file_cache_path(self, cache_key: str) -> Path:
         """Get file path for cache key."""
-        # Create safe filename from cache key
-        safe_filename = cache_key.replace('/', '_').replace(':', '_')[:100] + '.json'
+        # Use hash-based filename to avoid invalid characters
+        import hashlib
+        hash_key = hashlib.md5(cache_key.encode('utf-8')).hexdigest()
+        safe_filename = f"cache_{hash_key}.json"
         return self.file_cache_dir / safe_filename
     
     def _get_cached_data(self, cache_key: str) -> Optional[Dict[str, Any]]:
