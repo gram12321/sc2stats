@@ -1,14 +1,64 @@
 # Version Log - SC2 2v2 Stats Scraper
 
-## AI INFO FOR VERSIONLOG UPDATE
-Version numbers should follow the Git commit names. 
-IE Gitcommit 9db1324f69a9358fab5fd59128806e4299cf5e1f : name is 0.0023a This is the version number. Followed by commit titel [Fix missing M3 games ...]
+## Version 0.00032c - 2025-09-04 (2efff22)
 
-Use yor git MCP tools to check git commit. 
-- Create a entry for each in the version log. 
-- 5-10 lines depending on extend of updates. 
-- Focus on changed files, added/removed functions/functionality. 
-- Do not focus on bug fixed, and stuff that was not used in the end anyway. 
+### 🧹 **Major Code Cleanup and Refactoring**
+
+#### ✅ **Code Quality Improvements**
+- **Eliminated duplicate code** across all three core modules (data_parser.py, database_inserter.py, scraper.py)
+- **Consolidated team normalization** logic into single helper functions
+- **Removed unused methods** and redundant code patterns
+- **Improved code readability** and maintainability
+
+#### 🔧 **Technical Refactoring**
+- **data_parser.py**: Extracted helper methods `_create_teams_from_opponents()` and `_generate_final_match_id()`
+- **database_inserter.py**: Broke down massive `insert_tournament_data()` function into focused helper functions
+- **scraper.py**: Split long `main()` function into modular helper functions
+- **Removed debug file**: Eliminated `debug_subevents.py` (42 lines removed)
+
+#### 📊 **Performance Impact**
+- **Cleaner architecture** with better separation of concerns
+- **Improved maintainability** through code consolidation
+- **Enhanced readability** for future development
+- **Maintained 100% functionality** while reducing code complexity
+
+---
+
+## Version 0.00032b - 2025-09-04 (5d9c7cf)
+
+### 🔧 **Terminal Logging Optimization and Bug Fixes**
+
+#### ✅ **Improvements**
+- **Reduced verbose terminal output** by changing INFO logs to DEBUG level
+- **Suppressed httpx HTTP request logs** for cleaner output
+- **Fixed duplicate match detection** logic in data_parser.py
+- **Improved cache filename handling** with MD5 hashing for Windows compatibility
+
+#### 🔧 **Technical Changes**
+- **data_parser.py**: Enhanced duplicate match detection with proper Group A/B handling
+- **database_inserter.py**: Reduced individual item creation logs to DEBUG level
+- **liquipedia_client.py**: Fixed cache filename generation with hashlib.md5
+- **scraper.py**: Streamlined logging output for better user experience
+
+---
+
+## Version 0.00032a - 2025-09-04 (c6802d2)
+
+### 🎯 **Critical Bug Fixes for Multi-Tournament Support**
+
+#### ✅ **Fixed Issues**
+- **Duplicate match ID resolution** for multiple tournaments with same match names
+- **Double Main Event entry** prevention in tournament processing
+- **Summary score fallback** handling when detailed game data unavailable
+- **Group A/B match handling** for Main Event tournament structure
+
+#### 🔧 **Technical Changes**
+- **data_parser.py**: Enhanced match ID generation with tournament prefixes
+- **scraper.py**: Improved tournament data merging logic
+- **Fixed match counting** discrepancies between tournaments
+- **Enhanced error handling** for edge cases in match parsing
+
+---
 
 ## Version 0.00031a - 2025-09-04 (3428b58)
 

@@ -83,18 +83,25 @@ Liquipedia API → Subevent Detection → Enhanced Scraper → JSON Export → S
 
 ## Recent Improvements
 
-### 🧹 **Code Cleanup (v0.00031a)**
-- **Eliminated duplicate code** across all modules
-- **Consolidated team normalization** logic
-- **Removed unused LPDB parsing methods**
+### 🧹 **Major Code Cleanup (v0.00032c)**
+- **Eliminated duplicate code** across all three core modules
+- **Consolidated team normalization** logic into single helper functions
+- **Removed unused methods** and redundant code patterns
 - **Improved code readability** and maintainability
 - **Maintained 100% functionality** with cleaner architecture
 
+### 🔧 **Terminal Logging Optimization (v0.00032b)**
+- **Reduced verbose terminal output** for better user experience
+- **Suppressed HTTP request logs** for cleaner output
+- **Fixed duplicate match detection** logic
+- **Improved cache filename handling** with Windows compatibility
+
 ### 🎯 **Key Features**
-- **59 matches successfully scraped** from UThermal 2v2 Circuit (Main Event + January)
-- **Automatic subevent detection** for Main Event + January
+- **199 matches successfully scraped** from all 12 UThermal 2v2 Circuit tournaments
+- **Automatic subevent detection** for complete tournament series coverage
 - **Dynamic team creation** with player order normalization
 - **Unique match ID generation** across tournaments
+- **Clean terminal output** with summary-focused logging
 
 ## Configuration Options
 
@@ -156,10 +163,11 @@ tools/scraper/
 
 ## Current Status
 
-- **✅ Scraper**: Fully implemented with automatic subevent detection
-- **✅ Database**: Fully integrated with Supabase Python client
-- **✅ Data Parsing**: Comprehensive wikitext parsing for all match types
-- **✅ Team Management**: Dynamic team creation with normalization
+- **✅ Scraper**: Fully implemented with automatic subevent detection and clean code architecture
+- **✅ Database**: Fully integrated with Supabase Python client and optimized insertion
+- **✅ Data Parsing**: Comprehensive wikitext parsing for all match types with enhanced error handling
+- **✅ Team Management**: Dynamic team creation with normalization and duplicate prevention
+- **✅ Code Quality**: Clean, maintainable codebase with proper separation of concerns
 - **🚧 Frontend**: Not yet implemented
 - **🚧 Analytics**: Basic data available, advanced features planned
 
