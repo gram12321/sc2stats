@@ -15,7 +15,7 @@ from data_parser import DataParser
 
 # Set up logging
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.INFO,  # Back to INFO level for production
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 
@@ -59,7 +59,7 @@ class SC2Scraper:
     
     def _find_subevents_via_api(self, tournament_series: str) -> List[str]:
         """Find subevents using MediaWiki API to query all pages with the series prefix."""
-        logger.debug(f"🌐 Querying MediaWiki API for series: {tournament_series}")
+        logger.debug(f"Querying MediaWiki API for series: {tournament_series}")
         
         try:
             # Check if we can access the session from our client
@@ -95,7 +95,7 @@ class SC2Scraper:
                     subevent = title.replace(f'{series_with_spaces}/', '', 1)
                     subevents.append(subevent)
             
-            logger.debug(f"🎯 API found {len(subevents)} pages: {sorted(subevents)}")
+            logger.debug(f"API found {len(subevents)} pages")
             return subevents
             
         except Exception as e:
@@ -135,7 +135,7 @@ class SC2Scraper:
             # Skip if it matches non-tournament patterns
             subevent_lower = subevent.lower()
             if any(pattern in subevent_lower for pattern in non_tournament_patterns):
-                logger.debug(f"  📄 Skipping info page: {subevent}")
+                logger.debug(f"Skipping info page: {subevent}")
                 continue
             
             # Quick content check to verify it's a tournament
@@ -145,11 +145,9 @@ class SC2Scraper:
                 
                 if content and len(content) > 1000 and self._is_likely_tournament_page(content):
                     tournament_subevents.append(subevent)
-                    logger.debug(f"  🏆 Confirmed tournament: {subevent}")
-                else:
-                    logger.debug(f"  📄 Not a tournament: {subevent}")
+                    logger.debug(f"Confirmed tournament: {subevent}")
             except Exception as e:
-                logger.warning(f"  ERROR: Error checking {subevent}: {e}")
+                logger.warning(f"Error checking {subevent}: {e}")
         
         return tournament_subevents
     
@@ -251,7 +249,6 @@ class SC2Scraper:
             # Clear parser caches to avoid conflicts between tournaments
             self.parser.players_cache.clear()
             self.parser.teams_cache.clear()
-            logger.debug(f"🧹 Cleared parser caches for {slug}")
             
             tournament_data = self.scrape_tournament(slug)
             if tournament_data:
@@ -346,8 +343,7 @@ class SC2Scraper:
 
 def main():
     """Scrape UThermal tournament with automatic subevent detection - ALL subevents."""
-    print("Enhanced SC2 Tournament Scraper with Subevent Detection")
-    print("=" * 60)
+    logger.info("Enhanced SC2 Tournament Scraper with Subevent Detection")
     
     scraper = SC2Scraper()
     tournament_series = "UThermal_2v2_Circuit"
@@ -356,7 +352,7 @@ def main():
         # Scrape all tournaments
         combined_data = _scrape_all_tournaments(scraper, tournament_series)
         if not combined_data:
-            print("FAILED: Failed to scrape tournament data")
+            logger.error("Failed to scrape tournament data")
             return
         
         # Show summary and save data
@@ -367,7 +363,7 @@ def main():
         _attempt_database_insertion(json_file_path)
         
     except Exception as e:
-        print(f"FAILED: Scraping failed: {e}")
+        logger.error(f"Scraping failed: {e}")
         import traceback
         traceback.print_exc()
 
@@ -375,20 +371,18 @@ def main():
 def _scrape_all_tournaments(scraper: SC2Scraper, tournament_series: str) -> dict:
     """Find and scrape all tournaments in the series."""
     subevents = scraper.find_subevents(tournament_series)
-    
     target_tournaments = [f"{tournament_series}/{subevent}" for subevent in subevents]
-    print(f"🎯 Scraping {len(target_tournaments)} tournaments...")
-    
+    logger.info(f"Scraping {len(target_tournaments)} tournaments...")
     return scraper.scrape_multiple_tournaments(target_tournaments)
 
 
 def _show_scraping_summary(combined_data: dict) -> None:
     """Display scraping summary and match distribution."""
-    print(f"\nScraping Summary:")
-    print(f"   Tournaments: {len(combined_data['tournaments'])}")
-    print(f"   Players: {len(combined_data['players'])}")
-    print(f"   Teams: {len(combined_data['teams'])}")
-    print(f"   Matches: {len(combined_data['matches'])}")
+    logger.info(f"Scraping Summary:")
+    logger.info(f"   Tournaments: {len(combined_data['tournaments'])}")
+    logger.info(f"   Players: {len(combined_data['players'])}")
+    logger.info(f"   Teams: {len(combined_data['teams'])}")
+    logger.info(f"   Matches: {len(combined_data['matches'])}")
     
     # Show match distribution
     match_by_tournament = {}
@@ -396,40 +390,43 @@ def _show_scraping_summary(combined_data: dict) -> None:
         slug = match.get('tournament_slug', 'unknown')
         match_by_tournament[slug] = match_by_tournament.get(slug, 0) + 1
     
-    print(f"\n   Match Distribution:")
+    logger.info(f"Match Distribution:")
     for slug, count in match_by_tournament.items():
-        print(f"     {slug}: {count} matches")
+        logger.info(f"     {slug}: {count} matches")
 
 
 def _save_tournament_data(combined_data: dict) -> str:
     """Save tournament data to JSON file."""
-    json_file_path = "../../output/tournament_data.json"
+    import os
+    # Get the project root directory (two levels up from scraper.py)
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    project_root = os.path.dirname(os.path.dirname(current_dir))
+    json_file_path = os.path.join(project_root, "output", "tournament_data.json")
+    
     with open(json_file_path, "w", encoding="utf-8") as f:
         json.dump(combined_data, f, indent=2, ensure_ascii=False, default=str)
     
-    print(f"\n💾 Data saved to {json_file_path}")
+    logger.info(f"Data saved to {json_file_path}")
     return json_file_path
 
 
 def _attempt_database_insertion(json_file_path: str) -> None:
     """Attempt to insert data into database."""
-    print(f"\n🗄️  Attempting database insertion...")
+    logger.info("Attempting database insertion...")
     try:
         config = load_scraper_config()
         success = insert_tournament_data(json_file_path, config)
         
         if success:
-            print(f"SUCCESS: Database insertion completed successfully!")
-            print(f"   All tournaments and their data have been inserted")
+            logger.info("Database insertion completed successfully!")
         else:
-            print(f"⚠️  Database insertion skipped or failed.")
-            print(f"   Data is ready in {json_file_path} for MCP-based insertion")
+            logger.warning("Database insertion skipped or failed.")
+            logger.info(f"Data is ready in {json_file_path} for MCP-based insertion")
             
     except Exception as e:
-        print(f"FAILED: Direct database connection failed: {str(e)[:100]}...")
-        print(f"   This is expected if Supabase doesn't allow direct PostgreSQL connections")
-        print(f"   Data is ready in {json_file_path} for MCP-based insertion")
-        logging.debug(f"Database insertion failed: {e}", exc_info=True)
+        logger.warning(f"Direct database connection failed: {str(e)[:100]}...")
+        logger.info(f"Data is ready in {json_file_path} for MCP-based insertion")
+        logger.debug(f"Database insertion failed: {e}", exc_info=True)
 
 if __name__ == "__main__":
     main()

@@ -62,19 +62,25 @@ class DataParser:
         """Parse matches from wikitext content using enhanced parsing."""
         logger.debug("Parsing matches from wikitext...")
         
-        # Find all match blocks first
+        # Find all match blocks with their positions to handle duplicates
         match_block_pattern = r'(\w+)=\{\{Match'
-        match_ids = re.findall(match_block_pattern, wikitext)
+        match_positions = []
         
-        logger.debug(f"Found {len(match_ids)} match blocks")
+        # Find all matches with their positions in the text
+        for match in re.finditer(match_block_pattern, wikitext):
+            match_id = match.group(1)
+            position = match.start()
+            match_positions.append((match_id, position))
+        
+        logger.debug(f"Found {len(match_positions)} match blocks")
         
         # Track processed matches to handle duplicates between groups
         processed_matches = {}  # unique_key -> match_object
         existing_match_ids = set()  # For efficient lookups
         
-        for i, match_id in enumerate(match_ids):
+        for i, (match_id, position) in enumerate(match_positions):
             try:
-                match_content = self._extract_match_content(wikitext, match_id)
+                match_content = self._extract_match_content_at_position(wikitext, match_id, position)
                 if not match_content:
                     continue
                 
@@ -87,9 +93,9 @@ class DataParser:
                 team1, team2 = self._create_teams_from_opponents(opponents)
                 
                 # Handle duplicate match IDs and create final match ID
-                final_match_id = self._generate_final_match_id(tournament, match_id, existing_match_ids, i)
+                final_match_id = self._generate_final_match_id(tournament, match_id, existing_match_ids, i, team1, team2)
                 
-                # Create unique key to detect true duplicates
+                # Create unique key to detect true duplicates (same teams, same match)
                 unique_key = f"{team1.name}_vs_{team2.name}_{final_match_id}"
                 if unique_key in processed_matches:
                     logger.warning(f"⚠️ True duplicate match detected: {final_match_id}")
@@ -100,6 +106,8 @@ class DataParser:
                 if match:
                     processed_matches[unique_key] = match
                     tournament.matches.append(match)
+                    # Add the base match_id to existing_match_ids for Group A/B detection
+                    # This ensures second occurrence of M1, M2, etc. will be detected as Group B
                     existing_match_ids.add(match_id)
                     logger.debug(f"Parsed match {final_match_id}: {team1.name} vs {team2.name}")
                 
@@ -219,15 +227,17 @@ class DataParser:
             return MatchStatus.SCHEDULED
     
     # Enhanced wikitext parsing helper methods
-    def _extract_match_content(self, wikitext: str, match_id: str) -> str:
-        """Extract the content of a specific match block."""
-        # Try with pipe prefix first (common in tournament brackets)
-        start_marker = f"|{match_id}={{{{Match"
-        start_pos = wikitext.find(start_marker)
+    def _extract_match_content_at_position(self, wikitext: str, match_id: str, position: int) -> str:
+        """Extract the content of a specific match block at a given position."""
+        # Start from the specific position where this match_id was found
+        start_marker = f"{match_id}={{{{Match"
+        start_pos = wikitext.find(start_marker, position)
+        
+        # Also try with pipe prefix
         if start_pos == -1:
-            # Fallback to without pipe
-            start_marker = f"{match_id}={{{{Match"
-            start_pos = wikitext.find(start_marker)
+            start_marker = f"|{match_id}={{{{Match"
+            start_pos = wikitext.find(start_marker, position)
+        
         if start_pos == -1:
             return None
         
@@ -244,7 +254,7 @@ class DataParser:
                     break
         
         return wikitext[start_pos:end_pos]
-    
+
     def _extract_opponents(self, match_content: str) -> tuple:
         """Extract opponent information from match content."""
         # Extract each opponent section separately to handle complex parameter structures
@@ -289,18 +299,25 @@ class DataParser:
         
         return team1, team2
     
-    def _generate_final_match_id(self, tournament: Tournament, match_id: str, existing_match_ids: set, position: int) -> str:
+    def _generate_final_match_id(self, tournament: Tournament, match_id: str, existing_match_ids: set, position: int, team1=None, team2=None) -> str:
         """Generate final match ID handling duplicates and prefixes."""
-        base_id = f"{tournament.liquipedia_slug.replace('/', '_')}_{match_id}"
+        base_slug = tournament.liquipedia_slug.replace('/', '_')
         
-        # Handle Group A/B duplicates for Main Event
-        if match_id in existing_match_ids and match_id.startswith('M') and match_id[1:].isdigit():
-            group_suffix = 'A' if position < 18 else 'B'
-            final_id = f"{tournament.liquipedia_slug.replace('/', '_')}_{group_suffix}_{match_id}"
-            logger.debug(f"🔄 Renamed duplicate {match_id} to {final_id} (position {position})")
-            return final_id
+        # Handle Group A/B matches (M1, M2, etc.)
+        if match_id.startswith('M') and match_id[1:].isdigit():
+            if match_id in existing_match_ids:
+                # Second occurrence = Group B
+                final_id = f"{base_slug}_B_{match_id}"
+                logger.debug(f"Group B match: {match_id} -> {final_id}")
+                return final_id
+            else:
+                # First occurrence = Group A
+                final_id = f"{base_slug}_A_{match_id}"
+                logger.debug(f"Group A match: {match_id} -> {final_id}")
+                return final_id
         
-        return base_id
+        # For bracket matches (R1M1, R2M1, etc.), use standard format
+        return f"{base_slug}_{match_id}"
 
     def _get_or_create_team(self, name: str, player1: Player, player2: Player) -> Team:
         """Get or create a team by players."""
@@ -401,16 +418,12 @@ class DataParser:
         """Extract games from match content."""
         games = []
         
-        # Extract games from match content
-        logger.debug(f"Extracting games from match content")
-        
         # First try to find detailed map entries with individual game results
         map_pattern = r'map(\d+)=\{\{Map\|[^}]*?map=([^|}]+)[^}]*?\|winner=([^|}]+)[^}]*\}\}'
         map_matches = re.findall(map_pattern, match_content)
         
         # If we found detailed maps, process them
         if map_matches:
-            logger.debug(f"Found {len(map_matches)} detailed map matches")
             
             for game_num_str, map_name, winner_str in map_matches:
                 try:
@@ -448,7 +461,6 @@ class DataParser:
         
         else:
             # Fallback: If no detailed maps found, try to create games based on summary scores
-            logger.debug("No detailed maps found, attempting to extract from summary scores")
             
             # Extract scores from opponent entries
             score1_pattern = r'opponent1=\{\{2Opponent\|[^}]*?\|score=(\d+)\}\}'
@@ -462,8 +474,6 @@ class DataParser:
                     score1 = int(score1_match.group(1))
                     score2 = int(score2_match.group(1))
                     total_games = score1 + score2
-                    
-                    logger.debug(f"Found summary scores: {score1}-{score2} (total {total_games} games)")
                     
                     # Create games based on the scores - but don't assume order
                     # We'll create placeholder games with the correct final score
@@ -479,15 +489,10 @@ class DataParser:
                                 duration_seconds=None
                             )
                             games.append(game)
-                        
-                        # Set the match winner based on the final score
-                        # This will be used by the match creation logic
-                        logger.debug(f"Created {total_games} placeholder games for score {score1}-{score2}")
                             
                 except (ValueError, IndexError):
-                    logger.debug("Could not parse summary scores")
+                    pass
             else:
-                logger.warning(f"No detailed maps or summary scores found for match. Skipping game creation.")
-                logger.debug(f"Match content (first 200 chars): {match_content[:200]}")
+                logger.warning(f"No detailed maps or summary scores found for match")
         
         return games

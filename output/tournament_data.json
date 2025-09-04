@@ -111,164 +111,8 @@
   ],
   "players": [
     {
-      "liquipedia_slug": "gerald",
-      "name": "Gerald",
-      "nationality": null,
-      "preferred_race": null
-    },
-    {
-      "liquipedia_slug": "elazer",
-      "name": "Elazer",
-      "nationality": null,
-      "preferred_race": null
-    },
-    {
-      "liquipedia_slug": "has",
-      "name": "Has",
-      "nationality": null,
-      "preferred_race": null
-    },
-    {
-      "liquipedia_slug": "jumy",
-      "name": "Jumy",
-      "nationality": null,
-      "preferred_race": null
-    },
-    {
-      "liquipedia_slug": "special",
-      "name": "SpeCial",
-      "nationality": null,
-      "preferred_race": null
-    },
-    {
-      "liquipedia_slug": "statis",
-      "name": "Statis",
-      "nationality": null,
-      "preferred_race": null
-    },
-    {
-      "liquipedia_slug": "heromarine",
-      "name": "HeRoMaRinE",
-      "nationality": null,
-      "preferred_race": null
-    },
-    {
-      "liquipedia_slug": "uthermal",
-      "name": "uThermal",
-      "nationality": null,
-      "preferred_race": null
-    },
-    {
-      "liquipedia_slug": "milkicow",
-      "name": "MilkiCow",
-      "nationality": null,
-      "preferred_race": null
-    },
-    {
-      "liquipedia_slug": "clem",
-      "name": "Clem",
-      "nationality": null,
-      "preferred_race": null
-    },
-    {
-      "liquipedia_slug": "trigger",
-      "name": "trigger",
-      "nationality": null,
-      "preferred_race": null
-    },
-    {
-      "liquipedia_slug": "ggmachine",
-      "name": "GgMaChine",
-      "nationality": null,
-      "preferred_race": null
-    },
-    {
-      "liquipedia_slug": "moja",
-      "name": "Moja",
-      "nationality": null,
-      "preferred_race": null
-    },
-    {
       "liquipedia_slug": "cham",
       "name": "Cham",
-      "nationality": null,
-      "preferred_race": null
-    },
-    {
-      "liquipedia_slug": "maxpax",
-      "name": "MaxPax",
-      "nationality": null,
-      "preferred_race": null
-    },
-    {
-      "liquipedia_slug": "shameless",
-      "name": "Shameless",
-      "nationality": null,
-      "preferred_race": null
-    },
-    {
-      "liquipedia_slug": "goblin",
-      "name": "goblin",
-      "nationality": null,
-      "preferred_race": null
-    },
-    {
-      "liquipedia_slug": "wayne",
-      "name": "Wayne",
-      "nationality": null,
-      "preferred_race": null
-    },
-    {
-      "liquipedia_slug": "spirit",
-      "name": "Spirit",
-      "nationality": null,
-      "preferred_race": null
-    },
-    {
-      "liquipedia_slug": "youngyakov",
-      "name": "YoungYakov",
-      "nationality": null,
-      "preferred_race": null
-    },
-    {
-      "liquipedia_slug": "viper",
-      "name": "Viper",
-      "nationality": null,
-      "preferred_race": null
-    },
-    {
-      "liquipedia_slug": "larry",
-      "name": "Larry",
-      "nationality": null,
-      "preferred_race": null
-    },
-    {
-      "liquipedia_slug": "skillous",
-      "name": "SKillous",
-      "nationality": null,
-      "preferred_race": null
-    },
-    {
-      "liquipedia_slug": "rex",
-      "name": "Rex",
-      "nationality": null,
-      "preferred_race": null
-    },
-    {
-      "liquipedia_slug": "ryung",
-      "name": "Ryung",
-      "nationality": null,
-      "preferred_race": null
-    },
-    {
-      "liquipedia_slug": "deer",
-      "name": "deer",
-      "nationality": null,
-      "preferred_race": null
-    },
-    {
-      "liquipedia_slug": "brat_ok",
-      "name": "Brat_OK",
       "nationality": null,
       "preferred_race": null
     },
@@ -279,20 +123,26 @@
       "preferred_race": null
     },
     {
-      "liquipedia_slug": "captainsam",
-      "name": "CaptainSam",
+      "liquipedia_slug": "goblin",
+      "name": "goblin",
       "nationality": null,
       "preferred_race": null
     },
     {
-      "liquipedia_slug": "mindelvk",
-      "name": "MindelVK",
+      "liquipedia_slug": "elazer",
+      "name": "Elazer",
       "nationality": null,
       "preferred_race": null
     },
     {
-      "liquipedia_slug": "gumiho",
-      "name": "GuMiho",
+      "liquipedia_slug": "deer",
+      "name": "deer",
+      "nationality": null,
+      "preferred_race": null
+    },
+    {
+      "liquipedia_slug": "jumy",
+      "name": "Jumy",
       "nationality": null,
       "preferred_race": null
     },
@@ -303,14 +153,152 @@
       "preferred_race": null
     },
     {
-      "liquipedia_slug": "serral",
-      "name": "Serral",
+      "liquipedia_slug": "wayne",
+      "name": "Wayne",
       "nationality": null,
       "preferred_race": null
     },
     {
-      "liquipedia_slug": "art",
-      "name": "ART",
+      "liquipedia_slug": "gerald",
+      "name": "Gerald",
+      "nationality": null,
+      "preferred_race": null
+    },
+    {
+      "liquipedia_slug": "captainsam",
+      "name": "CaptainSam",
+      "nationality": null,
+      "preferred_race": null
+    },
+    {
+      "liquipedia_slug": "special",
+      "name": "SpeCial",
+      "nationality": null,
+      "preferred_race": null
+    },
+    {
+      "liquipedia_slug": "heromarine",
+      "name": "HeRoMaRinE",
+      "nationality": null,
+      "preferred_race": null
+    },
+    {
+      "liquipedia_slug": "maxpax",
+      "name": "MaxPax",
+      "nationality": null,
+      "preferred_race": null
+    },
+    {
+      "liquipedia_slug": "larry",
+      "name": "Larry",
+      "nationality": null,
+      "preferred_race": null
+    },
+    {
+      "liquipedia_slug": "trigger",
+      "name": "trigger",
+      "nationality": null,
+      "preferred_race": null
+    },
+    {
+      "liquipedia_slug": "shameless",
+      "name": "Shameless",
+      "nationality": null,
+      "preferred_race": null
+    },
+    {
+      "liquipedia_slug": "skillous",
+      "name": "SKillous",
+      "nationality": null,
+      "preferred_race": null
+    },
+    {
+      "liquipedia_slug": "viper",
+      "name": "Viper",
+      "nationality": null,
+      "preferred_race": null
+    },
+    {
+      "liquipedia_slug": "mindelvk",
+      "name": "MindelVK",
+      "nationality": null,
+      "preferred_race": null
+    },
+    {
+      "liquipedia_slug": "moja",
+      "name": "Moja",
+      "nationality": null,
+      "preferred_race": null
+    },
+    {
+      "liquipedia_slug": "uthermal",
+      "name": "uThermal",
+      "nationality": null,
+      "preferred_race": null
+    },
+    {
+      "liquipedia_slug": "youngyakov",
+      "name": "YoungYakov",
+      "nationality": null,
+      "preferred_race": null
+    },
+    {
+      "liquipedia_slug": "has",
+      "name": "Has",
+      "nationality": null,
+      "preferred_race": null
+    },
+    {
+      "liquipedia_slug": "ggmachine",
+      "name": "GgMaChine",
+      "nationality": null,
+      "preferred_race": null
+    },
+    {
+      "liquipedia_slug": "ryung",
+      "name": "Ryung",
+      "nationality": null,
+      "preferred_race": null
+    },
+    {
+      "liquipedia_slug": "statis",
+      "name": "Statis",
+      "nationality": null,
+      "preferred_race": null
+    },
+    {
+      "liquipedia_slug": "clem",
+      "name": "Clem",
+      "nationality": null,
+      "preferred_race": null
+    },
+    {
+      "liquipedia_slug": "gumiho",
+      "name": "GuMiho",
+      "nationality": null,
+      "preferred_race": null
+    },
+    {
+      "liquipedia_slug": "spirit",
+      "name": "Spirit",
+      "nationality": null,
+      "preferred_race": null
+    },
+    {
+      "liquipedia_slug": "milkicow",
+      "name": "MilkiCow",
+      "nationality": null,
+      "preferred_race": null
+    },
+    {
+      "liquipedia_slug": "brat_ok",
+      "name": "Brat_OK",
+      "nationality": null,
+      "preferred_race": null
+    },
+    {
+      "liquipedia_slug": "rex",
+      "name": "Rex",
       "nationality": null,
       "preferred_race": null
     },
@@ -321,32 +309,8 @@
       "preferred_race": null
     },
     {
-      "liquipedia_slug": "tiger",
-      "name": "Tiger",
-      "nationality": null,
-      "preferred_race": null
-    },
-    {
-      "liquipedia_slug": "nicoract",
-      "name": "Nicoract",
-      "nationality": null,
-      "preferred_race": null
-    },
-    {
       "liquipedia_slug": "uedsoldier",
       "name": "UedSoldier",
-      "nationality": null,
-      "preferred_race": null
-    },
-    {
-      "liquipedia_slug": "replicant",
-      "name": "Replicant",
-      "nationality": null,
-      "preferred_race": null
-    },
-    {
-      "liquipedia_slug": "boanaan",
-      "name": "boanaan",
       "nationality": null,
       "preferred_race": null
     },
@@ -357,8 +321,26 @@
       "preferred_race": null
     },
     {
-      "liquipedia_slug": "iba",
-      "name": "Iba",
+      "liquipedia_slug": "art",
+      "name": "ART",
+      "nationality": null,
+      "preferred_race": null
+    },
+    {
+      "liquipedia_slug": "boanaan",
+      "name": "boanaan",
+      "nationality": null,
+      "preferred_race": null
+    },
+    {
+      "liquipedia_slug": "replicant",
+      "name": "Replicant",
+      "nationality": null,
+      "preferred_race": null
+    },
+    {
+      "liquipedia_slug": "tiger",
+      "name": "Tiger",
       "nationality": null,
       "preferred_race": null
     },
@@ -369,8 +351,26 @@
       "preferred_race": null
     },
     {
-      "liquipedia_slug": "showtime",
-      "name": "ShoWTimE",
+      "liquipedia_slug": "serral",
+      "name": "Serral",
+      "nationality": null,
+      "preferred_race": null
+    },
+    {
+      "liquipedia_slug": "iba",
+      "name": "Iba",
+      "nationality": null,
+      "preferred_race": null
+    },
+    {
+      "liquipedia_slug": "nicoract",
+      "name": "Nicoract",
+      "nationality": null,
+      "preferred_race": null
+    },
+    {
+      "liquipedia_slug": "risky",
+      "name": "RiSky",
       "nationality": null,
       "preferred_race": null
     },
@@ -387,14 +387,14 @@
       "preferred_race": null
     },
     {
-      "liquipedia_slug": "risky",
-      "name": "RiSky",
+      "liquipedia_slug": "figaro",
+      "name": "FIGARO",
       "nationality": null,
       "preferred_race": null
     },
     {
-      "liquipedia_slug": "figaro",
-      "name": "FIGARO",
+      "liquipedia_slug": "showtime",
+      "name": "ShoWTimE",
       "nationality": null,
       "preferred_race": null
     },
@@ -411,32 +411,8 @@
       "preferred_race": null
     },
     {
-      "liquipedia_slug": "darksatas",
-      "name": "DarkSatas",
-      "nationality": null,
-      "preferred_race": null
-    },
-    {
-      "liquipedia_slug": "blademaster",
-      "name": "Blademaster",
-      "nationality": null,
-      "preferred_race": null
-    },
-    {
-      "liquipedia_slug": "hatecheese",
-      "name": "HateCheese",
-      "nationality": null,
-      "preferred_race": null
-    },
-    {
-      "liquipedia_slug": "threepoint",
-      "name": "threepoint",
-      "nationality": null,
-      "preferred_race": null
-    },
-    {
-      "liquipedia_slug": "antarct",
-      "name": "Antarct",
+      "liquipedia_slug": "tikky",
+      "name": "Tikky",
       "nationality": null,
       "preferred_race": null
     },
@@ -447,8 +423,32 @@
       "preferred_race": null
     },
     {
+      "liquipedia_slug": "threepoint",
+      "name": "threepoint",
+      "nationality": null,
+      "preferred_race": null
+    },
+    {
+      "liquipedia_slug": "blademaster",
+      "name": "Blademaster",
+      "nationality": null,
+      "preferred_race": null
+    },
+    {
       "liquipedia_slug": "dimaga",
       "name": "DIMAGA",
+      "nationality": null,
+      "preferred_race": null
+    },
+    {
+      "liquipedia_slug": "hatecheese",
+      "name": "HateCheese",
+      "nationality": null,
+      "preferred_race": null
+    },
+    {
+      "liquipedia_slug": "antarct",
+      "name": "Antarct",
       "nationality": null,
       "preferred_race": null
     },
@@ -459,8 +459,8 @@
       "preferred_race": null
     },
     {
-      "liquipedia_slug": "tikky",
-      "name": "Tikky",
+      "liquipedia_slug": "darksatas",
+      "name": "DarkSatas",
       "nationality": null,
       "preferred_race": null
     },
@@ -471,20 +471,32 @@
       "preferred_race": null
     },
     {
+      "liquipedia_slug": "kelazhur",
+      "name": "Kelazhur",
+      "nationality": null,
+      "preferred_race": null
+    },
+    {
       "liquipedia_slug": "ryerye",
       "name": "RyeRye",
       "nationality": null,
       "preferred_race": null
     },
     {
-      "liquipedia_slug": "arrogfire",
-      "name": "Arrogfire",
+      "liquipedia_slug": "sickness",
+      "name": "SickNess",
       "nationality": null,
       "preferred_race": null
     },
     {
-      "liquipedia_slug": "sickness",
-      "name": "SickNess",
+      "liquipedia_slug": "optimistc",
+      "name": "OpTiMiStC",
+      "nationality": null,
+      "preferred_race": null
+    },
+    {
+      "liquipedia_slug": "arrogfire",
+      "name": "Arrogfire",
       "nationality": null,
       "preferred_race": null
     },
@@ -501,92 +513,8 @@
       "preferred_race": null
     },
     {
-      "liquipedia_slug": "kelazhur",
-      "name": "Kelazhur",
-      "nationality": null,
-      "preferred_race": null
-    },
-    {
-      "liquipedia_slug": "optimistc",
-      "name": "OpTiMiStC",
-      "nationality": null,
-      "preferred_race": null
-    },
-    {
-      "liquipedia_slug": "aelith",
-      "name": "Aelith",
-      "nationality": null,
-      "preferred_race": null
-    },
-    {
-      "liquipedia_slug": "holyhit",
-      "name": "HolyHit",
-      "nationality": null,
-      "preferred_race": null
-    },
-    {
-      "liquipedia_slug": "starfish",
-      "name": "Starfish",
-      "nationality": null,
-      "preferred_race": null
-    },
-    {
-      "liquipedia_slug": "arrogfire",
-      "name": "arrogfire",
-      "nationality": null,
-      "preferred_race": null
-    },
-    {
-      "liquipedia_slug": "erebusblack",
-      "name": "ErebusBlack",
-      "nationality": null,
-      "preferred_race": null
-    },
-    {
-      "liquipedia_slug": "dns",
-      "name": "DnS",
-      "nationality": null,
-      "preferred_race": null
-    },
-    {
-      "liquipedia_slug": "dolan",
-      "name": "Dolan",
-      "nationality": null,
-      "preferred_race": null
-    },
-    {
-      "liquipedia_slug": "maxgio",
-      "name": "MaxGio",
-      "nationality": null,
-      "preferred_race": null
-    },
-    {
-      "liquipedia_slug": "ryoku",
-      "name": "Ryoku",
-      "nationality": null,
-      "preferred_race": null
-    },
-    {
-      "liquipedia_slug": "goswser",
-      "name": "Goswser",
-      "nationality": null,
-      "preferred_race": null
-    },
-    {
-      "liquipedia_slug": "sivean",
-      "name": "Sivean",
-      "nationality": null,
-      "preferred_race": null
-    },
-    {
       "liquipedia_slug": "fightingfrog",
       "name": "FightingFrog",
-      "nationality": null,
-      "preferred_race": null
-    },
-    {
-      "liquipedia_slug": "elimisu",
-      "name": "Elimisu",
       "nationality": null,
       "preferred_race": null
     },
@@ -597,38 +525,80 @@
       "preferred_race": null
     },
     {
+      "liquipedia_slug": "aelith",
+      "name": "Aelith",
+      "nationality": null,
+      "preferred_race": null
+    },
+    {
+      "liquipedia_slug": "starfish",
+      "name": "Starfish",
+      "nationality": null,
+      "preferred_race": null
+    },
+    {
+      "liquipedia_slug": "erebusblack",
+      "name": "ErebusBlack",
+      "nationality": null,
+      "preferred_race": null
+    },
+    {
+      "liquipedia_slug": "elimisu",
+      "name": "Elimisu",
+      "nationality": null,
+      "preferred_race": null
+    },
+    {
+      "liquipedia_slug": "holyhit",
+      "name": "HolyHit",
+      "nationality": null,
+      "preferred_race": null
+    },
+    {
+      "liquipedia_slug": "dolan",
+      "name": "Dolan",
+      "nationality": null,
+      "preferred_race": null
+    },
+    {
+      "liquipedia_slug": "dns",
+      "name": "DnS",
+      "nationality": null,
+      "preferred_race": null
+    },
+    {
+      "liquipedia_slug": "maxgio",
+      "name": "MaxGio",
+      "nationality": null,
+      "preferred_race": null
+    },
+    {
+      "liquipedia_slug": "goswser",
+      "name": "Goswser",
+      "nationality": null,
+      "preferred_race": null
+    },
+    {
+      "liquipedia_slug": "arrogfire",
+      "name": "arrogfire",
+      "nationality": null,
+      "preferred_race": null
+    },
+    {
+      "liquipedia_slug": "ryoku",
+      "name": "Ryoku",
+      "nationality": null,
+      "preferred_race": null
+    },
+    {
+      "liquipedia_slug": "sivean",
+      "name": "Sivean",
+      "nationality": null,
+      "preferred_race": null
+    },
+    {
       "liquipedia_slug": "nightphoenix",
       "name": "NightPhoenix",
-      "nationality": null,
-      "preferred_race": null
-    },
-    {
-      "liquipedia_slug": "ultramarine",
-      "name": "UltraMarine",
-      "nationality": null,
-      "preferred_race": null
-    },
-    {
-      "liquipedia_slug": "fjant",
-      "name": "Fjant",
-      "nationality": null,
-      "preferred_race": null
-    },
-    {
-      "liquipedia_slug": "lordgg",
-      "name": "LordGG",
-      "nationality": null,
-      "preferred_race": null
-    },
-    {
-      "liquipedia_slug": "anticore",
-      "name": "Anticore",
-      "nationality": null,
-      "preferred_race": null
-    },
-    {
-      "liquipedia_slug": "lena",
-      "name": "Lena",
       "nationality": null,
       "preferred_race": null
     },
@@ -639,8 +609,26 @@
       "preferred_race": null
     },
     {
+      "liquipedia_slug": "kingslayer",
+      "name": "KingSlayeR",
+      "nationality": null,
+      "preferred_race": null
+    },
+    {
       "liquipedia_slug": "mixu",
       "name": "Mixu",
+      "nationality": null,
+      "preferred_race": null
+    },
+    {
+      "liquipedia_slug": "ultramarine",
+      "name": "UltraMarine",
+      "nationality": null,
+      "preferred_race": null
+    },
+    {
+      "liquipedia_slug": "lordgg",
+      "name": "LordGG",
       "nationality": null,
       "preferred_race": null
     },
@@ -651,20 +639,8 @@
       "preferred_race": null
     },
     {
-      "liquipedia_slug": "kingslayer",
-      "name": "KingSlayeR",
-      "nationality": null,
-      "preferred_race": null
-    },
-    {
-      "liquipedia_slug": "indy",
-      "name": "Indy",
-      "nationality": null,
-      "preferred_race": null
-    },
-    {
-      "liquipedia_slug": "purce",
-      "name": "Purce",
+      "liquipedia_slug": "lena",
+      "name": "Lena",
       "nationality": null,
       "preferred_race": null
     },
@@ -681,20 +657,26 @@
       "preferred_race": null
     },
     {
-      "liquipedia_slug": "gugus",
-      "name": "GuGus",
+      "liquipedia_slug": "anticore",
+      "name": "Anticore",
       "nationality": null,
       "preferred_race": null
     },
     {
-      "liquipedia_slug": "nokota",
-      "name": "Nokota",
+      "liquipedia_slug": "purce",
+      "name": "Purce",
       "nationality": null,
       "preferred_race": null
     },
     {
-      "liquipedia_slug": "urono",
-      "name": "Urono",
+      "liquipedia_slug": "indy",
+      "name": "Indy",
+      "nationality": null,
+      "preferred_race": null
+    },
+    {
+      "liquipedia_slug": "fjant",
+      "name": "Fjant",
       "nationality": null,
       "preferred_race": null
     },
@@ -705,14 +687,20 @@
       "preferred_race": null
     },
     {
-      "liquipedia_slug": "aimliloke",
-      "name": "Aimliloke",
+      "liquipedia_slug": "gugus",
+      "name": "GuGus",
       "nationality": null,
       "preferred_race": null
     },
     {
-      "liquipedia_slug": "darjeeling",
-      "name": "Darjeeling",
+      "liquipedia_slug": "urono",
+      "name": "Urono",
+      "nationality": null,
+      "preferred_race": null
+    },
+    {
+      "liquipedia_slug": "nokota",
+      "name": "Nokota",
       "nationality": null,
       "preferred_race": null
     },
@@ -723,44 +711,20 @@
       "preferred_race": null
     },
     {
+      "liquipedia_slug": "aimliloke",
+      "name": "Aimliloke",
+      "nationality": null,
+      "preferred_race": null
+    },
+    {
       "liquipedia_slug": "havertz",
       "name": "Havertz",
       "nationality": null,
       "preferred_race": null
     },
     {
-      "liquipedia_slug": "raccoon",
-      "name": "RACCOON",
-      "nationality": null,
-      "preferred_race": null
-    },
-    {
-      "liquipedia_slug": "kinpach",
-      "name": "Kinpach",
-      "nationality": null,
-      "preferred_race": null
-    },
-    {
-      "liquipedia_slug": "ninja",
-      "name": "Ninja",
-      "nationality": null,
-      "preferred_race": null
-    },
-    {
-      "liquipedia_slug": "jaeger",
-      "name": "Jaeger",
-      "nationality": null,
-      "preferred_race": null
-    },
-    {
-      "liquipedia_slug": "dmega",
-      "name": "Dmega",
-      "nationality": null,
-      "preferred_race": null
-    },
-    {
-      "liquipedia_slug": "sirgheorghe",
-      "name": "SirGheorghe",
+      "liquipedia_slug": "darjeeling",
+      "name": "Darjeeling",
       "nationality": null,
       "preferred_race": null
     },
@@ -777,6 +741,42 @@
       "preferred_race": null
     },
     {
+      "liquipedia_slug": "kinpach",
+      "name": "Kinpach",
+      "nationality": null,
+      "preferred_race": null
+    },
+    {
+      "liquipedia_slug": "jaeger",
+      "name": "Jaeger",
+      "nationality": null,
+      "preferred_race": null
+    },
+    {
+      "liquipedia_slug": "dmega",
+      "name": "Dmega",
+      "nationality": null,
+      "preferred_race": null
+    },
+    {
+      "liquipedia_slug": "ninja",
+      "name": "Ninja",
+      "nationality": null,
+      "preferred_race": null
+    },
+    {
+      "liquipedia_slug": "sirgheorghe",
+      "name": "SirGheorghe",
+      "nationality": null,
+      "preferred_race": null
+    },
+    {
+      "liquipedia_slug": "raccoon",
+      "name": "RACCOON",
+      "nationality": null,
+      "preferred_race": null
+    },
+    {
       "liquipedia_slug": "rate",
       "name": "Rate",
       "nationality": null,
@@ -785,19 +785,49 @@
   ],
   "teams": [
     {
+      "name": "Jumy + YoungYakov",
+      "player1_name": "Jumy",
+      "player2_name": "YoungYakov"
+    },
+    {
+      "name": "Cham + SpeCial",
+      "player1_name": "Cham",
+      "player2_name": "SpeCial"
+    },
+    {
+      "name": "Brat_OK + MindelVK",
+      "player1_name": "Brat_OK",
+      "player2_name": "MindelVK"
+    },
+    {
       "name": "Has + Rex",
       "player1_name": "Has",
       "player2_name": "Rex"
     },
     {
-      "name": "Elazer + Gerald",
-      "player1_name": "Elazer",
-      "player2_name": "Gerald"
-    },
-    {
       "name": "Clem + trigger",
       "player1_name": "Clem",
       "player2_name": "trigger"
+    },
+    {
+      "name": "MilkiCow + Wayne",
+      "player1_name": "MilkiCow",
+      "player2_name": "Wayne"
+    },
+    {
+      "name": "Larry + Night",
+      "player1_name": "Larry",
+      "player2_name": "Night"
+    },
+    {
+      "name": "goblin + uThermal",
+      "player1_name": "goblin",
+      "player2_name": "uThermal"
+    },
+    {
+      "name": "CaptainSam + Viper",
+      "player1_name": "CaptainSam",
+      "player2_name": "Viper"
     },
     {
       "name": "HeRoMaRinE + Statis",
@@ -820,19 +850,14 @@
       "player2_name": "Ryung"
     },
     {
-      "name": "MilkiCow + Wayne",
-      "player1_name": "MilkiCow",
-      "player2_name": "Wayne"
-    },
-    {
       "name": "GgMaChine + Shameless",
       "player1_name": "GgMaChine",
       "player2_name": "Shameless"
     },
     {
-      "name": "goblin + uThermal",
-      "player1_name": "goblin",
-      "player2_name": "uThermal"
+      "name": "Elazer + Gerald",
+      "player1_name": "Elazer",
+      "player2_name": "Gerald"
     },
     {
       "name": "MaxPax + Spirit",
@@ -840,54 +865,9 @@
       "player2_name": "Spirit"
     },
     {
-      "name": "Brat_OK + MindelVK",
-      "player1_name": "Brat_OK",
-      "player2_name": "MindelVK"
-    },
-    {
-      "name": "CaptainSam + Viper",
-      "player1_name": "CaptainSam",
-      "player2_name": "Viper"
-    },
-    {
-      "name": "Larry + Night",
-      "player1_name": "Larry",
-      "player2_name": "Night"
-    },
-    {
-      "name": "Cham + SpeCial",
-      "player1_name": "Cham",
-      "player2_name": "SpeCial"
-    },
-    {
-      "name": "Jumy + YoungYakov",
-      "player1_name": "Jumy",
-      "player2_name": "YoungYakov"
-    },
-    {
       "name": "Iba + boanaan",
       "player1_name": "Iba",
       "player2_name": "boanaan"
-    },
-    {
-      "name": "Harstem + Lambo",
-      "player1_name": "Harstem",
-      "player2_name": "Lambo"
-    },
-    {
-      "name": "Elazer + SKillous",
-      "player1_name": "Elazer",
-      "player2_name": "SKillous"
-    },
-    {
-      "name": "Serral + ZhuGeLiang",
-      "player1_name": "Serral",
-      "player2_name": "ZhuGeLiang"
-    },
-    {
-      "name": "Gerald + Nicoract",
-      "player1_name": "Gerald",
-      "player2_name": "Nicoract"
     },
     {
       "name": "Replicant + Tiger",
@@ -895,9 +875,29 @@
       "player2_name": "Tiger"
     },
     {
+      "name": "Harstem + Lambo",
+      "player1_name": "Harstem",
+      "player2_name": "Lambo"
+    },
+    {
       "name": "ART + UedSoldier",
       "player1_name": "ART",
       "player2_name": "UedSoldier"
+    },
+    {
+      "name": "Elazer + SKillous",
+      "player1_name": "Elazer",
+      "player2_name": "SKillous"
+    },
+    {
+      "name": "Gerald + Nicoract",
+      "player1_name": "Gerald",
+      "player2_name": "Nicoract"
+    },
+    {
+      "name": "Serral + ZhuGeLiang",
+      "player1_name": "Serral",
+      "player2_name": "ZhuGeLiang"
     },
     {
       "name": "Lambo + ShoWTimE",
@@ -910,29 +910,19 @@
       "player2_name": "Gref"
     },
     {
-      "name": "MilkiCow + Vanya",
-      "player1_name": "MilkiCow",
-      "player2_name": "Vanya"
-    },
-    {
       "name": "FIGARO + RiSky",
       "player1_name": "FIGARO",
       "player2_name": "RiSky"
     },
     {
-      "name": "DarkSatas + HateCheese",
-      "player1_name": "DarkSatas",
-      "player2_name": "HateCheese"
+      "name": "MilkiCow + Vanya",
+      "player1_name": "MilkiCow",
+      "player2_name": "Vanya"
     },
     {
-      "name": "DIMAGA + starfish",
-      "player1_name": "DIMAGA",
-      "player2_name": "starfish"
-    },
-    {
-      "name": "ShoWTimE + Spirit",
-      "player1_name": "ShoWTimE",
-      "player2_name": "Spirit"
+      "name": "Tikky + threepoint",
+      "player1_name": "Tikky",
+      "player2_name": "threepoint"
     },
     {
       "name": "Blademaster + Hardwell",
@@ -945,14 +935,49 @@
       "player2_name": "Melu"
     },
     {
+      "name": "DIMAGA + starfish",
+      "player1_name": "DIMAGA",
+      "player2_name": "starfish"
+    },
+    {
+      "name": "ShoWTimE + Spirit",
+      "player1_name": "ShoWTimE",
+      "player2_name": "Spirit"
+    },
+    {
+      "name": "DarkSatas + HateCheese",
+      "player1_name": "DarkSatas",
+      "player2_name": "HateCheese"
+    },
+    {
       "name": "DefMars + ZaRDieNT",
       "player1_name": "DefMars",
       "player2_name": "ZaRDieNT"
     },
     {
-      "name": "Tikky + threepoint",
-      "player1_name": "Tikky",
-      "player2_name": "threepoint"
+      "name": "ShaDoWn + YoungYakov",
+      "player1_name": "ShaDoWn",
+      "player2_name": "YoungYakov"
+    },
+    {
+      "name": "Arrogfire + Krystianer",
+      "player1_name": "Arrogfire",
+      "player2_name": "Krystianer"
+    },
+    {
+      "name": "Cham + RyeRye",
+      "player1_name": "Cham",
+      "player2_name": "RyeRye"
+    },
+    {
+      "name": "Elazer + ShoWTimE",
+      "player1_name": "Elazer",
+      "player2_name": "ShoWTimE"
+    },
+    {
+      "name": "Kelazhur + Lambo",
+      "player1_name": "Kelazhur",
+      "player2_name": "Lambo"
     },
     {
       "name": "SickNess + ZaRDieNT",
@@ -965,39 +990,14 @@
       "player2_name": "OpTiMiStC"
     },
     {
-      "name": "ShaDoWn + YoungYakov",
-      "player1_name": "ShaDoWn",
-      "player2_name": "YoungYakov"
+      "name": "Aelith + Elimisu",
+      "player1_name": "Aelith",
+      "player2_name": "Elimisu"
     },
     {
-      "name": "Cham + RyeRye",
-      "player1_name": "Cham",
-      "player2_name": "RyeRye"
-    },
-    {
-      "name": "Arrogfire + Krystianer",
-      "player1_name": "Arrogfire",
-      "player2_name": "Krystianer"
-    },
-    {
-      "name": "Kelazhur + Lambo",
-      "player1_name": "Kelazhur",
-      "player2_name": "Lambo"
-    },
-    {
-      "name": "Elazer + ShoWTimE",
-      "player1_name": "Elazer",
-      "player2_name": "ShoWTimE"
-    },
-    {
-      "name": "FightingFrog + HolyHit",
-      "player1_name": "FightingFrog",
-      "player2_name": "HolyHit"
-    },
-    {
-      "name": "DIMAGA + Starfish",
-      "player1_name": "DIMAGA",
-      "player2_name": "Starfish"
+      "name": "DnS + Kelazhur",
+      "player1_name": "DnS",
+      "player2_name": "Kelazhur"
     },
     {
       "name": "MaxGio + Ryoku",
@@ -1010,19 +1010,9 @@
       "player2_name": "arrogfire"
     },
     {
-      "name": "Sivean + armonox",
-      "player1_name": "Sivean",
-      "player2_name": "armonox"
-    },
-    {
-      "name": "Aelith + Elimisu",
-      "player1_name": "Aelith",
-      "player2_name": "Elimisu"
-    },
-    {
-      "name": "DnS + Kelazhur",
-      "player1_name": "DnS",
-      "player2_name": "Kelazhur"
+      "name": "FightingFrog + HolyHit",
+      "player1_name": "FightingFrog",
+      "player2_name": "HolyHit"
     },
     {
       "name": "ErebusBlack + Goswser",
@@ -1030,29 +1020,19 @@
       "player2_name": "Goswser"
     },
     {
+      "name": "Sivean + armonox",
+      "player1_name": "Sivean",
+      "player2_name": "armonox"
+    },
+    {
+      "name": "DIMAGA + Starfish",
+      "player1_name": "DIMAGA",
+      "player2_name": "Starfish"
+    },
+    {
       "name": "Dolan + Hardwell",
       "player1_name": "Dolan",
       "player2_name": "Hardwell"
-    },
-    {
-      "name": "MilkiCow + SKillous",
-      "player1_name": "MilkiCow",
-      "player2_name": "SKillous"
-    },
-    {
-      "name": "Elazer + Serral",
-      "player1_name": "Elazer",
-      "player2_name": "Serral"
-    },
-    {
-      "name": "MaxPax + uThermal",
-      "player1_name": "MaxPax",
-      "player2_name": "uThermal"
-    },
-    {
-      "name": "GgMaChine + Jumy",
-      "player1_name": "GgMaChine",
-      "player2_name": "Jumy"
     },
     {
       "name": "GgMaChine + SKillous",
@@ -1060,64 +1040,9 @@
       "player2_name": "SKillous"
     },
     {
-      "name": "Jumy + MaxPax",
-      "player1_name": "Jumy",
-      "player2_name": "MaxPax"
-    },
-    {
-      "name": "GgMaChine + Lambo",
-      "player1_name": "GgMaChine",
-      "player2_name": "Lambo"
-    },
-    {
-      "name": "Jumy + uThermal",
-      "player1_name": "Jumy",
-      "player2_name": "uThermal"
-    },
-    {
-      "name": "Serral + uThermal",
-      "player1_name": "Serral",
-      "player2_name": "uThermal"
-    },
-    {
-      "name": "MaxPax + SKillous",
-      "player1_name": "MaxPax",
-      "player2_name": "SKillous"
-    },
-    {
-      "name": "GgMaChine + Wayne",
-      "player1_name": "GgMaChine",
-      "player2_name": "Wayne"
-    },
-    {
-      "name": "Shameless + uThermal",
-      "player1_name": "Shameless",
-      "player2_name": "uThermal"
-    },
-    {
       "name": "trigger + uThermal",
       "player1_name": "trigger",
       "player2_name": "uThermal"
-    },
-    {
-      "name": "SKillous + uThermal",
-      "player1_name": "SKillous",
-      "player2_name": "uThermal"
-    },
-    {
-      "name": "MilkiCow + trigger",
-      "player1_name": "MilkiCow",
-      "player2_name": "trigger"
-    },
-    {
-      "name": "SKillous + Serral",
-      "player1_name": "SKillous",
-      "player2_name": "Serral"
-    },
-    {
-      "name": "GgMaChine + trigger",
-      "player1_name": "GgMaChine",
-      "player2_name": "trigger"
     },
     {
       "name": "Jumy + SKillous",
@@ -1125,28 +1050,13 @@
       "player2_name": "SKillous"
     },
     {
-      "name": "ShoWTimE + trigger",
-      "player1_name": "ShoWTimE",
-      "player2_name": "trigger"
-    },
-    {
-      "name": "Wayne + uThermal",
-      "player1_name": "Wayne",
-      "player2_name": "uThermal"
-    },
-    {
-      "name": "MaxPax + Wayne",
-      "player1_name": "MaxPax",
+      "name": "Jumy + Wayne",
+      "player1_name": "Jumy",
       "player2_name": "Wayne"
     },
     {
-      "name": "GgMaChine + MilkiCow",
+      "name": "GgMaChine + trigger",
       "player1_name": "GgMaChine",
-      "player2_name": "MilkiCow"
-    },
-    {
-      "name": "MaxPax + trigger",
-      "player1_name": "MaxPax",
       "player2_name": "trigger"
     },
     {
@@ -1155,19 +1065,9 @@
       "player2_name": "Serral"
     },
     {
-      "name": "GgMaChine + Serral",
-      "player1_name": "GgMaChine",
+      "name": "MaxPax + Serral",
+      "player1_name": "MaxPax",
       "player2_name": "Serral"
-    },
-    {
-      "name": "Jumy + Wayne",
-      "player1_name": "Jumy",
-      "player2_name": "Wayne"
-    },
-    {
-      "name": "Serral + Wayne",
-      "player1_name": "Serral",
-      "player2_name": "Wayne"
     },
     {
       "name": "MaxPax + MilkiCow",
@@ -1175,9 +1075,14 @@
       "player2_name": "MilkiCow"
     },
     {
-      "name": "MaxPax + Serral",
-      "player1_name": "MaxPax",
-      "player2_name": "Serral"
+      "name": "GgMaChine + uThermal",
+      "player1_name": "GgMaChine",
+      "player2_name": "uThermal"
+    },
+    {
+      "name": "ShoWTimE + trigger",
+      "player1_name": "ShoWTimE",
+      "player2_name": "trigger"
     },
     {
       "name": "Jumy + trigger",
@@ -1185,13 +1090,68 @@
       "player2_name": "trigger"
     },
     {
+      "name": "Wayne + uThermal",
+      "player1_name": "Wayne",
+      "player2_name": "uThermal"
+    },
+    {
+      "name": "GgMaChine + Jumy",
+      "player1_name": "GgMaChine",
+      "player2_name": "Jumy"
+    },
+    {
+      "name": "Shameless + uThermal",
+      "player1_name": "Shameless",
+      "player2_name": "uThermal"
+    },
+    {
+      "name": "MilkiCow + SKillous",
+      "player1_name": "MilkiCow",
+      "player2_name": "SKillous"
+    },
+    {
+      "name": "Serral + Wayne",
+      "player1_name": "Serral",
+      "player2_name": "Wayne"
+    },
+    {
+      "name": "MaxPax + Wayne",
+      "player1_name": "MaxPax",
+      "player2_name": "Wayne"
+    },
+    {
+      "name": "SKillous + Serral",
+      "player1_name": "SKillous",
+      "player2_name": "Serral"
+    },
+    {
+      "name": "Jumy + uThermal",
+      "player1_name": "Jumy",
+      "player2_name": "uThermal"
+    },
+    {
+      "name": "MaxPax + SKillous",
+      "player1_name": "MaxPax",
+      "player2_name": "SKillous"
+    },
+    {
+      "name": "SKillous + Wayne",
+      "player1_name": "SKillous",
+      "player2_name": "Wayne"
+    },
+    {
+      "name": "Elazer + Serral",
+      "player1_name": "Elazer",
+      "player2_name": "Serral"
+    },
+    {
       "name": "GgMaChine + MaxPax",
       "player1_name": "GgMaChine",
       "player2_name": "MaxPax"
     },
     {
-      "name": "Wayne + trigger",
-      "player1_name": "Wayne",
+      "name": "MilkiCow + trigger",
+      "player1_name": "MilkiCow",
       "player2_name": "trigger"
     },
     {
@@ -1200,19 +1160,14 @@
       "player2_name": "trigger"
     },
     {
-      "name": "SKillous + Wayne",
-      "player1_name": "SKillous",
-      "player2_name": "Wayne"
+      "name": "MaxPax + trigger",
+      "player1_name": "MaxPax",
+      "player2_name": "trigger"
     },
     {
-      "name": "MilkiCow + uThermal",
-      "player1_name": "MilkiCow",
-      "player2_name": "uThermal"
-    },
-    {
-      "name": "GgMaChine + uThermal",
-      "player1_name": "GgMaChine",
-      "player2_name": "uThermal"
+      "name": "Jumy + MaxPax",
+      "player1_name": "Jumy",
+      "player2_name": "MaxPax"
     },
     {
       "name": "SKillous + trigger",
@@ -1220,9 +1175,54 @@
       "player2_name": "trigger"
     },
     {
+      "name": "Wayne + trigger",
+      "player1_name": "Wayne",
+      "player2_name": "trigger"
+    },
+    {
+      "name": "MilkiCow + uThermal",
+      "player1_name": "MilkiCow",
+      "player2_name": "uThermal"
+    },
+    {
+      "name": "Serral + uThermal",
+      "player1_name": "Serral",
+      "player2_name": "uThermal"
+    },
+    {
+      "name": "GgMaChine + Serral",
+      "player1_name": "GgMaChine",
+      "player2_name": "Serral"
+    },
+    {
+      "name": "MaxPax + uThermal",
+      "player1_name": "MaxPax",
+      "player2_name": "uThermal"
+    },
+    {
+      "name": "GgMaChine + MilkiCow",
+      "player1_name": "GgMaChine",
+      "player2_name": "MilkiCow"
+    },
+    {
+      "name": "SKillous + uThermal",
+      "player1_name": "SKillous",
+      "player2_name": "uThermal"
+    },
+    {
       "name": "Jumy + MilkiCow",
       "player1_name": "Jumy",
       "player2_name": "MilkiCow"
+    },
+    {
+      "name": "GgMaChine + Lambo",
+      "player1_name": "GgMaChine",
+      "player2_name": "Lambo"
+    },
+    {
+      "name": "GgMaChine + Wayne",
+      "player1_name": "GgMaChine",
+      "player2_name": "Wayne"
     },
     {
       "name": "Jumy + Serral",
@@ -1250,39 +1250,9 @@
       "player2_name": "goblin"
     },
     {
-      "name": "ART + LordGG",
-      "player1_name": "ART",
-      "player2_name": "LordGG"
-    },
-    {
       "name": "HiGhDrA + Mixu",
       "player1_name": "HiGhDrA",
       "player2_name": "Mixu"
-    },
-    {
-      "name": "Loviuf + Purce",
-      "player1_name": "Loviuf",
-      "player2_name": "Purce"
-    },
-    {
-      "name": "Tiger + UltraMarine",
-      "player1_name": "Tiger",
-      "player2_name": "UltraMarine"
-    },
-    {
-      "name": "EchoSoldier + Lena",
-      "player1_name": "EchoSoldier",
-      "player2_name": "Lena"
-    },
-    {
-      "name": "KingSlayeR + Lemon",
-      "player1_name": "KingSlayeR",
-      "player2_name": "Lemon"
-    },
-    {
-      "name": "Anticore + Azura",
-      "player1_name": "Anticore",
-      "player2_name": "Azura"
     },
     {
       "name": "Fjant + uThermal",
@@ -1290,14 +1260,34 @@
       "player2_name": "uThermal"
     },
     {
-      "name": "Calftowin + LookMaNoSens",
-      "player1_name": "Calftowin",
-      "player2_name": "LookMaNoSens"
+      "name": "ART + LordGG",
+      "player1_name": "ART",
+      "player2_name": "LordGG"
     },
     {
-      "name": "GuGus + Urono",
-      "player1_name": "GuGus",
-      "player2_name": "Urono"
+      "name": "Anticore + Azura",
+      "player1_name": "Anticore",
+      "player2_name": "Azura"
+    },
+    {
+      "name": "Loviuf + Purce",
+      "player1_name": "Loviuf",
+      "player2_name": "Purce"
+    },
+    {
+      "name": "KingSlayeR + Lemon",
+      "player1_name": "KingSlayeR",
+      "player2_name": "Lemon"
+    },
+    {
+      "name": "EchoSoldier + Lena",
+      "player1_name": "EchoSoldier",
+      "player2_name": "Lena"
+    },
+    {
+      "name": "Tiger + UltraMarine",
+      "player1_name": "Tiger",
+      "player2_name": "UltraMarine"
     },
     {
       "name": "Aimliloke + Nokota",
@@ -1305,9 +1295,9 @@
       "player2_name": "Nokota"
     },
     {
-      "name": "Jumy + ShoWTimE",
-      "player1_name": "Jumy",
-      "player2_name": "ShoWTimE"
+      "name": "Darjeeling + Havertz",
+      "player1_name": "Darjeeling",
+      "player2_name": "Havertz"
     },
     {
       "name": "Moja + uThermal",
@@ -1315,14 +1305,14 @@
       "player2_name": "uThermal"
     },
     {
+      "name": "GuGus + Urono",
+      "player1_name": "GuGus",
+      "player2_name": "Urono"
+    },
+    {
       "name": "MilkiCow + YoungYakov",
       "player1_name": "MilkiCow",
       "player2_name": "YoungYakov"
-    },
-    {
-      "name": "Darjeeling + Havertz",
-      "player1_name": "Darjeeling",
-      "player2_name": "Havertz"
     },
     {
       "name": "Gerald + Krystianer",
@@ -1330,9 +1320,14 @@
       "player2_name": "Krystianer"
     },
     {
-      "name": "Lambo + Spirit",
-      "player1_name": "Lambo",
-      "player2_name": "Spirit"
+      "name": "Jumy + ShoWTimE",
+      "player1_name": "Jumy",
+      "player2_name": "ShoWTimE"
+    },
+    {
+      "name": "Calftowin + LookMaNoSens",
+      "player1_name": "Calftowin",
+      "player2_name": "LookMaNoSens"
     },
     {
       "name": "Krystianer + Ninja",
@@ -1340,19 +1335,19 @@
       "player2_name": "Ninja"
     },
     {
-      "name": "Antarct + EruptioN",
-      "player1_name": "Antarct",
-      "player2_name": "EruptioN"
-    },
-    {
-      "name": "Jaeger + RACCOON",
-      "player1_name": "Jaeger",
-      "player2_name": "RACCOON"
+      "name": "Lambo + Spirit",
+      "player1_name": "Lambo",
+      "player2_name": "Spirit"
     },
     {
       "name": "Bombilla + Dmega",
       "player1_name": "Bombilla",
       "player2_name": "Dmega"
+    },
+    {
+      "name": "Jaeger + RACCOON",
+      "player1_name": "Jaeger",
+      "player2_name": "RACCOON"
     },
     {
       "name": "SirGheorghe + Urono",
@@ -1365,14 +1360,19 @@
       "player2_name": "Kinpach"
     },
     {
-      "name": "Elazer + Lambo",
-      "player1_name": "Elazer",
-      "player2_name": "Lambo"
+      "name": "Antarct + EruptioN",
+      "player1_name": "Antarct",
+      "player2_name": "EruptioN"
     },
     {
       "name": "Gref + Rate",
       "player1_name": "Gref",
       "player2_name": "Rate"
+    },
+    {
+      "name": "Elazer + Lambo",
+      "player1_name": "Elazer",
+      "player2_name": "Lambo"
     }
   ],
   "matches": [
@@ -3377,7 +3377,7 @@
       "tournament_slug": "UThermal_2v2_Circuit/Last Chance Qualifiers"
     },
     {
-      "match_id": "Main Event_UThermal_2v2_Circuit_Main Event_M1",
+      "match_id": "Main Event_UThermal_2v2_Circuit_Main Event_A_M1",
       "team1_name": "Jumy + uThermal",
       "team2_name": "SKillous + Wayne",
       "best_of": 3,
@@ -3399,7 +3399,7 @@
       "tournament_slug": "UThermal_2v2_Circuit/Main Event"
     },
     {
-      "match_id": "Main Event_UThermal_2v2_Circuit_Main Event_M2",
+      "match_id": "Main Event_UThermal_2v2_Circuit_Main Event_A_M2",
       "team1_name": "MaxPax + Serral",
       "team2_name": "GgMaChine + trigger",
       "best_of": 3,
@@ -3426,7 +3426,7 @@
       "tournament_slug": "UThermal_2v2_Circuit/Main Event"
     },
     {
-      "match_id": "Main Event_UThermal_2v2_Circuit_Main Event_M3",
+      "match_id": "Main Event_UThermal_2v2_Circuit_Main Event_A_M3",
       "team1_name": "MilkiCow + uThermal",
       "team2_name": "GgMaChine + MaxPax",
       "best_of": 3,
@@ -3448,7 +3448,7 @@
       "tournament_slug": "UThermal_2v2_Circuit/Main Event"
     },
     {
-      "match_id": "Main Event_UThermal_2v2_Circuit_Main Event_M4",
+      "match_id": "Main Event_UThermal_2v2_Circuit_Main Event_A_M4",
       "team1_name": "SKillous + Serral",
       "team2_name": "Jumy + trigger",
       "best_of": 3,
@@ -3470,7 +3470,7 @@
       "tournament_slug": "UThermal_2v2_Circuit/Main Event"
     },
     {
-      "match_id": "Main Event_UThermal_2v2_Circuit_Main Event_M5",
+      "match_id": "Main Event_UThermal_2v2_Circuit_Main Event_A_M5",
       "team1_name": "SKillous + uThermal",
       "team2_name": "Wayne + trigger",
       "best_of": 3,
@@ -3492,7 +3492,7 @@
       "tournament_slug": "UThermal_2v2_Circuit/Main Event"
     },
     {
-      "match_id": "Main Event_UThermal_2v2_Circuit_Main Event_M6",
+      "match_id": "Main Event_UThermal_2v2_Circuit_Main Event_A_M6",
       "team1_name": "Jumy + Serral",
       "team2_name": "GgMaChine + MilkiCow",
       "best_of": 3,
@@ -3514,7 +3514,7 @@
       "tournament_slug": "UThermal_2v2_Circuit/Main Event"
     },
     {
-      "match_id": "Main Event_UThermal_2v2_Circuit_Main Event_M7",
+      "match_id": "Main Event_UThermal_2v2_Circuit_Main Event_A_M7",
       "team1_name": "GgMaChine + uThermal",
       "team2_name": "SKillous + trigger",
       "best_of": 3,
@@ -3536,7 +3536,7 @@
       "tournament_slug": "UThermal_2v2_Circuit/Main Event"
     },
     {
-      "match_id": "Main Event_UThermal_2v2_Circuit_Main Event_M8",
+      "match_id": "Main Event_UThermal_2v2_Circuit_Main Event_A_M8",
       "team1_name": "Jumy + Wayne",
       "team2_name": "MaxPax + MilkiCow",
       "best_of": 3,
@@ -3563,7 +3563,7 @@
       "tournament_slug": "UThermal_2v2_Circuit/Main Event"
     },
     {
-      "match_id": "Main Event_UThermal_2v2_Circuit_Main Event_M9",
+      "match_id": "Main Event_UThermal_2v2_Circuit_Main Event_A_M9",
       "team1_name": "Serral + uThermal",
       "team2_name": "Jumy + MaxPax",
       "best_of": 3,
@@ -3585,7 +3585,7 @@
       "tournament_slug": "UThermal_2v2_Circuit/Main Event"
     },
     {
-      "match_id": "Main Event_UThermal_2v2_Circuit_Main Event_M10",
+      "match_id": "Main Event_UThermal_2v2_Circuit_Main Event_A_M10",
       "team1_name": "GgMaChine + Wayne",
       "team2_name": "MilkiCow + SKillous",
       "best_of": 3,
@@ -3607,7 +3607,7 @@
       "tournament_slug": "UThermal_2v2_Circuit/Main Event"
     },
     {
-      "match_id": "Main Event_UThermal_2v2_Circuit_Main Event_M11",
+      "match_id": "Main Event_UThermal_2v2_Circuit_Main Event_A_M11",
       "team1_name": "trigger + uThermal",
       "team2_name": "MilkiCow + Serral",
       "best_of": 3,
@@ -3634,7 +3634,7 @@
       "tournament_slug": "UThermal_2v2_Circuit/Main Event"
     },
     {
-      "match_id": "Main Event_UThermal_2v2_Circuit_Main Event_M12",
+      "match_id": "Main Event_UThermal_2v2_Circuit_Main Event_A_M12",
       "team1_name": "MaxPax + Wayne",
       "team2_name": "GgMaChine + SKillous",
       "best_of": 3,
@@ -3656,7 +3656,7 @@
       "tournament_slug": "UThermal_2v2_Circuit/Main Event"
     },
     {
-      "match_id": "Main Event_UThermal_2v2_Circuit_Main Event_M13",
+      "match_id": "Main Event_UThermal_2v2_Circuit_Main Event_A_M13",
       "team1_name": "MilkiCow + Wayne",
       "team2_name": "MaxPax + trigger",
       "best_of": 3,
@@ -3678,7 +3678,7 @@
       "tournament_slug": "UThermal_2v2_Circuit/Main Event"
     },
     {
-      "match_id": "Main Event_UThermal_2v2_Circuit_Main Event_M14",
+      "match_id": "Main Event_UThermal_2v2_Circuit_Main Event_A_M14",
       "team1_name": "Jumy + SKillous",
       "team2_name": "GgMaChine + Serral",
       "best_of": 3,
@@ -3705,7 +3705,7 @@
       "tournament_slug": "UThermal_2v2_Circuit/Main Event"
     },
     {
-      "match_id": "Main Event_UThermal_2v2_Circuit_Main Event_M15",
+      "match_id": "Main Event_UThermal_2v2_Circuit_Main Event_A_M15",
       "team1_name": "Wayne + uThermal",
       "team2_name": "Serral + trigger",
       "best_of": 3,
@@ -3727,7 +3727,7 @@
       "tournament_slug": "UThermal_2v2_Circuit/Main Event"
     },
     {
-      "match_id": "Main Event_UThermal_2v2_Circuit_Main Event_M16",
+      "match_id": "Main Event_UThermal_2v2_Circuit_Main Event_A_M16",
       "team1_name": "MaxPax + SKillous",
       "team2_name": "Jumy + MilkiCow",
       "best_of": 3,
@@ -3749,7 +3749,7 @@
       "tournament_slug": "UThermal_2v2_Circuit/Main Event"
     },
     {
-      "match_id": "Main Event_UThermal_2v2_Circuit_Main Event_M17",
+      "match_id": "Main Event_UThermal_2v2_Circuit_Main Event_A_M17",
       "team1_name": "MaxPax + uThermal",
       "team2_name": "Serral + Wayne",
       "best_of": 3,
@@ -3776,428 +3776,7 @@
       "tournament_slug": "UThermal_2v2_Circuit/Main Event"
     },
     {
-      "match_id": "Main Event_UThermal_2v2_Circuit_Main Event_M18",
-      "team1_name": "MilkiCow + trigger",
-      "team2_name": "GgMaChine + Jumy",
-      "best_of": 3,
-      "status": "completed",
-      "stage": "Unknown",
-      "winner_name": "GgMaChine + Jumy",
-      "games": [
-        {
-          "game_number": 1,
-          "map_name": "Breakwater",
-          "winner_name": "GgMaChine + Jumy"
-        },
-        {
-          "game_number": 2,
-          "map_name": "Crimson Research Lab",
-          "winner_name": "GgMaChine + Jumy"
-        }
-      ],
-      "tournament_slug": "UThermal_2v2_Circuit/Main Event"
-    },
-    {
-      "match_id": "Main Event_UThermal_2v2_Circuit_Main Event_B_M1",
-      "team1_name": "Jumy + uThermal",
-      "team2_name": "SKillous + Wayne",
-      "best_of": 3,
-      "status": "completed",
-      "stage": "Unknown",
-      "winner_name": "Jumy + uThermal",
-      "games": [
-        {
-          "game_number": 1,
-          "map_name": "Emerald City",
-          "winner_name": "uThermal + Jumy"
-        },
-        {
-          "game_number": 2,
-          "map_name": "Reclamation LE",
-          "winner_name": "uThermal + Jumy"
-        }
-      ],
-      "tournament_slug": "UThermal_2v2_Circuit/Main Event"
-    },
-    {
-      "match_id": "Main Event_UThermal_2v2_Circuit_Main Event_B_M2",
-      "team1_name": "MaxPax + Serral",
-      "team2_name": "GgMaChine + trigger",
-      "best_of": 3,
-      "status": "completed",
-      "stage": "Unknown",
-      "winner_name": "MaxPax + Serral",
-      "games": [
-        {
-          "game_number": 1,
-          "map_name": "Undercurrent",
-          "winner_name": "MaxPax + Serral"
-        },
-        {
-          "game_number": 2,
-          "map_name": "Emerald City",
-          "winner_name": "trigger + GgMaChine"
-        },
-        {
-          "game_number": 3,
-          "map_name": "Rohana",
-          "winner_name": "MaxPax + Serral"
-        }
-      ],
-      "tournament_slug": "UThermal_2v2_Circuit/Main Event"
-    },
-    {
-      "match_id": "Main Event_UThermal_2v2_Circuit_Main Event_B_M3",
-      "team1_name": "MilkiCow + uThermal",
-      "team2_name": "GgMaChine + MaxPax",
-      "best_of": 3,
-      "status": "completed",
-      "stage": "Unknown",
-      "winner_name": "GgMaChine + MaxPax",
-      "games": [
-        {
-          "game_number": 1,
-          "map_name": "Reclamation LE",
-          "winner_name": "MaxPax + GgMaChine"
-        },
-        {
-          "game_number": 2,
-          "map_name": "Undercurrent",
-          "winner_name": "MaxPax + GgMaChine"
-        }
-      ],
-      "tournament_slug": "UThermal_2v2_Circuit/Main Event"
-    },
-    {
-      "match_id": "Main Event_UThermal_2v2_Circuit_Main Event_B_M4",
-      "team1_name": "SKillous + Serral",
-      "team2_name": "Jumy + trigger",
-      "best_of": 3,
-      "status": "completed",
-      "stage": "Unknown",
-      "winner_name": "Jumy + trigger",
-      "games": [
-        {
-          "game_number": 1,
-          "map_name": "Undercurrent",
-          "winner_name": "trigger + Jumy"
-        },
-        {
-          "game_number": 2,
-          "map_name": "Crimson Research Lab",
-          "winner_name": "trigger + Jumy"
-        }
-      ],
-      "tournament_slug": "UThermal_2v2_Circuit/Main Event"
-    },
-    {
-      "match_id": "Main Event_UThermal_2v2_Circuit_Main Event_B_M5",
-      "team1_name": "SKillous + uThermal",
-      "team2_name": "Wayne + trigger",
-      "best_of": 3,
-      "status": "completed",
-      "stage": "Unknown",
-      "winner_name": "Wayne + trigger",
-      "games": [
-        {
-          "game_number": 1,
-          "map_name": "Undercurrent",
-          "winner_name": "trigger + Wayne"
-        },
-        {
-          "game_number": 2,
-          "map_name": "Reclamation LE",
-          "winner_name": "trigger + Wayne"
-        }
-      ],
-      "tournament_slug": "UThermal_2v2_Circuit/Main Event"
-    },
-    {
-      "match_id": "Main Event_UThermal_2v2_Circuit_Main Event_B_M6",
-      "team1_name": "Jumy + Serral",
-      "team2_name": "GgMaChine + MilkiCow",
-      "best_of": 3,
-      "status": "completed",
-      "stage": "Unknown",
-      "winner_name": "Jumy + Serral",
-      "games": [
-        {
-          "game_number": 1,
-          "map_name": "Undercurrent",
-          "winner_name": "Serral + Jumy"
-        },
-        {
-          "game_number": 2,
-          "map_name": "Emerald City",
-          "winner_name": "Serral + Jumy"
-        }
-      ],
-      "tournament_slug": "UThermal_2v2_Circuit/Main Event"
-    },
-    {
-      "match_id": "Main Event_UThermal_2v2_Circuit_Main Event_B_M7",
-      "team1_name": "GgMaChine + uThermal",
-      "team2_name": "SKillous + trigger",
-      "best_of": 3,
-      "status": "completed",
-      "stage": "Unknown",
-      "winner_name": "GgMaChine + uThermal",
-      "games": [
-        {
-          "game_number": 1,
-          "map_name": "Yellowjacket",
-          "winner_name": "uThermal + GgMaChine"
-        },
-        {
-          "game_number": 2,
-          "map_name": "Undercurrent",
-          "winner_name": "uThermal + GgMaChine"
-        }
-      ],
-      "tournament_slug": "UThermal_2v2_Circuit/Main Event"
-    },
-    {
-      "match_id": "Main Event_UThermal_2v2_Circuit_Main Event_B_M8",
-      "team1_name": "Jumy + Wayne",
-      "team2_name": "MaxPax + MilkiCow",
-      "best_of": 3,
-      "status": "completed",
-      "stage": "Unknown",
-      "winner_name": "MaxPax + MilkiCow",
-      "games": [
-        {
-          "game_number": 1,
-          "map_name": "Undercurrent",
-          "winner_name": "Wayne + Jumy"
-        },
-        {
-          "game_number": 2,
-          "map_name": "Rohana",
-          "winner_name": "MaxPax + MilkiCow"
-        },
-        {
-          "game_number": 3,
-          "map_name": "Reclamation LE",
-          "winner_name": "MaxPax + MilkiCow"
-        }
-      ],
-      "tournament_slug": "UThermal_2v2_Circuit/Main Event"
-    },
-    {
-      "match_id": "Main Event_UThermal_2v2_Circuit_Main Event_B_M9",
-      "team1_name": "Serral + uThermal",
-      "team2_name": "Jumy + MaxPax",
-      "best_of": 3,
-      "status": "completed",
-      "stage": "Unknown",
-      "winner_name": "Serral + uThermal",
-      "games": [
-        {
-          "game_number": 1,
-          "map_name": "Undercurrent",
-          "winner_name": "uThermal + Serral"
-        },
-        {
-          "game_number": 2,
-          "map_name": "Reclamation LE",
-          "winner_name": "uThermal + Serral"
-        }
-      ],
-      "tournament_slug": "UThermal_2v2_Circuit/Main Event"
-    },
-    {
-      "match_id": "Main Event_UThermal_2v2_Circuit_Main Event_B_M10",
-      "team1_name": "GgMaChine + Wayne",
-      "team2_name": "MilkiCow + SKillous",
-      "best_of": 3,
-      "status": "completed",
-      "stage": "Unknown",
-      "winner_name": "MilkiCow + SKillous",
-      "games": [
-        {
-          "game_number": 1,
-          "map_name": "Undercurrent",
-          "winner_name": "SKillous + MilkiCow"
-        },
-        {
-          "game_number": 2,
-          "map_name": "Crimson Research Lab",
-          "winner_name": "SKillous + MilkiCow"
-        }
-      ],
-      "tournament_slug": "UThermal_2v2_Circuit/Main Event"
-    },
-    {
-      "match_id": "Main Event_UThermal_2v2_Circuit_Main Event_B_M11",
-      "team1_name": "trigger + uThermal",
-      "team2_name": "MilkiCow + Serral",
-      "best_of": 3,
-      "status": "completed",
-      "stage": "Unknown",
-      "winner_name": "trigger + uThermal",
-      "games": [
-        {
-          "game_number": 1,
-          "map_name": "Reclamation LE",
-          "winner_name": "uThermal + trigger"
-        },
-        {
-          "game_number": 2,
-          "map_name": "Yellowjacket",
-          "winner_name": "Serral + MilkiCow"
-        },
-        {
-          "game_number": 3,
-          "map_name": "Emerald City",
-          "winner_name": "uThermal + trigger"
-        }
-      ],
-      "tournament_slug": "UThermal_2v2_Circuit/Main Event"
-    },
-    {
-      "match_id": "Main Event_UThermal_2v2_Circuit_Main Event_B_M12",
-      "team1_name": "MaxPax + Wayne",
-      "team2_name": "GgMaChine + SKillous",
-      "best_of": 3,
-      "status": "completed",
-      "stage": "Unknown",
-      "winner_name": "MaxPax + Wayne",
-      "games": [
-        {
-          "game_number": 1,
-          "map_name": "Reclamation LE",
-          "winner_name": "MaxPax + Wayne"
-        },
-        {
-          "game_number": 2,
-          "map_name": "Undercurrent",
-          "winner_name": "MaxPax + Wayne"
-        }
-      ],
-      "tournament_slug": "UThermal_2v2_Circuit/Main Event"
-    },
-    {
-      "match_id": "Main Event_UThermal_2v2_Circuit_Main Event_B_M13",
-      "team1_name": "MilkiCow + Wayne",
-      "team2_name": "MaxPax + trigger",
-      "best_of": 3,
-      "status": "completed",
-      "stage": "Unknown",
-      "winner_name": "MaxPax + trigger",
-      "games": [
-        {
-          "game_number": 1,
-          "map_name": "Undercurrent",
-          "winner_name": "MaxPax + trigger"
-        },
-        {
-          "game_number": 2,
-          "map_name": "Yellowjacket",
-          "winner_name": "MaxPax + trigger"
-        }
-      ],
-      "tournament_slug": "UThermal_2v2_Circuit/Main Event"
-    },
-    {
-      "match_id": "Main Event_UThermal_2v2_Circuit_Main Event_B_M14",
-      "team1_name": "Jumy + SKillous",
-      "team2_name": "GgMaChine + Serral",
-      "best_of": 3,
-      "status": "completed",
-      "stage": "Unknown",
-      "winner_name": "Jumy + SKillous",
-      "games": [
-        {
-          "game_number": 1,
-          "map_name": "Arctic Flowers",
-          "winner_name": "Serral + GgMaChine"
-        },
-        {
-          "game_number": 2,
-          "map_name": "Crimson Research Lab",
-          "winner_name": "SKillous + Jumy"
-        },
-        {
-          "game_number": 3,
-          "map_name": "Emerald City",
-          "winner_name": "SKillous + Jumy"
-        }
-      ],
-      "tournament_slug": "UThermal_2v2_Circuit/Main Event"
-    },
-    {
-      "match_id": "Main Event_UThermal_2v2_Circuit_Main Event_B_M15",
-      "team1_name": "Wayne + uThermal",
-      "team2_name": "Serral + trigger",
-      "best_of": 3,
-      "status": "completed",
-      "stage": "Unknown",
-      "winner_name": "Serral + trigger",
-      "games": [
-        {
-          "game_number": 1,
-          "map_name": "Undercurrent",
-          "winner_name": "Serral + trigger"
-        },
-        {
-          "game_number": 2,
-          "map_name": "Rohana",
-          "winner_name": "Serral + trigger"
-        }
-      ],
-      "tournament_slug": "UThermal_2v2_Circuit/Main Event"
-    },
-    {
-      "match_id": "Main Event_UThermal_2v2_Circuit_Main Event_B_M16",
-      "team1_name": "MaxPax + SKillous",
-      "team2_name": "Jumy + MilkiCow",
-      "best_of": 3,
-      "status": "completed",
-      "stage": "Unknown",
-      "winner_name": "MaxPax + SKillous",
-      "games": [
-        {
-          "game_number": 1,
-          "map_name": "Yellowjacket",
-          "winner_name": "MaxPax + SKillous"
-        },
-        {
-          "game_number": 2,
-          "map_name": "Rohana",
-          "winner_name": "MaxPax + SKillous"
-        }
-      ],
-      "tournament_slug": "UThermal_2v2_Circuit/Main Event"
-    },
-    {
-      "match_id": "Main Event_UThermal_2v2_Circuit_Main Event_B_M17",
-      "team1_name": "MaxPax + uThermal",
-      "team2_name": "Serral + Wayne",
-      "best_of": 3,
-      "status": "completed",
-      "stage": "Unknown",
-      "winner_name": "MaxPax + uThermal",
-      "games": [
-        {
-          "game_number": 1,
-          "map_name": "Undercurrent",
-          "winner_name": "MaxPax + uThermal"
-        },
-        {
-          "game_number": 2,
-          "map_name": "Emerald City",
-          "winner_name": "Serral + Wayne"
-        },
-        {
-          "game_number": 3,
-          "map_name": "Rohana",
-          "winner_name": "MaxPax + uThermal"
-        }
-      ],
-      "tournament_slug": "UThermal_2v2_Circuit/Main Event"
-    },
-    {
-      "match_id": "Main Event_UThermal_2v2_Circuit_Main Event_B_M18",
+      "match_id": "Main Event_UThermal_2v2_Circuit_Main Event_A_M18",
       "team1_name": "MilkiCow + trigger",
       "team2_name": "GgMaChine + Jumy",
       "best_of": 3,
