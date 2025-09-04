@@ -1,0 +1,36 @@
+{
+  "content": {
+    "batchcomplete": "",
+    "warnings": {
+      "main": {
+        "*": "Subscribe to the mediawiki-api-announce mailing list at <https://lists.wikimedia.org/postorius/lists/mediawiki-api-announce.lists.wikimedia.org/> for notice of API deprecations and breaking changes."
+      },
+      "revisions": {
+        "*": "Because \"rvslots\" was not specified, a legacy format has been used for the output. This format is deprecated, and in the future the new format will always be used."
+      }
+    },
+    "query": {
+      "normalized": [
+        {
+          "from": "UThermal_2v2_Circuit/WUC/3",
+          "to": "UThermal 2v2 Circuit/WUC/3"
+        }
+      ],
+      "pages": {
+        "120637": {
+          "pageid": 120637,
+          "ns": 0,
+          "title": "UThermal 2v2 Circuit/WUC/3",
+          "revisions": [
+            {
+              "contentformat": "text/x-wiki",
+              "contentmodel": "wikitext",
+              "*": "{{DISPLAYTITLE:uThermal 2v2 Circuit: Warm Up Cup #3}}\n{{uThermal 2v2 Circuit/Tabs}}\n{{Infobox league\n|name=uThermal 2v2 Circuit: Warm Up Cup #3\n|tickername=uThermal 2v2 Warm Up Cup #3\n|series=uThermal 2v2 Circuit\n|organizer=uThermal\n|icon=\n|server=Europe\n|game=lotv\n|type=Online\n|country=World\n|prizepool=420\n|format=2v2<br>Playoffs\n|date=2025-07-16\n|liquipediatier=3|tiertype=2v2\n|map1=Arctic Flowers\n|map2=Breakwater\n|map3=Crimson Research Lab\n|map4=Emerald City\n|map5=Reclamation LE\n|map6=Rhoskallian\n|map7=Rohana\n|map8=Undercurrent\n|map9=Yellowjacket\n|twitch=uthermalsc2\n|web=https://tl.net/forum/sc2-tournaments/634467-uthermal-2v2-circuit\n|bracket=https://challonge.com/uthermal2v2w3\n|team_number=16\n}}{{TOClimit|2}}\n\n==Format==\n* Single-elimination bracket.\n** All matches are {{abbr/Bo3}}.\n** Finals are {{abbr/Bo5}}.\n* '''Resource Trading Tax''' mod is enabled, with the following settings:\n** Trade Disabled Duration is set to 7 minutes.\n** Tax Percentage is set to 0%.\n\n==Prize Pool==\n{{DuoPrizePool|importLimit=8\n|{{Slot|usdprize=200}}\n|{{Slot|usdprize=100}}\n|{{Slot|place=3-4|usdprize=50}}\n}}\n===Bonus Award===\n{{AwardPrizePool\n|{{Slot|award=Bonus for a Random Team|usdprize=20|{{2Opponent|p1=Brat_OK|p2=MindelVK}}}}\n}}\n\n==Notable Participating Teams==\n{{OpponentList\n|{{2Opponent|p1=Lambo|p2=Harstem}}\n|{{2Opponent|p1=Gerald|p2=Krystianer}}\n|{{2Opponent|p1=UltraMarine|p2=Tiger|p2link=Tiger (Russian player)}}\n|{{2Opponent|p1=NightPhoenix|p2=Wayne}}\n|{{2Opponent|p1=Jumy|p2=ShoWTimE}}\n|{{2Opponent|p1=Azura|p2=Anticore}}\n|{{2Opponent|p1=GgMaChine|p2=Shameless}}\n|{{2Opponent|p1=MilkiCow|p2=YoungYakov}}\n|{{2Opponent|p1=DIMAGA|p2=Starfish|p2flag=by|p2race=z|p2team=}}\n|{{2Opponent|p1=goblin|p2=Elazer}}\n|{{2Opponent|p1=uThermal|p1race=t|p2=Moja}}\n|{{2Opponent|p1=Brat_OK|p2=MindelVK}}\n}}\n\n==Results==\n{{Bracket|Bracket/16|id=uTher2v2W3\n|R1M1header=Round of 16\n\n<!-- Round 1 -->\n|R1M1={{Match|bestof=3\n    |opponent1={{2Opponent|p1=Lambo|p2=Harstem|score=2}}\n    |opponent2={{2Opponent|p1=Calftowin|p1flag=hu|p1race=p|p2=LookMaNoSens|p2flag=hu|p2race=z|score=0}}\n}}\n|R1M2={{Match\n    |opponent1={{2Opponent|p1=Gerald|p2=Krystianer|score=2}}\n    |opponent2={{2Opponent|p1=UltraMarine|p2=Tiger|score=0}}\n}}\n|R1M3={{Match\n    |opponent1={{2Opponent|p1=NightPhoenix|p2=Wayne|score=2}}\n    |opponent2={{2Opponent|p1=GuGus|p1flag=fr|p1race=t|p2=Urono|p2flag=at|p2race=p|score=0}}\n}}\n|R1M4={{Match\n    |opponent1={{2Opponent|p1=Jumy|p2=ShoWTimE|score=2}}\n    |opponent2={{2Opponent|p1=Azura|p2=Anticore|score=0}}\n}}\n|R1M5={{Match\n    |opponent1={{2Opponent|p1=GgMaChine|p2=Shameless|score=2}}\n    |opponent2={{2Opponent|p1=Havertz|p1flag=bo|p1race=z|p2=Darjeeling|p2flag=bo|p2race=z|score=0}}\n}}\n|R1M6={{Match\n    |opponent1={{2Opponent|p1=MilkiCow|p2=YoungYakov|score=0}}\n    |opponent2={{2Opponent|p1=DIMAGA|p2=Starfish|score=2}}\n}}\n|R1M7={{Match\n    |opponent1={{2Opponent|p1=goblin|p2=Elazer|score=2}}\n    |opponent2={{2Opponent|p1=Aimliloke|p1flag=us|p1race=t|p2=Nokota|p2flag=fr|p2race=t|score=0}}\n}}\n|R1M8={{Match\n    |opponent1={{2Opponent|p1=uThermal|p2=Moja|score=0}}\n    |opponent2={{2Opponent|p1=Brat_OK|p2=MindelVK|score=2}}\n}}\n\n<!-- Round 2 -->\n|R2M1={{Match\n    |opponent1={{2Opponent|p1=Lambo|p2=Harstem|score=2}}\n    |opponent2={{2Opponent|p1=Gerald|p2=Krystianer|score=1}}\n}}\n|R2M2={{Match\n    |opponent1={{2Opponent|p1=NightPhoenix|p2=Wayne|score=2}}\n    |opponent2={{2Opponent|p1=Jumy|p2=ShoWTimE|score=0}}\n}}\n|R2M3={{Match\n    |opponent1={{2Opponent|p1=GgMaChine|p2=Shameless|score=2}}\n    |opponent2={{2Opponent|p1=DIMAGA|p2=Starfish|score=0}}\n}}\n|R2M4={{Match\n    |opponent1={{2Opponent|p1=goblin|p2=Elazer|score=2}}\n    |opponent2={{2Opponent|p1=Brat_OK|p2=MindelVK|score=0}}\n}}\n\n<!-- Semifinals -->\n|R3M1={{Match\n    |date=2025-07-16 19:15 {{abbr/CEST}}\n    |twitch=uThermal\n    |opponent1={{2Opponent|p1=Lambo|p2=Harstem}}\n    |opponent2={{2Opponent|p1=NightPhoenix|p2=Wayne}}\n    |map1={{Map|map=Reclamation|winner=2}}\n    |map2={{Map|map=Arctic Flowers|winner=2}}\n}}\n|R3M2={{Match\n    |date=2025-07-16 19:40 {{abbr/CEST}}\n    |twitch=uThermal\n    |opponent1={{2Opponent|p1=GgMaChine|p2=Shameless}}\n    |opponent2={{2Opponent|p1=goblin|p2=Elazer}}\n    |map1={{Map|map=Undercurrent|winner=1}}\n    |map2={{Map|map=Emerald City|winner=1}}\n}}\n\n<!-- Grand Final -->\n|R4M1={{Match|bestof=5\n    |date=2025-07-16 20:20 {{abbr/CEST}}\n    |twitch=uThermal\n    |opponent1={{2Opponent|p1=NightPhoenix|p2=Wayne}}\n    |opponent2={{2Opponent|p1=GgMaChine|p2=Shameless}}\n    |map1={{Map|map=Crimson Research Lab|winner=1}}\n    |map2={{Map|map=Undercurrent|winner=1}}\n    |map3={{Map|map=Arctic Flowers|winner=2}}\n    |map4={{Map|map=Reclamation LE|winner=2}}\n    |map5={{Map|map=Yellowjacket|winner=2}}\n}}\n}}\n\n==View Games==\n===Streams===\n{{box|start|padding=3em}}\n* {{Flag|usuk}} [https://www.twitch.tv/uthermalsc2 Official Stream]\n* {{Flag|usuk}} [https://www.twitch.tv/steadfastsc Steadfast]\n{{box|break|padding=2em}}\n* {{Flag|pl}} [https://www.twitch.tv/indystarcraft Indy]\n* {{Flag|fr}} [https://www.twitch.tv/iamtkl TKL]\n* {{Flag|fr}} [https://twitch.tv/k4noya Kanoya]\n{{box|end}}\n\n===Talents===\n{{box|start|padding=2em}}\n{{broadcasterCard\n|position=Host and Commentator\n|b1=uThermal\n}}\n{{broadcasterCard\n|position=Commentator\n|b1=Steadfast\n}}\n{{box|break|padding=2em}}\n{{BroadcasterCard\n|position=Other Languages Commentator\n|b1=Indy\n|b2=Kanoya|b2flag=fr\n|b3=TKL\n}}\n{{box|end}}"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "cached_at": "2025-09-04T11:32:25.588188"
+}

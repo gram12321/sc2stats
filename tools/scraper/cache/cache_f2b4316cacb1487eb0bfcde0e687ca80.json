@@ -1,0 +1,36 @@
+{
+  "content": {
+    "batchcomplete": "",
+    "warnings": {
+      "main": {
+        "*": "Subscribe to the mediawiki-api-announce mailing list at <https://lists.wikimedia.org/postorius/lists/mediawiki-api-announce.lists.wikimedia.org/> for notice of API deprecations and breaking changes."
+      },
+      "revisions": {
+        "*": "Because \"rvslots\" was not specified, a legacy format has been used for the output. This format is deprecated, and in the future the new format will always be used."
+      }
+    },
+    "query": {
+      "normalized": [
+        {
+          "from": "UThermal_2v2_Circuit/WUC/1",
+          "to": "UThermal 2v2 Circuit/WUC/1"
+        }
+      ],
+      "pages": {
+        "120609": {
+          "pageid": 120609,
+          "ns": 0,
+          "title": "UThermal 2v2 Circuit/WUC/1",
+          "revisions": [
+            {
+              "contentformat": "text/x-wiki",
+              "contentmodel": "wikitext",
+              "*": "{{DISPLAYTITLE:uThermal 2v2 Circuit: Warm Up Cup #1}}\n{{uThermal 2v2 Circuit/Tabs}}\n{{Infobox league\n|name=uThermal 2v2 Circuit: Warm Up Cup #1\n|tickername=uThermal 2v2 Warm Up Cup #1\n|series=uThermal 2v2 Circuit\n|organizer=uThermal\n|icon=\n|server=Europe\n|game=lotv\n|type=Online\n|country=World\n|prizepool=420\n|format=2v2<br>Playoffs\n|date=2025-07-02\n|liquipediatier=3|tiertype=2v2\n|map1=Arctic Flowers\n|map2=Breakwater\n|map3=Crimson Research Lab\n|map4=Emerald City\n|map5=Reclamation LE\n|map6=Rhoskallian\n|map7=Rohana\n|map8=Undercurrent\n|map9=Yellowjacket\n|twitch=uthermalsc2\n|twitch2=steadfastsc\n|web=https://tl.net/forum/sc2-tournaments/634467-uthermal-2v2-circuit\n|bracket=https://challonge.com/uthermal2v2w1\n|team_number=\n}}{{TOClimit|2}}\n\n==Format==\n* Single-elimination bracket.\n** All matches are {{abbr/Bo3}}.\n** Finals are {{abbr/Bo5}}.\n* '''Resource Trading Tax''' mod is enabled, with the following settings:\n** Trade Disabled Duration is set to 7 minutes.\n** Tax Percentage is set to 0%.\n\n==Talents==\n{{broadcasterCard\n|position=Host and Commentator\n|b1=uThermal\n}}\n{{broadcasterCard\n|position=Commentator\n|b1=Steadfast\n}}\n\n==Prize Pool==\n{{DuoPrizePool|importLimit=8\n|{{Slot|usdprize=200}}\n|{{Slot|usdprize=100}}\n|{{Slot|place=3-4|usdprize=50}}\n}}\n===Bonus Award===\n{{AwardPrizePool\n|{{Slot|award=Bonus for a Random Team|usdprize=20|{{2Opponent|p1=Brat_OK|p2=MindelVK}}}}\n}}\n\n==Notable Participating Teams==\n{{OpponentList\n|{{2Opponent|p1=Spirit|p2=ShoWTimE}}\n|{{2Opponent|p1=DefMars|p2=ZaRDieNT}}\n|{{2Opponent|p1=Moja|p2=OpTiMiStC}}\n|{{2Opponent|p1=GgMaChine|p2=Shameless}}\n|{{2Opponent|p1=ART|p2=Kinpach|p2flag=ru|p2race=r|p2team=hasu players}}\n|{{2Opponent|p1=Lambo|p2=Harstem}}\n|{{2Opponent|p1=Rob|p2=Dolan}}\n|{{2Opponent|p1=uThermal|p1race=t|p2=goblin}}\n|{{2Opponent|p1=NightPhoenix|p2=Wayne}}\n|{{2Opponent|p1=Brat_OK|p2=MindelVK}}\n|{{2Opponent|p1=trigger|p2=Clem}}\n|{{2Opponent|p1=ErebusBlack|p2=Goswser}}\n|{{2Opponent|p1=Jumy|p2=YoungYakov}}\n|{{2Opponent|p1=DIMAGA|p2=Starfish|p2flag=by|p2race=z}}\n}}\n\n==Results==\n{{Bracket|Bracket/8|id=uTher2v2W1\n\n<!-- Round 1 -->\n|R1M1={{Match|bestof=3\n    |opponent1={{2Opponent|p1=Spirit|p2=ShoWTimE|score=2}}\n    |opponent2={{2Opponent|p1=DefMars|p2=ZaRDieNT|score=0}}\n}}\n|R1M2={{Match\n    |opponent1={{2Opponent|p1=GgMaChine|p2=Shameless|score=2}}\n    |opponent2={{2Opponent|p1=Lambo|p2=Harstem|score=1}}\n}}\n|R1M3={{Match\n    |opponent1={{2Opponent|p1=uThermal|p2=goblin|score=0}}\n    |opponent2={{2Opponent|p1=NightPhoenix|p2=Wayne|score=2}}\n}}\n|R1M4={{Match\n    |opponent1={{2Opponent|p1=trigger|p2=Clem|score=2}}\n    |opponent2={{2Opponent|p1=Jumy|p2=YoungYakov|score=0}}\n}}\n\n<!-- Semifinals -->\n|R2M1={{Match\n    |date=2025-07-02 19:30 {{abbr/CEST}}\n    |twitch=uThermal\n    |opponent1={{2Opponent|p1=Spirit|p2=ShoWTimE}}\n    |opponent2={{2Opponent|p1=GgMaChine|p2=Shameless}}\n    |map1={{Map|map=Emerald City|winner=1}}\n    |map2={{Map|map=Undercurrent|winner=2}}\n    |map3={{Map|map=Rhoskallian|winner=1}}\n}}\n|R2M2={{Match\n    |date=2025-07-02 19:30 {{abbr/CEST}}\n    |twitch=uThermal\n    |opponent1={{2Opponent|p1=NightPhoenix|p2=Wayne}}\n    |opponent2={{2Opponent|p1=trigger|p2=Clem}}\n    |map1={{Map|map=Undercurrent|winner=2}}\n    |map2={{Map|map=Rohana|winner=1}}\n    |map3={{Map|map=Yellowjacket|winner=2}}\n}}\n\n<!-- Grand Final -->\n|R3M1={{Match|bestof=5\n    |date=2025-07-02 20:30 {{abbr/CEST}}\n    |twitch=uThermal\n    |opponent1={{2Opponent|p1=Spirit|p2=ShoWTimE}}\n    |opponent2={{2Opponent|p1=trigger|p2=Clem}}\n    |map1={{Map|map=Breakwater|winner=1}}\n    |map2={{Map|map=Reclamation|winner=1}}\n    |map3={{Map|map=Emerald City|winner=1}}\n}}\n}}\n\n==View Games==\n===Streams===\n* {{Flag|usuk}} [https://www.twitch.tv/uthermalsc2 Official Stream]\n* {{Flag|usuk}} [https://www.twitch.tv/steadfastsc Steadfast]"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "cached_at": "2025-09-04T11:32:21.418834"
+}
