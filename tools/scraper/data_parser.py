@@ -266,8 +266,13 @@ class DataParser:
     # Enhanced wikitext parsing helper methods
     def _extract_match_content(self, wikitext: str, match_id: str) -> str:
         """Extract the content of a specific match block."""
-        start_marker = f"{match_id}={{{{Match"
+        # Try with pipe prefix first (common in tournament brackets)
+        start_marker = f"|{match_id}={{{{Match"
         start_pos = wikitext.find(start_marker)
+        if start_pos == -1:
+            # Fallback to without pipe
+            start_marker = f"{match_id}={{{{Match"
+            start_pos = wikitext.find(start_marker)
         if start_pos == -1:
             return None
         
@@ -287,20 +292,29 @@ class DataParser:
     
     def _extract_opponents(self, match_content: str) -> tuple:
         """Extract opponent information from match content."""
-        # Look for opponent1 and opponent2 patterns - handle race info between p1 and p2
-        opponent1_pattern = r'opponent1=\{\{2Opponent\|p1=([^|]+)(?:\|p1race=[^|]+)?\|p2=([^|}]+)'
-        opponent2_pattern = r'opponent2=\{\{2Opponent\|p1=([^|]+)(?:\|p1race=[^|]+)?\|p2=([^|}]+)'
+        # Extract each opponent section separately to handle complex parameter structures
+        opponent1_section = re.search(r'opponent1=\{\{2Opponent\|([^}]+)\}\}', match_content)
+        opponent2_section = re.search(r'opponent2=\{\{2Opponent\|([^}]+)\}\}', match_content)
         
-        opponent1_match = re.search(opponent1_pattern, match_content)
-        opponent2_match = re.search(opponent2_pattern, match_content)
-        
-        if not opponent1_match or not opponent2_match:
+        if not opponent1_section or not opponent2_section:
             return None
         
-        p1_1 = opponent1_match.group(1)
-        p1_2 = opponent1_match.group(2)
-        p2_1 = opponent2_match.group(1)
-        p2_2 = opponent2_match.group(2)
+        # Extract p1 and p2 from each section
+        opp1_content = opponent1_section.group(1)
+        opp2_content = opponent2_section.group(1)
+        
+        p1_1_match = re.search(r'p1=([^|]+)', opp1_content)
+        p1_2_match = re.search(r'p2=([^|]+)', opp1_content)
+        p2_1_match = re.search(r'p1=([^|]+)', opp2_content)
+        p2_2_match = re.search(r'p2=([^|]+)', opp2_content)
+        
+        if not all([p1_1_match, p1_2_match, p2_1_match, p2_2_match]):
+            return None
+        
+        p1_1 = p1_1_match.group(1)
+        p1_2 = p1_2_match.group(1)
+        p2_1 = p2_1_match.group(1)
+        p2_2 = p2_2_match.group(1)
         
         return (p1_1, p1_2, p2_1, p2_2)
     
