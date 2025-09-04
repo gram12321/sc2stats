@@ -209,6 +209,11 @@ class SC2Scraper:
         all_matches = []
         
         for slug in tournament_slugs:
+            # Clear parser caches to avoid conflicts between tournaments
+            self.parser.players_cache.clear()
+            self.parser.teams_cache.clear()
+            logger.info(f"🧹 Cleared parser caches for {slug}")
+            
             tournament_data = self.scrape_tournament(slug)
             if tournament_data:
                 all_tournaments.append(tournament_data["tournament"])

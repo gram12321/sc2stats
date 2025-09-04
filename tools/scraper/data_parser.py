@@ -96,15 +96,17 @@ class DataParser:
                 team1 = self._get_or_create_team(f"{player1_1.name} + {player1_2.name}", player1_1, player1_2)
                 team2 = self._get_or_create_team(f"{player2_1.name} + {player2_2.name}", player2_1, player2_2)
                 
-                # For duplicate match IDs, add group suffix to distinguish Group A from Group B
-                final_match_id = match_id
+                # Make match IDs unique across tournaments by prefixing with tournament slug
+                # Also handle duplicate match IDs within the same tournament (Group A vs Group B)
+                final_match_id = f"{tournament.liquipedia_slug.replace('/', '_')}_{match_id}"
+                
                 if match_id in [m.match_id for m in tournament.matches]:
-                    # This is a duplicate ID - likely Group A vs Group B
+                    # This is a duplicate ID within the same tournament - likely Group A vs Group B
                     if match_id.startswith('M') and match_id[1:].isdigit():
                         # Determine if this is Group A or Group B based on position in the list
                         # First 18 M matches are Group A, second 18 are Group B
                         group_suffix = 'A' if i < 18 else 'B'  # More precise group detection
-                        final_match_id = f"{group_suffix}_{match_id}"
+                        final_match_id = f"{tournament.liquipedia_slug.replace('/', '_')}_{group_suffix}_{match_id}"
                         logger.debug(f"🔄 Renamed duplicate {match_id} to {final_match_id} (position {i})")
                 
                 # Create unique key AFTER determining final match ID
@@ -342,7 +344,7 @@ class DataParser:
         games = self._extract_games_from_content(match_content, team1, team2)
         match.games = games
         
-        # Determine winner based on games
+        # Determine winner based on games or summary scores
         if games:
             team1_wins = sum(1 for game in games if game.winner == team1)
             team2_wins = sum(1 for game in games if game.winner == team2)
@@ -351,6 +353,26 @@ class DataParser:
                 match.winner = team1
             elif team2_wins > team1_wins:
                 match.winner = team2
+            elif team1_wins == 0 and team2_wins == 0:
+                # No individual game winners determined (summary scores only)
+                # Extract winner from summary scores
+                score1_pattern = r'opponent1=\{\{2Opponent\|[^}]*?\|score=(\d+)\}\}'
+                score2_pattern = r'opponent2=\{\{2Opponent\|[^}]*?\|score=(\d+)\}\}'
+                
+                score1_match = re.search(score1_pattern, match_content)
+                score2_match = re.search(score2_pattern, match_content)
+                
+                if score1_match and score2_match:
+                    try:
+                        score1 = int(score1_match.group(1))
+                        score2 = int(score2_match.group(1))
+                        
+                        if score1 > score2:
+                            match.winner = team1
+                        elif score2 > score1:
+                            match.winner = team2
+                    except (ValueError, IndexError):
+                        pass
         
         return match
     
@@ -429,7 +451,7 @@ class DataParser:
                     continue
         
         else:
-            # Fallback: If no detailed maps found, try to create placeholder games based on scores
+            # Fallback: If no detailed maps found, try to create games based on summary scores
             logger.debug("No detailed maps found, attempting to extract from summary scores")
             
             # Extract scores from opponent entries
@@ -447,29 +469,29 @@ class DataParser:
                     
                     logger.debug(f"Found summary scores: {score1}-{score2} (total {total_games} games)")
                     
-                    # Create placeholder games based on the scores
+                    # Create games based on the scores - but don't assume order
+                    # We'll create placeholder games with the correct final score
                     if total_games > 0:
-                        winner_team = team1 if score1 > score2 else team2
-                        
-                        # Create games alternating winners to match the final score
+                        # Create games with unknown individual results but correct final score
                         for game_num in range(1, total_games + 1):
-                            # Simple logic: assign wins to reach the final score
-                            if score1 > score2:
-                                # Team1 won, so give them wins up to their score
-                                game_winner = team1 if game_num <= score1 else team2
-                            else:
-                                # Team2 won, so give them wins up to their score  
-                                game_winner = team2 if game_num <= score2 else team1
-                            
+                            # We can't determine individual game winners from summary scores
+                            # So we'll create games with null winners but correct total count
                             game = Game(
                                 game_number=game_num,
                                 map_name="Unknown Map",  # No map info available
-                                winner=game_winner,
+                                winner=None,  # Can't determine individual game winners
                                 duration_seconds=None
                             )
                             games.append(game)
+                        
+                        # Set the match winner based on the final score
+                        # This will be used by the match creation logic
+                        logger.debug(f"Created {total_games} placeholder games for score {score1}-{score2}")
                             
                 except (ValueError, IndexError):
                     logger.debug("Could not parse summary scores")
+            else:
+                logger.warning(f"No detailed maps or summary scores found for match. Skipping game creation.")
+                logger.debug(f"Match content (first 200 chars): {match_content[:200]}")
         
         return games
