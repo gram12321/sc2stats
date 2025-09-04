@@ -11,8 +11,10 @@ from typing import Optional
 from dataclasses import dataclass
 try:
     from dotenv import load_dotenv  # type: ignore
-    # Load environment variables
-    load_dotenv()
+    # Load environment variables from project root
+    project_root = Path(__file__).parent.parent.parent
+    env_path = project_root / '.env'
+    load_dotenv(env_path)
 except ImportError:
     # python-dotenv not installed, continue without it
     pass
