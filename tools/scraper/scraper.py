@@ -330,7 +330,7 @@ class SC2Scraper:
         
 
 def main():
-    """Scrape UThermal tournament with automatic subevent detection."""
+    """Scrape UThermal tournament with automatic subevent detection - ALL subevents."""
     print("Enhanced SC2 Tournament Scraper with Subevent Detection")
     print("=" * 60)
     
@@ -345,34 +345,15 @@ def main():
         print(f"🔍 Finding subevents for {tournament_series}...")
         subevents = scraper.find_subevents(tournament_series)
         
-        # Step 2: Filter to only main event and January (as requested)
+        # Step 2: Add all discovered subevents (including Main Event from API)
         target_tournaments = []
         
-        # Add main event
-        main_event_slug = f"{tournament_series}/Main_Event"
-        target_tournaments.append(main_event_slug)
-        print(f"✅ Added: {main_event_slug}")
-        
-        # Add January subevent (look for "1" which corresponds to January)
-        january_found = False
+        # Add all discovered subevents - no hardcoding, use what API finds
+        print(f"🔍 Adding all discovered subevents (including Main Event)...")
         for subevent in subevents:
-            if subevent == "1":  # January subevent
-                january_slug = f"{tournament_series}/{subevent}"
-                target_tournaments.append(january_slug)
-                print(f"✅ Added: {january_slug}")
-                january_found = True
-                break
-        
-        # If January not found in detected subevents, try to fetch it directly
-        if not january_found:
-            print("🔍 January not found in subevents, checking directly...")
-            january_slug = f"{tournament_series}/1"
-            january_content = scraper.client.get_page_content(january_slug)
-            if january_content and len(january_content) > 1000:  # Basic check for valid content
-                target_tournaments.append(january_slug)
-                print(f"✅ Added: {january_slug} (found directly)")
-            else:
-                print("⚠️  Warning: Could not find January subevent, proceeding with main event only")
+            subevent_slug = f"{tournament_series}/{subevent}"
+            target_tournaments.append(subevent_slug)
+            print(f"✅ Added: {subevent_slug}")
         
         print(f"\n🎯 Scraping {len(target_tournaments)} tournaments:")
         for slug in target_tournaments:

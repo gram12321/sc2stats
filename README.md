@@ -91,7 +91,7 @@ Liquipedia API → Subevent Detection → Enhanced Scraper → JSON Export → S
 - **Maintained 100% functionality** with cleaner architecture
 
 ### 🎯 **Key Features**
-- **59 matches successfully scraped** from UThermal 2v2 Circuit
+- **59 matches successfully scraped** from UThermal 2v2 Circuit (Main Event + January)
 - **Automatic subevent detection** for Main Event + January
 - **Dynamic team creation** with player order normalization
 - **Unique match ID generation** across tournaments
