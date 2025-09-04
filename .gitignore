@@ -26,7 +26,15 @@ __pycache__/
 venv/
 ENV/
 env/
+
+# Environment files
 .env
+.env.*
+**/.env
+**/.env.*
+!.env.*.example
+!**/.env.*.example
+tools/scraper/.env
 
 # Cache directories
 cache/
