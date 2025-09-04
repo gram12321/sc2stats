@@ -7,10 +7,37 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Dependencies
 node_modules
+package-lock.json
+
+# Build outputs
 dist
 dist-ssr
 *.local
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+ENV/
+env/
+.env
+
+# Cache directories
+cache/
+.cache/
+tools/scraper/cache/
+tools/scraper/__pycache__/
+
+# Temporary files
+*.tmp
+*.temp
+temp_data.json
 
 # Editor directories and files
 .vscode/*
@@ -22,3 +49,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+coverage
+
+# Output directories
+output/
+*.json.backup

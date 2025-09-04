@@ -146,7 +146,7 @@ class SupabaseDatabaseInserter:
         
         try:
             self.client = create_client(self.supabase_url, self.supabase_key)
-            logger.info("✅ Connected to Supabase database")
+            logger.info("Connected to Supabase database")
         except Exception as e:
             logger.error(f"Failed to connect to database: {e}")
             raise DatabaseError(f"Database connection failed: {e}")
@@ -373,7 +373,7 @@ def _process_tournament_data(inserter: SupabaseDatabaseInserter, tournament_data
         _insert_matches_and_games(inserter, tournament_data, tournament_id_map, 
                                  default_tournament_id, player_id_map, team_id_map)
         
-        logger.info("✅ Tournament data successfully inserted into database")
+        logger.info("Tournament data successfully inserted into database")
         return True
         
     except Exception as e:

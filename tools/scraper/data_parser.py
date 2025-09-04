@@ -60,7 +60,7 @@ class DataParser:
     
     def parse_matches_from_wikitext(self, tournament: Tournament, wikitext: str) -> None:
         """Parse matches from wikitext content using enhanced parsing."""
-        logger.debug("🔍 Parsing matches from wikitext...")
+        logger.debug("Parsing matches from wikitext...")
         
         # Find all match blocks first
         match_block_pattern = r'(\w+)=\{\{Match'
@@ -101,7 +101,7 @@ class DataParser:
                     processed_matches[unique_key] = match
                     tournament.matches.append(match)
                     existing_match_ids.add(match_id)
-                    logger.debug(f"✅ Parsed match {final_match_id}: {team1.name} vs {team2.name}")
+                    logger.debug(f"Parsed match {final_match_id}: {team1.name} vs {team2.name}")
                 
             except Exception as e:
                 logger.warning(f"⚠️ Failed to parse match {match_id}: {e}")
@@ -110,7 +110,7 @@ class DataParser:
         tournament.players.update(self.players_cache.values())
         tournament.teams.update(self.teams_cache.values())
         
-        logger.debug(f"📊 Parsed {len(tournament.matches)} matches, {len(tournament.players)} players, {len(tournament.teams)} teams")
+        logger.debug(f"Parsed {len(tournament.matches)} matches, {len(tournament.players)} players, {len(tournament.teams)} teams")
     
     def _parse_infobox(self, wikitext: str) -> Dict[str, str]:
         """Parse the tournament infobox from wikitext."""

@@ -1,10 +1,30 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { useOverallStats } from '@/hooks/useData'
-import { Trophy, Users, UserCheck, BarChart3, TrendingUp, Calendar } from 'lucide-react'
+import { 
+  AlertDialog, 
+  AlertDialogAction, 
+  AlertDialogCancel, 
+  AlertDialogContent, 
+  AlertDialogDescription, 
+  AlertDialogFooter, 
+  AlertDialogHeader, 
+  AlertDialogTitle, 
+  AlertDialogTrigger 
+} from '@/components/ui/alert-dialog'
+import { useOverallStats, useScraperActions } from '@/hooks/useData'
+import { Trophy, Users, UserCheck, BarChart3, TrendingUp, Calendar, Database, RefreshCw, Trash2 } from 'lucide-react'
 
 export default function Dashboard() {
   const { stats, loading, error } = useOverallStats()
+  const { 
+    clearDatabase, 
+    runScraper, 
+    clearAndRun, 
+    isClearing, 
+    isRunning, 
+    actionError, 
+    actionSuccess 
+  } = useScraperActions()
 
   if (loading) {
     return (
@@ -153,20 +173,98 @@ export default function Dashboard() {
       {/* Data Source Info */}
       <Card>
         <CardHeader>
-          <CardTitle>Data Source</CardTitle>
+          <CardTitle className="flex items-center space-x-2">
+            <Database className="h-5 w-5" />
+            <span>Data Management</span>
+          </CardTitle>
           <CardDescription>
             Tournament data is automatically scraped from Liquipedia and stored in Supabase
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center justify-between">
-            <div className="space-y-1">
-              <p className="text-sm font-medium">Last Updated</p>
-              <p className="text-sm text-muted-foreground">
-                Data is refreshed automatically when new tournaments are detected
-              </p>
+          <div className="space-y-4">
+            {/* Status Messages */}
+            {actionSuccess && (
+              <div className="p-3 bg-green-50 border border-green-200 rounded-md">
+                <pre className="text-sm text-green-700 whitespace-pre-wrap font-mono">{actionSuccess}</pre>
+              </div>
+            )}
+            {actionError && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+                <p className="text-sm text-red-700">{actionError}</p>
+              </div>
+            )}
+            
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <p className="text-sm font-medium">Database Controls</p>
+                <p className="text-sm text-muted-foreground">
+                  Clear existing data and refresh from Liquipedia
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="outline" size="sm" disabled={isClearing || isRunning}>
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Clear Database
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Clear Database</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This will permanently delete all tournament data, matches, players, and teams. 
+                        This action cannot be undone.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={clearDatabase} className="bg-red-600 hover:bg-red-700">
+                        {isClearing ? 'Clearing...' : 'Clear Database'}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={runScraper}
+                  disabled={isClearing || isRunning}
+                >
+                  <RefreshCw className={`h-4 w-4 mr-2 ${isRunning ? 'animate-spin' : ''}`} />
+                  {isRunning ? 'Running...' : 'Run Scraper'}
+                </Button>
+
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button 
+                      size="sm" 
+                      disabled={isClearing || isRunning}
+                    >
+                      <Database className="h-4 w-4 mr-2" />
+                      Clear & Rescrape
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Clear Database and Rescrape</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This will delete all existing data and then run the scraper to fetch fresh 
+                        tournament data from Liquipedia. This process may take several minutes.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={clearAndRun}>
+                        {isClearing || isRunning ? 'Processing...' : 'Clear & Rescrape'}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
             </div>
-            <Button variant="outline">Refresh Data</Button>
           </div>
         </CardContent>
       </Card>

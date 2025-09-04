@@ -77,15 +77,14 @@ export interface TournamentStats {
 }
 
 export interface PlayerStats {
-  player: Player
-  tournaments_played: number
+  player_name: string
+  nationality?: string
+  preferred_race?: string
   total_matches: number
-  matches_won: number
-  total_games: number
-  games_won: number
-  win_rate: number
-  partners: Player[]
-  favorite_maps: string[]
+  wins: number
+  losses: number
+  win_percentage: number
+  teammates: string
 }
 
 export interface TeamStats {

@@ -17,7 +17,8 @@ applyTo: '**'
 - Do not use `npm run dev` unless specifically told to. The user already has a dev server running.
 - Use named imports; avoid default exports.
 - Use ES `import` modules, not `require`.
-- Place imports at the top of each file; no inline imports.
+- Place imports at the top of each file; no inline imports.¨
+- Do not use emojis in scripts or code comments.
 
 ### ✅ Key AI Code & Architecture Rules
 

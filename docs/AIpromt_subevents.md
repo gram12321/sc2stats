@@ -2,9 +2,9 @@ We have succesfully create a @scraper.py  that scrapes data from liquidpedia tou
 
 Liquidpedia is build in a way that a tournament page like this, can have multiple sub events. We have succesfully create a scraper that can automaticlkly detect and scrape all event including subevents 
 
-We are ready to move on to next phase in the development, which is to create a webinterface for displaying the results/analyses. As descriped in the @readme.md we will use react/vite, typescript, ShadCN. 
+We have created a webinterface for displaying the results/analyses. As descriped in the @readme.md we use react/vite, typescript, ShadCN. 
+
+Next task is to actually display something. 
 
 task is:
-1. Make sure we have all dependencies needed
-2. Create the initial layout for the webinterface.
-3. Succesfully run a developer view (npm run dev.)
+1. Lets make a list of all players with thier number of matches, win/loss and teammates 

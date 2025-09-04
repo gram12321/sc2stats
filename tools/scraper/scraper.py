@@ -46,7 +46,7 @@ class SC2Scraper:
         Returns:
             List of subevent slugs relative to the series
         """
-        logger.debug(f"🔍 Finding subevents for {tournament_series} using MediaWiki API")
+        logger.debug(f"Finding subevents for {tournament_series} using MediaWiki API")
         
         # Use MediaWiki API to find all pages with the tournament series prefix
         api_subevents = self._find_subevents_via_api(tournament_series)
@@ -54,7 +54,7 @@ class SC2Scraper:
         # Filter out non-tournament pages
         tournament_subevents = self._filter_tournament_pages(tournament_series, set(api_subevents))
         
-        logger.debug(f"✅ Found {len(tournament_subevents)} tournament subevents: {sorted(tournament_subevents)}")
+        logger.debug(f"Found {len(tournament_subevents)} tournament subevents: {sorted(tournament_subevents)}")
         return sorted(tournament_subevents)
     
     def _find_subevents_via_api(self, tournament_series: str) -> List[str]:
@@ -129,7 +129,7 @@ class SC2Scraper:
         
         tournament_subevents = []
         
-        logger.debug(f"🔍 Filtering {len(subevents)} potential subevents...")
+        logger.debug(f"Filtering {len(subevents)} potential subevents...")
         
         for subevent in subevents:
             # Skip if it matches non-tournament patterns
@@ -149,7 +149,7 @@ class SC2Scraper:
                 else:
                     logger.debug(f"  📄 Not a tournament: {subevent}")
             except Exception as e:
-                logger.warning(f"  ❌ Error checking {subevent}: {e}")
+                logger.warning(f"  ERROR: Error checking {subevent}: {e}")
         
         return tournament_subevents
     
@@ -356,7 +356,7 @@ def main():
         # Scrape all tournaments
         combined_data = _scrape_all_tournaments(scraper, tournament_series)
         if not combined_data:
-            print("❌ Failed to scrape tournament data")
+            print("FAILED: Failed to scrape tournament data")
             return
         
         # Show summary and save data
@@ -367,7 +367,7 @@ def main():
         _attempt_database_insertion(json_file_path)
         
     except Exception as e:
-        print(f"❌ Scraping failed: {e}")
+        print(f"FAILED: Scraping failed: {e}")
         import traceback
         traceback.print_exc()
 
@@ -384,7 +384,7 @@ def _scrape_all_tournaments(scraper: SC2Scraper, tournament_series: str) -> dict
 
 def _show_scraping_summary(combined_data: dict) -> None:
     """Display scraping summary and match distribution."""
-    print(f"\n📈 Scraping Summary:")
+    print(f"\nScraping Summary:")
     print(f"   Tournaments: {len(combined_data['tournaments'])}")
     print(f"   Players: {len(combined_data['players'])}")
     print(f"   Teams: {len(combined_data['teams'])}")
@@ -419,14 +419,14 @@ def _attempt_database_insertion(json_file_path: str) -> None:
         success = insert_tournament_data(json_file_path, config)
         
         if success:
-            print(f"✅ Database insertion completed successfully!")
+            print(f"SUCCESS: Database insertion completed successfully!")
             print(f"   All tournaments and their data have been inserted")
         else:
             print(f"⚠️  Database insertion skipped or failed.")
             print(f"   Data is ready in {json_file_path} for MCP-based insertion")
             
     except Exception as e:
-        print(f"❌ Direct database connection failed: {str(e)[:100]}...")
+        print(f"FAILED: Direct database connection failed: {str(e)[:100]}...")
         print(f"   This is expected if Supabase doesn't allow direct PostgreSQL connections")
         print(f"   Data is ready in {json_file_path} for MCP-based insertion")
         logging.debug(f"Database insertion failed: {e}", exc_info=True)
