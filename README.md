@@ -1,12 +1,19 @@
 # SC2 2v2 Stats Scraper
 
-A robust web scraper for Liquipedia tournament data that extracts StarCraft 2 2v2 tournament information and stores it in a Supabase PostgreSQL database.
+A comprehensive tournament analysis platform that scrapes StarCraft 2 2v2 tournament data from Liquipedia and provides real-time data visualization through a modern React web interface.
 
 ## Overview
 
 This scraper system provides comprehensive data extraction for SC2 2v2 tournaments from Liquipedia, with features like automatic subevent detection, intelligent caching, and efficient database integration. **The system automatically discovers and scrapes all subevents within a tournament series, ensuring complete data coverage.**
 
 ## Features
+
+### 🌐 **Modern Web Interface**
+- **React 18 + TypeScript** for type-safe frontend development
+- **ShadCN UI Components** with Tailwind CSS for professional design
+- **Real-time Data Updates** via Supabase subscriptions
+- **Responsive Dashboard** with tournament statistics and analytics
+- **Interactive Charts** and data visualization components
 
 ### 🚀 **Performance & Scalability**
 - **Automatic subevent detection** using MediaWiki API
@@ -35,60 +42,54 @@ This scraper system provides comprehensive data extraction for SC2 2v2 tournamen
 ### 🗄️ **Database Integration**
 - **JSON export** for data persistence and transfer
 - **Supabase Python client** for efficient data insertion
+- **Real-time subscriptions** for live frontend updates
 - **Structured data persistence** in PostgreSQL tables
 - **Data validation** and integrity checks
-- **Team normalization** for consistent player ordering
-
-### 🔧 **Configuration & Monitoring**
-- **Environment-based configuration**
-- **Detailed logging** with configurable levels
-- **Performance metrics** and statistics
-- **Session reporting** and analysis
 
 ## Architecture
 
 ```
-Enhanced SC2 Scraper
-├── Subevent Detection
-│   ├── MediaWiki API integration
-│   ├── Generic page discovery
-│   └── Intelligent filtering
-├── Data Processing
-│   ├── Wikitext parsing
-│   ├── Match extraction
-│   └── Team normalization
-├── Caching Layer
-│   ├── In-memory TTL cache
-│   ├── Persistent file storage
-│   └── Cache validation and cleanup
-├── Database Layer
-│   ├── Supabase Python client
-│   ├── Dynamic team creation
-│   ├── Schema management
-│   └── Transaction handling
-└── Output Management
-    ├── Database persistence
-    ├── Statistics and reporting
-    └── Error tracking and analysis
+SC2 Tournament Analysis Platform
+├── Frontend (React/TypeScript)
+│   ├── Dashboard & Analytics
+│   ├── Tournament Browser
+│   ├── Player/Team Statistics
+│   └── Real-time Data Updates
+├── Backend Scraper (Python)
+│   ├── Subevent Detection
+│   ├── Data Processing
+│   ├── Caching Layer
+│   └── Database Integration
+└── Database (Supabase)
+    ├── Tournament Data
+    ├── Match Results
+    ├── Player Statistics
+    └── Real-time Subscriptions
 ```
 
 ## Data Flow
 
 ```
-Liquipedia API → Subevent Detection → Enhanced Scraper → JSON Export → Supabase Client → Supabase Database
+Liquipedia API → Subevent Detection → Enhanced Scraper → JSON Export → Supabase Database → React Frontend
      ↓                    ↓                    ↓              ↓              ↓              ↓
-  Raw Data          Tournament Series    Cached Data    Structured    Bulk Insertion    Data Storage
-  Extraction        Discovery           Management      Data         via Supabase      for Web Apps
+  Raw Data          Tournament Series    Cached Data    Structured     Real-time        Interactive
+  Extraction        Discovery           Management      Data         Subscriptions     Visualization
 ```
 
 ## Recent Improvements
+
+### 🌐 **Complete Frontend Implementation (v0.0004)**
+- **Modern React Stack**: React 18, TypeScript, Vite 7.1.4 for optimal development experience
+- **Professional UI**: ShadCN component library with Tailwind CSS v4 for consistent design
+- **Real-time Dashboard**: Live tournament statistics with interactive data visualization
+- **Type-Safe Development**: Complete TypeScript coverage for database and UI components
+- **Development Server**: Fully functional at `http://localhost:5173/` with hot reload
 
 ### 🧹 **Major Code Cleanup (v0.00032c)**
 - **Eliminated duplicate code** across all three core modules
 - **Consolidated team normalization** logic into single helper functions
 - **Removed unused methods** and redundant code patterns
 - **Improved code readability** and maintainability
-- **Maintained 100% functionality** with cleaner architecture
 
 ### 🔧 **Terminal Logging Optimization (v0.00032b)**
 - **Reduced verbose terminal output** for better user experience
@@ -98,10 +99,31 @@ Liquipedia API → Subevent Detection → Enhanced Scraper → JSON Export → S
 
 ### 🎯 **Key Features**
 - **199 matches successfully scraped** from all 12 UThermal 2v2 Circuit tournaments
+- **Complete web interface** with real-time data visualization and analytics
 - **Automatic subevent detection** for complete tournament series coverage
 - **Dynamic team creation** with player order normalization
-- **Unique match ID generation** across tournaments
-- **Clean terminal output** with summary-focused logging
+- **Professional UI/UX** with responsive design and interactive components
+
+## Technology Stack
+
+### Frontend
+- **React 18** with TypeScript for type-safe development
+- **Vite 7.1.4** for fast development and optimized builds
+- **Tailwind CSS v4** for modern, responsive styling
+- **ShadCN UI** for professional component library
+- **React Router** for seamless navigation
+
+### Backend
+- **Python 3.x** with robust scraping capabilities
+- **Supabase Python Client** for database operations
+- **MediaWiki API** for intelligent data discovery
+- **Advanced caching** with TTL and file persistence
+
+### Database
+- **Supabase PostgreSQL** with real-time subscriptions
+- **Structured schema** for tournaments, matches, players, teams
+- **Row Level Security** for data protection
+- **Real-time updates** for live frontend synchronization
 
 ## Configuration Options
 
@@ -129,51 +151,58 @@ The scraper populates the following Supabase tables:
 
 ## Architecture Decision
 
-**Why Supabase Python Client?**
+**Why Supabase + React Frontend?**
 
-The scraper uses the Supabase Python client instead of direct PostgreSQL connections for the following reasons:
+The platform uses Supabase with a React frontend for the following reasons:
 
+**Backend (Python Scraper + Supabase):**
 - **Simplicity**: Leverages Supabase's built-in authentication and security
 - **Reliability**: Handles connection pooling and retries automatically
 - **Security**: Uses Supabase's RLS policies and authentication
-- **Maintenance**: Easier to maintain and update
+- **Real-time**: Built-in subscriptions for live data updates
 
-**Frontend Integration**
-
-The React frontend will use the Supabase client for:
-- Data fetching and real-time subscriptions
-- User authentication and RLS policies
-- Client-side data manipulation (filtering, sorting, graph redrawing)
+**Frontend (React + TypeScript):**
+- **Modern Development**: Type-safe development with excellent tooling
+- **Real-time Updates**: Instant data synchronization via Supabase subscriptions
+- **Component Architecture**: Reusable UI components with ShadCN design system
+- **Performance**: Optimized builds and hot reload for development
 
 ## File Structure
 
 ```
-tools/scraper/
-├── __init__.py              # Package initialization
-├── scraper_config.py        # Configuration management
-├── liquipedia_client.py     # MediaWiki API client with caching
-├── data_models.py           # Data structures and models
-├── data_parser.py           # Wikitext parser for tournament data
-├── scraper.py               # Main scraper with subevent detection
-├── database_inserter.py     # Supabase database integration
-├── database_schema.py       # Database schema definitions (in docs/)
-├── cache/                   # Cached API responses
-└── README.md                # This file
+sc2stats/
+├── src/                     # React Frontend
+│   ├── components/ui/       # ShadCN UI components
+│   ├── pages/              # Main application pages
+│   ├── hooks/              # Custom React hooks for data
+│   ├── lib/                # Utilities and Supabase client
+│   └── types/              # TypeScript type definitions
+├── tools/scraper/          # Python Backend
+│   ├── scraper.py          # Main scraper with subevent detection
+│   ├── data_parser.py      # Wikitext parser for tournament data
+│   ├── database_inserter.py # Supabase database integration
+│   ├── liquipedia_client.py # MediaWiki API client with caching
+│   ├── data_models.py      # Data structures and models
+│   └── cache/              # Cached API responses
+└── docs/                   # Documentation and schema
+```
+
 ```
 
 ## Current Status
 
 - **✅ Scraper**: Fully implemented with automatic subevent detection and clean code architecture
 - **✅ Database**: Fully integrated with Supabase Python client and optimized insertion
+- **✅ Frontend**: Complete React application with TypeScript, ShadCN UI, and real-time data
 - **✅ Data Parsing**: Comprehensive wikitext parsing for all match types with enhanced error handling
 - **✅ Team Management**: Dynamic team creation with normalization and duplicate prevention
 - **✅ Code Quality**: Clean, maintainable codebase with proper separation of concerns
-- **🚧 Frontend**: Not yet implemented
-- **🚧 Analytics**: Basic data available, advanced features planned
+- **🚧 Analytics**: Advanced statistical analysis and visualization features planned
+- **🚧 User Authentication**: Multi-user support and personalized dashboards planned
 
 ### 🔮 **Next Steps**
-- React frontend development
-- Real-time data subscriptions
-- Advanced analytics dashboard
-- Additional tournament support
-- Player and team statistics aggregation
+- Advanced analytics dashboard with statistical insights
+- User authentication and personalized tournament tracking
+- Additional tournament series support (GSL, ESL, etc.)
+- Player performance tracking and ranking systems
+- Team composition analysis and win rate statistics

@@ -1,7 +1,7 @@
 Great everything seems to work. Lets update our docs. 
  @docs/versionlog.md
  @readme.md
- @.cursor/rules/airules.mdc
+ @.cursor/rules/ai-agent.rule.mdc/airulesVS.instructions.md and  @.cursor/rules/airules.mdc These two should be identical 
 
 ## Rules vs readme.
 Try to keep rules clean of additional info, just AI rules. 
