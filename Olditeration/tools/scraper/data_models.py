@@ -104,6 +104,8 @@ class Match:
     match_date: Optional[datetime] = None
     games: List[Game] = field(default_factory=list)
     stage: Optional[str] = None  # Bracket stage (e.g., "Finals", "Semifinals")
+    team1_score: int = 0  # Direct score from Liquipedia
+    team2_score: int = 0  # Direct score from Liquipedia
     
     def add_game(self, game: Game):
         """Add a game to this match."""
@@ -112,11 +114,20 @@ class Match:
     @property
     def score(self) -> str:
         """Get the current score as a string (e.g., "2-1")."""
+        # Use direct scores if available (from summary format), otherwise calculate from games
+        if self.team1_score > 0 or self.team2_score > 0:
+            return f"{self.team1_score}-{self.team2_score}"
+        
         if not self.games:
             return "0-0"
         
         team1_wins = sum(1 for game in self.games if game.winner == self.team1)
         team2_wins = sum(1 for game in self.games if game.winner == self.team2)
+        
+        # Update the score fields based on games if they weren't set
+        self.team1_score = team1_wins
+        self.team2_score = team2_wins
+        
         return f"{team1_wins}-{team2_wins}"
 
 

@@ -73,8 +73,8 @@ def load_scraper_config() -> ScraperConfig:
             "LIQUIPEDIA_API_URL", 
             "https://liquipedia.net/starcraft2/api.php"
         ),
-        rate_limit_delay=float(os.getenv("RATE_LIMIT_DELAY", "1.0")),
-        max_retries=int(os.getenv("MAX_RETRIES", "5")),
+        rate_limit_delay=float(os.getenv("RATE_LIMIT_DELAY", "2.0")),  # Increased from 1.0
+        max_retries=int(os.getenv("MAX_RETRIES", "7")),  # Increased from 5
         
         # Caching settings
         cache_ttl=int(os.getenv("CACHE_TTL", "3600")),  # 1 hour

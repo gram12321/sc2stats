@@ -267,7 +267,7 @@ class SupabaseDatabaseInserter:
         }
         
         # Add optional fields
-        for field in ["round", "best_of", "winner_id", "status", "match_date"]:
+        for field in ["round", "best_of", "winner_id", "status", "match_date", "team1_score", "team2_score"]:
             if field in kwargs and kwargs[field] is not None:
                 data[field] = kwargs[field]
         
@@ -487,7 +487,9 @@ def _insert_single_match(inserter: SupabaseDatabaseInserter, match: dict,
         team2_id=team2_id,
         best_of=match.get('best_of'),
         winner_id=winner_id,
-        status=match.get('status', 'completed')
+        status=match.get('status', 'completed'),
+        team1_score=match.get('team1_score', 0),
+        team2_score=match.get('team2_score', 0)
     )
     
     # Insert games

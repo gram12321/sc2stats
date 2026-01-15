@@ -41,6 +41,7 @@ cache/
 .cache/
 tools/scraper/cache/
 tools/scraper/__pycache__/
+.vite/
 
 # Temporary files
 *.tmp

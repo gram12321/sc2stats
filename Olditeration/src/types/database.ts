@@ -45,6 +45,11 @@ export interface Match {
   match_date?: string
   created_at: string
   updated_at: string
+  // Score fields from database
+  team1_score?: number
+  team2_score?: number
+  // Calculated fields
+  score?: string
   // Joined data
   tournament?: Tournament
   team1?: Team

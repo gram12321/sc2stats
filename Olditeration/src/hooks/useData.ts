@@ -112,7 +112,7 @@ export function useTournamentStats() {
   return { stats, loading, error }
 }
 
-// Hook for fetching matches with full details
+// Hook for fetching matches with full details and hybrid score calculation
 export function useMatches(tournamentId?: string) {
   const [matches, setMatches] = useState<Match[]>([])
   const [loading, setLoading] = useState(true)
@@ -123,7 +123,41 @@ export function useMatches(tournamentId?: string) {
       try {
         setLoading(true)
         
-        let query = supabase
+        // First get matches with calculated scores using our database function
+        const { data: matchesWithScores, error: scoresError } = await supabase
+          .rpc('get_matches_with_scores', { tournament_id_param: tournamentId || null })
+
+        if (scoresError) throw scoresError
+
+        // Type the RPC response
+        type MatchWithScore = {
+          id: string
+          tournament_id: string
+          match_id: string
+          team1_id: string
+          team2_id: string
+          winner_id?: string
+          best_of: number
+          status: string
+          match_date?: string
+          created_at: string
+          updated_at: string
+          team1_score: number
+          team2_score: number
+          score: string
+        }
+
+        const typedMatchesWithScores = matchesWithScores as MatchWithScore[]
+
+        // Then fetch the full related data for each match
+        const matchIds = (typedMatchesWithScores || []).map(m => m.id)
+        
+        if (matchIds.length === 0) {
+          setMatches([])
+          return
+        }
+
+        const { data: fullMatches, error: fullError } = await supabase
           .from('matches')
           .select(`
             *,
@@ -145,16 +179,23 @@ export function useMatches(tournamentId?: string) {
             ),
             games(*)
           `)
+          .in('id', matchIds)
           .order('match_date', { ascending: false })
 
-        if (tournamentId) {
-          query = query.eq('tournament_id', tournamentId)
-        }
+        if (fullError) throw fullError
 
-        const { data, error } = await query
+        // Merge the score data with the full match data
+        const matchesWithFullData = (fullMatches || []).map(match => {
+          const scoreData = typedMatchesWithScores?.find(s => s.id === match.id)
+          return {
+            ...match,
+            team1_score: scoreData?.team1_score || 0,
+            team2_score: scoreData?.team2_score || 0,
+            score: scoreData?.score || '0-0'
+          }
+        })
 
-        if (error) throw error
-        setMatches(data || [])
+        setMatches(matchesWithFullData)
       } catch (err) {
         setError(err instanceof Error ? err.message : 'An error occurred')
       } finally {

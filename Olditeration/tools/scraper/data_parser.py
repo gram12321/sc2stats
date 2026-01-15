@@ -380,6 +380,10 @@ class DataParser:
                         score1 = int(score1_match.group(1))
                         score2 = int(score2_match.group(1))
                         
+                        # Store the scores in the match
+                        match.team1_score = score1
+                        match.team2_score = score2
+                        
                         if score1 > score2:
                             match.winner = team1
                         elif score2 > score1:

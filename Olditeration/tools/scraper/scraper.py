@@ -62,13 +62,7 @@ class SC2Scraper:
         logger.debug(f"Querying MediaWiki API for series: {tournament_series}")
         
         try:
-            # Check if we can access the session from our client
-            if not hasattr(self.client, 'session'):
-                logger.warning("Cannot access session object from LiquipediaClient")
-                return []
-            
-            base_url = 'https://liquipedia.net/starcraft2/api.php'
-            # Convert underscores to spaces for the API query (MediaWiki page titles use spaces)
+            # Use the client's _make_request method for better error handling and caching
             series_with_spaces = tournament_series.replace('_', ' ')
             params = {
                 'action': 'query',
@@ -78,12 +72,8 @@ class SC2Scraper:
                 'format': 'json'
             }
             
-            response = self.client.session.get(base_url, params=params)
-            if response.status_code != 200:
-                logger.error(f"MediaWiki API request failed: {response.status_code}")
-                return []
-            
-            data = response.json()
+            # Use the client's robust request method with retry logic
+            data = self.client._make_request(params)
             pages = data.get('query', {}).get('allpages', [])
             
             # Extract subevent names (remove the series prefix)
@@ -100,6 +90,11 @@ class SC2Scraper:
             
         except Exception as e:
             logger.error(f"Error querying MediaWiki API: {e}")
+            logger.info("Falling back to hardcoded subevent list...")
+            # Fallback to known subevents for UThermal circuit
+            if "UThermal_2v2_Circuit" in tournament_series:
+                return ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", 
+                       "11", "12", "13", "14", "15", "16", "17", "18", "19", "20"]
             return []
     
     def _is_likely_tournament_page(self, content: str) -> bool:
@@ -310,7 +305,9 @@ class SC2Scraper:
                 "team2_name": match.team2.name,
                 "best_of": match.best_of,
                 "status": match.status.value,
-                "stage": match.stage
+                "stage": match.stage,
+                "team1_score": match.team1_score,
+                "team2_score": match.team2_score
             }
             
             # Add winner info if available

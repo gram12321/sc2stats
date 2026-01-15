@@ -1,24 +1,15 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
-import { Layout } from '@/components/Layout'
-import Dashboard from '@/pages/Dashboard'
-import Tournaments from '@/pages/Tournaments'
-import Players from '@/pages/Players'
-import Teams from '@/pages/Teams'
-import Analytics from '@/pages/Analytics'
-
 function App() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<Layout />}>
-          <Route index element={<Dashboard />} />
-          <Route path="tournaments" element={<Tournaments />} />
-          <Route path="players" element={<Players />} />
-          <Route path="teams" element={<Teams />} />
-          <Route path="analytics" element={<Analytics />} />
-        </Route>
-      </Routes>
-    </Router>
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+      <div className="text-center">
+        <h1 className="text-4xl font-bold text-gray-900 mb-4">
+          SC2 Stats
+        </h1>
+        <p className="text-gray-600">
+          Welcome to SC2 Tournament Statistics
+        </p>
+      </div>
+    </div>
   )
 }
 

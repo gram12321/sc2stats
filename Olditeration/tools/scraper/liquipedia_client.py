@@ -151,8 +151,19 @@ class LiquipediaClient:
         if self.config.rate_limit_delay > 0:
             time.sleep(self.config.rate_limit_delay)
         
-        # Make the request
-        response = self.session.get(self.config.api_url, params=params, timeout=30)
+        # Make the request with extended timeout for connection issues
+        try:
+            response = self.session.get(
+                self.config.api_url, 
+                params=params, 
+                timeout=(10, 30)  # (connection_timeout, read_timeout)
+            )
+        except requests.exceptions.ConnectTimeout:
+            logger.warning("Connection timeout to Liquipedia, retrying...")
+            raise LiquipediaApiError("Connection timeout to Liquipedia")
+        except requests.exceptions.ReadTimeout:
+            logger.warning("Read timeout from Liquipedia, retrying...")
+            raise LiquipediaApiError("Read timeout from Liquipedia")
         
         if response.status_code == 429:
             logger.warning("Rate limited by Liquipedia (429)")
