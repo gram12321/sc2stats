@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Race } from '../types/tournament';
 import { getPlayerDefaults, setPlayerDefault, clearPlayerDefaults } from '../lib/playerDefaults';
 
-const RACES: Race[] = ['Terran', 'Zerg', 'Protoss'];
+const RACES: Exclude<Race, null>[] = ['Terran', 'Zerg', 'Protoss', 'Random'];
 
 interface PlayerManagerProps {
   onBack?: () => void;
@@ -62,14 +62,13 @@ export function PlayerManager({ onBack }: PlayerManagerProps) {
   };
 
   const handleBulkSet = async (race: Race) => {
-    const filtered = filteredPlayers();
     const newDefaults = { ...defaults };
     filtered.forEach(player => {
       newDefaults[player] = race;
     });
     setDefaults(newDefaults);
     try {
-      // Save each individually or all at once
+      // Save each individually
       await Promise.all(filtered.map(player => setPlayerDefault(player, race)));
     } catch (err) {
       console.error('Error saving bulk defaults:', err);
@@ -88,7 +87,7 @@ export function PlayerManager({ onBack }: PlayerManagerProps) {
     }
   };
 
-  const filteredPlayers = () => {
+  const filtered = useMemo(() => {
     let result = players;
     
     // Filter by search term
@@ -103,9 +102,7 @@ export function PlayerManager({ onBack }: PlayerManagerProps) {
     }
     
     return result;
-  };
-
-  const filtered = filteredPlayers();
+  }, [players, searchTerm, hideWithDefaults, defaults]);
 
   return (
     <div className="min-h-screen bg-gray-50">

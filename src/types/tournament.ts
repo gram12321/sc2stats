@@ -1,4 +1,4 @@
-export type Race = 'Terran' | 'Zerg' | 'Protoss' | null;
+export type Race = 'Terran' | 'Zerg' | 'Protoss' | 'Random' | null;
 
 export interface Player {
   name: string;

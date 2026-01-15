@@ -18,8 +18,8 @@ This project scrapes tournament data from Liquipedia using the **MediaWiki API**
 
 ### Frontend
 - React 18 + TypeScript + Vite
-- Tailwind CSS + ShadCN UI
-- Supabase for database and real-time subscriptions
+- Tailwind CSS
+- Express.js API server for serving tournament data
 
 ### Backend
 - **API Server** - Express.js server to serve tournament JSON files
@@ -31,7 +31,7 @@ This project scrapes tournament data from Liquipedia using the **MediaWiki API**
 ## Data Flow
 
 ```
-Liquipedia URL → MediaWiki API → Wikitext Parser → JSON Export → [Optional: Supabase] → React Frontend
+Liquipedia URL → MediaWiki API → Wikitext Parser → JSON Export → Express API → React Frontend
 ```
 
 ## Getting Started
@@ -80,10 +80,11 @@ node tools/scraper.js https://liquipedia.net/starcraft2/UThermal_2v2_Circuit/1
 ## Current Status
 
 - ✅ Frontend: React app with compact bracket view (Liquipedia-inspired)
-- ✅ API Server: Express server to serve tournament JSON files
-- ✅ Scraper: Simplified scraper extracts matches, rounds, scores, and players
-- ✅ UI: Tournament browser with compact bracket display and race editing
-- ✅ Data export: JSON format implemented
+- ✅ API Server: Express server to serve tournament JSON files and player defaults
+- ✅ Scraper: Simplified scraper extracts matches, rounds, scores, and players reliably
+- ✅ Player Management: UI for setting default player races
+- ✅ Tournament Editor: Compact bracket display with race editing
+- ✅ Data Export: JSON format for tournaments and player defaults
 
 ## Scraper Data Output
 

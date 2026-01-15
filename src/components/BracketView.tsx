@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { TournamentData, Match } from '../types/tournament';
 import { MatchBox } from './MatchBox';
 import { MatchEditor } from './MatchEditor';
+import { downloadTournamentJSON } from '../lib/utils';
 
 interface BracketViewProps {
   data: TournamentData;
@@ -27,28 +28,21 @@ export function BracketView({ data, onDataChange }: BracketViewProps) {
 
   // Group matches by round and order them
   const rounds = ['Round of 16', 'Quarterfinals', 'Semifinals', 'Grand Final'];
-  const groupedMatches = rounds.reduce((acc, round) => {
-    const matches = tournamentData.matches.filter(m => m.round === round);
-    if (matches.length > 0) {
-      acc[round] = matches.sort((a, b) => {
-        // Sort by match_id to maintain order
-        return a.match_id.localeCompare(b.match_id);
-      });
-    }
-    return acc;
-  }, {} as Record<string, Match[]>);
+  const groupedMatches = useMemo(() => {
+    return rounds.reduce((acc, round) => {
+      const matches = tournamentData.matches.filter(m => m.round === round);
+      if (matches.length > 0) {
+        acc[round] = matches.sort((a, b) => {
+          // Sort by match_id to maintain order
+          return a.match_id.localeCompare(b.match_id);
+        });
+      }
+      return acc;
+    }, {} as Record<string, Match[]>);
+  }, [tournamentData.matches]);
 
   const downloadJSON = () => {
-    const jsonStr = JSON.stringify(tournamentData, null, 2);
-    const blob = new Blob([jsonStr], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${tournamentData.tournament.liquipedia_slug.replace(/\//g, '_')}_edited.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    downloadTournamentJSON(tournamentData);
   };
 
   return (

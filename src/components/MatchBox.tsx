@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Match, Race } from '../types/tournament';
-import { getPlayerDefault } from '../lib/playerDefaults';
+import { getPlayerDefaults } from '../lib/playerDefaults';
 
 interface MatchBoxProps {
   match: Match;
@@ -11,23 +11,28 @@ export function MatchBox({ match, onClick }: MatchBoxProps) {
   const [defaults, setDefaults] = useState<Record<string, Race>>({});
 
   useEffect(() => {
-    // Load defaults for all players in this match
+    // Load all defaults once (more efficient than individual calls)
     const loadDefaults = async () => {
-      const players = [
-        match.team1.player1.name,
-        match.team1.player2.name,
-        match.team2.player1.name,
-        match.team2.player2.name
-      ];
-      
-      const loadedDefaults: Record<string, Race> = {};
-      for (const player of players) {
-        const race = await getPlayerDefault(player);
-        if (race) {
-          loadedDefaults[player] = race;
-        }
+      try {
+        const allDefaults = await getPlayerDefaults();
+        // Only keep defaults for players in this match
+        const matchPlayers = [
+          match.team1.player1.name,
+          match.team1.player2.name,
+          match.team2.player1.name,
+          match.team2.player2.name
+        ];
+        
+        const matchDefaults: Record<string, Race> = {};
+        matchPlayers.forEach(player => {
+          if (allDefaults[player]) {
+            matchDefaults[player] = allDefaults[player];
+          }
+        });
+        setDefaults(matchDefaults);
+      } catch (err) {
+        console.error('Error loading defaults:', err);
       }
-      setDefaults(loadedDefaults);
     };
     
     loadDefaults();
@@ -40,7 +45,8 @@ export function MatchBox({ match, onClick }: MatchBoxProps) {
   
   const getRaceAbbrev = (race: Race | null | undefined): string => {
     if (!race) return '';
-    return race[0];
+    // Random gets 'R', others get first letter
+    return race === 'Random' ? 'R' : race[0];
   };
   const team1Won = match.team1_score !== null && match.team2_score !== null && 
                    match.team1_score > match.team2_score;

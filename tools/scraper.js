@@ -186,11 +186,9 @@ function parseMatch(matchText, round, matchId) {
 
   // Extract date
   const dateMatch = matchText.match(/\|date\s*=\s*([^|\n]+)/i);
-  let date = dateMatch ? dateMatch[1].trim() : null;
-  if (date) {
-    date = date.replace(/\{\{[^}]+\}\}/g, '').trim();
-    date = date.replace(/\s+/g, ' ').trim();
-  }
+  const date = dateMatch 
+    ? dateMatch[1].trim().replace(/\{\{[^}]+\}\}/g, '').replace(/\s+/g, ' ').trim() 
+    : null;
 
   // Extract games/maps
   const games = [];

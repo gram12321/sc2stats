@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Match, Race } from '../types/tournament';
-import { getPlayerDefault } from '../lib/playerDefaults';
+import { getPlayerDefaults } from '../lib/playerDefaults';
 
 interface MatchEditorProps {
   match: Match;
   onUpdate: (updatedMatch: Match) => void;
 }
 
-const RACES: Race[] = ['Terran', 'Zerg', 'Protoss'];
+const RACES: Exclude<Race, null>[] = ['Terran', 'Zerg', 'Protoss', 'Random'];
 
 export function MatchEditor({ match, onUpdate }: MatchEditorProps) {
   const [editedMatch, setEditedMatch] = useState<Match>(match);
@@ -18,33 +18,24 @@ export function MatchEditor({ match, onUpdate }: MatchEditorProps) {
       const updated = { ...match };
       let changed = false;
 
-      if (!updated.team1.player1.race) {
-        const defaultRace = await getPlayerDefault(updated.team1.player1.name);
-        if (defaultRace) {
-          updated.team1.player1.race = defaultRace;
-          changed = true;
-        }
+      // Load all defaults once (more efficient than individual calls)
+      const defaults = await getPlayerDefaults();
+
+      if (!updated.team1.player1.race && defaults[updated.team1.player1.name]) {
+        updated.team1.player1.race = defaults[updated.team1.player1.name];
+        changed = true;
       }
-      if (!updated.team1.player2.race) {
-        const defaultRace = await getPlayerDefault(updated.team1.player2.name);
-        if (defaultRace) {
-          updated.team1.player2.race = defaultRace;
-          changed = true;
-        }
+      if (!updated.team1.player2.race && defaults[updated.team1.player2.name]) {
+        updated.team1.player2.race = defaults[updated.team1.player2.name];
+        changed = true;
       }
-      if (!updated.team2.player1.race) {
-        const defaultRace = await getPlayerDefault(updated.team2.player1.name);
-        if (defaultRace) {
-          updated.team2.player1.race = defaultRace;
-          changed = true;
-        }
+      if (!updated.team2.player1.race && defaults[updated.team2.player1.name]) {
+        updated.team2.player1.race = defaults[updated.team2.player1.name];
+        changed = true;
       }
-      if (!updated.team2.player2.race) {
-        const defaultRace = await getPlayerDefault(updated.team2.player2.name);
-        if (defaultRace) {
-          updated.team2.player2.race = defaultRace;
-          changed = true;
-        }
+      if (!updated.team2.player2.race && defaults[updated.team2.player2.name]) {
+        updated.team2.player2.race = defaults[updated.team2.player2.name];
+        changed = true;
       }
 
       if (changed) {

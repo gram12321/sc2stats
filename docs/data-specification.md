@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document describes the data structure and extraction approach for the SC2 2v2 tournament scraper. The scraper extracts match data from Liquipedia using the **MediaWiki API** and outputs structured JSON.
+This document describes the data structure and extraction approach for the SC2 2v2 tournament scraper. The scraper extracts match data from Liquipedia using the **MediaWiki API** and outputs structured JSON. Player races are managed separately through the UI and stored in `player_defaults.json`.
 
 ## Data Source: MediaWiki API
 
@@ -97,9 +97,11 @@ Each match includes:
 - Best of format
 
 ### ⚠️ Sometimes Available:
-- **Player races**: Extracted from "Notable Participating Teams" section (single-letter codes: `t`=Terran, `z`=Zerg, `p`=Protoss)
 - Match dates/times (usually only for later rounds)
 - Individual map results (usually only semifinals and finals)
+
+### ❌ Not Extracted (Manual Entry):
+- **Player races**: Not extracted automatically. Races are added manually through the UI or set as player defaults.
 
 ### ❌ Not Available:
 - Game duration
@@ -130,23 +132,21 @@ Each match includes:
 
 ### Team Template (2Opponent)
 ```
-{{2Opponent|p1=Player1|p2=Player2|score=X|p1race=t|p2race=z}}
+{{2Opponent|p1=Player1|p2=Player2|score=X}}
 ```
 
-**Race codes**: `t` = Terran, `z` = Zerg, `p` = Protoss
+**Note**: Race parameters (`p1race`, `p2race`) may exist in wikitext but are not extracted by the scraper.
 
-## Race Data Extraction
+## Race Data Management
 
-Race information is extracted from two sources:
+**Note**: Player races are **not** extracted automatically by the scraper. This is by design for reliability and speed.
 
-1. **Direct from match brackets**: If `p1race`/`p2race` parameters exist in the `{{2Opponent}}` template
-2. **From Notable Participating Teams**: A lookup map is built from the "Notable Participating Teams" section, which often contains race data not present in match brackets
+Race information is managed through:
+1. **Player Defaults**: Set default races for players in the Player Manager UI
+2. **Manual Entry**: Edit races directly in match data through the tournament bracket view
+3. **Storage**: Player defaults are stored in `output/player_defaults.json`
 
-The scraper:
-- Extracts race data from the "Notable Participating Teams" section first
-- Uses this lookup when parsing matches
-- Falls back to direct race parameters if available in match brackets
-- Converts single-letter codes (`t`, `z`, `p`) to full names (`Terran`, `Zerg`, `Protoss`)
+The UI automatically applies player defaults when editing matches if no race is set in the match data.
 
 ## Team Normalization
 
