@@ -2,16 +2,18 @@ import { useState, useMemo } from 'react';
 import { TournamentData, Match } from '../types/tournament';
 import { MatchBox } from './MatchBox';
 import { MatchEditor } from './MatchEditor';
-import { downloadTournamentJSON } from '../lib/utils';
 
 interface BracketViewProps {
   data: TournamentData;
+  filename: string;
   onDataChange?: (updatedData: TournamentData) => void;
 }
 
-export function BracketView({ data, onDataChange }: BracketViewProps) {
+export function BracketView({ data, filename, onDataChange }: BracketViewProps) {
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
   const [tournamentData, setTournamentData] = useState<TournamentData>(data);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveMessage, setSaveMessage] = useState<string | null>(null);
 
   const handleMatchUpdate = (updatedMatch: Match) => {
     const updatedMatches = tournamentData.matches.map((m) =>
@@ -41,8 +43,30 @@ export function BracketView({ data, onDataChange }: BracketViewProps) {
     }, {} as Record<string, Match[]>);
   }, [tournamentData.matches]);
 
-  const downloadJSON = () => {
-    downloadTournamentJSON(tournamentData);
+  const saveTournament = async () => {
+    try {
+      setIsSaving(true);
+      setSaveMessage(null);
+      const response = await fetch(`/api/tournaments/${encodeURIComponent(filename)}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(tournamentData),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        throw new Error(errorData.error || `Failed to save tournament (${response.status})`);
+      }
+      
+      setSaveMessage('Tournament saved successfully!');
+      setTimeout(() => setSaveMessage(null), 3000);
+    } catch (err) {
+      setSaveMessage(err instanceof Error ? err.message : 'Failed to save tournament');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -66,11 +90,21 @@ export function BracketView({ data, onDataChange }: BracketViewProps) {
               </div>
             </div>
             <div className="flex items-center gap-2">
+              {saveMessage && (
+                <span className={`text-sm px-3 py-1 rounded ${
+                  saveMessage.includes('success') 
+                    ? 'bg-green-100 text-green-800' 
+                    : 'bg-red-100 text-red-800'
+                }`}>
+                  {saveMessage}
+                </span>
+              )}
               <button
-                onClick={downloadJSON}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                onClick={saveTournament}
+                disabled={isSaving}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-400 disabled:cursor-not-allowed"
               >
-                Download JSON
+                {isSaving ? 'Saving...' : 'Save'}
               </button>
             </div>
           </div>
@@ -99,7 +133,10 @@ export function BracketView({ data, onDataChange }: BracketViewProps) {
                     <div key={match.match_id} className="relative">
                       <MatchBox
                         match={match}
-                        onClick={() => setSelectedMatch(match)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedMatch(match);
+                        }}
                       />
                       
                       {/* Connecting line to next round */}
@@ -119,7 +156,12 @@ export function BracketView({ data, onDataChange }: BracketViewProps) {
       {selectedMatch && (
         <div
           className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-          onClick={() => setSelectedMatch(null)}
+          onClick={(e) => {
+            // Only close if clicking directly on the backdrop, not on child elements
+            if (e.target === e.currentTarget) {
+              setSelectedMatch(null);
+            }
+          }}
         >
           <div
             className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto"

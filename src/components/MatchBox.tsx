@@ -4,7 +4,7 @@ import { getPlayerDefaults } from '../lib/playerDefaults';
 
 interface MatchBoxProps {
   match: Match;
-  onClick: () => void;
+  onClick: (e: React.MouseEvent) => void;
 }
 
 export function MatchBox({ match, onClick }: MatchBoxProps) {

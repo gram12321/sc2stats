@@ -12,11 +12,16 @@ interface TournamentInfo {
 
 interface TournamentEditorProps {
   onNavigateToPlayers?: () => void;
+  onNavigateToPlayerRankings?: () => void;
+  onNavigateToTeamRankings?: () => void;
+  onNavigateToRaceRankings?: () => void;
+  onNavigateToMatches?: () => void;
 }
 
-export function TournamentEditor({ onNavigateToPlayers }: TournamentEditorProps) {
+export function TournamentEditor({ onNavigateToPlayers, onNavigateToPlayerRankings, onNavigateToTeamRankings, onNavigateToRaceRankings, onNavigateToMatches }: TournamentEditorProps) {
   const [tournaments, setTournaments] = useState<TournamentInfo[]>([]);
   const [selectedTournament, setSelectedTournament] = useState<TournamentData | null>(null);
+  const [selectedFilename, setSelectedFilename] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingTournament, setIsLoadingTournament] = useState(false);
@@ -31,7 +36,16 @@ export function TournamentEditor({ onNavigateToPlayers }: TournamentEditorProps)
       const response = await fetch('/api/tournaments');
       if (!response.ok) throw new Error('Failed to load tournaments');
       const data = await response.json();
-      setTournaments(data);
+      // Sort by date descending (newest first), then by name if no date
+      const sorted = data.sort((a: TournamentInfo, b: TournamentInfo) => {
+        if (a.date && b.date) {
+          return new Date(b.date).getTime() - new Date(a.date).getTime();
+        }
+        if (a.date && !b.date) return -1;
+        if (!a.date && b.date) return 1;
+        return a.name.localeCompare(b.name);
+      });
+      setTournaments(sorted);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load tournaments');
     } finally {
@@ -53,6 +67,7 @@ export function TournamentEditor({ onNavigateToPlayers }: TournamentEditorProps)
       }
       
       setSelectedTournament(data);
+      setSelectedFilename(filename);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load tournament');
     } finally {
@@ -64,13 +79,18 @@ export function TournamentEditor({ onNavigateToPlayers }: TournamentEditorProps)
     setSelectedTournament(updatedData);
   };
 
-  if (selectedTournament) {
+  const handleBack = () => {
+    setSelectedTournament(null);
+    setSelectedFilename(null);
+  };
+
+  if (selectedTournament && selectedFilename) {
     return (
       <div>
         <div className="bg-white border-b border-gray-200 shadow-sm">
           <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
             <button
-              onClick={() => setSelectedTournament(null)}
+              onClick={handleBack}
               className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500"
             >
               ← Back to Tournament List
@@ -79,6 +99,7 @@ export function TournamentEditor({ onNavigateToPlayers }: TournamentEditorProps)
         </div>
         <BracketView
           data={selectedTournament}
+          filename={selectedFilename}
           onDataChange={handleDataChange}
         />
       </div>
@@ -96,14 +117,48 @@ export function TournamentEditor({ onNavigateToPlayers }: TournamentEditorProps)
                 Select a tournament to view and edit player races
               </p>
             </div>
-            {onNavigateToPlayers && (
-              <button
-                onClick={onNavigateToPlayers}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                Manage Players
-              </button>
-            )}
+            <div className="flex gap-2">
+              {onNavigateToPlayerRankings && (
+                <button
+                  onClick={onNavigateToPlayerRankings}
+                  className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+                >
+                  Player Rankings
+                </button>
+              )}
+              {onNavigateToTeamRankings && (
+                <button
+                  onClick={onNavigateToTeamRankings}
+                  className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                >
+                  Team Rankings
+                </button>
+              )}
+              {onNavigateToRaceRankings && (
+                <button
+                  onClick={onNavigateToRaceRankings}
+                  className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                >
+                  Race Statistics
+                </button>
+              )}
+              {onNavigateToPlayers && (
+                <button
+                  onClick={onNavigateToPlayers}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  Manage Players
+                </button>
+              )}
+              {onNavigateToMatches && (
+                <button
+                  onClick={onNavigateToMatches}
+                  className="px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                >
+                  Match History
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>

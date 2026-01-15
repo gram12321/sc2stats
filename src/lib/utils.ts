@@ -19,3 +19,16 @@ export function downloadTournamentJSON(data: TournamentData): void {
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
 }
+
+/**
+ * Format a number to show at most 2 decimal places
+ * Used for displaying ranking points in the UI
+ * 
+ * @param {number} value - The number to format
+ * @returns {string} Formatted number string
+ */
+export function formatRankingPoints(value: number): string {
+  // Round to 2 decimal places and remove trailing zeros
+  const rounded = Math.round(value * 100) / 100;
+  return rounded.toString();
+}
