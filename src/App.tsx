@@ -1,16 +1,15 @@
-function App() {
-  return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold text-gray-900 mb-4">
-          SC2 Stats
-        </h1>
-        <p className="text-gray-600">
-          Welcome to SC2 Tournament Statistics
-        </p>
-      </div>
-    </div>
-  )
-}
+import { useState } from 'react';
+import { TournamentEditor } from './pages/TournamentEditor';
+import { PlayerManager } from './pages/PlayerManager';
 
-export default App
+type View = 'tournaments' | 'players';
+
+export function App() {
+  const [currentView, setCurrentView] = useState<View>('tournaments');
+
+  if (currentView === 'players') {
+    return <PlayerManager onBack={() => setCurrentView('tournaments')} />;
+  }
+
+  return <TournamentEditor onNavigateToPlayers={() => setCurrentView('players')} />;
+}
