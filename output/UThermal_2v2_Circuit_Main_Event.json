@@ -20,7 +20,7 @@
   "matches": [
     {
       "match_id": "R1M1",
-      "round": "Round of 16",
+      "round": "Upper Bracket Semifinals",
       "team1": {
         "player1": {
           "name": "MaxPax"
@@ -63,7 +63,7 @@
     },
     {
       "match_id": "R1M2",
-      "round": "Round of 16",
+      "round": "Upper Bracket Semifinals",
       "team1": {
         "player1": {
           "name": "Shameless"
@@ -106,7 +106,7 @@
     },
     {
       "match_id": "R1M3",
-      "round": "Round of 16",
+      "round": "Lower Bracket Quarterfinals",
       "team1": {
         "player1": {
           "name": "ShoWTimE",
@@ -136,7 +136,7 @@
     },
     {
       "match_id": "R1M4",
-      "round": "Round of 16",
+      "round": "Lower Bracket Quarterfinals",
       "team1": {
         "player1": {
           "name": "Shameless"
@@ -179,7 +179,7 @@
     },
     {
       "match_id": "R2M1",
-      "round": "Quarterfinals",
+      "round": "Lower Bracket Semifinals",
       "team1": {
         "player1": {
           "name": "ShoWTimE"
@@ -226,7 +226,7 @@
     },
     {
       "match_id": "R3M1",
-      "round": "Semifinals",
+      "round": "Upper Bracket Final",
       "team1": {
         "player1": {
           "name": "MaxPax"
@@ -269,7 +269,7 @@
     },
     {
       "match_id": "R3M2",
-      "round": "Semifinals",
+      "round": "Lower Bracket Final",
       "team1": {
         "player1": {
           "name": "Jumy"

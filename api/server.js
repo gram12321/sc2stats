@@ -238,6 +238,8 @@ app.get('/api/race-matchup/:race1/:race2', async (req, res) => {
   try {
     const { race1, race2 } = req.params;
     const { matchHistory } = await calculateRaceRankings();
+    const { matchHistory: teamMatchHistory } = await calculateTeamRankings();
+    const { matchHistory: playerMatchHistory } = await calculateRankings();
     
     // Create matchup key (e.g., "PvT")
     const raceAbbr = {
@@ -250,9 +252,35 @@ app.get('/api/race-matchup/:race1/:race2', async (req, res) => {
     const abbr2 = raceAbbr[race2] || race2[0];
     const matchupKey = `${abbr1}v${abbr2}`;
     
-    // Filter matches that have this matchup in race_impacts
+    // Create maps for quick lookup
+    const teamMatchMap = new Map();
+    if (teamMatchHistory) {
+      teamMatchHistory.forEach(match => {
+        const key = `${match.tournament_slug}-${match.match_id}`;
+        teamMatchMap.set(key, match);
+      });
+    }
+    
+    const playerMatchMap = new Map();
+    if (playerMatchHistory) {
+      playerMatchHistory.forEach(match => {
+        const key = `${match.tournament_slug}-${match.match_id}`;
+        playerMatchMap.set(key, match);
+      });
+    }
+    
+    // Filter matches that have this matchup in race_impacts and merge team_impacts and player_impacts
     const matches = matchHistory.filter(match => {
       return match.race_impacts && match.race_impacts[matchupKey];
+    }).map(match => {
+      const key = `${match.tournament_slug}-${match.match_id}`;
+      const teamMatch = teamMatchMap.get(key);
+      const playerMatch = playerMatchMap.get(key);
+      return {
+        ...match,
+        team_impacts: teamMatch?.team_impacts || match.team_impacts,
+        player_impacts: playerMatch?.player_impacts || match.player_impacts
+      };
     });
     
     res.json(matches);
@@ -267,12 +295,40 @@ app.get('/api/race-combo/:race', async (req, res) => {
   try {
     const { race } = req.params;
     const { matchHistory } = await calculateRaceRankings();
+    const { matchHistory: teamMatchHistory } = await calculateTeamRankings();
+    const { matchHistory: playerMatchHistory } = await calculateRankings();
     
-    // Filter matches where the race appears in team1_races or team2_races
+    // Create maps for quick lookup
+    const teamMatchMap = new Map();
+    if (teamMatchHistory) {
+      teamMatchHistory.forEach(match => {
+        const key = `${match.tournament_slug}-${match.match_id}`;
+        teamMatchMap.set(key, match);
+      });
+    }
+    
+    const playerMatchMap = new Map();
+    if (playerMatchHistory) {
+      playerMatchHistory.forEach(match => {
+        const key = `${match.tournament_slug}-${match.match_id}`;
+        playerMatchMap.set(key, match);
+      });
+    }
+    
+    // Filter matches where the race appears in team1_races or team2_races and merge team_impacts and player_impacts
     const matches = matchHistory.filter(match => {
       const team1Races = match.team1_races || [];
       const team2Races = match.team2_races || [];
       return team1Races.includes(race) || team2Races.includes(race);
+    }).map(match => {
+      const key = `${match.tournament_slug}-${match.match_id}`;
+      const teamMatch = teamMatchMap.get(key);
+      const playerMatch = playerMatchMap.get(key);
+      return {
+        ...match,
+        team_impacts: teamMatch?.team_impacts || match.team_impacts,
+        player_impacts: playerMatch?.player_impacts || match.player_impacts
+      };
     });
     
     res.json(matches);
@@ -296,19 +352,46 @@ app.get('/api/team-race-matchup/:combo1/:combo2', async (req, res) => {
   try {
     const { combo1, combo2 } = req.params;
     const { matchHistory } = await calculateTeamRaceRankings();
+    const { matchHistory: teamMatchHistory } = await calculateTeamRankings();
+    const { matchHistory: playerMatchHistory } = await calculateRankings();
     
     // Normalize combos (sort alphabetically to match internal key format)
     const sorted = [combo1, combo2].sort();
     const combo1Normalized = sorted[0];
     const combo2Normalized = sorted[1];
     
-    // Filter matches for this matchup
-    // matchHistory stores original team combos, so we need to normalize and compare
+    // Create maps for quick lookup
+    const teamMatchMap = new Map();
+    if (teamMatchHistory) {
+      teamMatchHistory.forEach(match => {
+        const key = `${match.tournament_slug}-${match.match_id}`;
+        teamMatchMap.set(key, match);
+      });
+    }
+    
+    const playerMatchMap = new Map();
+    if (playerMatchHistory) {
+      playerMatchHistory.forEach(match => {
+        const key = `${match.tournament_slug}-${match.match_id}`;
+        playerMatchMap.set(key, match);
+      });
+    }
+    
+    // Filter matches for this matchup and merge team_impacts and player_impacts
     const matches = matchHistory.filter(match => {
       const matchTeam1Combo = match.team1_combo;
       const matchTeam2Combo = match.team2_combo;
       const matchSorted = [matchTeam1Combo, matchTeam2Combo].sort();
       return matchSorted[0] === combo1Normalized && matchSorted[1] === combo2Normalized;
+    }).map(match => {
+      const key = `${match.tournament_slug}-${match.match_id}`;
+      const teamMatch = teamMatchMap.get(key);
+      const playerMatch = playerMatchMap.get(key);
+      return {
+        ...match,
+        team_impacts: teamMatch?.team_impacts || match.team_impacts,
+        player_impacts: playerMatch?.player_impacts || match.player_impacts
+      };
     });
     
     res.json(matches);
@@ -323,10 +406,38 @@ app.get('/api/team-race-combo/:combo', async (req, res) => {
   try {
     const { combo } = req.params;
     const { matchHistory } = await calculateTeamRaceRankings();
+    const { matchHistory: teamMatchHistory } = await calculateTeamRankings();
+    const { matchHistory: playerMatchHistory } = await calculateRankings();
     
-    // Filter matches where either team1_combo or team2_combo matches the combo
+    // Create maps for quick lookup
+    const teamMatchMap = new Map();
+    if (teamMatchHistory) {
+      teamMatchHistory.forEach(match => {
+        const key = `${match.tournament_slug}-${match.match_id}`;
+        teamMatchMap.set(key, match);
+      });
+    }
+    
+    const playerMatchMap = new Map();
+    if (playerMatchHistory) {
+      playerMatchHistory.forEach(match => {
+        const key = `${match.tournament_slug}-${match.match_id}`;
+        playerMatchMap.set(key, match);
+      });
+    }
+    
+    // Filter matches where either team1_combo or team2_combo matches the combo and merge team_impacts and player_impacts
     const matches = matchHistory.filter(match => {
       return match.team1_combo === combo || match.team2_combo === combo;
+    }).map(match => {
+      const key = `${match.tournament_slug}-${match.match_id}`;
+      const teamMatch = teamMatchMap.get(key);
+      const playerMatch = playerMatchMap.get(key);
+      return {
+        ...match,
+        team_impacts: teamMatch?.team_impacts || match.team_impacts,
+        player_impacts: playerMatch?.player_impacts || match.player_impacts
+      };
     });
     
     res.json(matches);
@@ -352,8 +463,29 @@ app.get('/api/match-history', async (req, res) => {
   try {
     const { player, team, tournament } = req.query;
     const { rankings, matchHistory } = await calculateRankings();
+    const { matchHistory: teamMatchHistory } = await calculateTeamRankings();
     
-    let filteredHistory = matchHistory || [];
+    // Create a map of team match history by match_id for quick lookup
+    const teamMatchMap = new Map();
+    if (teamMatchHistory) {
+      teamMatchHistory.forEach(match => {
+        const key = `${match.tournament_slug}-${match.match_id}`;
+        teamMatchMap.set(key, match);
+      });
+    }
+    
+    // Merge team_impacts into match history
+    let filteredHistory = (matchHistory || []).map(match => {
+      const key = `${match.tournament_slug}-${match.match_id}`;
+      const teamMatch = teamMatchMap.get(key);
+      if (teamMatch && teamMatch.team_impacts) {
+        return {
+          ...match,
+          team_impacts: teamMatch.team_impacts
+        };
+      }
+      return match;
+    });
     
     // Filter by player if specified
     if (player) {
@@ -411,10 +543,20 @@ app.get('/api/player/:playerName', async (req, res) => {
   try {
     const playerName = decodeURIComponent(req.params.playerName);
     const { rankings, matchHistory } = await calculateRankings();
+    const { matchHistory: teamMatchHistory } = await calculateTeamRankings();
     
     const player = rankings.find(p => p.name === playerName);
     if (!player) {
       return res.status(404).json({ error: 'Player not found' });
+    }
+    
+    // Create a map of team match history by match_id for quick lookup
+    const teamMatchMap = new Map();
+    if (teamMatchHistory) {
+      teamMatchHistory.forEach(match => {
+        const key = `${match.tournament_slug}-${match.match_id}`;
+        teamMatchMap.set(key, match);
+      });
     }
     
     // Get player's match history
@@ -428,11 +570,14 @@ app.get('/api/player/:playerName', async (req, res) => {
       return players.includes(playerName);
     }).map(match => {
       const impact = match.player_impacts?.[playerName];
+      const key = `${match.tournament_slug}-${match.match_id}`;
+      const teamMatch = teamMatchMap.get(key);
       return {
         ...match,
         ratingChange: impact?.ratingChange || 0,
         won: impact?.won || false,
-        opponentRating: impact?.opponentRating || 0
+        opponentRating: impact?.opponentRating || 0,
+        team_impacts: teamMatch?.team_impacts || match.team_impacts
       };
     });
     
@@ -465,17 +610,29 @@ app.get('/api/team/:player1/:player2', async (req, res) => {
     }
     
     // Get team's match history
+    const { matchHistory: playerMatchHistory } = await calculateRankings();
+    const playerMatchMap = new Map();
+    if (playerMatchHistory) {
+      playerMatchHistory.forEach(match => {
+        const key = `${match.tournament_slug}-${match.match_id}`;
+        playerMatchMap.set(key, match);
+      });
+    }
+    
     const teamMatches = (matchHistory || []).filter(match => {
       const matchTeam1 = [match.team1?.player1, match.team1?.player2].sort().join('+');
       const matchTeam2 = [match.team2?.player1, match.team2?.player2].sort().join('+');
       return matchTeam1 === teamKey || matchTeam2 === teamKey;
     }).map(match => {
       const impact = match.team_impacts?.[teamKey];
+      const key = `${match.tournament_slug}-${match.match_id}`;
+      const playerMatch = playerMatchMap.get(key);
       return {
         ...match,
         ratingChange: impact?.ratingChange || 0,
         won: impact?.won || false,
-        opponentRating: impact?.opponentRating || 0
+        opponentRating: impact?.opponentRating || 0,
+        player_impacts: playerMatch?.player_impacts || match.player_impacts
       };
     });
     

@@ -221,24 +221,35 @@ export async function calculateRaceRankings() {
         match.team2_score
       );
 
+      // Check if this is a mirror matchup (same races, different order)
+      // For example: TP vs PT, TZ vs ZT, PZ vs ZP
+      // In mirror matchups, what one race gains, it loses in the inverse matchup
+      // So the net effect on race ratings should be zero
+      const isMirrorMatchup = (() => {
+        if (team1Races.length !== team2Races.length) return false;
+        // Sort both arrays and compare - if they have the same races, it's a mirror
+        const sorted1 = [...team1Races].sort();
+        const sorted2 = [...team2Races].sort();
+        return sorted1.length === sorted2.length && 
+               sorted1.every((race, idx) => race === sorted2[idx]);
+      })();
+
       // Track race matchup impacts for this match
       const raceImpacts = new Map();
 
-      // Compare each race from team1 against each race from team2
+      // Capture ALL matchup ratings BEFORE any updates (critical for zero-sum)
+      // This ensures that even if the same matchup pair is processed multiple times
+      // (e.g., in mirror matchups), we use the original baseline ratings
+      const matchupRatingsBefore = new Map();
+      
+      // First pass: initialize all matchups and capture their BEFORE ratings
       for (const race1 of team1Races) {
         for (const race2 of team2Races) {
-          // If races are the same, skip (cancel each other out = +0)
-          if (race1 === race2) {
-            continue;
-          }
-
-          // Create directional matchup keys (PvT and TvP are different!)
-          const matchupKey = getRaceMatchupKey(race1, race2); // e.g., "PvT"
-          const inverseKey = getInverseMatchupKey(matchupKey); // e.g., "TvP"
+          if (race1 === race2) continue;
+          
+          const matchupKey = getRaceMatchupKey(race1, race2);
+          const inverseKey = getInverseMatchupKey(matchupKey);
           if (!matchupKey || !inverseKey) continue;
-
-          // Determine winner: if team1 won, race1 beats race2
-          const matchupWon = team1Won;
           
           // Initialize both matchup stats if needed
           if (!raceStats.has(matchupKey)) {
@@ -253,44 +264,92 @@ export async function calculateRaceRankings() {
               race2: race1
             }));
           }
-
-          const matchupStats = raceStats.get(matchupKey);
-          const inverseStats = raceStats.get(inverseKey);
-
-          // Store ratings BEFORE any updates (critical for zero-sum)
-          const matchupRatingBefore = matchupStats.points;
-          const inverseRatingBefore = inverseStats.points;
-
-          // Compare against the inverse matchup, not average!
-          // PvT rating vs TvP rating - this makes it zero-sum
-          // When P beats T: PvT gains points based on TvP's rating, TvP loses based on PvT's rating
           
-          // Update PvT: compare its rating against TvP's rating
-          const ratingChange = updateStatsForMatch(
-            matchupStats,
-            matchupWon,
-            !matchupWon,
-            inverseRatingBefore // Use TvP's rating BEFORE update
-          );
+          // Capture BEFORE ratings (only once per unique matchup key)
+          if (!matchupRatingsBefore.has(matchupKey)) {
+            matchupRatingsBefore.set(matchupKey, raceStats.get(matchupKey).points);
+          }
+          if (!matchupRatingsBefore.has(inverseKey)) {
+            matchupRatingsBefore.set(inverseKey, raceStats.get(inverseKey).points);
+          }
+        }
+      }
 
-          // Update TvP: compare its rating against PvT's rating (before PvT was updated)
-          // This ensures zero-sum: what PvT gains, TvP loses
-          const inverseRatingChange = updateStatsForMatch(
-            inverseStats,
-            !matchupWon,
-            matchupWon,
-            matchupRatingBefore // Use PvT's rating BEFORE update
-          );
+      // Track which matchup pairs we've already processed (to avoid double-processing in mirrors)
+      const processedPairs = new Set();
 
-          // Track impact
-          raceImpacts.set(matchupKey, {
-            ratingBefore: matchupRatingBefore,
-            ratingChange,
-            won: matchupWon,
-            opponentRating: inverseRatingBefore,
-            race1: race1,
-            race2: race2
-          });
+      // Skip race matchup processing for mirror matchups (zero net effect)
+      if (isMirrorMatchup) {
+        // Still create match history entry, but with no race impacts
+        // This ensures the match appears in history but doesn't affect race ratings
+      } else {
+        // Compare each race from team1 against each race from team2
+        for (const race1 of team1Races) {
+          for (const race2 of team2Races) {
+            // If races are the same, skip (cancel each other out = +0)
+            if (race1 === race2) {
+              continue;
+            }
+
+            // Create directional matchup keys (PvT and TvP are different!)
+            const matchupKey = getRaceMatchupKey(race1, race2); // e.g., "PvT"
+            const inverseKey = getInverseMatchupKey(matchupKey); // e.g., "TvP"
+            if (!matchupKey || !inverseKey) continue;
+
+            // Skip if we've already processed this pair (can happen in mirror matchups)
+            // Use the lexicographically smaller key as the pair identifier
+            const pairKey = matchupKey < inverseKey ? `${matchupKey}|${inverseKey}` : `${inverseKey}|${matchupKey}`;
+            if (processedPairs.has(pairKey)) {
+              continue;
+            }
+            processedPairs.add(pairKey);
+
+            // Determine winner: if team1 won, race1 beats race2
+            const matchupWon = team1Won;
+            
+            const matchupStats = raceStats.get(matchupKey);
+            const inverseStats = raceStats.get(inverseKey);
+
+            // Use the BEFORE ratings captured at the start (ensures zero-sum even for duplicates)
+            const matchupRatingBefore = matchupRatingsBefore.get(matchupKey);
+            const inverseRatingBefore = matchupRatingsBefore.get(inverseKey);
+
+            // Compare against the inverse matchup, not average!
+            // PvT rating vs TvP rating - this makes it zero-sum
+            // When P beats T: PvT gains points based on TvP's rating, TvP loses based on PvT's rating
+            // IMPORTANT: Use BEFORE ratings for both sides to ensure true zero-sum
+            
+            // Update PvT: compare its BEFORE rating against TvP's BEFORE rating
+            const ratingChange = updateStatsForMatch(
+              matchupStats,
+              matchupWon,
+              !matchupWon,
+              inverseRatingBefore, // Use TvP's rating BEFORE update
+              0, // opponentConfidence
+              matchupRatingBefore // Use PvT's rating BEFORE update (explicit)
+            );
+
+            // Update TvP: compare its BEFORE rating against PvT's BEFORE rating
+            // This ensures zero-sum: what PvT gains, TvP loses
+            const inverseRatingChange = updateStatsForMatch(
+              inverseStats,
+              !matchupWon,
+              matchupWon,
+              matchupRatingBefore, // Use PvT's rating BEFORE update
+              0, // opponentConfidence
+              inverseRatingBefore // Use TvP's rating BEFORE update (explicit)
+            );
+
+            // Track impact
+            raceImpacts.set(matchupKey, {
+              ratingBefore: matchupRatingBefore,
+              ratingChange,
+              won: matchupWon,
+              opponentRating: inverseRatingBefore,
+              race1: race1,
+              race2: race2
+            });
+          }
         }
       }
 

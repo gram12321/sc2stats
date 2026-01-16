@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react';
 import { formatRankingPoints } from '../lib/utils';
+import { Race } from '../types/tournament';
+import { getPlayerDefaults } from '../lib/playerDefaults';
+import { MatchHistoryItem } from '../components/MatchHistoryItem';
 
 interface TeamRaceRanking {
   name: string; // e.g., "PT vs ZZ"
@@ -39,6 +42,31 @@ interface MatchHistoryEntry {
   team2_player1_race: string | null;
   team2_player2: string | null;
   team2_player2_race: string | null;
+  team_impacts?: Record<string, {
+    ratingBefore: number;
+    ratingChange: number;
+    won: boolean;
+    opponentRating: number;
+  }>;
+  player_impacts?: Record<string, {
+    ratingBefore: number;
+    ratingChange: number;
+    won: boolean;
+    opponentRating: number;
+  }>;
+}
+
+interface PlayerRanking {
+  name: string;
+  points: number;
+  confidence: number;
+}
+
+interface TeamRanking {
+  player1: string;
+  player2: string;
+  points: number;
+  confidence: number;
 }
 
 export function TeamRaceRankings({ onBack }: TeamRaceRankingsProps) {
@@ -51,9 +79,15 @@ export function TeamRaceRankings({ onBack }: TeamRaceRankingsProps) {
   const [isCombinedStats, setIsCombinedStats] = useState(false);
   const [matchHistory, setMatchHistory] = useState<MatchHistoryEntry[]>([]);
   const [isLoadingMatches, setIsLoadingMatches] = useState(false);
+  const [playerRankings, setPlayerRankings] = useState<Record<string, { rank: number; points: number; confidence: number }>>({});
+  const [teamRankings, setTeamRankings] = useState<Record<string, { rank: number; points: number; confidence: number }>>({});
+  const [playerRaces, setPlayerRaces] = useState<Record<string, Race>>({});
 
   useEffect(() => {
     loadRankings();
+    loadPlayerRankings();
+    loadTeamRankings();
+    loadAllPlayerRaces();
   }, []);
 
   const loadRankings = async () => {
@@ -135,6 +169,108 @@ export function TeamRaceRankings({ onBack }: TeamRaceRankingsProps) {
       'Random': 'R'
     };
     return `${abbr[race1] || race1}${abbr[race2] || race2}`;
+  };
+
+  const loadPlayerRankings = async () => {
+    try {
+      const response = await fetch('/api/player-rankings');
+      if (!response.ok) throw new Error('Failed to load player rankings');
+      const data: PlayerRanking[] = await response.json();
+      const rankMap: Record<string, { rank: number; points: number; confidence: number }> = {};
+      data.forEach((player, index) => {
+        rankMap[player.name] = {
+          rank: index + 1,
+          points: player.points,
+          confidence: player.confidence || 0
+        };
+      });
+      setPlayerRankings(rankMap);
+    } catch (err) {
+      console.error('Error loading player rankings:', err);
+    }
+  };
+
+  const loadTeamRankings = async () => {
+    try {
+      const response = await fetch('/api/team-rankings');
+      if (!response.ok) throw new Error('Failed to load team rankings');
+      const data: TeamRanking[] = await response.json();
+      const rankMap: Record<string, { rank: number; points: number; confidence: number }> = {};
+      data.forEach((team, index) => {
+        const teamKey = normalizeTeamKey(team.player1, team.player2);
+        rankMap[teamKey] = {
+          rank: index + 1,
+          points: team.points,
+          confidence: team.confidence || 0
+        };
+      });
+      setTeamRankings(rankMap);
+    } catch (err) {
+      console.error('Error loading team rankings:', err);
+    }
+  };
+
+  const loadAllPlayerRaces = async () => {
+    try {
+      const defaults = await getPlayerDefaults();
+      setPlayerRaces(defaults);
+    } catch (err) {
+      console.error('Error loading player races:', err);
+    }
+  };
+
+  const normalizeTeamKey = (player1: string, player2: string): string => {
+    return [player1, player2].filter(Boolean).sort().join('+');
+  };
+
+  const getPlayerRank = (name: string | null) => {
+    if (!name) return null;
+    return playerRankings[name]?.rank || null;
+  };
+
+  const getTeamRank = (player1: string | null, player2: string | null) => {
+    if (!player1 || !player2) return null;
+    const teamKey = normalizeTeamKey(player1, player2);
+    return teamRankings[teamKey] || null;
+  };
+
+  const getTeamImpact = (match: MatchHistoryEntry, player1: string | null, player2: string | null) => {
+    if (!match.team_impacts || !player1 || !player2) return null;
+    const teamKey = normalizeTeamKey(player1, player2);
+    return match.team_impacts[teamKey] || null;
+  };
+
+  const getPlayerImpact = (match: MatchHistoryEntry, playerName: string | null) => {
+    if (!match.player_impacts || !playerName) return null;
+    return match.player_impacts[playerName] || null;
+  };
+
+  // Convert MatchHistoryEntry to format expected by MatchHistoryItem
+  const convertMatchForComponent = (match: MatchHistoryEntry) => {
+    return {
+      match_id: match.match_id,
+      tournament_slug: match.tournament_slug,
+      tournament_date: match.tournament_date,
+      match_date: match.match_date,
+      round: match.round,
+      team1: {
+        player1: match.team1_player1 || '',
+        player2: match.team1_player2 || ''
+      },
+      team2: {
+        player1: match.team2_player1 || '',
+        player2: match.team2_player2 || ''
+      },
+      team1_score: match.team1_score,
+      team2_score: match.team2_score,
+      player_impacts: match.player_impacts,
+      team_impacts: match.team_impacts
+    };
+  };
+
+  const getRaceAbbrev = (race: string | null | undefined): string => {
+    if (!race) return '';
+    return race === 'Random' ? 'R' : race[0];
   };
 
   const formatDate = (dateStr: string | null) => {
@@ -600,46 +736,83 @@ export function TeamRaceRankings({ onBack }: TeamRaceRankingsProps) {
                         ratingChange = match.rating_change || 0;
                       }
 
+                      // Determine which team is which based on combo ordering
+                      let clickedComboIsTeam1 = false;
+                      if (isCombinedStats) {
+                        clickedComboIsTeam1 = match.team1_combo === selectedMatchup.combo1;
+                      }
+                      
+                      const team1Won = team1Score > team2Score;
+                      const team1Rank = getTeamRank(
+                        clickedComboIsTeam1 ? match.team1_player1 : match.team2_player1,
+                        clickedComboIsTeam1 ? match.team1_player2 : match.team2_player2
+                      );
+                      const team2Rank = getTeamRank(
+                        clickedComboIsTeam1 ? match.team2_player1 : match.team1_player1,
+                        clickedComboIsTeam1 ? match.team2_player2 : match.team1_player2
+                      );
+                      const team1Impact = getTeamImpact(match,
+                        clickedComboIsTeam1 ? match.team1_player1 : match.team2_player1,
+                        clickedComboIsTeam1 ? match.team1_player2 : match.team2_player2
+                      );
+                      const team2Impact = getTeamImpact(match,
+                        clickedComboIsTeam1 ? match.team2_player1 : match.team1_player1,
+                        clickedComboIsTeam1 ? match.team2_player2 : match.team1_player2
+                      );
+                      
+                      // Parse player names from the formatted strings
+                      const parsePlayers = (playerString: string) => {
+                        return playerString.split(' + ').map(p => {
+                          const match = p.match(/^(.+?)\s*\(/);
+                          return match ? match[1].trim() : p.trim();
+                        });
+                      };
+                      
+                      const convertedMatch = convertMatchForComponent(match);
+                      const team1RankData = getTeamRank(
+                        clickedComboIsTeam1 ? match.team1_player1 : match.team2_player1,
+                        clickedComboIsTeam1 ? match.team1_player2 : match.team2_player2
+                      );
+                      const team2RankData = getTeamRank(
+                        clickedComboIsTeam1 ? match.team2_player1 : match.team1_player1,
+                        clickedComboIsTeam1 ? match.team2_player2 : match.team1_player2
+                      );
+                      
+                      // Convert player rankings to the format expected by component
+                      const playerRankingsMap: Record<string, { rank: number; points: number; confidence: number }> = {};
+                      Object.keys(playerRankings).forEach(name => {
+                        const ranking = playerRankings[name];
+                        if (ranking) {
+                          playerRankingsMap[name] = {
+                            rank: ranking.rank,
+                            points: ranking.points,
+                            confidence: ranking.confidence
+                          };
+                        }
+                      });
+
                       return (
-                        <div
+                        <MatchHistoryItem
                           key={`${match.tournament_slug}-${match.match_id}`}
-                          className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50"
-                        >
-                          <div className="flex items-center justify-between">
-                            <div className="flex-1">
-                              <div className="flex items-center gap-3 mb-2">
-                                <span className={`px-2 py-1 rounded text-xs font-medium ${
-                                  displayedCombo1Won ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                                }`}>
-                                  {displayedCombo1Won ? 'W' : 'L'}
-                                </span>
-                                <span className="text-sm font-medium text-gray-900">
-                                  {team1Score} - {team2Score}
-                                </span>
-                              </div>
-                              <div className="mb-1">
-                                <div className="text-sm text-gray-900">
-                                  <span className="font-medium">{team1Players}</span>
-                                  <span className="text-gray-400 mx-2">vs</span>
-                                  <span className="font-medium">{team2Players}</span>
-                                </div>
-                                <div className="text-xs text-gray-500 mt-1">
-                                  {team1Combo} vs {team2Combo}
-                                </div>
-                              </div>
-                              <div className="text-xs text-gray-500">
-                                {match.tournament_slug} • {match.round} • {formatDate(match.match_date || match.tournament_date)}
-                              </div>
-                            </div>
-                            <div className="text-right">
-                              <div className={`text-sm font-medium ${
-                                ratingChange >= 0 ? 'text-green-600' : 'text-red-600'
-                              }`}>
-                                {ratingChange >= 0 ? '+' : ''}{formatRankingPoints(ratingChange)}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
+                          match={convertedMatch}
+                          team1Rank={team1RankData ? { rank: team1RankData.rank, points: team1RankData.points, confidence: team1RankData.confidence } : null}
+                          team2Rank={team2RankData ? { rank: team2RankData.rank, points: team2RankData.points, confidence: team2RankData.confidence } : null}
+                          playerRankings={playerRankingsMap}
+                          playerRaces={playerRaces}
+                          showWinLoss={true}
+                          winLossValue={displayedCombo1Won}
+                          showRatingBreakdown={true}
+                          showComboInfo={true}
+                          comboInfo={{
+                            combo1: team1Combo,
+                            combo2: team2Combo,
+                            ratingChange
+                          }}
+                          normalizeTeamKey={normalizeTeamKey}
+                          getTeamImpact={(match, player1, player2) => getTeamImpact(match as MatchHistoryEntry, player1, player2)}
+                          getPlayerImpact={(match, playerName) => getPlayerImpact(match as MatchHistoryEntry, playerName)}
+                          formatDate={formatDate}
+                        />
                       );
                     })}
                 </div>

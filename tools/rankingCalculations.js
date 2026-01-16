@@ -41,6 +41,11 @@ export function getProvisionalKFactor(matchCount) {
  * @param {boolean} actualWin - Whether the entity actually won
  */
 export function updateConfidence(stats, expectedWin, actualWin) {
+  // Ensure confidence is initialized and is a valid number
+  if (typeof stats.confidence !== 'number' || isNaN(stats.confidence)) {
+    stats.confidence = 0;
+  }
+  
   // Determine if prediction was correct based on expected outcome
   // If expected win probability > 0.5, we predicted a win
   // If expected win probability < 0.5, we predicted a loss
@@ -58,7 +63,17 @@ export function updateConfidence(stats, expectedWin, actualWin) {
     change = -baseChange * (stats.confidence / 100);
   }
   
+  // Ensure change is a valid number
+  if (isNaN(change) || !isFinite(change)) {
+    change = 0;
+  }
+  
   stats.confidence = Math.max(0, Math.min(100, stats.confidence + change));
+  
+  // Final safety check
+  if (isNaN(stats.confidence) || !isFinite(stats.confidence)) {
+    stats.confidence = 0;
+  }
 }
 
 /**
@@ -124,14 +139,15 @@ export function calculateRatingChange(expectedWin, actualWin, kFactor = 32) {
  * @param {boolean} lost - Whether this entity lost the match
  * @param {number} opponentRating - Current rating/points of the opponent
  * @param {number} opponentConfidence - Opponent's confidence (0-100, optional for future use)
+ * @param {number} currentRating - Optional: explicit current rating to use (for zero-sum calculations)
  * @returns {number} The rating change that was applied
  */
-export function updateStatsForMatch(stats, won, lost, opponentRating, opponentConfidence = 0) {
+export function updateStatsForMatch(stats, won, lost, opponentRating, opponentConfidence = 0, currentRating = null) {
   // Increment match count BEFORE calculating K-factor (uses current match count)
   stats.matches++;
   
-  // Initialize confidence if not present
-  if (stats.confidence === undefined) {
+  // Initialize confidence if not present or invalid
+  if (typeof stats.confidence !== 'number' || isNaN(stats.confidence)) {
     stats.confidence = 0;
   }
   
@@ -142,7 +158,9 @@ export function updateStatsForMatch(stats, won, lost, opponentRating, opponentCo
   const adjustedK = applyConfidenceAdjustment(baseK, stats.confidence);
   
   // Calculate expected win probability (with tighter scale: 350)
-  const expectedWin = predictWinProbability(stats.points, opponentRating);
+  // Use explicit currentRating if provided (for zero-sum calculations), otherwise use stats.points
+  const ratingToUse = currentRating !== null ? currentRating : stats.points;
+  const expectedWin = predictWinProbability(ratingToUse, opponentRating);
   
   // Calculate rating change
   const ratingChange = calculateRatingChange(expectedWin, won, adjustedK);
