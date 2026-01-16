@@ -1,0 +1,243 @@
+{
+  "tournament": {
+    "name": "uThermal 2v2 Circuit: Warm Up Cup #1",
+    "liquipedia_slug": "UThermal_2v2_Circuit/WUC/1",
+    "date": "2025-07-02",
+    "prize_pool": 420,
+    "format": "2v2 Playoffs",
+    "maps": [
+      "Arctic Flowers",
+      "Breakwater",
+      "Crimson Research Lab",
+      "Emerald City",
+      "Reclamation LE",
+      "Rhoskallian",
+      "Rohana",
+      "Undercurrent",
+      "Yellowjacket"
+    ]
+  },
+  "matches": [
+    {
+      "match_id": "R1M1",
+      "round": "Round of 16",
+      "team1": {
+        "player1": {
+          "name": "ShoWTimE"
+        },
+        "player2": {
+          "name": "Spirit"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "DefMars"
+        },
+        "player2": {
+          "name": "ZaRDieNT"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 0,
+      "best_of": 3,
+      "date": null,
+      "games": [],
+      "tournament_slug": "UThermal_2v2_Circuit/WUC/1"
+    },
+    {
+      "match_id": "R1M2",
+      "round": "Round of 16",
+      "team1": {
+        "player1": {
+          "name": "GgMaChine"
+        },
+        "player2": {
+          "name": "Shameless"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Harstem"
+        },
+        "player2": {
+          "name": "Lambo"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 1,
+      "best_of": 3,
+      "date": null,
+      "games": [],
+      "tournament_slug": "UThermal_2v2_Circuit/WUC/1"
+    },
+    {
+      "match_id": "R1M3",
+      "round": "Round of 16",
+      "team1": {
+        "player1": {
+          "name": "goblin"
+        },
+        "player2": {
+          "name": "uThermal"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "NightPhoenix"
+        },
+        "player2": {
+          "name": "Wayne"
+        }
+      },
+      "team1_score": 0,
+      "team2_score": 2,
+      "best_of": 3,
+      "date": null,
+      "games": [],
+      "tournament_slug": "UThermal_2v2_Circuit/WUC/1"
+    },
+    {
+      "match_id": "R1M4",
+      "round": "Round of 16",
+      "team1": {
+        "player1": {
+          "name": "Clem"
+        },
+        "player2": {
+          "name": "trigger"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Jumy"
+        },
+        "player2": {
+          "name": "YoungYakov"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 0,
+      "best_of": 3,
+      "date": null,
+      "games": [],
+      "tournament_slug": "UThermal_2v2_Circuit/WUC/1"
+    },
+    {
+      "match_id": "R2M1",
+      "round": "Quarterfinals",
+      "team1": {
+        "player1": {
+          "name": "ShoWTimE"
+        },
+        "player2": {
+          "name": "Spirit"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "GgMaChine"
+        },
+        "player2": {
+          "name": "Shameless"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 1,
+      "best_of": 3,
+      "date": "2025-07-02 19:30",
+      "games": [
+        {
+          "map": "Emerald City",
+          "winner": 1
+        },
+        {
+          "map": "Undercurrent",
+          "winner": 2
+        },
+        {
+          "map": "Rhoskallian",
+          "winner": 1
+        }
+      ],
+      "tournament_slug": "UThermal_2v2_Circuit/WUC/1"
+    },
+    {
+      "match_id": "R2M2",
+      "round": "Quarterfinals",
+      "team1": {
+        "player1": {
+          "name": "NightPhoenix"
+        },
+        "player2": {
+          "name": "Wayne"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Clem"
+        },
+        "player2": {
+          "name": "trigger"
+        }
+      },
+      "team1_score": 1,
+      "team2_score": 2,
+      "best_of": 3,
+      "date": "2025-07-02 19:30",
+      "games": [
+        {
+          "map": "Undercurrent",
+          "winner": 2
+        },
+        {
+          "map": "Rohana",
+          "winner": 1
+        },
+        {
+          "map": "Yellowjacket",
+          "winner": 2
+        }
+      ],
+      "tournament_slug": "UThermal_2v2_Circuit/WUC/1"
+    },
+    {
+      "match_id": "R3M1",
+      "round": "Semifinals",
+      "team1": {
+        "player1": {
+          "name": "ShoWTimE"
+        },
+        "player2": {
+          "name": "Spirit"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Clem"
+        },
+        "player2": {
+          "name": "trigger"
+        }
+      },
+      "team1_score": 3,
+      "team2_score": 0,
+      "best_of": 5,
+      "date": "2025-07-02 20:30",
+      "games": [
+        {
+          "map": "Breakwater",
+          "winner": 1
+        },
+        {
+          "map": "Reclamation",
+          "winner": 1
+        },
+        {
+          "map": "Emerald City",
+          "winner": 1
+        }
+      ],
+      "tournament_slug": "UThermal_2v2_Circuit/WUC/1"
+    }
+  ]
+}
