@@ -2,7 +2,8 @@ import { readdir, readFile } from 'fs/promises';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import {
-  updateStatsForMatch
+  updateStatsForMatch,
+  calculatePopulationStats
 } from './rankingCalculations.js';
 import {
   determineMatchOutcome,
@@ -251,18 +252,23 @@ export async function calculateRaceRankings() {
           const inverseKey = getInverseMatchupKey(matchupKey);
           if (!matchupKey || !inverseKey) continue;
           
-          // Initialize both matchup stats if needed
+          // Calculate population statistics BEFORE initializing new matchups
+          // This allows us to start new matchups at the population mean
+          const existingPopulationStats = calculatePopulationStats(raceStats);
+          const populationMean = existingPopulationStats.mean;
+
+          // Initialize both matchup stats if needed, starting them at population mean
           if (!raceStats.has(matchupKey)) {
             raceStats.set(matchupKey, initializeStats(matchupKey, {
               race1: race1,
               race2: race2
-            }));
+            }, populationMean));
           }
           if (!raceStats.has(inverseKey)) {
             raceStats.set(inverseKey, initializeStats(inverseKey, {
               race1: race2,
               race2: race1
-            }));
+            }, populationMean));
           }
           
           // Capture BEFORE ratings (only once per unique matchup key)
@@ -314,10 +320,17 @@ export async function calculateRaceRankings() {
             const matchupRatingBefore = matchupRatingsBefore.get(matchupKey);
             const inverseRatingBefore = matchupRatingsBefore.get(inverseKey);
 
+            // Calculate population statistics for race matchups (adapts to actual skill distribution)
+            const populationStats = calculatePopulationStats(raceStats);
+            const populationStdDev = populationStats.stdDev;
+            const populationMean = populationStats.mean;
+
             // Compare against the inverse matchup, not average!
             // PvT rating vs TvP rating - this makes it zero-sum
             // When P beats T: PvT gains points based on TvP's rating, TvP loses based on PvT's rating
             // IMPORTANT: Use BEFORE ratings for both sides to ensure true zero-sum
+            // Note: Since we use explicit currentRating, first-match logic doesn't apply here,
+            // but we pass populationMean for consistency
             
             // Update PvT: compare its BEFORE rating against TvP's BEFORE rating
             const matchupResult = updateStatsForMatch(
@@ -325,8 +338,10 @@ export async function calculateRaceRankings() {
               matchupWon,
               !matchupWon,
               inverseRatingBefore, // Use TvP's rating BEFORE update
+              populationStdDev, // Population std dev for adaptive scaling
               0, // opponentConfidence
-              matchupRatingBefore // Use PvT's rating BEFORE update (explicit)
+              matchupRatingBefore, // Use PvT's rating BEFORE update (explicit)
+              populationMean // Population mean (for first-match logic, though explicit rating takes precedence)
             );
 
             // Update TvP: compare its BEFORE rating against PvT's BEFORE rating
@@ -336,8 +351,10 @@ export async function calculateRaceRankings() {
               !matchupWon,
               matchupWon,
               matchupRatingBefore, // Use PvT's rating BEFORE update
+              populationStdDev, // Population std dev for adaptive scaling
               0, // opponentConfidence
-              inverseRatingBefore // Use TvP's rating BEFORE update (explicit)
+              inverseRatingBefore, // Use TvP's rating BEFORE update (explicit)
+              populationMean // Population mean (for first-match logic, though explicit rating takes precedence)
             );
 
             // Track impact

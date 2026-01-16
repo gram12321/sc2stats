@@ -3,7 +3,7 @@ import { readdir, readFile, writeFile, mkdir } from 'fs/promises';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import cors from 'cors';
-import { calculateRankings } from '../tools/calculateRankings.js';
+import { calculateRankings } from '../tools/processRankings.js';
 import { calculateTeamRankings } from '../tools/calculateTeamRankings.js';
 import { calculateRaceRankings } from '../tools/calculateRaceRankings.js';
 import { calculateTeamRaceRankings } from '../tools/calculateTeamRaceRankings.js';

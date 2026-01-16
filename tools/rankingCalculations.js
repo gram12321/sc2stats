@@ -95,19 +95,72 @@ export function applyConfidenceAdjustment(baseK, confidence) {
 }
 
 /**
+ * Calculate population statistics (mean and standard deviation) from player ratings
+ * Used to determine the distribution of skill in the player base
+ * 
+ * @param {Map|Array} playerStats - Map or Array of player stats objects with 'points' property
+ * @returns {Object} Object with mean and stdDev properties
+ */
+export function calculatePopulationStats(playerStats) {
+  // Convert Map to Array if needed
+  const ratings = playerStats instanceof Map 
+    ? Array.from(playerStats.values()).map(s => s.points)
+    : playerStats.map(s => s.points);
+  
+  if (ratings.length === 0) {
+    // Default fallback if no players
+    return { mean: 0, stdDev: 350 };
+  }
+  
+  // Calculate mean
+  const mean = ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length;
+  
+  // Calculate variance
+  const variance = ratings.reduce((sum, rating) => {
+    const diff = rating - mean;
+    return sum + (diff * diff);
+  }, 0) / ratings.length;
+  
+  // Calculate standard deviation
+  const stdDev = Math.sqrt(variance);
+  
+  // Ensure minimum std dev to avoid division by zero
+  // Use 350 as minimum (fallback to old system if population is too uniform)
+  const minStdDev = 50; // Minimum reasonable std dev
+  const finalStdDev = Math.max(stdDev, minStdDev);
+  
+  return { mean, stdDev: finalStdDev };
+}
+
+/**
  * Predict win probability for team1 based on rating difference
- * Uses logistic function: P(team1 wins) = 1 / (1 + 10^((rating2 - rating1) / 350))
- * This is similar to Elo rating system with tighter scale (350 instead of 400)
+ * Uses population-based logistic function: P(team1 wins) = 1 / (1 + 10^((rating2 - rating1) / stdDev))
+ * This adapts to the actual distribution of player skill (Blizzard-style)
+ * 
+ * How it works:
+ * - The formula uses a logistic (S-curve) function that maps rating differences to win probabilities
+ * - The populationStdDev acts as a "scale factor" - it determines how many rating points = 1 standard deviation
+ * - When ratingDiff = 0 (equal ratings): P(win) = 1/(1+10^0) = 1/2 = 50%
+ * - When ratingDiff = -stdDev (team1 is 1 std dev higher): P(win) = 1/(1+10^-1) = 1/1.1 ≈ 90.9%
+ * - When ratingDiff = -2*stdDev (team1 is 2 std dev higher): P(win) = 1/(1+10^-2) = 1/1.01 ≈ 99.0%
+ * - When ratingDiff = +stdDev (team1 is 1 std dev lower): P(win) = 1/(1+10^1) = 1/11 ≈ 9.1%
+ * 
+ * The function is symmetric: if team1 has X% chance, team2 has (100-X)% chance
  * 
  * @param {number} rating1 - Current rating/points of team1
  * @param {number} rating2 - Current rating/points of team2
+ * @param {number} populationStdDev - Standard deviation of the player population (acts as scale factor)
  * @returns {number} Expected win probability for team1 (0 to 1)
  */
-export function predictWinProbability(rating1, rating2) {
+export function predictWinProbability(rating1, rating2, populationStdDev = 350) {
   const ratingDiff = rating2 - rating1;
-  // Using 350 as the rating difference (tighter than standard 400)
-  // This increases rating spread and makes differences more impactful
-  return 1 / (1 + Math.pow(10, ratingDiff / 350));
+  // Using population std dev as the scale factor
+  // This adapts to the actual skill distribution:
+  // - 0 std dev apart (equal ratings) = 50% win chance
+  // - 1 std dev apart (higher player) = ~91% win chance
+  // - 2 std dev apart (higher player) = ~99% win chance
+  // - The function approaches but never reaches 0% or 100%
+  return 1 / (1 + Math.pow(10, ratingDiff / populationStdDev));
 }
 
 /**
@@ -132,17 +185,21 @@ export function calculateRatingChange(expectedWin, actualWin, kFactor = 32) {
  * - Provisional K-factor (higher for new players/teams)
  * - Confidence tracking (builds with correct predictions)
  * - Confidence-based K-factor adjustment (individual per entity)
- * - Tighter rating scale (350 instead of 400)
+ * - Population-based rating scale (adapts to actual skill distribution)
  * 
  * @param {Object} stats - Current stats object (will be mutated)
  * @param {boolean} won - Whether this entity won the match
  * @param {boolean} lost - Whether this entity lost the match
  * @param {number} opponentRating - Current rating/points of the opponent
+ * @param {number} populationStdDev - Standard deviation of the player population
  * @param {number} opponentConfidence - Opponent's confidence (0-100, optional for future use)
  * @param {number} currentRating - Optional: explicit current rating to use (for zero-sum calculations)
  * @returns {Object} Object with ratingChange and calculation details
  */
-export function updateStatsForMatch(stats, won, lost, opponentRating, opponentConfidence = 0, currentRating = null) {
+export function updateStatsForMatch(stats, won, lost, opponentRating, populationStdDev = 350, opponentConfidence = 0, currentRating = null, populationMean = null) {
+  // Check if this is the first match (before incrementing)
+  const isFirstMatch = stats.matches === 0;
+  
   // Increment match count BEFORE calculating K-factor (uses current match count)
   stats.matches++;
   
@@ -157,10 +214,21 @@ export function updateStatsForMatch(stats, won, lost, opponentRating, opponentCo
   // Apply confidence adjustment individually
   const adjustedK = applyConfidenceAdjustment(baseK, stats.confidence);
   
-  // Calculate expected win probability (with tighter scale: 350)
-  // Use explicit currentRating if provided (for zero-sum calculations), otherwise use stats.points
-  const ratingToUse = currentRating !== null ? currentRating : stats.points;
-  const expectedWin = predictWinProbability(ratingToUse, opponentRating);
+  // Calculate expected win probability using population-based scale
+  // For first match: use population mean instead of current rating (which might be 0 or mean)
+  // This ensures reasonable expected win probabilities for new players
+  // Use explicit currentRating if provided (for zero-sum calculations)
+  let ratingToUse;
+  if (currentRating !== null) {
+    ratingToUse = currentRating;
+  } else if (isFirstMatch && populationMean !== null) {
+    // First match: use population mean for expected win calculation
+    ratingToUse = populationMean;
+  } else {
+    ratingToUse = stats.points;
+  }
+  
+  const expectedWin = predictWinProbability(ratingToUse, opponentRating, populationStdDev);
   
   // Calculate rating change
   const ratingChange = calculateRatingChange(expectedWin, won, adjustedK);
@@ -186,7 +254,8 @@ export function updateStatsForMatch(stats, won, lost, opponentRating, opponentCo
       baseK,
       adjustedK,
       confidence: stats.confidence,
-      matchCount: stats.matches
+      matchCount: stats.matches,
+      populationStdDev
     }
   };
 }

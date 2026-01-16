@@ -2,7 +2,8 @@ import { readdir, readFile } from 'fs/promises';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import {
-  updateStatsForMatch
+  updateStatsForMatch,
+  calculatePopulationStats
 } from './rankingCalculations.js';
 import {
   determineMatchOutcome,
@@ -126,19 +127,25 @@ export async function calculateTeamRankings() {
       const team1PlayersSorted = [team1Player1, team1Player2].sort();
       const team2PlayersSorted = [team2Player1, team2Player2].sort();
 
-      // Initialize teams if they don't exist yet
+      // Calculate population statistics BEFORE initializing new teams
+      // This allows us to start new teams at the population mean
+      const existingPopulationStats = calculatePopulationStats(teamStats);
+      const populationMean = existingPopulationStats.mean;
+      const populationStdDev = existingPopulationStats.stdDev;
+
+      // Initialize teams if they don't exist yet, starting them at population mean
       if (!teamStats.has(team1Key)) {
         teamStats.set(team1Key, initializeStats(team1Key, {
           player1: team1PlayersSorted[0],
           player2: team1PlayersSorted[1]
-        }));
+        }, populationMean));
       }
 
       if (!teamStats.has(team2Key)) {
         teamStats.set(team2Key, initializeStats(team2Key, {
           player1: team2PlayersSorted[0],
           player2: team2PlayersSorted[1]
-        }));
+        }, populationMean));
       }
 
       // Get current team ratings BEFORE updating (to use previous ratings for prediction)
@@ -149,6 +156,11 @@ export async function calculateTeamRankings() {
       const team1Rating = team1Stats.points;
       const team2Rating = team2Stats.points;
 
+      // Recalculate population statistics after adding new teams
+      const finalPopulationStats = calculatePopulationStats(teamStats);
+      const finalPopulationMean = finalPopulationStats.mean;
+      const finalPopulationStdDev = finalPopulationStats.stdDev;
+
       // Determine winner
       const { team1Won, team2Won } = determineMatchOutcome(
         match.team1_score,
@@ -157,10 +169,10 @@ export async function calculateTeamRankings() {
 
       // Update stats using prediction-based scoring
       // Compare team1 rating vs team2 rating (using previous ratings)
-      const team1Result = updateStatsForMatch(team1Stats, team1Won, team2Won, team2Rating);
+      const team1Result = updateStatsForMatch(team1Stats, team1Won, team2Won, team2Rating, finalPopulationStdDev, 0, null, finalPopulationMean);
       
       // Compare team2 rating vs team1 rating (using previous ratings)
-      const team2Result = updateStatsForMatch(team2Stats, team2Won, team1Won, team1Rating);
+      const team2Result = updateStatsForMatch(team2Stats, team2Won, team1Won, team1Rating, finalPopulationStdDev, 0, null, finalPopulationMean);
 
       // Store match history entry
       matchHistory.push({

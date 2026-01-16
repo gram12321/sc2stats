@@ -2,7 +2,8 @@ import { readdir, readFile } from 'fs/promises';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import {
-  updateStatsForMatch
+  updateStatsForMatch,
+  calculatePopulationStats
 } from './rankingCalculations.js';
 import {
   determineMatchOutcome,
@@ -314,6 +315,11 @@ export async function calculateTeamRaceRankings() {
       const combo1RatingBefore = matchupStats.combo1Points;
       const combo2RatingBefore = matchupStats.combo2Points;
       
+      // Calculate population statistics for team race matchups (adapts to actual skill distribution)
+      const populationStats = calculatePopulationStats(teamRaceStats);
+      const populationStdDev = populationStats.stdDev;
+      const populationMean = populationStats.mean;
+      
       // Create temporary stats objects for updateStatsForMatch
       const combo1TempStats = {
         matches: matchupStats.combo1Matches,
@@ -334,7 +340,11 @@ export async function calculateTeamRaceRankings() {
         combo1TempStats,
         combo1Won,
         !combo1Won,
-        combo2RatingBefore
+        combo2RatingBefore,
+        populationStdDev,
+        0,
+        null,
+        populationMean
       );
       
       // Update combo2 stats comparing against combo1 (before combo1 update)
@@ -342,7 +352,11 @@ export async function calculateTeamRaceRankings() {
         combo2TempStats,
         !combo1Won,
         combo1Won,
-        combo1RatingBefore
+        combo1RatingBefore,
+        populationStdDev,
+        0,
+        null,
+        populationMean
       );
       
       // Apply changes back to matchup stats
