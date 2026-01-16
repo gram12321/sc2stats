@@ -330,7 +330,7 @@ export async function calculateTeamRaceRankings() {
       };
       
       // Update combo1 stats comparing against combo2
-      const combo1RatingChange = updateStatsForMatch(
+      const combo1Result = updateStatsForMatch(
         combo1TempStats,
         combo1Won,
         !combo1Won,
@@ -338,7 +338,7 @@ export async function calculateTeamRaceRankings() {
       );
       
       // Update combo2 stats comparing against combo1 (before combo1 update)
-      const combo2RatingChange = updateStatsForMatch(
+      const combo2Result = updateStatsForMatch(
         combo2TempStats,
         !combo1Won,
         combo1Won,
@@ -352,7 +352,7 @@ export async function calculateTeamRaceRankings() {
       // Net points for combo1 (used for overall ranking)
       matchupStats.points = matchupStats.combo1Points - matchupStats.combo2Points;
       
-      const ratingChange = combo1RatingChange;
+      const ratingChange = combo1Result.ratingChange;
 
       // Get player races for display
       const getRaceAbbr = (race) => {

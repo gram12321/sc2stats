@@ -200,12 +200,13 @@ export async function calculateRankings() {
       for (const playerName of team1Players) {
         const stats = playerStats.get(playerName);
         const ratingBefore = stats.points;
-        const ratingChange = updateStatsForMatch(stats, team1Won, team2Won, team1AvgOpponentRating);
+        const result = updateStatsForMatch(stats, team1Won, team2Won, team1AvgOpponentRating);
         playerImpacts.set(playerName, {
           ratingBefore,
-          ratingChange,
+          ratingChange: result.ratingChange,
           won: team1Won,
-          opponentRating: team1AvgOpponentRating
+          opponentRating: team1AvgOpponentRating,
+          ...result.calculationDetails
         });
       }
 
@@ -213,12 +214,13 @@ export async function calculateRankings() {
       for (const playerName of team2Players) {
         const stats = playerStats.get(playerName);
         const ratingBefore = stats.points;
-        const ratingChange = updateStatsForMatch(stats, team2Won, team1Won, team2AvgOpponentRating);
+        const result = updateStatsForMatch(stats, team2Won, team1Won, team2AvgOpponentRating);
         playerImpacts.set(playerName, {
           ratingBefore,
-          ratingChange,
+          ratingChange: result.ratingChange,
           won: team2Won,
-          opponentRating: team2AvgOpponentRating
+          opponentRating: team2AvgOpponentRating,
+          ...result.calculationDetails
         });
       }
 

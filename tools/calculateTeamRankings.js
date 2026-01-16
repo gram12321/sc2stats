@@ -157,10 +157,10 @@ export async function calculateTeamRankings() {
 
       // Update stats using prediction-based scoring
       // Compare team1 rating vs team2 rating (using previous ratings)
-      const team1RatingChange = updateStatsForMatch(team1Stats, team1Won, team2Won, team2Rating);
+      const team1Result = updateStatsForMatch(team1Stats, team1Won, team2Won, team2Rating);
       
       // Compare team2 rating vs team1 rating (using previous ratings)
-      const team2RatingChange = updateStatsForMatch(team2Stats, team2Won, team1Won, team1Rating);
+      const team2Result = updateStatsForMatch(team2Stats, team2Won, team1Won, team1Rating);
 
       // Store match history entry
       matchHistory.push({
@@ -182,15 +182,17 @@ export async function calculateTeamRankings() {
         team_impacts: {
           [team1Key]: {
             ratingBefore: team1Rating,
-            ratingChange: team1RatingChange,
+            ratingChange: team1Result.ratingChange,
             won: team1Won,
-            opponentRating: team2Rating
+            opponentRating: team2Rating,
+            ...team1Result.calculationDetails
           },
           [team2Key]: {
             ratingBefore: team2Rating,
-            ratingChange: team2RatingChange,
+            ratingChange: team2Result.ratingChange,
             won: team2Won,
-            opponentRating: team1Rating
+            opponentRating: team1Rating,
+            ...team2Result.calculationDetails
           }
         }
       });

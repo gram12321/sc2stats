@@ -140,7 +140,7 @@ export function calculateRatingChange(expectedWin, actualWin, kFactor = 32) {
  * @param {number} opponentRating - Current rating/points of the opponent
  * @param {number} opponentConfidence - Opponent's confidence (0-100, optional for future use)
  * @param {number} currentRating - Optional: explicit current rating to use (for zero-sum calculations)
- * @returns {number} The rating change that was applied
+ * @returns {Object} Object with ratingChange and calculation details
  */
 export function updateStatsForMatch(stats, won, lost, opponentRating, opponentConfidence = 0, currentRating = null) {
   // Increment match count BEFORE calculating K-factor (uses current match count)
@@ -178,6 +178,15 @@ export function updateStatsForMatch(stats, won, lost, opponentRating, opponentCo
   // Update points based on prediction performance
   stats.points += ratingChange;
   
-  // Return the rating change for tracking purposes
-  return ratingChange;
+  // Return the rating change and calculation details for tracking purposes
+  return {
+    ratingChange,
+    calculationDetails: {
+      expectedWin,
+      baseK,
+      adjustedK,
+      confidence: stats.confidence,
+      matchCount: stats.matches
+    }
+  };
 }

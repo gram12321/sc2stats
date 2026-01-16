@@ -1,11 +1,17 @@
 import { Race } from '../types/tournament';
 import { formatRankingPoints } from '../lib/utils';
+import { Tooltip } from './ui/tooltip';
 
 interface PlayerImpact {
   ratingBefore: number;
   ratingChange: number;
   won: boolean;
   opponentRating: number;
+  expectedWin?: number;
+  baseK?: number;
+  adjustedK?: number;
+  confidence?: number;
+  matchCount?: number;
 }
 
 interface TeamImpact {
@@ -13,6 +19,11 @@ interface TeamImpact {
   ratingChange: number;
   won: boolean;
   opponentRating: number;
+  expectedWin?: number;
+  baseK?: number;
+  adjustedK?: number;
+  confidence?: number;
+  matchCount?: number;
 }
 
 interface MatchData {
@@ -40,6 +51,11 @@ interface MatchData {
     opponentRating: number;
     race1: string;
     race2: string;
+    expectedWin?: number;
+    baseK?: number;
+    adjustedK?: number;
+    confidence?: number;
+    matchCount?: number;
   }>;
 }
 
@@ -92,6 +108,79 @@ const getRaceAbbrev = (race: Race | null | undefined): string => {
   if (!race) return '';
   return race === 'Random' ? 'R' : race[0];
 };
+
+/**
+ * Generate tooltip content explaining the rating change calculation
+ * Uses calculation details from backend
+ */
+function getRatingChangeTooltip(impact: PlayerImpact | TeamImpact, type: 'player' | 'team' | 'race' = 'player'): React.ReactNode {
+  const { ratingBefore, ratingChange, won, opponentRating, expectedWin, baseK, adjustedK, confidence, matchCount } = impact;
+  
+  if (expectedWin === undefined || adjustedK === undefined) {
+    // Backend should always provide these values
+    return (
+      <div className="text-left text-xs">
+        <div className="font-semibold mb-1">Rating Change</div>
+        <div>{formatRankingPoints(ratingChange)}</div>
+      </div>
+    );
+  }
+  
+  const expectedWinPercent = Math.round(expectedWin * 100);
+  const actualResult = won ? 1 : 0;
+  const typeLabel = type === 'team' ? 'Team' : type === 'race' ? 'Race' : 'Player';
+  
+  // Format the calculation breakdown using backend-provided values
+  const performanceDiff = (actualResult - expectedWin).toFixed(3);
+  const calculation = `${adjustedK.toFixed(1)} × (${actualResult} - ${expectedWin.toFixed(3)}) = ${formatRankingPoints(ratingChange)}`;
+  
+  return (
+    <div className="text-left space-y-1">
+      <div className="font-semibold mb-1">{typeLabel} Rating Change Calculation</div>
+      <div className="text-xs space-y-0.5">
+        <div><span className="font-medium">My Rating:</span> {formatRankingPoints(ratingBefore)}</div>
+        <div><span className="font-medium">Opponent Rating:</span> {formatRankingPoints(opponentRating)}</div>
+        <div className="pt-1 border-t border-gray-700 mt-0.5">
+          <div><span className="font-medium">Expected Win Probability:</span> {expectedWinPercent}% ({expectedWin.toFixed(3)})</div>
+          <div><span className="font-medium">Actual Result:</span> {won ? 'Win' : 'Loss'} ({actualResult})</div>
+          <div className="text-gray-300 mt-0.5">
+            Performance: {won ? 'Outperformed' : 'Underperformed'} by {Math.abs(parseFloat(performanceDiff)).toFixed(3)}
+          </div>
+        </div>
+        {baseK !== undefined && (
+          <div className="pt-1 border-t border-gray-700 mt-0.5">
+            <div><span className="font-medium">Base K-factor:</span> {baseK.toFixed(1)}</div>
+            {adjustedK !== undefined && adjustedK !== baseK && (
+              <div><span className="font-medium">Adjusted K-factor:</span> {adjustedK.toFixed(1)}</div>
+            )}
+            {confidence !== undefined && (
+              <div className="text-gray-300">Confidence: {Math.round(confidence)}%</div>
+            )}
+            {matchCount !== undefined && (
+              <div className="text-gray-300">Match Count: {matchCount}</div>
+            )}
+          </div>
+        )}
+        <div className="pt-1 border-t border-gray-700 mt-0.5">
+          <div className="font-medium mb-0.5">Final Calculation:</div>
+          <div className="font-mono text-xs bg-gray-800 px-1 py-0.5 rounded">
+            {calculation}
+          </div>
+          <div className="text-gray-300 text-[10px] mt-0.5">
+            K-factor × (Actual - Expected) = Rating Change
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Generate tooltip for race impact (when we have race_impacts data)
+ */
+function getRaceChangeTooltip(impact: { ratingBefore: number; ratingChange: number; won: boolean; opponentRating: number; race1: string; race2: string; expectedWin?: number; baseK?: number; adjustedK?: number; confidence?: number; matchCount?: number }): React.ReactNode {
+  return getRatingChangeTooltip(impact, 'race');
+}
 
 export function MatchHistoryItem({
   match,
@@ -171,11 +260,13 @@ export function MatchHistoryItem({
                 {Math.round(team1Rank.confidence)}%
               </span>
               {team1Impact && (
-                <span className={`text-sm font-bold ${
-                  team1Impact.ratingChange >= 0 ? 'text-green-700' : 'text-red-700'
-                }`}>
-                  {team1Impact.ratingChange >= 0 ? '+' : ''}{formatRankingPoints(team1Impact.ratingChange)}
-                </span>
+                <Tooltip content={getRatingChangeTooltip(team1Impact, 'team')}>
+                  <span className={`text-sm font-bold cursor-help ${
+                    team1Impact.ratingChange >= 0 ? 'text-green-700' : 'text-red-700'
+                  }`}>
+                    {team1Impact.ratingChange >= 0 ? '+' : ''}{formatRankingPoints(team1Impact.ratingChange)}
+                  </span>
+                </Tooltip>
               )}
             </div>
           )}
@@ -199,11 +290,13 @@ export function MatchHistoryItem({
                     <span className="text-xs text-gray-500">#{playerRank}</span>
                   )}
                   {impact && (
-                    <span className={`text-xs font-medium ${
-                      impact.ratingChange >= 0 ? 'text-green-600' : 'text-red-600'
-                    }`}>
-                      {impact.ratingChange >= 0 ? '+' : ''}{formatRankingPoints(impact.ratingChange)}
-                    </span>
+                    <Tooltip content={getRatingChangeTooltip(impact, 'player')}>
+                      <span className={`text-xs font-medium cursor-help ${
+                        impact.ratingChange >= 0 ? 'text-green-600' : 'text-red-600'
+                      }`}>
+                        {impact.ratingChange >= 0 ? '+' : ''}{formatRankingPoints(impact.ratingChange)}
+                      </span>
+                    </Tooltip>
                   )}
                 </div>
               );
@@ -234,11 +327,13 @@ export function MatchHistoryItem({
               return (
                 <div key={playerName} className="flex items-center gap-0.5 shrink-0 flex-row-reverse">
                   {impact && (
-                    <span className={`text-xs font-medium ${
-                      impact.ratingChange >= 0 ? 'text-green-600' : 'text-red-600'
-                    }`}>
-                      {impact.ratingChange >= 0 ? '+' : ''}{formatRankingPoints(impact.ratingChange)}
-                    </span>
+                    <Tooltip content={getRatingChangeTooltip(impact, 'player')}>
+                      <span className={`text-xs font-medium cursor-help ${
+                        impact.ratingChange >= 0 ? 'text-green-600' : 'text-red-600'
+                      }`}>
+                        {impact.ratingChange >= 0 ? '+' : ''}{formatRankingPoints(impact.ratingChange)}
+                      </span>
+                    </Tooltip>
                   )}
                   {playerRank && (
                     <span className="text-xs text-gray-500">#{playerRank}</span>
@@ -260,11 +355,13 @@ export function MatchHistoryItem({
               isTeam2Highlighted ? 'bg-blue-100 border-blue-300' : 'bg-blue-50 border-blue-200'
             }`}>
               {team2Impact && (
-                <span className={`text-sm font-bold ${
-                  team2Impact.ratingChange >= 0 ? 'text-green-700' : 'text-red-700'
-                }`}>
-                  {team2Impact.ratingChange >= 0 ? '+' : ''}{formatRankingPoints(team2Impact.ratingChange)}
-                </span>
+                <Tooltip content={getRatingChangeTooltip(team2Impact, 'team')}>
+                  <span className={`text-sm font-bold cursor-help ${
+                    team2Impact.ratingChange >= 0 ? 'text-green-700' : 'text-red-700'
+                  }`}>
+                    {team2Impact.ratingChange >= 0 ? '+' : ''}{formatRankingPoints(team2Impact.ratingChange)}
+                  </span>
+                </Tooltip>
               )}
               <span className={`text-sm font-semibold ${
                 team2Rank.confidence >= 70 ? 'text-blue-700' : 
@@ -290,15 +387,19 @@ export function MatchHistoryItem({
               <div className="flex items-center gap-1 flex-wrap">
                 <span className="text-gray-600">Teams:</span>
                 {team1Rank && team1Impact && (
-                  <span className={`font-medium ${team1Impact.ratingChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    {team1Players.join('+')} {team1Impact.ratingChange >= 0 ? '+' : ''}{formatRankingPoints(team1Impact.ratingChange)}
-                  </span>
+                  <Tooltip content={getRatingChangeTooltip(team1Impact, 'team')}>
+                    <span className={`font-medium cursor-help ${team1Impact.ratingChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      {team1Players.join('+')} {team1Impact.ratingChange >= 0 ? '+' : ''}{formatRankingPoints(team1Impact.ratingChange)}
+                    </span>
+                  </Tooltip>
                 )}
                 {team1Rank && team1Impact && team2Rank && team2Impact && <span className="text-gray-400">•</span>}
                 {team2Rank && team2Impact && (
-                  <span className={`font-medium ${team2Impact.ratingChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    {team2Players.join('+')} {team2Impact.ratingChange >= 0 ? '+' : ''}{formatRankingPoints(team2Impact.ratingChange)}
-                  </span>
+                  <Tooltip content={getRatingChangeTooltip(team2Impact, 'team')}>
+                    <span className={`font-medium cursor-help ${team2Impact.ratingChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      {team2Players.join('+')} {team2Impact.ratingChange >= 0 ? '+' : ''}{formatRankingPoints(team2Impact.ratingChange)}
+                    </span>
+                  </Tooltip>
                 )}
               </div>
             </div>
@@ -312,20 +413,24 @@ export function MatchHistoryItem({
                   const impact = getPlayerImpact(match, name);
                   if (!impact) return null;
                   return (
-                    <span key={name} className={`font-medium ${impact.ratingChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {name} {impact.ratingChange >= 0 ? '+' : ''}{formatRankingPoints(impact.ratingChange)}
-                      {idx < team1Players.length - 1 || team2Players.some(n => getPlayerImpact(match, n)) ? ',' : ''}
-                    </span>
+                    <Tooltip key={name} content={getRatingChangeTooltip(impact, 'player')}>
+                      <span className={`font-medium cursor-help ${impact.ratingChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {name} {impact.ratingChange >= 0 ? '+' : ''}{formatRankingPoints(impact.ratingChange)}
+                        {idx < team1Players.length - 1 || team2Players.some(n => getPlayerImpact(match, n)) ? ',' : ''}
+                      </span>
+                    </Tooltip>
                   );
                 })}
                 {team2Players.map((name, idx) => {
                   const impact = getPlayerImpact(match, name);
                   if (!impact) return null;
                   return (
-                    <span key={name} className={`font-medium ${impact.ratingChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {name} {impact.ratingChange >= 0 ? '+' : ''}{formatRankingPoints(impact.ratingChange)}
-                      {idx < team2Players.length - 1 ? ',' : ''}
-                    </span>
+                    <Tooltip key={name} content={getRatingChangeTooltip(impact, 'player')}>
+                      <span className={`font-medium cursor-help ${impact.ratingChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {name} {impact.ratingChange >= 0 ? '+' : ''}{formatRankingPoints(impact.ratingChange)}
+                        {idx < team2Players.length - 1 ? ',' : ''}
+                      </span>
+                    </Tooltip>
                   );
                 })}
               </div>
@@ -343,14 +448,31 @@ export function MatchHistoryItem({
                       return (
                         <>
                           <span className="text-gray-600">Races:</span>
-                          {raceChanges.map((rc, idx) => (
-                            <span key={rc.race}>
-                              {idx > 0 && <span className="text-gray-400">•</span>}
-                              <span className={`font-medium ${rc.change >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                {rc.race} {rc.change >= 0 ? '+' : ''}{formatRankingPoints(rc.change)}
+                          {raceChanges.map((rc, idx) => {
+                            // Try to find the race impact for this race
+                            const raceImpact = Object.values(match.race_impacts || {}).find(imp => 
+                              (imp.race1 === rc.race || imp.race2 === rc.race) && 
+                              Math.abs(imp.ratingChange - rc.change) < 0.01
+                            );
+                            
+                            const tooltipContent = raceImpact ? getRaceChangeTooltip(raceImpact) : (
+                              <div className="text-left text-xs">
+                                <div className="font-semibold mb-1">Race Rating Change</div>
+                                <div>{rc.race}: {rc.change >= 0 ? '+' : ''}{formatRankingPoints(rc.change)}</div>
+                              </div>
+                            );
+                            
+                            return (
+                              <span key={rc.race}>
+                                {idx > 0 && <span className="text-gray-400">•</span>}
+                                <Tooltip content={tooltipContent}>
+                                  <span className={`font-medium cursor-help ${rc.change >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                    {rc.race} {rc.change >= 0 ? '+' : ''}{formatRankingPoints(rc.change)}
+                                  </span>
+                                </Tooltip>
                               </span>
-                            </span>
-                          ))}
+                            );
+                          })}
                         </>
                       );
                     }
@@ -368,22 +490,47 @@ export function MatchHistoryItem({
                       return (
                         <>
                           <span className="text-gray-600">Races:</span>
-                          <span className={`font-medium ${race1Change >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                            {raceInfo.race1} {race1Change >= 0 ? '+' : ''}{formatRankingPoints(race1Change)}
-                          </span>
+                          <Tooltip content={getRaceChangeTooltip(impact)}>
+                            <span className={`font-medium cursor-help ${race1Change >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                              {raceInfo.race1} {race1Change >= 0 ? '+' : ''}{formatRankingPoints(race1Change)}
+                            </span>
+                          </Tooltip>
                           <span className="text-gray-400">•</span>
-                          <span className={`font-medium ${race2Change >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                            {race2Name} {race2Change >= 0 ? '+' : ''}{formatRankingPoints(race2Change)}
-                          </span>
+                          <Tooltip content={getRaceChangeTooltip({
+                            ...impact,
+                            ratingChange: -impact.ratingChange,
+                            won: !impact.won,
+                            race1: impact.race2,
+                            race2: impact.race1
+                          })}>
+                            <span className={`font-medium cursor-help ${race2Change >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                              {race2Name} {race2Change >= 0 ? '+' : ''}{formatRankingPoints(race2Change)}
+                            </span>
+                          </Tooltip>
                         </>
                       );
                     } else {
+                      // Find race impact for combined stats
+                      const raceImpacts = match.race_impacts || {};
+                      const raceImpact = Object.values(raceImpacts).find(imp => 
+                        (imp.race1 === raceInfo.race1 || imp.race2 === raceInfo.race1)
+                      );
+                      
+                      const tooltipContent = raceImpact ? getRaceChangeTooltip(raceImpact) : (
+                        <div className="text-left text-xs">
+                          <div className="font-semibold mb-1">Race Rating Change</div>
+                          <div>{raceInfo.race1}: {raceInfo.ratingChange >= 0 ? '+' : ''}{formatRankingPoints(raceInfo.ratingChange)}</div>
+                        </div>
+                      );
+                      
                       return (
                         <>
                           <span className="text-gray-600">Race:</span>
-                          <span className={`font-medium ${raceInfo.ratingChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                            {raceInfo.race1} {raceInfo.ratingChange >= 0 ? '+' : ''}{formatRankingPoints(raceInfo.ratingChange)}
-                          </span>
+                          <Tooltip content={tooltipContent}>
+                            <span className={`font-medium cursor-help ${raceInfo.ratingChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                              {raceInfo.race1} {raceInfo.ratingChange >= 0 ? '+' : ''}{formatRankingPoints(raceInfo.ratingChange)}
+                            </span>
+                          </Tooltip>
                         </>
                       );
                     }
@@ -394,16 +541,37 @@ export function MatchHistoryItem({
             </div>
           ) : null}
           {/* Combo changes */}
-          {showComboInfo && comboInfo && (
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1 flex-wrap">
-                <span className="text-gray-600">Combo:</span>
-                <span className={`font-medium ${comboInfo.ratingChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {comboInfo.combo1} {comboInfo.ratingChange >= 0 ? '+' : ''}{formatRankingPoints(comboInfo.ratingChange)}
-                </span>
+          {showComboInfo && comboInfo && (() => {
+            // Try to find team impact for combo (combo is team race combination)
+            const team1Key = normalizeTeamKey(match.team1.player1, match.team1.player2);
+            const team2Key = normalizeTeamKey(match.team2.player1, match.team2.player2);
+            const comboTeam1Impact = match.team_impacts?.[team1Key];
+            const comboTeam2Impact = match.team_impacts?.[team2Key];
+            
+            // Determine which team has the combo
+            const team1HasCombo = comboTeam1Impact && Math.abs(comboTeam1Impact.ratingChange - comboInfo.ratingChange) < 0.01;
+            const comboImpact = team1HasCombo ? comboTeam1Impact : comboTeam2Impact;
+            
+            const tooltipContent = comboImpact ? getRatingChangeTooltip(comboImpact, 'team') : (
+              <div className="text-left text-xs">
+                <div className="font-semibold mb-1">Combo Rating Change</div>
+                <div>{comboInfo.combo1}: {comboInfo.ratingChange >= 0 ? '+' : ''}{formatRankingPoints(comboInfo.ratingChange)}</div>
               </div>
-            </div>
-          )}
+            );
+            
+            return (
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1 flex-wrap">
+                  <span className="text-gray-600">Combo:</span>
+                  <Tooltip content={tooltipContent}>
+                    <span className={`font-medium cursor-help ${comboInfo.ratingChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      {comboInfo.combo1} {comboInfo.ratingChange >= 0 ? '+' : ''}{formatRankingPoints(comboInfo.ratingChange)}
+                    </span>
+                  </Tooltip>
+                </div>
+              </div>
+            );
+          })()}
         </div>
       )}
     </div>

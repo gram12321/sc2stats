@@ -320,7 +320,7 @@ export async function calculateRaceRankings() {
             // IMPORTANT: Use BEFORE ratings for both sides to ensure true zero-sum
             
             // Update PvT: compare its BEFORE rating against TvP's BEFORE rating
-            const ratingChange = updateStatsForMatch(
+            const matchupResult = updateStatsForMatch(
               matchupStats,
               matchupWon,
               !matchupWon,
@@ -331,7 +331,7 @@ export async function calculateRaceRankings() {
 
             // Update TvP: compare its BEFORE rating against PvT's BEFORE rating
             // This ensures zero-sum: what PvT gains, TvP loses
-            const inverseRatingChange = updateStatsForMatch(
+            const inverseResult = updateStatsForMatch(
               inverseStats,
               !matchupWon,
               matchupWon,
@@ -343,11 +343,12 @@ export async function calculateRaceRankings() {
             // Track impact
             raceImpacts.set(matchupKey, {
               ratingBefore: matchupRatingBefore,
-              ratingChange,
+              ratingChange: matchupResult.ratingChange,
               won: matchupWon,
               opponentRating: inverseRatingBefore,
               race1: race1,
-              race2: race2
+              race2: race2,
+              ...matchupResult.calculationDetails
             });
           }
         }

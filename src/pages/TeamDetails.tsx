@@ -178,6 +178,10 @@ export function TeamDetails({ player1, player2, onBack }: TeamDetailsProps) {
     return match.team_impacts[teamKey] || null;
   };
 
+  const getPlayerImpact = (match: TeamMatch, playerName: string) => {
+    return match.player_impacts?.[playerName] || null;
+  };
+
   const getRaceAbbrev = (race: Race | null | undefined): string => {
     if (!race) return '';
     return race === 'Random' ? 'R' : race[0];
