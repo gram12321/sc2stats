@@ -42,6 +42,7 @@ export function initializeStats(name, additionalFields = {}) {
     wins: 0,
     losses: 0,
     points: 0,
+    confidence: 0, // Confidence starts at 0% for new entities
     ...additionalFields
   };
 }

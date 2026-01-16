@@ -14,6 +14,28 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
   const [tournamentData, setTournamentData] = useState<TournamentData>(data);
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
+  const [teamRankings, setTeamRankings] = useState<Record<string, number>>({});
+  
+  // Load team rankings
+  useEffect(() => {
+    const loadTeamRankings = async () => {
+      try {
+        const response = await fetch('/api/team-rankings');
+        if (!response.ok) return;
+        const data = await response.json();
+        // Create a map of team key (sorted players) -> rank
+        const rankMap: Record<string, number> = {};
+        data.forEach((team: any, index: number) => {
+          const teamKey = [team.player1, team.player2].sort().join('+');
+          rankMap[teamKey] = index + 1;
+        });
+        setTeamRankings(rankMap);
+      } catch (err) {
+        console.error('Error loading team rankings:', err);
+      }
+    };
+    loadTeamRankings();
+  }, []);
   
   // Separate group stage matches from bracket matches
   const { groupStageMatches, bracketMatches, groupNames } = useMemo(() => {
@@ -262,6 +284,7 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
                       <MatchBox
                         key={match.match_id}
                         match={match}
+                        teamRankings={teamRankings}
                         onClick={(e) => {
                           e.stopPropagation();
                           setSelectedMatch(match);
@@ -312,6 +335,7 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
                             <div key={match.match_id} className="relative">
                               <MatchBox
                                 match={match}
+                                teamRankings={teamRankings}
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   setSelectedMatch(match);
@@ -358,6 +382,7 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
                           <div key={match.match_id} className="relative">
                             <MatchBox
                               match={match}
+                              teamRankings={teamRankings}
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setSelectedMatch(match);
@@ -390,6 +415,7 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
                     <div key={match.match_id}>
                       <MatchBox
                         match={match}
+                        teamRankings={teamRankings}
                         onClick={(e) => {
                           e.stopPropagation();
                           setSelectedMatch(match);
@@ -423,6 +449,7 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
                       <div key={match.match_id} className="relative">
                         <MatchBox
                           match={match}
+                          teamRankings={teamRankings}
                           onClick={(e) => {
                             e.stopPropagation();
                             setSelectedMatch(match);

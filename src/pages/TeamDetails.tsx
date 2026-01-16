@@ -30,6 +30,7 @@ interface TeamDetails {
   wins: number;
   losses: number;
   points: number;
+  confidence: number;
   matchHistory: TeamMatch[];
 }
 
@@ -154,7 +155,7 @@ export function TeamDetails({ player1, player2, onBack }: TeamDetailsProps) {
 
       <div className="max-w-7xl mx-auto p-6">
         {/* Stats Summary */}
-        <div className="grid grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-5 gap-4 mb-6">
           <div className="bg-white rounded-lg border border-gray-200 p-4">
             <div className="text-sm text-gray-600">Total Matches</div>
             <div className="text-2xl font-bold text-gray-900">{team.matches}</div>
@@ -171,6 +172,12 @@ export function TeamDetails({ player1, player2, onBack }: TeamDetailsProps) {
             <div className="text-sm text-gray-600">Ranking Points</div>
             <div className={`text-2xl font-bold ${team.points > 0 ? 'text-green-600' : team.points < 0 ? 'text-red-600' : 'text-gray-600'}`}>
               {team.points > 0 ? '+' : ''}{formatRankingPoints(team.points)}
+            </div>
+          </div>
+          <div className="bg-white rounded-lg border border-gray-200 p-4">
+            <div className="text-sm text-gray-600">Confidence</div>
+            <div className={`text-2xl font-bold ${team.confidence >= 70 ? 'text-blue-600' : team.confidence >= 40 ? 'text-yellow-600' : 'text-gray-500'}`}>
+              {Math.round(team.confidence)}%
             </div>
           </div>
         </div>

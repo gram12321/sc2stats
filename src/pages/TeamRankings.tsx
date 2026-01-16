@@ -12,13 +12,20 @@ interface TeamRanking {
   points: number;
 }
 
+interface PlayerRanking {
+  name: string;
+  points: number;
+}
+
 interface TeamRankingsProps {
   onBack?: () => void;
+  onNavigateToTeam?: (player1: string, player2: string) => void;
 }
 
 export function TeamRankings({ onBack, onNavigateToTeam }: TeamRankingsProps) {
   const [rankings, setRankings] = useState<TeamRanking[]>([]);
   const [playerRaces, setPlayerRaces] = useState<Record<string, Race>>({});
+  const [playerRankings, setPlayerRankings] = useState<Record<string, number>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -26,6 +33,7 @@ export function TeamRankings({ onBack, onNavigateToTeam }: TeamRankingsProps) {
   useEffect(() => {
     loadRankings();
     loadPlayerRaces();
+    loadPlayerRankings();
   }, []);
 
   const loadRankings = async () => {
@@ -49,6 +57,22 @@ export function TeamRankings({ onBack, onNavigateToTeam }: TeamRankingsProps) {
       setPlayerRaces(defaults);
     } catch (err) {
       console.error('Error loading player races:', err);
+    }
+  };
+
+  const loadPlayerRankings = async () => {
+    try {
+      const response = await fetch('/api/player-rankings');
+      if (!response.ok) throw new Error('Failed to load player rankings');
+      const data: PlayerRanking[] = await response.json();
+      // Create a map of player name -> rank (1-indexed)
+      const rankMap: Record<string, number> = {};
+      data.forEach((player, index) => {
+        rankMap[player.name] = index + 1;
+      });
+      setPlayerRankings(rankMap);
+    } catch (err) {
+      console.error('Error loading player rankings:', err);
     }
   };
 
@@ -160,7 +184,7 @@ export function TeamRankings({ onBack, onNavigateToTeam }: TeamRankingsProps) {
                         </td>
                       </tr>
                     ) : (
-                      filteredRankings.map((team, index) => {
+                      filteredRankings.map((team) => {
                         const rank = rankings.findIndex(t => 
                           t.player1 === team.player1 && t.player2 === team.player2
                         ) + 1;
@@ -186,7 +210,7 @@ export function TeamRankings({ onBack, onNavigateToTeam }: TeamRankingsProps) {
                               </div>
                             </td>
                             <td className="px-6 py-4">
-                              <div className="flex items-center gap-3">
+                              <div className="flex flex-col gap-1">
                                 <div className="flex items-center gap-2">
                                   {onNavigateToTeam ? (
                                     <button
@@ -202,8 +226,11 @@ export function TeamRankings({ onBack, onNavigateToTeam }: TeamRankingsProps) {
                                       {player1Race && <span className="text-gray-500 ml-1">({getRaceAbbr(player1Race)})</span>}
                                     </span>
                                   )}
+                                  {playerRankings[team.player1] && (
+                                    <span className="text-xs text-gray-400">({playerRankings[team.player1]})</span>
+                                  )}
                                 </div>
-                                <span className="text-gray-400">+</span>
+                                <span className="text-gray-400 text-xs">+</span>
                                 <div className="flex items-center gap-2">
                                   {onNavigateToTeam ? (
                                     <button
@@ -218,6 +245,9 @@ export function TeamRankings({ onBack, onNavigateToTeam }: TeamRankingsProps) {
                                       {team.player2}
                                       {player2Race && <span className="text-gray-500 ml-1">({getRaceAbbr(player2Race)})</span>}
                                     </span>
+                                  )}
+                                  {playerRankings[team.player2] && (
+                                    <span className="text-xs text-gray-400">({playerRankings[team.player2]})</span>
                                   )}
                                 </div>
                               </div>

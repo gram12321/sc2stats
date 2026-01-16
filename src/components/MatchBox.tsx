@@ -5,9 +5,10 @@ import { getPlayerDefaults } from '../lib/playerDefaults';
 interface MatchBoxProps {
   match: Match;
   onClick: (e: React.MouseEvent) => void;
+  teamRankings?: Record<string, number>;
 }
 
-export function MatchBox({ match, onClick }: MatchBoxProps) {
+export function MatchBox({ match, onClick, teamRankings }: MatchBoxProps) {
   const [defaults, setDefaults] = useState<Record<string, Race>>({});
 
   useEffect(() => {
@@ -48,6 +49,17 @@ export function MatchBox({ match, onClick }: MatchBoxProps) {
     // Random gets 'R', others get first letter
     return race === 'Random' ? 'R' : race[0];
   };
+  
+  // Get team ranking key (alphabetically sorted players)
+  const getTeamKey = (player1: string, player2: string): string => {
+    return [player1, player2].sort().join('+');
+  };
+  
+  const team1Key = getTeamKey(match.team1.player1.name, match.team1.player2.name);
+  const team2Key = getTeamKey(match.team2.player1.name, match.team2.player2.name);
+  const team1Ranking = teamRankings?.[team1Key];
+  const team2Ranking = teamRankings?.[team2Key];
+  
   const team1Won = match.team1_score !== null && match.team2_score !== null && 
                    match.team1_score > match.team2_score;
   const team2Won = match.team1_score !== null && match.team2_score !== null && 
@@ -75,6 +87,11 @@ export function MatchBox({ match, onClick }: MatchBoxProps) {
               {getRace(match.team1.player2.name, match.team1.player2.race) && (
                 <span className="ml-1 text-xs text-gray-500">
                   ({getRaceAbbrev(getRace(match.team1.player2.name, match.team1.player2.race))})
+                </span>
+              )}
+              {team1Ranking && (
+                <span className="ml-1 text-xs font-semibold text-blue-600">
+                  ({team1Ranking})
                 </span>
               )}
             </div>
@@ -107,6 +124,11 @@ export function MatchBox({ match, onClick }: MatchBoxProps) {
               {getRace(match.team2.player2.name, match.team2.player2.race) && (
                 <span className="ml-1 text-xs text-gray-500">
                   ({getRaceAbbrev(getRace(match.team2.player2.name, match.team2.player2.race))})
+                </span>
+              )}
+              {team2Ranking && (
+                <span className="ml-1 text-xs font-semibold text-blue-600">
+                  ({team2Ranking})
                 </span>
               )}
             </div>
