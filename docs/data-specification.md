@@ -20,7 +20,7 @@ Each match includes:
    - Player 1 name and race (if available)
    - Player 2 name and race (if available)
 
-2. **Round/Stage**: Round name (e.g., "Round of 16", "Quarterfinals", "Semifinals", "Grand Final")
+2. **Round/Stage**: Round name (e.g., "Round of 16", "Quarterfinals", "Semifinals", "Grand Final", "Group A", "Group B")
 
 3. **Results**: Team scores and winner (derived from scores)
 
@@ -120,13 +120,23 @@ Each match includes:
 }}
 ```
 
-### Match Template
+### Match Template (Bracket Matches)
 ```
 {{Match|bestof=3
 |opponent1={{2Opponent|p1=Player1|p2=Player2|score=2}}
 |opponent2={{2Opponent|p1=Player1|p2=Player2|score=0}}
 |map1={{Map|map=MapName|winner=1}}
 |date=2025-01-07 20:00 CET
+}}
+```
+
+### Matchlist Template (Group Stage Matches)
+```
+{{Matchlist
+|id=UNIQUE_ID
+|title=Group A Matches
+|M1={{Match|bestof=3|opponent1={{2Opponent|p1=Player1|p2=Player2|score=2}}|opponent2={{2Opponent|p1=Player1|p2=Player2|score=0}}}}
+|M2={{Match|...}}
 }}
 ```
 
@@ -164,7 +174,24 @@ Scores are extracted using two methods:
 1. **Direct extraction**: From `|score=` parameter in `{{2Opponent}}` template (early rounds)
 2. **Calculated from games**: Count wins from `{{Map}}` templates when direct scores are missing (later rounds)
 
-See [score-calculation-explanation.md](score-calculation-explanation.md) for details.
+Scores can be manually edited through the Match Editor UI if the scraper missed or incorrectly extracted them.
+
+## Tournament Formats Supported
+
+### Single-Elimination
+- Standard bracket format with rounds: Round of 16, Quarterfinals, Semifinals, Grand Final
+- Matches extracted from `{{Bracket}}` template
+
+### Double-Elimination
+- Upper bracket and lower bracket separated
+- Lower bracket rounds identified by "Lower Bracket" in round name
+- Grand Final displayed separately
+
+### Group Stage / Round Robin
+- Matches extracted from `{{Matchlist}}` templates
+- Group names detected from context (Group A, Group B, etc.)
+- Match IDs prefixed with `GS_` (Group Stage) to avoid conflicts
+- Can be combined with playoff brackets in same tournament
 
 ## Export Format
 

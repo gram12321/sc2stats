@@ -74,25 +74,42 @@ node tools/scraper.js https://liquipedia.net/starcraft2/UThermal_2v2_Circuit/1
 2. Start both the API server (`npm run api`) and frontend dev server (`npm run dev`)
 3. Open the frontend URL (usually `http://localhost:5173`)
 4. Select a tournament from the list
-5. Click on any match in the bracket to edit player races
-6. Download the edited JSON when done
+5. **Viewing Tournaments**:
+   - For tournaments with group stages, use tabs to switch between "Group Stage" and "Playoffs"
+   - Group stage matches are displayed in a grid layout grouped by group name
+   - Bracket matches show single or double-elimination format
+6. **Editing Matches**:
+   - Click on any match to open the match editor
+   - Edit player races using the dropdown menus
+   - Edit match scores using the number inputs (useful for correcting scraper errors)
+   - Changes save automatically when you click "Save" in the tournament view
+7. Download the edited JSON when done
 
 ## Current Status
 
 - ✅ Frontend: React app with compact bracket view (Liquipedia-inspired)
 - ✅ API Server: Express server to serve tournament JSON files and player defaults
-- ✅ Scraper: Simplified scraper extracts matches, rounds, scores, and players reliably
+- ✅ Scraper: Extracts matches, rounds, scores, and players reliably
+  - Supports single-elimination brackets
+  - Supports double-elimination brackets (upper/lower bracket separation)
+  - Supports group stage/round robin matches from Matchlist templates
 - ✅ Player Management: UI for setting default player races
-- ✅ Tournament Editor: Compact bracket display with race editing
+- ✅ Tournament Editor: 
+  - Compact bracket display with race editing
+  - Tab navigation for Group Stage vs Playoffs
+  - Score editing for correcting scraper errors
 - ✅ Data Export: JSON format for tournaments and player defaults
 
 ## Scraper Data Output
 
 The scraper extracts the following data reliably:
 - **Tournament metadata**: Name, date, prize pool, format, maps
-- **Matches**: Round, match ID, teams (player pairs), scores, best-of format, date, individual games/maps
+- **Bracket matches**: Round, match ID, teams (player pairs), scores, best-of format, date, individual games/maps
+- **Group stage matches**: Extracted from Matchlist templates, grouped by group name (Group A, Group B, etc.)
 
-**Note**: Player races are not extracted automatically. They can be added and edited manually through the React UI interface.
+**Note**: 
+- Player races are not extracted automatically. They can be added and edited manually through the React UI interface.
+- Match scores can be manually corrected in the Match Editor if the scraper missed or incorrectly extracted them.
 
 ## Documentation
 
