@@ -4,6 +4,7 @@ import { PlayerManager } from './pages/PlayerManager';
 import { PlayerRankings } from './pages/PlayerRankings';
 import { TeamRankings } from './pages/TeamRankings';
 import { RaceRankings } from './pages/RaceRankings';
+import { TeamRaceRankings } from './pages/TeamRaceRankings';
 import { MatchesList } from './pages/MatchesList';
 import { PlayerDetails } from './pages/PlayerDetails';
 import { TeamDetails } from './pages/TeamDetails';
@@ -14,6 +15,7 @@ type View =
   | 'player-rankings' 
   | 'team-rankings'
   | 'race-rankings'
+  | 'team-race-rankings'
   | 'matches'
   | 'player-details'
   | 'team-details';
@@ -48,6 +50,10 @@ export function App() {
     return <RaceRankings onBack={() => navigate('tournaments')} />;
   }
 
+  if (navState.view === 'team-race-rankings') {
+    return <TeamRaceRankings onBack={() => navigate('tournaments')} />;
+  }
+
   if (navState.view === 'matches') {
     return <MatchesList onBack={() => navigate('tournaments')} />;
   }
@@ -66,6 +72,7 @@ export function App() {
       onNavigateToPlayerRankings={() => navigate('player-rankings')}
       onNavigateToTeamRankings={() => navigate('team-rankings')}
       onNavigateToRaceRankings={() => navigate('race-rankings')}
+      onNavigateToTeamRaceRankings={() => navigate('team-race-rankings')}
       onNavigateToMatches={() => navigate('matches')}
     />
   );

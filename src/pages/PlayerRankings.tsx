@@ -56,14 +56,14 @@ export function PlayerRankings({ onBack, onNavigateToPlayer }: PlayerRankingsPro
     player.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const getRaceBadgeColor = (race: Race | null | undefined) => {
-    if (!race) return 'bg-gray-100 text-gray-600';
+  const getRaceAbbr = (race: Race | null | undefined): string => {
+    if (!race) return '';
     switch (race) {
-      case 'Terran': return 'bg-blue-100 text-blue-800';
-      case 'Zerg': return 'bg-purple-100 text-purple-800';
-      case 'Protoss': return 'bg-yellow-100 text-yellow-800';
-      case 'Random': return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-600';
+      case 'Terran': return 'T';
+      case 'Zerg': return 'Z';
+      case 'Protoss': return 'P';
+      case 'Random': return 'R';
+      default: return '';
     }
   };
 
@@ -189,20 +189,18 @@ export function PlayerRankings({ onBack, onNavigateToPlayer }: PlayerRankingsPro
                                     className="text-blue-600 hover:text-blue-800 hover:underline"
                                   >
                                     {player.name}
+                                    {race && <span className="text-gray-500 ml-1">({getRaceAbbr(race)})</span>}
                                   </button>
                                 ) : (
-                                  player.name
+                                  <>
+                                    {player.name}
+                                    {race && <span className="text-gray-500 ml-1">({getRaceAbbr(race)})</span>}
+                                  </>
                                 )}
                               </div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
-                              {race ? (
-                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRaceBadgeColor(race)}`}>
-                                  {race}
-                                </span>
-                              ) : (
-                                <span className="text-xs text-gray-400">—</span>
-                              )}
+                              <span className="text-xs text-gray-400">—</span>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-center">
                               <span className="text-sm text-gray-900">{player.matches}</span>

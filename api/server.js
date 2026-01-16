@@ -6,6 +6,7 @@ import cors from 'cors';
 import { calculateRankings } from '../tools/calculateRankings.js';
 import { calculateTeamRankings } from '../tools/calculateTeamRankings.js';
 import { calculateRaceRankings } from '../tools/calculateRaceRankings.js';
+import { calculateTeamRaceRankings } from '../tools/calculateTeamRaceRankings.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -224,11 +225,114 @@ app.get('/api/team-rankings', async (req, res) => {
 // Get race rankings
 app.get('/api/race-rankings', async (req, res) => {
   try {
-    const { rankings, combinedRankings } = await calculateRaceRankings();
-    res.json({ rankings, combinedRankings });
+    const { rankings, combinedRankings, matchHistory } = await calculateRaceRankings();
+    res.json({ rankings, combinedRankings, matchHistory });
   } catch (error) {
     console.error('Error calculating race rankings:', error);
     res.status(500).json({ error: 'Failed to calculate race rankings' });
+  }
+});
+
+// Get all matches for a specific race matchup (e.g., PvT)
+app.get('/api/race-matchup/:race1/:race2', async (req, res) => {
+  try {
+    const { race1, race2 } = req.params;
+    const { matchHistory } = await calculateRaceRankings();
+    
+    // Create matchup key (e.g., "PvT")
+    const raceAbbr = {
+      'Protoss': 'P',
+      'Terran': 'T',
+      'Zerg': 'Z',
+      'Random': 'R'
+    };
+    const abbr1 = raceAbbr[race1] || race1[0];
+    const abbr2 = raceAbbr[race2] || race2[0];
+    const matchupKey = `${abbr1}v${abbr2}`;
+    
+    // Filter matches that have this matchup in race_impacts
+    const matches = matchHistory.filter(match => {
+      return match.race_impacts && match.race_impacts[matchupKey];
+    });
+    
+    res.json(matches);
+  } catch (error) {
+    console.error('Error fetching race matchup matches:', error);
+    res.status(500).json({ error: 'Failed to fetch matchup matches' });
+  }
+});
+
+// Get all matches for a specific race (for combined stats, e.g., TvX)
+app.get('/api/race-combo/:race', async (req, res) => {
+  try {
+    const { race } = req.params;
+    const { matchHistory } = await calculateRaceRankings();
+    
+    // Filter matches where the race appears in team1_races or team2_races
+    const matches = matchHistory.filter(match => {
+      const team1Races = match.team1_races || [];
+      const team2Races = match.team2_races || [];
+      return team1Races.includes(race) || team2Races.includes(race);
+    });
+    
+    res.json(matches);
+  } catch (error) {
+    console.error('Error fetching race combo matches:', error);
+    res.status(500).json({ error: 'Failed to fetch combo matches' });
+  }
+});
+
+app.get('/api/team-race-rankings', async (req, res) => {
+  try {
+    const { rankings, combinedRankings, matchHistory } = await calculateTeamRaceRankings();
+    res.json({ rankings, combinedRankings, matchHistory });
+  } catch (error) {
+    console.error('Error calculating team race rankings:', error);
+    res.status(500).json({ error: 'Failed to calculate team race rankings' });
+  }
+});
+
+app.get('/api/team-race-matchup/:combo1/:combo2', async (req, res) => {
+  try {
+    const { combo1, combo2 } = req.params;
+    const { matchHistory } = await calculateTeamRaceRankings();
+    
+    // Normalize combos (sort alphabetically to match internal key format)
+    const sorted = [combo1, combo2].sort();
+    const combo1Normalized = sorted[0];
+    const combo2Normalized = sorted[1];
+    
+    // Filter matches for this matchup
+    // matchHistory stores original team combos, so we need to normalize and compare
+    const matches = matchHistory.filter(match => {
+      const matchTeam1Combo = match.team1_combo;
+      const matchTeam2Combo = match.team2_combo;
+      const matchSorted = [matchTeam1Combo, matchTeam2Combo].sort();
+      return matchSorted[0] === combo1Normalized && matchSorted[1] === combo2Normalized;
+    });
+    
+    res.json(matches);
+  } catch (error) {
+    console.error('Error fetching team race matchup matches:', error);
+    res.status(500).json({ error: 'Failed to fetch matchup matches' });
+  }
+});
+
+// Get all matches for a specific team race combination (for combined stats)
+app.get('/api/team-race-combo/:combo', async (req, res) => {
+  try {
+    const { combo } = req.params;
+    const { matchHistory } = await calculateTeamRaceRankings();
+    
+    // Filter matches where either team1_combo or team2_combo matches the combo
+    const matches = matchHistory.filter(match => {
+      return match.team1_combo === combo || match.team2_combo === combo;
+    });
+    
+    res.json(matches);
+  } catch (error) {
+    console.error('Error fetching team race combo matches:', error);
+    res.status(500).json({ error: 'Failed to fetch combo matches' });
   }
 });
 

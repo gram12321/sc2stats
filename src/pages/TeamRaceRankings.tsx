@@ -1,17 +1,21 @@
 import { useState, useEffect } from 'react';
 import { formatRankingPoints } from '../lib/utils';
 
-interface RaceRanking {
-  name: string; // e.g., "PvZ", "TvP"
-  race1: string; // e.g., "Protoss", "Terran"
-  race2: string; // e.g., "Zerg", "Protoss"
+interface TeamRaceRanking {
+  name: string; // e.g., "PT vs ZZ"
+  combo1: string; // e.g., "PT"
+  combo2: string; // e.g., "ZZ"
+  combo1Race1: string; // e.g., "Protoss"
+  combo1Race2: string; // e.g., "Terran"
+  combo2Race1: string; // e.g., "Zerg"
+  combo2Race2: string; // e.g., "Zerg"
   matches: number;
-  wins: number;
-  losses: number;
-  points: number;
+  wins: number; // wins for combo1
+  losses: number; // losses for combo1 (wins for combo2)
+  points: number; // net points for combo1
 }
 
-interface RaceRankingsProps {
+interface TeamRaceRankingsProps {
   onBack?: () => void;
 }
 
@@ -21,18 +25,12 @@ interface MatchHistoryEntry {
   tournament_date: string | null;
   match_date: string | null;
   round: string;
-  team1_races: string[];
-  team2_races: string[];
+  team1_combo: string;
+  team2_combo: string;
   team1_score: number;
   team2_score: number;
-  race_impacts: Record<string, {
-    ratingBefore: number;
-    ratingChange: number;
-    won: boolean;
-    opponentRating: number;
-    race1: string;
-    race2: string;
-  }>;
+  combo1_won: boolean;
+  rating_change: number;
   team1_player1: string | null;
   team1_player1_race: string | null;
   team1_player2: string | null;
@@ -43,14 +41,13 @@ interface MatchHistoryEntry {
   team2_player2_race: string | null;
 }
 
-export function RaceRankings({ onBack }: RaceRankingsProps) {
-  const [rankings, setRankings] = useState<RaceRanking[]>([]);
-  const [combinedRankings, setCombinedRankings] = useState<RaceRanking[]>([]);
+export function TeamRaceRankings({ onBack }: TeamRaceRankingsProps) {
+  const [rankings, setRankings] = useState<TeamRaceRanking[]>([]);
+  const [combinedRankings, setCombinedRankings] = useState<TeamRaceRanking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [hideRandom, setHideRandom] = useState(false);
-  const [selectedMatchup, setSelectedMatchup] = useState<RaceRanking | null>(null);
+  const [selectedMatchup, setSelectedMatchup] = useState<TeamRaceRanking | null>(null);
   const [isCombinedStats, setIsCombinedStats] = useState(false);
   const [matchHistory, setMatchHistory] = useState<MatchHistoryEntry[]>([]);
   const [isLoadingMatches, setIsLoadingMatches] = useState(false);
@@ -63,10 +60,10 @@ export function RaceRankings({ onBack }: RaceRankingsProps) {
     try {
       setIsLoading(true);
       setError(null);
-      const response = await fetch('/api/race-rankings');
-      if (!response.ok) throw new Error('Failed to load race rankings');
+      const response = await fetch('/api/team-race-rankings');
+      if (!response.ok) throw new Error('Failed to load team race rankings');
       const data = await response.json();
-      // Handle both old format (array) and new format (object with rankings and combinedRankings)
+      // Handle both old format (array) and new format (object with rankings, combinedRankings, and matchHistory)
       if (Array.isArray(data)) {
         setRankings(data);
         setCombinedRankings([]);
@@ -75,24 +72,48 @@ export function RaceRankings({ onBack }: RaceRankingsProps) {
         setCombinedRankings(data.combinedRankings || []);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load race rankings');
+      setError(err instanceof Error ? err.message : 'Failed to load team race rankings');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const filteredRankings = rankings.filter(matchup => {
-    // Filter out Random matchups if hideRandom is enabled
-    if (hideRandom && (matchup.race1 === 'Random' || matchup.race2 === 'Random')) {
-      return false;
+  const loadMatchHistory = async (matchup: TeamRaceRanking, isCombined: boolean = false) => {
+    try {
+      setIsLoadingMatches(true);
+      let response;
+      if (isCombined) {
+        // For combined stats, fetch all matches involving this combo
+        response = await fetch(`/api/team-race-combo/${encodeURIComponent(matchup.combo1)}`);
+      } else {
+        // For individual matchups, fetch matches for this specific matchup
+        response = await fetch(`/api/team-race-matchup/${encodeURIComponent(matchup.combo1)}/${encodeURIComponent(matchup.combo2)}`);
+      }
+      if (!response.ok) throw new Error('Failed to load match history');
+      const data = await response.json();
+      setMatchHistory(data);
+    } catch (err) {
+      console.error('Error loading match history:', err);
+      setMatchHistory([]);
+    } finally {
+      setIsLoadingMatches(false);
     }
-    
-    // Apply search filter
+  };
+
+  const handleMatchupClick = (matchup: TeamRaceRanking, isCombined: boolean = false) => {
+    setSelectedMatchup(matchup);
+    setIsCombinedStats(isCombined);
+    loadMatchHistory(matchup, isCombined);
+  };
+
+  const filteredRankings = rankings.filter(matchup => {
     const searchLower = searchTerm.toLowerCase();
     return (
       matchup.name.toLowerCase().includes(searchLower) ||
-      matchup.race1.toLowerCase().includes(searchLower) ||
-      matchup.race2.toLowerCase().includes(searchLower)
+      matchup.combo1.toLowerCase().includes(searchLower) ||
+      matchup.combo2.toLowerCase().includes(searchLower) ||
+      `${matchup.combo1Race1} ${matchup.combo1Race2}`.toLowerCase().includes(searchLower) ||
+      `${matchup.combo2Race1} ${matchup.combo2Race2}`.toLowerCase().includes(searchLower)
     );
   });
 
@@ -106,42 +127,14 @@ export function RaceRankings({ onBack }: RaceRankingsProps) {
     }
   };
 
-  const getFullRaceName = (abbr: string) => {
-    const raceMap: Record<string, string> = {
-      'P': 'Protoss',
-      'T': 'Terran',
-      'Z': 'Zerg',
-      'R': 'Random'
+  const formatCombo = (race1: string, race2: string) => {
+    const abbr = {
+      'Protoss': 'P',
+      'Terran': 'T',
+      'Zerg': 'Z',
+      'Random': 'R'
     };
-    return raceMap[abbr] || abbr;
-  };
-
-  const loadMatchHistory = async (matchup: RaceRanking, isCombined: boolean = false) => {
-    try {
-      setIsLoadingMatches(true);
-      let response;
-      if (isCombined) {
-        // For combined stats, fetch all matches involving this race
-        response = await fetch(`/api/race-combo/${encodeURIComponent(matchup.race1)}`);
-      } else {
-        // For individual matchups, fetch matches for this specific matchup
-        response = await fetch(`/api/race-matchup/${encodeURIComponent(matchup.race1)}/${encodeURIComponent(matchup.race2)}`);
-      }
-      if (!response.ok) throw new Error('Failed to load match history');
-      const data = await response.json();
-      setMatchHistory(data);
-    } catch (err) {
-      console.error('Error loading match history:', err);
-      setMatchHistory([]);
-    } finally {
-      setIsLoadingMatches(false);
-    }
-  };
-
-  const handleMatchupClick = (matchup: RaceRanking, isCombined: boolean = false) => {
-    setSelectedMatchup(matchup);
-    setIsCombinedStats(isCombined);
-    loadMatchHistory(matchup, isCombined);
+    return `${abbr[race1] || race1}${abbr[race2] || race2}`;
   };
 
   const formatDate = (dateStr: string | null) => {
@@ -159,9 +152,9 @@ export function RaceRankings({ onBack }: RaceRankingsProps) {
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Race Statistics</h1>
+              <h1 className="text-2xl font-bold text-gray-900">Team Race Statistics</h1>
               <p className="text-gray-600 mt-1">
-                Race vs race matchup statistics using the same ranking calculations as players/teams
+                Team race combination matchup statistics (PT vs ZZ, etc.)
               </p>
             </div>
             {onBack && (
@@ -180,7 +173,7 @@ export function RaceRankings({ onBack }: RaceRankingsProps) {
         {isLoading ? (
           <div className="text-center py-12">
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            <p className="mt-4 text-gray-600">Loading race statistics...</p>
+            <p className="mt-4 text-gray-600">Loading team race statistics...</p>
           </div>
         ) : error ? (
           <div className="bg-red-50 border border-red-200 rounded-lg p-4">
@@ -194,12 +187,12 @@ export function RaceRankings({ onBack }: RaceRankingsProps) {
           </div>
         ) : (
           <>
-            {/* Combined Race Statistics */}
+            {/* Combined Team Race Statistics */}
             {combinedRankings.length > 0 && (
               <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden mb-6">
                 <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
-                  <h2 className="text-lg font-semibold text-gray-900">Combined Race Statistics</h2>
-                  <p className="text-sm text-gray-600 mt-1">Overall performance for each race against all opponents</p>
+                  <h2 className="text-lg font-semibold text-gray-900">Combined Team Race Statistics</h2>
+                  <p className="text-sm text-gray-600 mt-1">Overall performance for each team race combination against all opponents</p>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="min-w-full divide-y divide-gray-200">
@@ -209,7 +202,7 @@ export function RaceRankings({ onBack }: RaceRankingsProps) {
                           Rank
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Race
+                          Team Race
                         </th>
                         <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Matches
@@ -248,9 +241,14 @@ export function RaceRankings({ onBack }: RaceRankingsProps) {
                           </td>
                           <td className="px-6 py-4">
                             <div className="flex items-center gap-3">
-                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRaceBadgeColor(matchup.race1)}`}>
-                                {matchup.race1}
-                              </span>
+                              <div className="flex items-center gap-1">
+                                <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getRaceBadgeColor(matchup.combo1Race1)}`}>
+                                  {matchup.combo1Race1[0]}
+                                </span>
+                                <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getRaceBadgeColor(matchup.combo1Race2)}`}>
+                                  {matchup.combo1Race2[0]}
+                                </span>
+                              </div>
                               <span className="text-gray-400 font-medium">vs</span>
                               <span className="text-sm text-gray-600 font-medium">All</span>
                               <span className="text-sm text-gray-500 ml-2">({matchup.name})</span>
@@ -290,28 +288,17 @@ export function RaceRankings({ onBack }: RaceRankingsProps) {
               </div>
             )}
 
-            {/* Search and Filters */}
+            {/* Search */}
             <div className="bg-white rounded-lg border border-gray-200 p-4 mb-6 shadow-sm">
-              <div className="flex items-center gap-4 mb-4">
-                <input
-                  type="text"
-                  placeholder="Search race matchups..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={hideRandom}
-                    onChange={(e) => setHideRandom(e.target.checked)}
-                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
-                  />
-                  <span className="text-sm text-gray-700">Hide Random matchups</span>
-                </label>
-              </div>
-              <div className="text-sm text-gray-600">
-                Showing {filteredRankings.length} of {rankings.length} race matchups
+              <input
+                type="text"
+                placeholder="Search team race matchups..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <div className="mt-2 text-sm text-gray-600">
+                Showing {filteredRankings.length} of {rankings.length} team race matchups
               </div>
             </div>
 
@@ -319,7 +306,7 @@ export function RaceRankings({ onBack }: RaceRankingsProps) {
             <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
               <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
                 <h2 className="text-lg font-semibold text-gray-900">Individual Matchups</h2>
-                <p className="text-sm text-gray-600 mt-1">Detailed race vs race matchup statistics</p>
+                <p className="text-sm text-gray-600 mt-1">Detailed team race vs team race matchup statistics</p>
               </div>
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
@@ -349,7 +336,7 @@ export function RaceRankings({ onBack }: RaceRankingsProps) {
                     {filteredRankings.length === 0 ? (
                       <tr>
                         <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
-                          {searchTerm ? 'No race matchups found matching your search' : 'No race statistics available'}
+                          {searchTerm ? 'No team race matchups found matching your search' : 'No team race statistics available'}
                         </td>
                       </tr>
                     ) : (
@@ -358,8 +345,8 @@ export function RaceRankings({ onBack }: RaceRankingsProps) {
                         return (
                           <tr
                             key={matchup.name}
+                            onClick={() => handleMatchupClick(matchup)}
                             className="hover:bg-gray-50 transition-colors cursor-pointer"
-                            onClick={() => handleMatchupClick(matchup, false)}
                           >
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="flex items-center">
@@ -377,13 +364,23 @@ export function RaceRankings({ onBack }: RaceRankingsProps) {
                             </td>
                             <td className="px-6 py-4">
                               <div className="flex items-center gap-3">
-                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRaceBadgeColor(matchup.race1)}`}>
-                                  {matchup.race1}
-                                </span>
+                                <div className="flex items-center gap-1">
+                                  <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getRaceBadgeColor(matchup.combo1Race1)}`}>
+                                    {matchup.combo1Race1[0]}
+                                  </span>
+                                  <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getRaceBadgeColor(matchup.combo1Race2)}`}>
+                                    {matchup.combo1Race2[0]}
+                                  </span>
+                                </div>
                                 <span className="text-gray-400 font-medium">vs</span>
-                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRaceBadgeColor(matchup.race2)}`}>
-                                  {matchup.race2}
-                                </span>
+                                <div className="flex items-center gap-1">
+                                  <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getRaceBadgeColor(matchup.combo2Race1)}`}>
+                                    {matchup.combo2Race1[0]}
+                                  </span>
+                                  <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getRaceBadgeColor(matchup.combo2Race2)}`}>
+                                    {matchup.combo2Race2[0]}
+                                  </span>
+                                </div>
                                 <span className="text-sm text-gray-500 ml-2">({matchup.name})</span>
                               </div>
                             </td>
@@ -469,11 +466,9 @@ export function RaceRankings({ onBack }: RaceRankingsProps) {
           >
             <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
               <div>
-                <h3 className="text-lg font-semibold">
-                  Match History: {isCombinedStats ? `${selectedMatchup.race1} vs All` : selectedMatchup.name}
-                </h3>
+                <h3 className="text-lg font-semibold">Match History: {selectedMatchup.name}</h3>
                 <p className="text-sm text-gray-600 mt-1">
-                  {matchHistory.length} total matches
+                  {selectedMatchup.matches} total matches
                 </p>
               </div>
               <button
@@ -497,7 +492,7 @@ export function RaceRankings({ onBack }: RaceRankingsProps) {
                 </div>
               ) : matchHistory.length === 0 ? (
                 <div className="text-center py-8 text-gray-500">
-                  No matches found for this {isCombinedStats ? 'race' : 'matchup'}
+                  No matches found for this {isCombinedStats ? 'team race combination' : 'matchup'}
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -512,38 +507,50 @@ export function RaceRankings({ onBack }: RaceRankingsProps) {
                       return 0;
                     })
                     .map((match) => {
-                      // Determine win/loss and rating change based on matchup type
-                      let won = false;
-                      let ratingChange = 0;
-                      let displayedRace1 = selectedMatchup.race1;
-                      let displayedRace2 = selectedMatchup.race2;
-                      let team1Players, team2Players, team1Score, team2Score;
+                      // For combined stats, determine if the clicked combo won
+                      // For individual matchups, use the existing logic
+                      let displayedCombo1Won: boolean;
                       
-                      // Format player names with races
+                      if (isCombinedStats) {
+                        // For combined stats, check if the clicked combo (selectedMatchup.combo1) won
+                        const clickedCombo = selectedMatchup.combo1;
+                        const clickedComboIsTeam1 = match.team1_combo === clickedCombo;
+                        displayedCombo1Won = clickedComboIsTeam1 
+                          ? match.team1_score > match.team2_score
+                          : match.team2_score > match.team1_score;
+                      } else {
+                        // Normalize match combos to match the selected matchup format
+                        const matchCombosSorted = [match.team1_combo, match.team2_combo].sort();
+                        const matchCombo1 = matchCombosSorted[0];
+                        const matchCombo2 = matchCombosSorted[1];
+                        
+                        // Determine which combo won in the match
+                        // If team1_combo comes first alphabetically, team1 winning means combo1 won
+                        const matchCombo1Won = 
+                          (match.team1_combo === matchCombo1 && match.team1_score > match.team2_score) ||
+                          (match.team2_combo === matchCombo1 && match.team2_score > match.team1_score);
+                        
+                        // Check if the displayed combo1 (from selectedMatchup) matches matchCombo1
+                        // If they match, use matchCombo1Won; otherwise flip it
+                        displayedCombo1Won = 
+                          (selectedMatchup.combo1 === matchCombo1) ? matchCombo1Won : !matchCombo1Won;
+                      }
+
+                      // Format team names with races
                       const formatPlayerWithRace = (name: string | null, race: string | null) => {
                         if (!name) return '';
                         return race ? `${name} (${race})` : name;
                       };
 
+                      // For combined stats, show clicked combo first; for individual matchups, keep original order
+                      let team1Players, team2Players, team1Combo, team2Combo, team1Score, team2Score, ratingChange;
+                      
                       if (isCombinedStats) {
-                        // For combined stats, check if the race appears in winning team
-                        const race1InTeam1 = match.team1_races.includes(selectedMatchup.race1);
-                        const race1InTeam2 = match.team2_races.includes(selectedMatchup.race1);
-                        won = race1InTeam1 
-                          ? match.team1_score > match.team2_score
-                          : match.team2_score > match.team1_score;
+                        const clickedCombo = selectedMatchup.combo1;
+                        const clickedComboIsTeam1 = match.team1_combo === clickedCombo;
                         
-                        // Find the first race_impact involving this race
-                        const raceImpacts = match.race_impacts || {};
-                        for (const [key, impact] of Object.entries(raceImpacts)) {
-                          if (impact.race1 === selectedMatchup.race1 || impact.race2 === selectedMatchup.race1) {
-                            ratingChange = impact.race1 === selectedMatchup.race1 ? impact.ratingChange : -impact.ratingChange;
-                            break;
-                          }
-                        }
-                        
-                        // Show clicked race first
-                        if (race1InTeam1) {
+                        if (clickedComboIsTeam1) {
+                          // Clicked combo is team1, keep original order
                           team1Players = [
                             formatPlayerWithRace(match.team1_player1, match.team1_player1_race),
                             formatPlayerWithRace(match.team1_player2, match.team1_player2_race)
@@ -552,11 +559,14 @@ export function RaceRankings({ onBack }: RaceRankingsProps) {
                             formatPlayerWithRace(match.team2_player1, match.team2_player1_race),
                             formatPlayerWithRace(match.team2_player2, match.team2_player2_race)
                           ].filter(Boolean).join(' + ') || 'Unknown';
+                          team1Combo = match.team1_combo;
+                          team2Combo = match.team2_combo;
                           team1Score = match.team1_score;
                           team2Score = match.team2_score;
-                          displayedRace2 = match.team2_races.join(' + ');
+                          // Rating change is from combo1's perspective, which matches clicked combo
+                          ratingChange = match.rating_change || 0;
                         } else {
-                          // Swap to show clicked race first
+                          // Clicked combo is team2, swap to show it first
                           team1Players = [
                             formatPlayerWithRace(match.team2_player1, match.team2_player1_race),
                             formatPlayerWithRace(match.team2_player2, match.team2_player2_race)
@@ -565,61 +575,29 @@ export function RaceRankings({ onBack }: RaceRankingsProps) {
                             formatPlayerWithRace(match.team1_player1, match.team1_player1_race),
                             formatPlayerWithRace(match.team1_player2, match.team1_player2_race)
                           ].filter(Boolean).join(' + ') || 'Unknown';
+                          team1Combo = match.team2_combo;
+                          team2Combo = match.team1_combo;
                           team1Score = match.team2_score;
                           team2Score = match.team1_score;
-                          displayedRace2 = match.team1_races.join(' + ');
+                          // Rating change is from combo1's perspective, but clicked combo is combo2, so negate
+                          ratingChange = -(match.rating_change || 0);
                         }
                       } else {
-                        // For individual matchups, find the specific matchup impact
-                        const matchupKey = selectedMatchup.name; // e.g., "PvT"
-                        const impact = match.race_impacts?.[matchupKey];
-                        if (impact) {
-                          won = impact.won;
-                          ratingChange = impact.ratingChange;
-                        }
-                        
-                        // Determine which team has race1 and which has race2
-                        const team1HasRace1 = match.team1_races.includes(selectedMatchup.race1);
-                        const team2HasRace1 = match.team2_races.includes(selectedMatchup.race1);
-                        
-                        if (team1HasRace1) {
-                          team1Players = [
-                            formatPlayerWithRace(match.team1_player1, match.team1_player1_race),
-                            formatPlayerWithRace(match.team1_player2, match.team1_player2_race)
-                          ].filter(Boolean).join(' + ') || 'Unknown';
-                          team2Players = [
-                            formatPlayerWithRace(match.team2_player1, match.team2_player1_race),
-                            formatPlayerWithRace(match.team2_player2, match.team2_player2_race)
-                          ].filter(Boolean).join(' + ') || 'Unknown';
-                          team1Score = match.team1_score;
-                          team2Score = match.team2_score;
-                          displayedRace2 = match.team2_races.join(' + ');
-                        } else if (team2HasRace1) {
-                          // Swap to show race1 first
-                          team1Players = [
-                            formatPlayerWithRace(match.team2_player1, match.team2_player1_race),
-                            formatPlayerWithRace(match.team2_player2, match.team2_player2_race)
-                          ].filter(Boolean).join(' + ') || 'Unknown';
-                          team2Players = [
-                            formatPlayerWithRace(match.team1_player1, match.team1_player1_race),
-                            formatPlayerWithRace(match.team1_player2, match.team1_player2_race)
-                          ].filter(Boolean).join(' + ') || 'Unknown';
-                          team1Score = match.team2_score;
-                          team2Score = match.team1_score;
-                          displayedRace2 = match.team1_races.join(' + ');
-                        } else {
-                          // Fallback: keep original order
-                          team1Players = [
-                            formatPlayerWithRace(match.team1_player1, match.team1_player1_race),
-                            formatPlayerWithRace(match.team1_player2, match.team1_player2_race)
-                          ].filter(Boolean).join(' + ') || 'Unknown';
-                          team2Players = [
-                            formatPlayerWithRace(match.team2_player1, match.team2_player1_race),
-                            formatPlayerWithRace(match.team2_player2, match.team2_player2_race)
-                          ].filter(Boolean).join(' + ') || 'Unknown';
-                          team1Score = match.team1_score;
-                          team2Score = match.team2_score;
-                        }
+                        // For individual matchups, keep original order
+                        team1Players = [
+                          formatPlayerWithRace(match.team1_player1, match.team1_player1_race),
+                          formatPlayerWithRace(match.team1_player2, match.team1_player2_race)
+                        ].filter(Boolean).join(' + ') || 'Unknown';
+                        team2Players = [
+                          formatPlayerWithRace(match.team2_player1, match.team2_player1_race),
+                          formatPlayerWithRace(match.team2_player2, match.team2_player2_race)
+                        ].filter(Boolean).join(' + ') || 'Unknown';
+                        team1Combo = match.team1_combo;
+                        team2Combo = match.team2_combo;
+                        team1Score = match.team1_score;
+                        team2Score = match.team2_score;
+                        // For individual matchups, rating change is already from combo1's perspective
+                        ratingChange = match.rating_change || 0;
                       }
 
                       return (
@@ -631,9 +609,9 @@ export function RaceRankings({ onBack }: RaceRankingsProps) {
                             <div className="flex-1">
                               <div className="flex items-center gap-3 mb-2">
                                 <span className={`px-2 py-1 rounded text-xs font-medium ${
-                                  won ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                                  displayedCombo1Won ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                                 }`}>
-                                  {won ? 'W' : 'L'}
+                                  {displayedCombo1Won ? 'W' : 'L'}
                                 </span>
                                 <span className="text-sm font-medium text-gray-900">
                                   {team1Score} - {team2Score}
@@ -646,15 +624,7 @@ export function RaceRankings({ onBack }: RaceRankingsProps) {
                                   <span className="font-medium">{team2Players}</span>
                                 </div>
                                 <div className="text-xs text-gray-500 mt-1">
-                                  <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getRaceBadgeColor(displayedRace1)}`}>
-                                    {displayedRace1}
-                                  </span>
-                                  <span className="text-gray-400 mx-2">vs</span>
-                                  {displayedRace2.split(' + ').map((race, idx) => (
-                                    <span key={idx} className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getRaceBadgeColor(race)}`}>
-                                      {race}
-                                    </span>
-                                  ))}
+                                  {team1Combo} vs {team2Combo}
                                 </div>
                               </div>
                               <div className="text-xs text-gray-500">

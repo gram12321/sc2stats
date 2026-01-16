@@ -60,14 +60,14 @@ export function TeamRankings({ onBack, onNavigateToTeam }: TeamRankingsProps) {
     );
   });
 
-  const getRaceBadgeColor = (race: Race | null | undefined) => {
-    if (!race) return 'bg-gray-100 text-gray-600';
+  const getRaceAbbr = (race: Race | null | undefined): string => {
+    if (!race) return '';
     switch (race) {
-      case 'Terran': return 'bg-blue-100 text-blue-800';
-      case 'Zerg': return 'bg-purple-100 text-purple-800';
-      case 'Protoss': return 'bg-yellow-100 text-yellow-800';
-      case 'Random': return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-600';
+      case 'Terran': return 'T';
+      case 'Zerg': return 'Z';
+      case 'Protoss': return 'P';
+      case 'Random': return 'R';
+      default: return '';
     }
   };
 
@@ -194,15 +194,12 @@ export function TeamRankings({ onBack, onNavigateToTeam }: TeamRankingsProps) {
                                       className="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline"
                                     >
                                       {team.player1}
+                                      {player1Race && <span className="text-gray-500 ml-1">({getRaceAbbr(player1Race)})</span>}
                                     </button>
                                   ) : (
                                     <span className="text-sm font-medium text-gray-900">
                                       {team.player1}
-                                    </span>
-                                  )}
-                                  {player1Race && (
-                                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getRaceBadgeColor(player1Race)}`}>
-                                      {player1Race}
+                                      {player1Race && <span className="text-gray-500 ml-1">({getRaceAbbr(player1Race)})</span>}
                                     </span>
                                   )}
                                 </div>
@@ -214,15 +211,12 @@ export function TeamRankings({ onBack, onNavigateToTeam }: TeamRankingsProps) {
                                       className="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline"
                                     >
                                       {team.player2}
+                                      {player2Race && <span className="text-gray-500 ml-1">({getRaceAbbr(player2Race)})</span>}
                                     </button>
                                   ) : (
                                     <span className="text-sm font-medium text-gray-900">
                                       {team.player2}
-                                    </span>
-                                  )}
-                                  {player2Race && (
-                                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getRaceBadgeColor(player2Race)}`}>
-                                      {player2Race}
+                                      {player2Race && <span className="text-gray-500 ml-1">({getRaceAbbr(player2Race)})</span>}
                                     </span>
                                   )}
                                 </div>

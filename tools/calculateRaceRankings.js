@@ -294,6 +294,18 @@ export async function calculateRaceRankings() {
         }
       }
 
+      // Get player races for display
+      const getRaceAbbr = (race) => {
+        if (!race) return null;
+        const raceAbbr = {
+          'Protoss': 'P',
+          'Terran': 'T',
+          'Zerg': 'Z',
+          'Random': 'R'
+        };
+        return raceAbbr[race] || race[0];
+      };
+
       // Store match history entry
       matchHistory.push({
         match_id: match.match_id,
@@ -305,7 +317,16 @@ export async function calculateRaceRankings() {
         team2_races: team2Races,
         team1_score: match.team1_score,
         team2_score: match.team2_score,
-        race_impacts: Object.fromEntries(raceImpacts)
+        race_impacts: Object.fromEntries(raceImpacts),
+        // Include player names and races
+        team1_player1: match.team1?.player1?.name || null,
+        team1_player1_race: getRaceAbbr(getPlayerRace(match.team1?.player1, playerDefaults)),
+        team1_player2: match.team1?.player2?.name || null,
+        team1_player2_race: getRaceAbbr(getPlayerRace(match.team1?.player2, playerDefaults)),
+        team2_player1: match.team2?.player1?.name || null,
+        team2_player1_race: getRaceAbbr(getPlayerRace(match.team2?.player1, playerDefaults)),
+        team2_player2: match.team2?.player2?.name || null,
+        team2_player2_race: getRaceAbbr(getPlayerRace(match.team2?.player2, playerDefaults))
       });
     }
 
@@ -325,9 +346,6 @@ export async function calculateRaceRankings() {
     for (const matchup of rankings) {
       const race1 = matchup.race1;
       const raceAbbr1 = raceAbbr[race1];
-      
-      // Skip Random for combined stats (only P, T, Z)
-      if (race1 === 'Random') continue;
       
       const combinedKey = `${raceAbbr1}vX`;
       

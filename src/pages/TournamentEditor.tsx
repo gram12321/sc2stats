@@ -15,10 +15,11 @@ interface TournamentEditorProps {
   onNavigateToPlayerRankings?: () => void;
   onNavigateToTeamRankings?: () => void;
   onNavigateToRaceRankings?: () => void;
+  onNavigateToTeamRaceRankings?: () => void;
   onNavigateToMatches?: () => void;
 }
 
-export function TournamentEditor({ onNavigateToPlayers, onNavigateToPlayerRankings, onNavigateToTeamRankings, onNavigateToRaceRankings, onNavigateToMatches }: TournamentEditorProps) {
+export function TournamentEditor({ onNavigateToPlayers, onNavigateToPlayerRankings, onNavigateToTeamRankings, onNavigateToRaceRankings, onNavigateToTeamRaceRankings, onNavigateToMatches }: TournamentEditorProps) {
   const [tournaments, setTournaments] = useState<TournamentInfo[]>([]);
   const [selectedTournament, setSelectedTournament] = useState<TournamentData | null>(null);
   const [selectedFilename, setSelectedFilename] = useState<string | null>(null);
@@ -140,6 +141,14 @@ export function TournamentEditor({ onNavigateToPlayers, onNavigateToPlayerRankin
                   className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 >
                   Race Statistics
+                </button>
+              )}
+              {onNavigateToTeamRaceRankings && (
+                <button
+                  onClick={onNavigateToTeamRaceRankings}
+                  className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                >
+                  Team Race Statistics
                 </button>
               )}
               {onNavigateToPlayers && (
