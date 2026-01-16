@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { TournamentData, Match } from '../types/tournament';
 import { MatchBox } from './MatchBox';
 import { MatchEditor } from './MatchEditor';
@@ -14,6 +14,40 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
   const [tournamentData, setTournamentData] = useState<TournamentData>(data);
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
+  
+  // Separate group stage matches from bracket matches
+  const { groupStageMatches, bracketMatches, groupNames } = useMemo(() => {
+    const groups: Match[] = [];
+    const bracket: Match[] = [];
+    const groupSet = new Set<string>();
+    
+    tournamentData.matches.forEach(match => {
+      if (match.round.startsWith('Group ')) {
+        groups.push(match);
+        groupSet.add(match.round);
+      } else {
+        bracket.push(match);
+      }
+    });
+    
+    return {
+      groupStageMatches: groups,
+      bracketMatches: bracket,
+      groupNames: Array.from(groupSet).sort()
+    };
+  }, [tournamentData.matches]);
+  
+  // Default to groups if no bracket matches, otherwise playoffs
+  const [activeTab, setActiveTab] = useState<'playoffs' | 'groups'>('playoffs');
+  
+  // Update active tab when data changes
+  useEffect(() => {
+    if (bracketMatches.length === 0 && groupStageMatches.length > 0) {
+      setActiveTab('groups');
+    } else if (bracketMatches.length > 0) {
+      setActiveTab('playoffs');
+    }
+  }, [bracketMatches.length, groupStageMatches.length]);
 
   const handleMatchUpdate = (updatedMatch: Match) => {
     const updatedMatches = tournamentData.matches.map((m) =>
@@ -31,7 +65,7 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
   // Separate rounds into upper bracket and lower bracket
   // Lower bracket rounds are explicitly named "Lower Bracket", everything else is upper bracket
   const { upperBracketRounds, lowerBracketRounds } = useMemo(() => {
-    const uniqueRounds = Array.from(new Set(tournamentData.matches.map(m => m.round)));
+    const uniqueRounds = Array.from(new Set(bracketMatches.map(m => m.round)));
     
     // Define round order for upper bracket (single-elimination or upper bracket of double-elimination)
     const upperBracketOrder = [
@@ -85,12 +119,12 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
       upperBracketRounds: sortedUpper,
       lowerBracketRounds: sortedLower
     };
-  }, [tournamentData.matches]);
+  }, [bracketMatches]);
 
   const groupedMatches = useMemo(() => {
     const allRounds = [...upperBracketRounds, ...lowerBracketRounds];
     return allRounds.reduce((acc, round) => {
-      const matches = tournamentData.matches.filter(m => m.round === round);
+      const matches = bracketMatches.filter(m => m.round === round);
       if (matches.length > 0) {
         acc[round] = matches.sort((a, b) => {
           // Sort by match_id to maintain order
@@ -99,7 +133,16 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
       }
       return acc;
     }, {} as Record<string, Match[]>);
-  }, [tournamentData.matches, upperBracketRounds, lowerBracketRounds]);
+  }, [bracketMatches, upperBracketRounds, lowerBracketRounds]);
+
+  const groupedByGroup = useMemo(() => {
+    return groupNames.reduce((acc, groupName) => {
+      acc[groupName] = groupStageMatches
+        .filter(m => m.round === groupName)
+        .sort((a, b) => a.match_id.localeCompare(b.match_id));
+      return acc;
+    }, {} as Record<string, Match[]>);
+  }, [groupStageMatches, groupNames]);
   
   const isDoubleElimination = lowerBracketRounds.length > 0;
 
@@ -171,7 +214,70 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
         </div>
       </div>
 
-      {/* Bracket */}
+      {/* Tabs for Group Stage vs Playoffs */}
+      {groupStageMatches.length > 0 && (
+        <div className="bg-white border-b border-gray-200">
+          <div className="max-w-7xl mx-auto px-6">
+            <div className="flex gap-1">
+              <button
+                onClick={() => setActiveTab('playoffs')}
+                className={`px-4 py-2 text-sm font-medium transition-colors ${
+                  activeTab === 'playoffs'
+                    ? 'text-blue-600 border-b-2 border-blue-600'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                Playoffs ({bracketMatches.length})
+              </button>
+              <button
+                onClick={() => setActiveTab('groups')}
+                className={`px-4 py-2 text-sm font-medium transition-colors ${
+                  activeTab === 'groups'
+                    ? 'text-blue-600 border-b-2 border-blue-600'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                Group Stage ({groupStageMatches.length})
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Group Stage View */}
+      {activeTab === 'groups' && groupStageMatches.length > 0 && (
+        <div className="max-w-7xl mx-auto px-6 py-6">
+          <div className="space-y-8">
+            {groupNames.map((groupName) => (
+              <div key={groupName} className="bg-white rounded-lg border border-gray-200 shadow-sm">
+                <div className="bg-gray-50 border-b border-gray-200 px-6 py-3">
+                  <h2 className="text-xl font-bold text-gray-900">{groupName}</h2>
+                  <p className="text-sm text-gray-600 mt-1">
+                    {groupedByGroup[groupName]?.length || 0} matches
+                  </p>
+                </div>
+                <div className="p-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {groupedByGroup[groupName]?.map((match) => (
+                      <MatchBox
+                        key={match.match_id}
+                        match={match}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedMatch(match);
+                        }}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Bracket/Playoffs View */}
+      {activeTab === 'playoffs' && bracketMatches.length > 0 && (
       <div className="max-w-full overflow-x-auto py-6">
         {isDoubleElimination ? (
           // Double-elimination: Show upper and lower brackets side by side
@@ -336,6 +442,7 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
           </div>
         )}
       </div>
+      )}
 
       {/* Edit Modal */}
       {selectedMatch && (

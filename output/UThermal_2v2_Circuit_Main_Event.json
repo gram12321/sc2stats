@@ -2,7 +2,7 @@
   "tournament": {
     "name": "uThermal 2v2 Circuit Main Event",
     "liquipedia_slug": "UThermal_2v2_Circuit/Main_Event",
-    "date": "2025-08-08 to 2025-08-17",
+    "date": "2025-08-08",
     "prize_pool": 15000,
     "format": "2v2 Group Stage Playoffs",
     "maps": [
@@ -20,7 +20,7 @@
   "matches": [
     {
       "match_id": "R1M1",
-      "round": "Upper Bracket Semifinals",
+      "round": "Round of 16",
       "team1": {
         "player1": {
           "name": "MaxPax"
@@ -63,7 +63,7 @@
     },
     {
       "match_id": "R1M2",
-      "round": "Upper Bracket Semifinals",
+      "round": "Round of 16",
       "team1": {
         "player1": {
           "name": "Shameless"
@@ -82,7 +82,7 @@
       },
       "team1_score": 1,
       "team2_score": 3,
-      "best_of": 5,
+      "best_of": 3,
       "date": "2025-08-16 17:00",
       "games": [
         {
@@ -106,54 +106,37 @@
     },
     {
       "match_id": "R1M3",
-      "round": "Lower Bracket Quarterfinals",
+      "round": "Round of 16",
       "team1": {
         "player1": {
-          "name": "ShoWTimE"
+          "name": "ShoWTimE",
+          "race": "Protoss"
         },
         "player2": {
-          "name": "trigger"
+          "name": "trigger",
+          "race": "Protoss"
         }
       },
       "team2": {
         "player1": {
-          "name": "GgMaChine"
+          "name": "GgMaChine",
+          "race": "Zerg"
         },
         "player2": {
-          "name": "Lambo"
+          "name": "Lambo",
+          "race": "Zerg"
         }
       },
       "team1_score": 3,
       "team2_score": 2,
-      "best_of": 5,
+      "best_of": 3,
       "date": "2025-08-16 20:40",
-      "games": [
-        {
-          "map": "Undercurrent",
-          "winner": 1
-        },
-        {
-          "map": "Reclamation LE",
-          "winner": 1
-        },
-        {
-          "map": "Emerald City",
-          "winner": 1
-        },
-        {
-          "map": "Yellowjacket",
-          "winner": 2
-        },
-        {
-          "map": "Arctic Flowers",
-          "winner": 2
-        }
-      ],
+      "games": [],
       "tournament_slug": "UThermal_2v2_Circuit/Main_Event"
     },
     {
       "match_id": "R1M4",
-      "round": "Lower Bracket Quarterfinals",
+      "round": "Round of 16",
       "team1": {
         "player1": {
           "name": "Shameless"
@@ -172,7 +155,7 @@
       },
       "team1_score": 1,
       "team2_score": 3,
-      "best_of": 5,
+      "best_of": 3,
       "date": "2025-08-16 19:20",
       "games": [
         {
@@ -196,7 +179,7 @@
     },
     {
       "match_id": "R2M1",
-      "round": "Lower Bracket Semifinals",
+      "round": "Quarterfinals",
       "team1": {
         "player1": {
           "name": "ShoWTimE"
@@ -215,7 +198,7 @@
       },
       "team1_score": 3,
       "team2_score": 2,
-      "best_of": 5,
+      "best_of": 3,
       "date": "2025-08-17 17:00",
       "games": [
         {
@@ -243,7 +226,7 @@
     },
     {
       "match_id": "R3M1",
-      "round": "Upper Bracket Final",
+      "round": "Semifinals",
       "team1": {
         "player1": {
           "name": "MaxPax"
@@ -262,7 +245,7 @@
       },
       "team1_score": 3,
       "team2_score": 1,
-      "best_of": 5,
+      "best_of": 3,
       "date": "2025-08-17 19:05",
       "games": [
         {
@@ -286,7 +269,7 @@
     },
     {
       "match_id": "R3M2",
-      "round": "Lower Bracket Final",
+      "round": "Semifinals",
       "team1": {
         "player1": {
           "name": "Jumy"
@@ -305,7 +288,7 @@
       },
       "team1_score": 2,
       "team2_score": 3,
-      "best_of": 5,
+      "best_of": 3,
       "date": "2025-08-17 20:10",
       "games": [
         {
@@ -350,7 +333,7 @@
           "name": "trigger"
         }
       },
-      "team1_score": 4,
+      "team1_score": 3,
       "team2_score": 1,
       "best_of": 7,
       "date": "2025-08-17 21:35",
@@ -372,6 +355,1287 @@
           "winner": 1
         }
       ],
+      "tournament_slug": "UThermal_2v2_Circuit/Main_Event"
+    },
+    {
+      "match_id": "GS_M1_1",
+      "round": "Group A",
+      "team1": {
+        "player1": {
+          "name": "Jumy"
+        },
+        "player2": {
+          "name": "uThermal"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "SKillous"
+        },
+        "player2": {
+          "name": "Wayne"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 0,
+      "best_of": 3,
+      "date": "2025-08-08 17:00",
+      "games": [
+        {
+          "map": "Emerald City",
+          "winner": 1
+        },
+        {
+          "map": "Reclamation LE",
+          "winner": 1
+        }
+      ],
+      "tournament_slug": "UThermal_2v2_Circuit/Main_Event"
+    },
+    {
+      "match_id": "GS_M2_1",
+      "round": "Group A",
+      "team1": {
+        "player1": {
+          "name": "MaxPax"
+        },
+        "player2": {
+          "name": "Serral"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "GgMaChine"
+        },
+        "player2": {
+          "name": "trigger"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 1,
+      "best_of": 3,
+      "date": "2025-08-08 17:00",
+      "games": [
+        {
+          "map": "Undercurrent",
+          "winner": 1
+        },
+        {
+          "map": "Emerald City",
+          "winner": 2
+        },
+        {
+          "map": "Rohana",
+          "winner": 1
+        }
+      ],
+      "tournament_slug": "UThermal_2v2_Circuit/Main_Event"
+    },
+    {
+      "match_id": "GS_M3_1",
+      "round": "Group A",
+      "team1": {
+        "player1": {
+          "name": "MilkiCow",
+          "race": "Terran"
+        },
+        "player2": {
+          "name": "uThermal",
+          "race": "Terran"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "GgMaChine",
+          "race": "Zerg"
+        },
+        "player2": {
+          "name": "MaxPax",
+          "race": "Protoss"
+        }
+      },
+      "team1_score": 0,
+      "team2_score": 2,
+      "best_of": 3,
+      "date": "2025-08-08 17:45",
+      "games": [],
+      "tournament_slug": "UThermal_2v2_Circuit/Main_Event"
+    },
+    {
+      "match_id": "GS_M4_1",
+      "round": "Group A",
+      "team1": {
+        "player1": {
+          "name": "SKillous"
+        },
+        "player2": {
+          "name": "Serral"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Jumy"
+        },
+        "player2": {
+          "name": "trigger"
+        }
+      },
+      "team1_score": 0,
+      "team2_score": 2,
+      "best_of": 3,
+      "date": "2025-08-08 17:45",
+      "games": [
+        {
+          "map": "Undercurrent",
+          "winner": 2
+        },
+        {
+          "map": "Crimson Research Lab",
+          "winner": 2
+        }
+      ],
+      "tournament_slug": "UThermal_2v2_Circuit/Main_Event"
+    },
+    {
+      "match_id": "GS_M5_1",
+      "round": "Group A",
+      "team1": {
+        "player1": {
+          "name": "SKillous"
+        },
+        "player2": {
+          "name": "uThermal"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Wayne"
+        },
+        "player2": {
+          "name": "trigger"
+        }
+      },
+      "team1_score": 0,
+      "team2_score": 2,
+      "best_of": 3,
+      "date": "2025-08-08 18:45",
+      "games": [
+        {
+          "map": "Undercurrent",
+          "winner": 2
+        },
+        {
+          "map": "Reclamation LE",
+          "winner": 2
+        }
+      ],
+      "tournament_slug": "UThermal_2v2_Circuit/Main_Event"
+    },
+    {
+      "match_id": "GS_M6_1",
+      "round": "Group A",
+      "team1": {
+        "player1": {
+          "name": "Jumy"
+        },
+        "player2": {
+          "name": "Serral"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "GgMaChine"
+        },
+        "player2": {
+          "name": "MilkiCow"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 0,
+      "best_of": 3,
+      "date": "2025-08-08 18:45",
+      "games": [
+        {
+          "map": "Undercurrent",
+          "winner": 1
+        },
+        {
+          "map": "Emerald City",
+          "winner": 1
+        }
+      ],
+      "tournament_slug": "UThermal_2v2_Circuit/Main_Event"
+    },
+    {
+      "match_id": "GS_M7_1",
+      "round": "Group A",
+      "team1": {
+        "player1": {
+          "name": "GgMaChine"
+        },
+        "player2": {
+          "name": "uThermal"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "SKillous"
+        },
+        "player2": {
+          "name": "trigger"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 0,
+      "best_of": 3,
+      "date": "2025-08-09 17:00",
+      "games": [
+        {
+          "map": "Yellowjacket",
+          "winner": 1
+        },
+        {
+          "map": "Undercurrent",
+          "winner": 1
+        }
+      ],
+      "tournament_slug": "UThermal_2v2_Circuit/Main_Event"
+    },
+    {
+      "match_id": "GS_M8_1",
+      "round": "Group A",
+      "team1": {
+        "player1": {
+          "name": "Jumy"
+        },
+        "player2": {
+          "name": "Wayne"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "MaxPax"
+        },
+        "player2": {
+          "name": "MilkiCow"
+        }
+      },
+      "team1_score": 1,
+      "team2_score": 2,
+      "best_of": 3,
+      "date": "2025-08-09 17:00",
+      "games": [
+        {
+          "map": "Undercurrent",
+          "winner": 1
+        },
+        {
+          "map": "Rohana",
+          "winner": 2
+        },
+        {
+          "map": "Reclamation LE",
+          "winner": 2
+        }
+      ],
+      "tournament_slug": "UThermal_2v2_Circuit/Main_Event"
+    },
+    {
+      "match_id": "GS_M9_1",
+      "round": "Group A",
+      "team1": {
+        "player1": {
+          "name": "Serral"
+        },
+        "player2": {
+          "name": "uThermal"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Jumy"
+        },
+        "player2": {
+          "name": "MaxPax"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 0,
+      "best_of": 3,
+      "date": "2025-08-09 18:00",
+      "games": [
+        {
+          "map": "Undercurrent",
+          "winner": 1
+        },
+        {
+          "map": "Reclamation LE",
+          "winner": 1
+        }
+      ],
+      "tournament_slug": "UThermal_2v2_Circuit/Main_Event"
+    },
+    {
+      "match_id": "GS_M10_1",
+      "round": "Group A",
+      "team1": {
+        "player1": {
+          "name": "GgMaChine"
+        },
+        "player2": {
+          "name": "Wayne"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "MilkiCow"
+        },
+        "player2": {
+          "name": "SKillous"
+        }
+      },
+      "team1_score": 0,
+      "team2_score": 2,
+      "best_of": 3,
+      "date": "2025-08-09 18:00",
+      "games": [
+        {
+          "map": "Undercurrent",
+          "winner": 2
+        },
+        {
+          "map": "Crimson Research Lab",
+          "winner": 2
+        }
+      ],
+      "tournament_slug": "UThermal_2v2_Circuit/Main_Event"
+    },
+    {
+      "match_id": "GS_M11_1",
+      "round": "Group A",
+      "team1": {
+        "player1": {
+          "name": "trigger"
+        },
+        "player2": {
+          "name": "uThermal"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "MilkiCow"
+        },
+        "player2": {
+          "name": "Serral"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 1,
+      "best_of": 3,
+      "date": "2025-08-09 18:45",
+      "games": [
+        {
+          "map": "Reclamation LE",
+          "winner": 1
+        },
+        {
+          "map": "Yellowjacket",
+          "winner": 2
+        },
+        {
+          "map": "Emerald City",
+          "winner": 1
+        }
+      ],
+      "tournament_slug": "UThermal_2v2_Circuit/Main_Event"
+    },
+    {
+      "match_id": "GS_M12_1",
+      "round": "Group A",
+      "team1": {
+        "player1": {
+          "name": "MaxPax"
+        },
+        "player2": {
+          "name": "Wayne"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "GgMaChine"
+        },
+        "player2": {
+          "name": "SKillous"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 0,
+      "best_of": 3,
+      "date": "2025-08-09 18:45",
+      "games": [
+        {
+          "map": "Reclamation LE",
+          "winner": 1
+        },
+        {
+          "map": "Undercurrent",
+          "winner": 1
+        }
+      ],
+      "tournament_slug": "UThermal_2v2_Circuit/Main_Event"
+    },
+    {
+      "match_id": "GS_M13_1",
+      "round": "Group A",
+      "team1": {
+        "player1": {
+          "name": "MilkiCow"
+        },
+        "player2": {
+          "name": "Wayne"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "MaxPax"
+        },
+        "player2": {
+          "name": "trigger"
+        }
+      },
+      "team1_score": 0,
+      "team2_score": 2,
+      "best_of": 3,
+      "date": "2025-08-10 17:00",
+      "games": [
+        {
+          "map": "Undercurrent",
+          "winner": 2
+        },
+        {
+          "map": "Yellowjacket",
+          "winner": 2
+        }
+      ],
+      "tournament_slug": "UThermal_2v2_Circuit/Main_Event"
+    },
+    {
+      "match_id": "GS_M14_1",
+      "round": "Group A",
+      "team1": {
+        "player1": {
+          "name": "Jumy"
+        },
+        "player2": {
+          "name": "SKillous"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "GgMaChine"
+        },
+        "player2": {
+          "name": "Serral"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 1,
+      "best_of": 3,
+      "date": "2025-08-10 17:00",
+      "games": [
+        {
+          "map": "Arctic Flowers",
+          "winner": 2
+        },
+        {
+          "map": "Crimson Research Lab",
+          "winner": 1
+        },
+        {
+          "map": "Emerald City",
+          "winner": 1
+        }
+      ],
+      "tournament_slug": "UThermal_2v2_Circuit/Main_Event"
+    },
+    {
+      "match_id": "GS_M15_1",
+      "round": "Group A",
+      "team1": {
+        "player1": {
+          "name": "Wayne"
+        },
+        "player2": {
+          "name": "uThermal"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Serral"
+        },
+        "player2": {
+          "name": "trigger"
+        }
+      },
+      "team1_score": 0,
+      "team2_score": 2,
+      "best_of": 3,
+      "date": "2025-08-10 18:10",
+      "games": [
+        {
+          "map": "Undercurrent",
+          "winner": 2
+        },
+        {
+          "map": "Rohana",
+          "winner": 2
+        }
+      ],
+      "tournament_slug": "UThermal_2v2_Circuit/Main_Event"
+    },
+    {
+      "match_id": "GS_M16_1",
+      "round": "Group A",
+      "team1": {
+        "player1": {
+          "name": "MaxPax"
+        },
+        "player2": {
+          "name": "SKillous"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Jumy"
+        },
+        "player2": {
+          "name": "MilkiCow"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 0,
+      "best_of": 3,
+      "date": "2025-08-10 18:10",
+      "games": [
+        {
+          "map": "Yellowjacket",
+          "winner": 1
+        },
+        {
+          "map": "Rohana",
+          "winner": 1
+        }
+      ],
+      "tournament_slug": "UThermal_2v2_Circuit/Main_Event"
+    },
+    {
+      "match_id": "GS_M17_1",
+      "round": "Group A",
+      "team1": {
+        "player1": {
+          "name": "MaxPax"
+        },
+        "player2": {
+          "name": "uThermal"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Serral"
+        },
+        "player2": {
+          "name": "Wayne"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 1,
+      "best_of": 3,
+      "date": "2025-08-10 18:45",
+      "games": [
+        {
+          "map": "Undercurrent",
+          "winner": 1
+        },
+        {
+          "map": "Emerald City",
+          "winner": 2
+        },
+        {
+          "map": "Rohana",
+          "winner": 1
+        }
+      ],
+      "tournament_slug": "UThermal_2v2_Circuit/Main_Event"
+    },
+    {
+      "match_id": "GS_M18_1",
+      "round": "Group A",
+      "team1": {
+        "player1": {
+          "name": "MilkiCow"
+        },
+        "player2": {
+          "name": "trigger"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "GgMaChine"
+        },
+        "player2": {
+          "name": "Jumy"
+        }
+      },
+      "team1_score": 0,
+      "team2_score": 2,
+      "best_of": 3,
+      "date": "2025-08-10 18:45",
+      "games": [
+        {
+          "map": "Breakwater",
+          "winner": 2
+        },
+        {
+          "map": "Crimson Research Lab",
+          "winner": 2
+        }
+      ],
+      "tournament_slug": "UThermal_2v2_Circuit/Main_Event"
+    },
+    {
+      "match_id": "GS_M1_2",
+      "round": "Group B",
+      "team1": {
+        "player1": {
+          "name": "YoungYakov"
+        },
+        "player2": {
+          "name": "goblin"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Elazer"
+        },
+        "player2": {
+          "name": "Shameless"
+        }
+      },
+      "team1_score": 1,
+      "team2_score": 2,
+      "best_of": 3,
+      "date": "2025-08-08 19:30",
+      "games": [
+        {
+          "map": "Emerald City",
+          "winner": 1
+        },
+        {
+          "map": "Undercurrent",
+          "winner": 2
+        },
+        {
+          "map": "Crimson Research Lab",
+          "winner": 2
+        }
+      ],
+      "tournament_slug": "UThermal_2v2_Circuit/Main_Event"
+    },
+    {
+      "match_id": "GS_M2_2",
+      "round": "Group B",
+      "team1": {
+        "player1": {
+          "name": "Nicoract"
+        },
+        "player2": {
+          "name": "Spirit"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Lambo"
+        },
+        "player2": {
+          "name": "ShoWTimE"
+        }
+      },
+      "team1_score": 1,
+      "team2_score": 2,
+      "best_of": 3,
+      "date": "2025-08-08 19:30",
+      "games": [
+        {
+          "map": "Undercurrent",
+          "winner": 2
+        },
+        {
+          "map": "Emerald City",
+          "winner": 1
+        },
+        {
+          "map": "Yellowjacket",
+          "winner": 2
+        }
+      ],
+      "tournament_slug": "UThermal_2v2_Circuit/Main_Event"
+    },
+    {
+      "match_id": "GS_M3_2",
+      "round": "Group B",
+      "team1": {
+        "player1": {
+          "name": "ZhuGeLiang"
+        },
+        "player2": {
+          "name": "goblin"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Lambo"
+        },
+        "player2": {
+          "name": "Spirit"
+        }
+      },
+      "team1_score": 0,
+      "team2_score": 2,
+      "best_of": 3,
+      "date": "2025-08-08 20:35",
+      "games": [
+        {
+          "map": "Crimson Research Lab",
+          "winner": 2
+        },
+        {
+          "map": "Emerald City",
+          "winner": 2
+        }
+      ],
+      "tournament_slug": "UThermal_2v2_Circuit/Main_Event"
+    },
+    {
+      "match_id": "GS_M4_2",
+      "round": "Group B",
+      "team1": {
+        "player1": {
+          "name": "Elazer"
+        },
+        "player2": {
+          "name": "Nicoract"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "ShoWTimE"
+        },
+        "player2": {
+          "name": "YoungYakov"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 0,
+      "best_of": 3,
+      "date": "2025-08-08 20:35",
+      "games": [
+        {
+          "map": "Arctic Flowers",
+          "winner": 1
+        },
+        {
+          "map": "Emerald City",
+          "winner": 1
+        }
+      ],
+      "tournament_slug": "UThermal_2v2_Circuit/Main_Event"
+    },
+    {
+      "match_id": "GS_M5_2",
+      "round": "Group B",
+      "team1": {
+        "player1": {
+          "name": "Elazer"
+        },
+        "player2": {
+          "name": "goblin"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Shameless"
+        },
+        "player2": {
+          "name": "ShoWTimE"
+        }
+      },
+      "team1_score": 1,
+      "team2_score": 2,
+      "best_of": 3,
+      "date": "2025-08-08 21:20",
+      "games": [
+        {
+          "map": "Emerald City",
+          "winner": 2
+        },
+        {
+          "map": "Yellowjacket",
+          "winner": 1
+        },
+        {
+          "map": "Reclamation LE",
+          "winner": 2
+        }
+      ],
+      "tournament_slug": "UThermal_2v2_Circuit/Main_Event"
+    },
+    {
+      "match_id": "GS_M6_2",
+      "round": "Group B",
+      "team1": {
+        "player1": {
+          "name": "Nicoract",
+          "race": "Terran"
+        },
+        "player2": {
+          "name": "YoungYakov",
+          "race": "Zerg"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Lambo",
+          "race": "Zerg"
+        },
+        "player2": {
+          "name": "ZhuGeLiang",
+          "race": "Zerg"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 0,
+      "best_of": 3,
+      "date": "2025-08-08 21:20",
+      "games": [],
+      "tournament_slug": "UThermal_2v2_Circuit/Main_Event"
+    },
+    {
+      "match_id": "GS_M7_2",
+      "round": "Group B",
+      "team1": {
+        "player1": {
+          "name": "Lambo"
+        },
+        "player2": {
+          "name": "goblin"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Elazer"
+        },
+        "player2": {
+          "name": "ShoWTimE"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 1,
+      "best_of": 3,
+      "date": "2025-08-09 19:45",
+      "games": [
+        {
+          "map": "Reclamation LE",
+          "winner": 2
+        },
+        {
+          "map": "Emerald City",
+          "winner": 1
+        },
+        {
+          "map": "Arctic Flowers",
+          "winner": 1
+        }
+      ],
+      "tournament_slug": "UThermal_2v2_Circuit/Main_Event"
+    },
+    {
+      "match_id": "GS_M8_2",
+      "round": "Group B",
+      "team1": {
+        "player1": {
+          "name": "Shameless"
+        },
+        "player2": {
+          "name": "YoungYakov"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Spirit"
+        },
+        "player2": {
+          "name": "ZhuGeLiang"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 0,
+      "best_of": 3,
+      "date": "2025-08-09 19:45",
+      "games": [
+        {
+          "map": "Crimson Research Lab",
+          "winner": 1
+        },
+        {
+          "map": "Undercurrent",
+          "winner": 1
+        }
+      ],
+      "tournament_slug": "UThermal_2v2_Circuit/Main_Event"
+    },
+    {
+      "match_id": "GS_M9_2",
+      "round": "Group B",
+      "team1": {
+        "player1": {
+          "name": "Nicoract"
+        },
+        "player2": {
+          "name": "goblin"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Spirit"
+        },
+        "player2": {
+          "name": "YoungYakov"
+        }
+      },
+      "team1_score": 0,
+      "team2_score": 2,
+      "best_of": 3,
+      "date": "2025-08-09 20:45",
+      "games": [
+        {
+          "map": "Emerald City",
+          "winner": 2
+        },
+        {
+          "map": "Arctic Flowers",
+          "winner": 2
+        }
+      ],
+      "tournament_slug": "UThermal_2v2_Circuit/Main_Event"
+    },
+    {
+      "match_id": "GS_M10_2",
+      "round": "Group B",
+      "team1": {
+        "player1": {
+          "name": "Lambo"
+        },
+        "player2": {
+          "name": "Shameless"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Elazer"
+        },
+        "player2": {
+          "name": "ZhuGeLiang"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 0,
+      "best_of": 3,
+      "date": "2025-08-09 20:45",
+      "games": [
+        {
+          "map": "Undercurrent",
+          "winner": 1
+        },
+        {
+          "map": "Crimson Research Lab",
+          "winner": 1
+        }
+      ],
+      "tournament_slug": "UThermal_2v2_Circuit/Main_Event"
+    },
+    {
+      "match_id": "GS_M11_2",
+      "round": "Group B",
+      "team1": {
+        "player1": {
+          "name": "ShoWTimE"
+        },
+        "player2": {
+          "name": "goblin"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Nicoract"
+        },
+        "player2": {
+          "name": "ZhuGeLiang"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 0,
+      "best_of": 3,
+      "date": "2025-08-09 21:30",
+      "games": [
+        {
+          "map": "Reclamation LE",
+          "winner": 1
+        },
+        {
+          "map": "Emerald City",
+          "winner": 1
+        }
+      ],
+      "tournament_slug": "UThermal_2v2_Circuit/Main_Event"
+    },
+    {
+      "match_id": "GS_M12_2",
+      "round": "Group B",
+      "team1": {
+        "player1": {
+          "name": "Shameless"
+        },
+        "player2": {
+          "name": "Spirit"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Elazer"
+        },
+        "player2": {
+          "name": "Lambo"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 0,
+      "best_of": 3,
+      "date": "2025-08-09 21:30",
+      "games": [
+        {
+          "map": "Crimson Research Lab",
+          "winner": 1
+        },
+        {
+          "map": "Emerald City",
+          "winner": 1
+        }
+      ],
+      "tournament_slug": "UThermal_2v2_Circuit/Main_Event"
+    },
+    {
+      "match_id": "GS_M13_2",
+      "round": "Group B",
+      "team1": {
+        "player1": {
+          "name": "Shameless"
+        },
+        "player2": {
+          "name": "ZhuGeLiang"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "ShoWTimE"
+        },
+        "player2": {
+          "name": "Spirit"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 0,
+      "best_of": 3,
+      "date": "2025-08-10 19:50",
+      "games": [
+        {
+          "map": "Emerald City",
+          "winner": 1
+        },
+        {
+          "map": "Yellowjacket",
+          "winner": 1
+        }
+      ],
+      "tournament_slug": "UThermal_2v2_Circuit/Main_Event"
+    },
+    {
+      "match_id": "GS_M14_2",
+      "round": "Group B",
+      "team1": {
+        "player1": {
+          "name": "Elazer"
+        },
+        "player2": {
+          "name": "YoungYakov"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Lambo"
+        },
+        "player2": {
+          "name": "Nicoract"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 0,
+      "best_of": 3,
+      "date": "2025-08-10 19:50",
+      "games": [
+        {
+          "map": "Emerald City",
+          "winner": 1
+        },
+        {
+          "map": "Yellowjacket",
+          "winner": 1
+        }
+      ],
+      "tournament_slug": "UThermal_2v2_Circuit/Main_Event"
+    },
+    {
+      "match_id": "GS_M15_2",
+      "round": "Group B",
+      "team1": {
+        "player1": {
+          "name": "Shameless"
+        },
+        "player2": {
+          "name": "goblin"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Nicoract"
+        },
+        "player2": {
+          "name": "ShoWTimE"
+        }
+      },
+      "team1_score": 0,
+      "team2_score": 2,
+      "best_of": 3,
+      "date": "2025-08-10 20:40",
+      "games": [
+        {
+          "map": "Undercurrent",
+          "winner": 2
+        },
+        {
+          "map": "Crimson Research Lab",
+          "winner": 2
+        }
+      ],
+      "tournament_slug": "UThermal_2v2_Circuit/Main_Event"
+    },
+    {
+      "match_id": "GS_M16_2",
+      "round": "Group B",
+      "team1": {
+        "player1": {
+          "name": "Elazer"
+        },
+        "player2": {
+          "name": "Spirit"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "YoungYakov"
+        },
+        "player2": {
+          "name": "ZhuGeLiang"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 1,
+      "best_of": 3,
+      "date": "2025-08-10 20:40",
+      "games": [
+        {
+          "map": "Yellowjacket",
+          "winner": 2
+        },
+        {
+          "map": "Emerald City",
+          "winner": 1
+        },
+        {
+          "map": "Crimson Research Lab",
+          "winner": 1
+        }
+      ],
+      "tournament_slug": "UThermal_2v2_Circuit/Main_Event"
+    },
+    {
+      "match_id": "GS_M17_2",
+      "round": "Group B",
+      "team1": {
+        "player1": {
+          "name": "Spirit"
+        },
+        "player2": {
+          "name": "goblin"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Nicoract"
+        },
+        "player2": {
+          "name": "Shameless"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 0,
+      "best_of": 3,
+      "date": "2025-08-10 21:35",
+      "games": [
+        {
+          "map": "Emerald City",
+          "winner": 1
+        },
+        {
+          "map": "Crimson Research Lab",
+          "winner": 1
+        }
+      ],
+      "tournament_slug": "UThermal_2v2_Circuit/Main_Event"
+    },
+    {
+      "match_id": "GS_M18_2",
+      "round": "Group B",
+      "team1": {
+        "player1": {
+          "name": "ShoWTimE"
+        },
+        "player2": {
+          "name": "ZhuGeLiang"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Lambo"
+        },
+        "player2": {
+          "name": "YoungYakov"
+        }
+      },
+      "team1_score": null,
+      "team2_score": null,
+      "best_of": 3,
+      "date": "2025-08-10 21:35",
+      "games": [],
       "tournament_slug": "UThermal_2v2_Circuit/Main_Event"
     }
   ]
