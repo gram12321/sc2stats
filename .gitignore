@@ -61,5 +61,4 @@ temp_data.json
 coverage
 
 # Output directories
-output/
 *.json.backup
