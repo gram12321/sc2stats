@@ -28,10 +28,68 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
     setSelectedMatch(null);
   };
 
-  // Group matches by round and order them
-  const rounds = ['Round of 16', 'Quarterfinals', 'Semifinals', 'Grand Final'];
+  // Separate rounds into upper bracket and lower bracket
+  // Lower bracket rounds are explicitly named "Lower Bracket", everything else is upper bracket
+  const { upperBracketRounds, lowerBracketRounds } = useMemo(() => {
+    const uniqueRounds = Array.from(new Set(tournamentData.matches.map(m => m.round)));
+    
+    // Define round order for upper bracket (single-elimination or upper bracket of double-elimination)
+    const upperBracketOrder = [
+      'Round of 16',
+      'Upper Bracket Semifinals',
+      'Quarterfinals',
+      'Upper Bracket Final',
+      'Semifinals',
+      'Grand Final'
+    ];
+    
+    // Define round order for lower bracket
+    const lowerBracketOrder = [
+      'Lower Bracket Quarterfinals',
+      'Lower Bracket Semifinals',
+      'Lower Bracket Final'
+    ];
+    
+    const upperRounds: string[] = [];
+    const lowerRounds: string[] = [];
+    
+    uniqueRounds.forEach(round => {
+      if (round.includes('Lower Bracket')) {
+        lowerRounds.push(round);
+      } else {
+        upperRounds.push(round);
+      }
+    });
+    
+    // Sort upper bracket rounds
+    const sortedUpper = upperRounds.sort((a, b) => {
+      const aIndex = upperBracketOrder.indexOf(a);
+      const bIndex = upperBracketOrder.indexOf(b);
+      if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
+      if (aIndex !== -1) return -1;
+      if (bIndex !== -1) return 1;
+      return a.localeCompare(b);
+    });
+    
+    // Sort lower bracket rounds
+    const sortedLower = lowerRounds.sort((a, b) => {
+      const aIndex = lowerBracketOrder.indexOf(a);
+      const bIndex = lowerBracketOrder.indexOf(b);
+      if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
+      if (aIndex !== -1) return -1;
+      if (bIndex !== -1) return 1;
+      return a.localeCompare(b);
+    });
+    
+    return {
+      upperBracketRounds: sortedUpper,
+      lowerBracketRounds: sortedLower
+    };
+  }, [tournamentData.matches]);
+
   const groupedMatches = useMemo(() => {
-    return rounds.reduce((acc, round) => {
+    const allRounds = [...upperBracketRounds, ...lowerBracketRounds];
+    return allRounds.reduce((acc, round) => {
       const matches = tournamentData.matches.filter(m => m.round === round);
       if (matches.length > 0) {
         acc[round] = matches.sort((a, b) => {
@@ -41,7 +99,9 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
       }
       return acc;
     }, {} as Record<string, Match[]>);
-  }, [tournamentData.matches]);
+  }, [tournamentData.matches, upperBracketRounds, lowerBracketRounds]);
+  
+  const isDoubleElimination = lowerBracketRounds.length > 0;
 
   const saveTournament = async () => {
     try {
@@ -113,24 +173,115 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
 
       {/* Bracket */}
       <div className="max-w-full overflow-x-auto py-6">
-        <div className="inline-flex gap-8 px-6">
-          {rounds.map((round, roundIndex) => {
-            const matches = groupedMatches[round] || [];
-            if (matches.length === 0) return null;
+        {isDoubleElimination ? (
+          // Double-elimination: Show upper and lower brackets side by side
+          <div className="flex gap-12 px-6">
+            {/* Upper Bracket */}
+            <div className="flex-shrink-0">
+              <div className="mb-4 text-center">
+                <h2 className="text-lg font-bold text-gray-900 bg-blue-100 px-4 py-2 rounded">
+                  Upper Bracket
+                </h2>
+              </div>
+              <div className="inline-flex gap-8">
+                {upperBracketRounds
+                  .filter(round => round !== 'Grand Final')
+                  .map((round, roundIndex) => {
+                    const matches = groupedMatches[round] || [];
+                    if (matches.length === 0) return null;
+                    const filteredRounds = upperBracketRounds.filter(r => r !== 'Grand Final');
 
-            return (
-              <div key={round} className="flex flex-col">
-                {/* Round Header */}
+                    return (
+                      <div key={round} className="flex flex-col">
+                        {/* Round Header */}
+                        <div className="mb-4 text-center">
+                          <h3 className="text-sm font-semibold text-gray-700 bg-gray-100 px-3 py-1 rounded">
+                            {round}
+                          </h3>
+                        </div>
+
+                        {/* Matches */}
+                        <div className="flex flex-col gap-4 justify-center min-h-[400px]">
+                          {matches.map((match) => (
+                            <div key={match.match_id} className="relative">
+                              <MatchBox
+                                match={match}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedMatch(match);
+                                }}
+                              />
+                              
+                              {/* Connecting line to next round */}
+                              {roundIndex < filteredRounds.length - 1 && (
+                                <div className="absolute top-1/2 -right-4 w-4 h-px bg-gray-400"></div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+            </div>
+
+            {/* Lower Bracket */}
+            <div className="flex-shrink-0">
+              <div className="mb-4 text-center">
+                <h2 className="text-lg font-bold text-gray-900 bg-red-100 px-4 py-2 rounded">
+                  Lower Bracket
+                </h2>
+              </div>
+              <div className="inline-flex gap-8">
+                {lowerBracketRounds.map((round, roundIndex) => {
+                  const matches = groupedMatches[round] || [];
+                  if (matches.length === 0) return null;
+
+                  return (
+                    <div key={round} className="flex flex-col">
+                      {/* Round Header */}
+                      <div className="mb-4 text-center">
+                        <h3 className="text-sm font-semibold text-gray-700 bg-gray-100 px-3 py-1 rounded">
+                          {round}
+                        </h3>
+                      </div>
+
+                      {/* Matches */}
+                      <div className="flex flex-col gap-4 justify-center min-h-[400px]">
+                        {matches.map((match) => (
+                          <div key={match.match_id} className="relative">
+                            <MatchBox
+                              match={match}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedMatch(match);
+                              }}
+                            />
+                            
+                            {/* Connecting line to next round */}
+                            {roundIndex < lowerBracketRounds.length - 1 && (
+                              <div className="absolute top-1/2 -right-4 w-4 h-px bg-gray-400"></div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Grand Final (if exists) - shown separately after lower bracket */}
+            {upperBracketRounds.includes('Grand Final') && (
+              <div className="flex-shrink-0">
                 <div className="mb-4 text-center">
-                  <h2 className="text-sm font-semibold text-gray-700 bg-gray-100 px-3 py-1 rounded">
-                    {round}
+                  <h2 className="text-lg font-bold text-gray-900 bg-yellow-100 px-4 py-2 rounded">
+                    Grand Final
                   </h2>
                 </div>
-
-                {/* Matches */}
-                <div className="flex flex-col gap-4 justify-center min-h-[400px]">
-                  {matches.map((match, matchIndex) => (
-                    <div key={match.match_id} className="relative">
+                <div className="flex flex-col">
+                  {groupedMatches['Grand Final']?.map((match) => (
+                    <div key={match.match_id}>
                       <MatchBox
                         match={match}
                         onClick={(e) => {
@@ -138,18 +289,52 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
                           setSelectedMatch(match);
                         }}
                       />
-                      
-                      {/* Connecting line to next round */}
-                      {roundIndex < rounds.length - 1 && (
-                        <div className="absolute top-1/2 -right-4 w-4 h-px bg-gray-400"></div>
-                      )}
                     </div>
                   ))}
                 </div>
               </div>
-            );
-          })}
-        </div>
+            )}
+          </div>
+        ) : (
+          // Single-elimination: Show all rounds in a single row
+          <div className="inline-flex gap-8 px-6">
+            {upperBracketRounds.map((round, roundIndex) => {
+              const matches = groupedMatches[round] || [];
+              if (matches.length === 0) return null;
+
+              return (
+                <div key={round} className="flex flex-col">
+                  {/* Round Header */}
+                  <div className="mb-4 text-center">
+                    <h2 className="text-sm font-semibold text-gray-700 bg-gray-100 px-3 py-1 rounded">
+                      {round}
+                    </h2>
+                  </div>
+
+                  {/* Matches */}
+                  <div className="flex flex-col gap-4 justify-center min-h-[400px]">
+                    {matches.map((match) => (
+                      <div key={match.match_id} className="relative">
+                        <MatchBox
+                          match={match}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedMatch(match);
+                          }}
+                        />
+                        
+                        {/* Connecting line to next round */}
+                        {roundIndex < upperBracketRounds.length - 1 && (
+                          <div className="absolute top-1/2 -right-4 w-4 h-px bg-gray-400"></div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Edit Modal */}
