@@ -99,6 +99,14 @@ node tools/scraper.js https://liquipedia.net/starcraft2/UThermal_2v2_Circuit/1
   - Tab navigation for Group Stage vs Playoffs
   - Score editing for correcting scraper errors
 - ✅ Data Export: JSON format for tournaments and player defaults
+- ✅ Ranking System: Enhanced Elo-based ranking with advanced features
+  - Provisional rating system (higher K-factors for new players/teams)
+  - Dynamic confidence tracking (builds with correct predictions)
+  - Confidence-based K-factor adjustments (individual per entity)
+  - Population-based adaptive rating scale
+  - Player, team, race, and team-race rankings
+  - Seeded rankings for Season 1 (three-pass seeding process)
+  - UI displays confidence percentages and filtering options
 
 ## Scraper Data Output
 
@@ -116,6 +124,13 @@ The scraper extracts the following data reliably:
 - [Data Specification](docs/data-specification.md) - Data structure and requirements
 
 
+## Ranking System
+
+Enhanced Elo-based ranking system for small datasets with provisional ratings, dynamic confidence tracking, and population-based scaling. Calculates player, team, race, and team-race rankings on-demand via API endpoints (`/api/player-rankings`, `/api/team-rankings`, etc.).
+
+**Key Features:** Provisional K-factors for new players/teams, confidence-based adjustments, adaptive rating scale, and seeded rankings for Season 1 (via `node tools/runSeededRankings.js`).
+
 ## Future ideas:
 
-We want to show the ranking/rating of the team/player at the time of a match in the matchhistories across the app. But this will likely require persistantcy per Xtime
+1. Database persistence for rankings (Supabase migration planned)
+2. Ranking calculation should be expanded with expected win score. Not just who is winning. A much favored team should win 2-0 (or 3-0) not 2-1. If much favored a 2-1 result might be better than expeted for the losing team, and worse than exptected for the winning team. Causing us to lower rank of winning team and raising for losing team. 

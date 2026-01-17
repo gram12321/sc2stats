@@ -1,5 +1,75 @@
 # Version Log - SC2 2v2 Stats Scraper
 
+## Version 1.00008 - 2026-01-16 (946ec85)
+
+### 🎯 **Enhanced Ranking System - Population-Based Scaling**
+
+#### ✅ **Ranking Calculation Improvements**
+- **tools/rankingCalculations.js**: Added `calculatePopulationStats()` function for adaptive rating scale
+- Enhanced `predictWinProbability()` to use population-based standard deviation instead of fixed 350 divisor
+- Updated `updateStatsForMatch()` to accept population statistics for adaptive scaling
+- New players/teams now start at population mean instead of 0 for better initial ratings
+- Refactored `tools/processRankings.js` from `tools/calculateRankings.js` with improved structure
+
+#### ✅ **Calculation File Updates**
+- **tools/processRankings.js**: Added population statistics calculation before initializing new players
+- **tools/calculateTeamRankings.js**: Integrated population-based scaling for team rankings
+- **tools/calculateRaceRankings.js**: Added population statistics for race matchup calculations
+- **tools/calculateTeamRaceRankings.js**: Integrated population-based scaling for team race rankings
+- **tools/rankingUtils.js**: Updated `initializeStats()` to accept population mean parameter
+
+#### ✅ **API Server Updates**
+- **api/server.js**: Updated import to use `processRankings.js` instead of removed `calculateRankings.js`
+
+---
+
+## Version 1.00006 - 2026-01-16 (b8a41d4)
+
+### 🎯 **Enhanced Ranking System - Core Features**
+
+#### ✅ **Provisional Rating System**
+- **tools/rankingCalculations.js**: Added `getProvisionalKFactor()` function
+  - Matches 1-5: K = 80 (rapid learning)
+  - Matches 6-10: K = 48 (transition)
+  - Matches 11-20: K = 40 (stabilizing)
+  - Matches 21+: Adaptive K = 32 * (1 + 3/matches), capped at 40
+- Higher K-factors for new players/teams accelerate convergence with small datasets
+
+#### ✅ **Dynamic Confidence System**
+- **tools/rankingCalculations.js**: Added `updateConfidence()` function
+- **tools/rankingUtils.js**: Added `confidence: 0` field to initial stats
+- Confidence starts at 0% and adjusts based on prediction accuracy
+- Adaptive change rate: faster when low confidence, slower when high confidence
+- Base change: +5% for correct predictions, -5% for incorrect predictions
+
+#### ✅ **Confidence-Based K-Factor Adjustments**
+- **tools/rankingCalculations.js**: Added `applyConfidenceAdjustment()` function
+- Individual K-factor adjustment per player/team based on confidence level
+- Low confidence (0%): K multiplied by 1.5 (50% increase)
+- High confidence (100%): K unchanged
+- Formula: `adjustedK = baseK * (1 + (100 - confidence) / 100 * 0.5)`
+
+#### ✅ **Tighter Rating Scale**
+- **tools/rankingCalculations.js**: Updated `predictWinProbability()` divisor from 400 to 350
+- Increases rating spread and makes differences more impactful
+- Better differentiation between skill levels in small datasets
+
+#### ✅ **Core Calculation Integration**
+- **tools/rankingCalculations.js**: Refactored `updateStatsForMatch()` to integrate all enhancements
+- Combines provisional K-factor, confidence tracking, and confidence-based adjustments
+- All calculation files updated to pass confidence through stats
+
+#### ✅ **UI Enhancements**
+- **src/pages/PlayerRankings.tsx**: Added confidence column with sorting and filtering
+- **src/pages/TeamRankings.tsx**: Added confidence display and low confidence filter
+- **src/pages/PlayerDetails.tsx**: Added confidence stat display with color coding
+- **src/pages/TeamDetails.tsx**: Added confidence stat display
+- **src/components/BracketView.tsx**: Added team ranking display in match boxes
+- **src/components/MatchBox.tsx**: Display team rankings next to team names
+- Dynamic confidence threshold filter (2/3 of average confidence)
+
+---
+
 ## Version 1.0005a - 2026-01-16 (f8451990)
 
 ### 🎯 **Group Stage/Round Robin Support**

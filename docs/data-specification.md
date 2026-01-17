@@ -196,3 +196,21 @@ Scores can be manually edited through the Match Editor UI if the scraper missed 
 ## Export Format
 
 JSON structure as shown above. Data is saved to `output/<tournament_slug>.json`.
+
+## Ranking System Data
+
+Enhanced Elo-based ranking system calculates ratings for players, teams, races, and team-race combinations. Rankings include points (Elo-based rating), matches, wins/losses, and confidence (prediction accuracy 0-100%).
+
+**Ranking Types:**
+- **Player Rankings**: Individual player performance
+- **Team Rankings**: 2v2 team performance (normalized: players stored alphabetically)
+- **Race Rankings**: Race matchup ratings (PvT, TvZ, etc.) with zero-sum system
+- **Team Race Rankings**: Team race combination ratings (PPvTT, etc.)
+
+**Features:**
+- Provisional K-factors (higher for new players/teams: 80 → 48 → 40 → adaptive)
+- Dynamic confidence tracking with adaptive K-factor adjustments
+- Population-based rating scale (adapts to skill distribution)
+- Seeded rankings for Season 1 (three-pass process via `node tools/runSeededRankings.js`)
+
+Rankings are calculated on-demand via API endpoints. Seeded rankings saved to `output/seeded_player_rankings.json` and `output/seeded_team_rankings.json`.
