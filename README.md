@@ -114,3 +114,8 @@ The scraper extracts the following data reliably:
 ## Documentation
 
 - [Data Specification](docs/data-specification.md) - Data structure and requirements
+
+
+## Future ideas:
+
+We want to show the ranking/rating of the team/player at the time of a match in the matchhistories across the app. But this will likely require persistantcy per Xtime

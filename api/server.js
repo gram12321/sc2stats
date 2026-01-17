@@ -222,6 +222,48 @@ app.get('/api/team-rankings', async (req, res) => {
   }
 });
 
+// Get seeded player rankings (from three-pass seeding process)
+app.get('/api/seeded-player-rankings', async (req, res) => {
+  try {
+    const seededRankingsFile = join(outputDir, 'seeded_player_rankings.json');
+    try {
+      const content = await readFile(seededRankingsFile, 'utf-8');
+      const rankings = JSON.parse(content);
+      res.json(rankings);
+    } catch (fileError) {
+      if (fileError.code === 'ENOENT') {
+        res.status(404).json({ error: 'Seeded rankings not found. Please run the seeding script first: node tools/runSeededRankings.js' });
+      } else {
+        throw fileError;
+      }
+    }
+  } catch (error) {
+    console.error('Error loading seeded player rankings:', error);
+    res.status(500).json({ error: 'Failed to load seeded player rankings' });
+  }
+});
+
+// Get seeded team rankings (from three-pass seeding process)
+app.get('/api/seeded-team-rankings', async (req, res) => {
+  try {
+    const seededRankingsFile = join(outputDir, 'seeded_team_rankings.json');
+    try {
+      const content = await readFile(seededRankingsFile, 'utf-8');
+      const rankings = JSON.parse(content);
+      res.json(rankings);
+    } catch (fileError) {
+      if (fileError.code === 'ENOENT') {
+        res.status(404).json({ error: 'Seeded rankings not found. Please run the seeding script first: node tools/runSeededRankings.js' });
+      } else {
+        throw fileError;
+      }
+    }
+  } catch (error) {
+    console.error('Error loading seeded team rankings:', error);
+    res.status(500).json({ error: 'Failed to load seeded team rankings' });
+  }
+});
+
 // Get race rankings
 app.get('/api/race-rankings', async (req, res) => {
   try {

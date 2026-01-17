@@ -75,8 +75,13 @@ export function TeamRaceRankings({ onBack }: TeamRaceRankingsProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [hideRandom, setHideRandom] = useState(false);
   const [selectedMatchup, setSelectedMatchup] = useState<TeamRaceRanking | null>(null);
   const [isCombinedStats, setIsCombinedStats] = useState(false);
+  const [sortColumn, setSortColumn] = useState<keyof TeamRaceRanking | 'rank' | null>(null);
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  const [combinedSortColumn, setCombinedSortColumn] = useState<keyof TeamRaceRanking | 'rank' | null>(null);
+  const [combinedSortDirection, setCombinedSortDirection] = useState<'asc' | 'desc'>('desc');
   const [matchHistory, setMatchHistory] = useState<MatchHistoryEntry[]>([]);
   const [isLoadingMatches, setIsLoadingMatches] = useState(false);
   const [playerRankings, setPlayerRankings] = useState<Record<string, { rank: number; points: number; confidence: number }>>({});
@@ -141,6 +146,17 @@ export function TeamRaceRankings({ onBack }: TeamRaceRankingsProps) {
   };
 
   const filteredRankings = rankings.filter(matchup => {
+    // Filter out Random matchups if hideRandom is enabled
+    if (hideRandom && (
+      matchup.combo1Race1 === 'Random' || 
+      matchup.combo1Race2 === 'Random' || 
+      matchup.combo2Race1 === 'Random' || 
+      matchup.combo2Race2 === 'Random'
+    )) {
+      return false;
+    }
+    
+    // Apply search filter
     const searchLower = searchTerm.toLowerCase();
     return (
       matchup.name.toLowerCase().includes(searchLower) ||
@@ -149,6 +165,101 @@ export function TeamRaceRankings({ onBack }: TeamRaceRankingsProps) {
       `${matchup.combo1Race1} ${matchup.combo1Race2}`.toLowerCase().includes(searchLower) ||
       `${matchup.combo2Race1} ${matchup.combo2Race2}`.toLowerCase().includes(searchLower)
     );
+  });
+
+  const filteredCombinedRankings = combinedRankings.filter(matchup => {
+    // Filter out Random matchups if hideRandom is enabled
+    if (hideRandom && (
+      matchup.combo1Race1 === 'Random' || 
+      matchup.combo1Race2 === 'Random'
+    )) {
+      return false;
+    }
+    return true;
+  });
+
+  const handleSort = (column: keyof TeamRaceRanking | 'rank', isCombined: boolean = false) => {
+    if (isCombined) {
+      if (combinedSortColumn === column) {
+        setCombinedSortDirection(combinedSortDirection === 'asc' ? 'desc' : 'asc');
+      } else {
+        setCombinedSortColumn(column);
+        setCombinedSortDirection('desc');
+      }
+    } else {
+      if (sortColumn === column) {
+        setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+      } else {
+        setSortColumn(column);
+        setSortDirection('desc');
+      }
+    }
+  };
+
+  const sortedRankings = [...filteredRankings].sort((a, b) => {
+    if (!sortColumn) return 0;
+    
+    let aValue: any;
+    let bValue: any;
+    
+    if (sortColumn === 'rank') {
+      aValue = rankings.findIndex(m => m.name === a.name) + 1;
+      bValue = rankings.findIndex(m => m.name === b.name) + 1;
+    } else if (sortColumn === 'name' || sortColumn === 'combo1' || sortColumn === 'combo2') {
+      aValue = a[sortColumn];
+      bValue = b[sortColumn];
+    } else {
+      aValue = a[sortColumn];
+      bValue = b[sortColumn];
+    }
+    
+    // Handle undefined/null values
+    if (aValue === undefined || aValue === null) aValue = (sortColumn === 'name' || sortColumn === 'combo1' || sortColumn === 'combo2') ? '' : 0;
+    if (bValue === undefined || bValue === null) bValue = (sortColumn === 'name' || sortColumn === 'combo1' || sortColumn === 'combo2') ? '' : 0;
+    
+    // String comparison
+    if (sortColumn === 'name' || sortColumn === 'combo1' || sortColumn === 'combo2') {
+      return sortDirection === 'asc' 
+        ? aValue.localeCompare(bValue)
+        : bValue.localeCompare(aValue);
+    }
+    
+    // Numeric comparison
+    const comparison = (aValue as number) - (bValue as number);
+    return sortDirection === 'asc' ? comparison : -comparison;
+  });
+
+  const sortedCombinedRankings = [...filteredCombinedRankings].sort((a, b) => {
+    if (!combinedSortColumn) return 0;
+    
+    let aValue: any;
+    let bValue: any;
+    
+    if (combinedSortColumn === 'rank') {
+      aValue = combinedRankings.findIndex(m => m.name === a.name) + 1;
+      bValue = combinedRankings.findIndex(m => m.name === b.name) + 1;
+    } else if (combinedSortColumn === 'name' || combinedSortColumn === 'combo1' || combinedSortColumn === 'combo2') {
+      aValue = a[combinedSortColumn];
+      bValue = b[combinedSortColumn];
+    } else {
+      aValue = a[combinedSortColumn];
+      bValue = b[combinedSortColumn];
+    }
+    
+    // Handle undefined/null values
+    if (aValue === undefined || aValue === null) aValue = (combinedSortColumn === 'name' || combinedSortColumn === 'combo1' || combinedSortColumn === 'combo2') ? '' : 0;
+    if (bValue === undefined || bValue === null) bValue = (combinedSortColumn === 'name' || combinedSortColumn === 'combo1' || combinedSortColumn === 'combo2') ? '' : 0;
+    
+    // String comparison
+    if (combinedSortColumn === 'name' || combinedSortColumn === 'combo1' || combinedSortColumn === 'combo2') {
+      return combinedSortDirection === 'asc' 
+        ? aValue.localeCompare(bValue)
+        : bValue.localeCompare(aValue);
+    }
+    
+    // Numeric comparison
+    const comparison = (aValue as number) - (bValue as number);
+    return combinedSortDirection === 'asc' ? comparison : -comparison;
   });
 
   const getRaceBadgeColor = (race: string) => {
@@ -161,15 +272,6 @@ export function TeamRaceRankings({ onBack }: TeamRaceRankingsProps) {
     }
   };
 
-  const formatCombo = (race1: string, race2: string) => {
-    const abbr = {
-      'Protoss': 'P',
-      'Terran': 'T',
-      'Zerg': 'Z',
-      'Random': 'R'
-    };
-    return `${abbr[race1] || race1}${abbr[race2] || race2}`;
-  };
 
   const loadPlayerRankings = async () => {
     try {
@@ -223,10 +325,6 @@ export function TeamRaceRankings({ onBack }: TeamRaceRankingsProps) {
     return [player1, player2].filter(Boolean).sort().join('+');
   };
 
-  const getPlayerRank = (name: string | null) => {
-    if (!name) return null;
-    return playerRankings[name]?.rank || null;
-  };
 
   const getTeamRank = (player1: string | null, player2: string | null) => {
     if (!player1 || !player2) return null;
@@ -268,10 +366,6 @@ export function TeamRaceRankings({ onBack }: TeamRaceRankingsProps) {
     };
   };
 
-  const getRaceAbbrev = (race: string | null | undefined): string => {
-    if (!race) return '';
-    return race === 'Random' ? 'R' : race[0];
-  };
 
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) return '—';
@@ -323,6 +417,31 @@ export function TeamRaceRankings({ onBack }: TeamRaceRankingsProps) {
           </div>
         ) : (
           <>
+            {/* Search and Filters */}
+            <div className="bg-white rounded-lg border border-gray-200 p-4 mb-6 shadow-sm">
+              <div className="flex items-center gap-4 mb-4">
+                <input
+                  type="text"
+                  placeholder="Search team race matchups..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={hideRandom}
+                    onChange={(e) => setHideRandom(e.target.checked)}
+                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+                  />
+                  <span className="text-sm text-gray-700">Hide Random matchups</span>
+                </label>
+              </div>
+              <div className="text-sm text-gray-600">
+                Showing {filteredRankings.length} of {rankings.length} team race matchups
+              </div>
+            </div>
+
             {/* Combined Team Race Statistics */}
             {combinedRankings.length > 0 && (
               <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden mb-6">
@@ -334,28 +453,76 @@ export function TeamRaceRankings({ onBack }: TeamRaceRankingsProps) {
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                       <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Rank
+                        <th 
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                          onClick={() => handleSort('rank', true)}
+                        >
+                          <div className="flex items-center gap-1">
+                            Rank
+                            {combinedSortColumn === 'rank' && (
+                              <span>{combinedSortDirection === 'asc' ? '↑' : '↓'}</span>
+                            )}
+                          </div>
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Team Race
+                        <th 
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                          onClick={() => handleSort('combo1', true)}
+                        >
+                          <div className="flex items-center gap-1">
+                            Team Race
+                            {combinedSortColumn === 'combo1' && (
+                              <span>{combinedSortDirection === 'asc' ? '↑' : '↓'}</span>
+                            )}
+                          </div>
                         </th>
-                        <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Matches
+                        <th 
+                          className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                          onClick={() => handleSort('matches', true)}
+                        >
+                          <div className="flex items-center justify-center gap-1">
+                            Matches
+                            {combinedSortColumn === 'matches' && (
+                              <span>{combinedSortDirection === 'asc' ? '↑' : '↓'}</span>
+                            )}
+                          </div>
                         </th>
-                        <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Wins
+                        <th 
+                          className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                          onClick={() => handleSort('wins', true)}
+                        >
+                          <div className="flex items-center justify-center gap-1">
+                            Wins
+                            {combinedSortColumn === 'wins' && (
+                              <span>{combinedSortDirection === 'asc' ? '↑' : '↓'}</span>
+                            )}
+                          </div>
                         </th>
-                        <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Losses
+                        <th 
+                          className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                          onClick={() => handleSort('losses', true)}
+                        >
+                          <div className="flex items-center justify-center gap-1">
+                            Losses
+                            {combinedSortColumn === 'losses' && (
+                              <span>{combinedSortDirection === 'asc' ? '↑' : '↓'}</span>
+                            )}
+                          </div>
                         </th>
-                        <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Points
+                        <th 
+                          className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                          onClick={() => handleSort('points', true)}
+                        >
+                          <div className="flex items-center justify-center gap-1">
+                            Points
+                            {combinedSortColumn === 'points' && (
+                              <span>{combinedSortDirection === 'asc' ? '↑' : '↓'}</span>
+                            )}
+                          </div>
                         </th>
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                      {combinedRankings.map((matchup, index) => (
+                      {sortedCombinedRankings.map((matchup, index) => (
                         <tr
                           key={matchup.name}
                           className="hover:bg-gray-50 transition-colors cursor-pointer"
@@ -424,20 +591,6 @@ export function TeamRaceRankings({ onBack }: TeamRaceRankingsProps) {
               </div>
             )}
 
-            {/* Search */}
-            <div className="bg-white rounded-lg border border-gray-200 p-4 mb-6 shadow-sm">
-              <input
-                type="text"
-                placeholder="Search team race matchups..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <div className="mt-2 text-sm text-gray-600">
-                Showing {filteredRankings.length} of {rankings.length} team race matchups
-              </div>
-            </div>
-
             {/* Individual Matchups Table */}
             <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
               <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
@@ -448,23 +601,71 @@ export function TeamRaceRankings({ onBack }: TeamRaceRankingsProps) {
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Rank
+                      <th 
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                        onClick={() => handleSort('rank', false)}
+                      >
+                        <div className="flex items-center gap-1">
+                          Rank
+                          {sortColumn === 'rank' && (
+                            <span>{sortDirection === 'asc' ? '↑' : '↓'}</span>
+                          )}
+                        </div>
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Matchup
+                      <th 
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                        onClick={() => handleSort('name', false)}
+                      >
+                        <div className="flex items-center gap-1">
+                          Matchup
+                          {sortColumn === 'name' && (
+                            <span>{sortDirection === 'asc' ? '↑' : '↓'}</span>
+                          )}
+                        </div>
                       </th>
-                      <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Matches
+                      <th 
+                        className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                        onClick={() => handleSort('matches', false)}
+                      >
+                        <div className="flex items-center justify-center gap-1">
+                          Matches
+                          {sortColumn === 'matches' && (
+                            <span>{sortDirection === 'asc' ? '↑' : '↓'}</span>
+                          )}
+                        </div>
                       </th>
-                      <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Wins
+                      <th 
+                        className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                        onClick={() => handleSort('wins', false)}
+                      >
+                        <div className="flex items-center justify-center gap-1">
+                          Wins
+                          {sortColumn === 'wins' && (
+                            <span>{sortDirection === 'asc' ? '↑' : '↓'}</span>
+                          )}
+                        </div>
                       </th>
-                      <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Losses
+                      <th 
+                        className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                        onClick={() => handleSort('losses', false)}
+                      >
+                        <div className="flex items-center justify-center gap-1">
+                          Losses
+                          {sortColumn === 'losses' && (
+                            <span>{sortDirection === 'asc' ? '↑' : '↓'}</span>
+                          )}
+                        </div>
                       </th>
-                      <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Points
+                      <th 
+                        className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                        onClick={() => handleSort('points', false)}
+                      >
+                        <div className="flex items-center justify-center gap-1">
+                          Points
+                          {sortColumn === 'points' && (
+                            <span>{sortDirection === 'asc' ? '↑' : '↓'}</span>
+                          )}
+                        </div>
                       </th>
                     </tr>
                   </thead>
@@ -476,7 +677,7 @@ export function TeamRaceRankings({ onBack }: TeamRaceRankingsProps) {
                         </td>
                       </tr>
                     ) : (
-                      filteredRankings.map((matchup, index) => {
+                      sortedRankings.map((matchup) => {
                         const rank = rankings.findIndex(m => m.name === matchup.name) + 1;
                         return (
                           <tr
@@ -658,7 +859,6 @@ export function TeamRaceRankings({ onBack }: TeamRaceRankingsProps) {
                         // Normalize match combos to match the selected matchup format
                         const matchCombosSorted = [match.team1_combo, match.team2_combo].sort();
                         const matchCombo1 = matchCombosSorted[0];
-                        const matchCombo2 = matchCombosSorted[1];
                         
                         // Determine which combo won in the match
                         // If team1_combo comes first alphabetically, team1 winning means combo1 won
@@ -672,14 +872,8 @@ export function TeamRaceRankings({ onBack }: TeamRaceRankingsProps) {
                           (selectedMatchup.combo1 === matchCombo1) ? matchCombo1Won : !matchCombo1Won;
                       }
 
-                      // Format team names with races
-                      const formatPlayerWithRace = (name: string | null, race: string | null) => {
-                        if (!name) return '';
-                        return race ? `${name} (${race})` : name;
-                      };
-
                       // For combined stats, show clicked combo first; for individual matchups, keep original order
-                      let team1Players, team2Players, team1Combo, team2Combo, team1Score, team2Score, ratingChange;
+                      let team1Combo, team2Combo, ratingChange;
                       
                       if (isCombinedStats) {
                         const clickedCombo = selectedMatchup.combo1;
@@ -687,51 +881,21 @@ export function TeamRaceRankings({ onBack }: TeamRaceRankingsProps) {
                         
                         if (clickedComboIsTeam1) {
                           // Clicked combo is team1, keep original order
-                          team1Players = [
-                            formatPlayerWithRace(match.team1_player1, match.team1_player1_race),
-                            formatPlayerWithRace(match.team1_player2, match.team1_player2_race)
-                          ].filter(Boolean).join(' + ') || 'Unknown';
-                          team2Players = [
-                            formatPlayerWithRace(match.team2_player1, match.team2_player1_race),
-                            formatPlayerWithRace(match.team2_player2, match.team2_player2_race)
-                          ].filter(Boolean).join(' + ') || 'Unknown';
                           team1Combo = match.team1_combo;
                           team2Combo = match.team2_combo;
-                          team1Score = match.team1_score;
-                          team2Score = match.team2_score;
                           // Rating change is from combo1's perspective, which matches clicked combo
                           ratingChange = match.rating_change || 0;
                         } else {
                           // Clicked combo is team2, swap to show it first
-                          team1Players = [
-                            formatPlayerWithRace(match.team2_player1, match.team2_player1_race),
-                            formatPlayerWithRace(match.team2_player2, match.team2_player2_race)
-                          ].filter(Boolean).join(' + ') || 'Unknown';
-                          team2Players = [
-                            formatPlayerWithRace(match.team1_player1, match.team1_player1_race),
-                            formatPlayerWithRace(match.team1_player2, match.team1_player2_race)
-                          ].filter(Boolean).join(' + ') || 'Unknown';
                           team1Combo = match.team2_combo;
                           team2Combo = match.team1_combo;
-                          team1Score = match.team2_score;
-                          team2Score = match.team1_score;
                           // Rating change is from combo1's perspective, but clicked combo is combo2, so negate
                           ratingChange = -(match.rating_change || 0);
                         }
                       } else {
                         // For individual matchups, keep original order
-                        team1Players = [
-                          formatPlayerWithRace(match.team1_player1, match.team1_player1_race),
-                          formatPlayerWithRace(match.team1_player2, match.team1_player2_race)
-                        ].filter(Boolean).join(' + ') || 'Unknown';
-                        team2Players = [
-                          formatPlayerWithRace(match.team2_player1, match.team2_player1_race),
-                          formatPlayerWithRace(match.team2_player2, match.team2_player2_race)
-                        ].filter(Boolean).join(' + ') || 'Unknown';
                         team1Combo = match.team1_combo;
                         team2Combo = match.team2_combo;
-                        team1Score = match.team1_score;
-                        team2Score = match.team2_score;
                         // For individual matchups, rating change is already from combo1's perspective
                         ratingChange = match.rating_change || 0;
                       }
@@ -741,32 +905,6 @@ export function TeamRaceRankings({ onBack }: TeamRaceRankingsProps) {
                       if (isCombinedStats) {
                         clickedComboIsTeam1 = match.team1_combo === selectedMatchup.combo1;
                       }
-                      
-                      const team1Won = team1Score > team2Score;
-                      const team1Rank = getTeamRank(
-                        clickedComboIsTeam1 ? match.team1_player1 : match.team2_player1,
-                        clickedComboIsTeam1 ? match.team1_player2 : match.team2_player2
-                      );
-                      const team2Rank = getTeamRank(
-                        clickedComboIsTeam1 ? match.team2_player1 : match.team1_player1,
-                        clickedComboIsTeam1 ? match.team2_player2 : match.team1_player2
-                      );
-                      const team1Impact = getTeamImpact(match,
-                        clickedComboIsTeam1 ? match.team1_player1 : match.team2_player1,
-                        clickedComboIsTeam1 ? match.team1_player2 : match.team2_player2
-                      );
-                      const team2Impact = getTeamImpact(match,
-                        clickedComboIsTeam1 ? match.team2_player1 : match.team1_player1,
-                        clickedComboIsTeam1 ? match.team2_player2 : match.team1_player2
-                      );
-                      
-                      // Parse player names from the formatted strings
-                      const parsePlayers = (playerString: string) => {
-                        return playerString.split(' + ').map(p => {
-                          const match = p.match(/^(.+?)\s*\(/);
-                          return match ? match[1].trim() : p.trim();
-                        });
-                      };
                       
                       const convertedMatch = convertMatchForComponent(match);
                       const team1RankData = getTeamRank(
@@ -809,8 +947,8 @@ export function TeamRaceRankings({ onBack }: TeamRaceRankingsProps) {
                             ratingChange
                           }}
                           normalizeTeamKey={normalizeTeamKey}
-                          getTeamImpact={(match, player1, player2) => getTeamImpact(match as MatchHistoryEntry, player1, player2)}
-                          getPlayerImpact={(match, playerName) => getPlayerImpact(match as MatchHistoryEntry, playerName)}
+                          getTeamImpact={(match, player1, player2) => getTeamImpact(match as unknown as MatchHistoryEntry, player1, player2)}
+                          getPlayerImpact={(match, playerName) => getPlayerImpact(match as unknown as MatchHistoryEntry, playerName)}
                           formatDate={formatDate}
                         />
                       );

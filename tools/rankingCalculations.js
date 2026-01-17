@@ -180,6 +180,28 @@ export function calculateRatingChange(expectedWin, actualWin, kFactor = 32) {
 }
 
 /**
+ * Initialize stats with a seed rating (for seeding system)
+ * This is a helper for the seeding process that starts entities with a pre-calculated rating
+ * instead of starting at 0 or population mean
+ * 
+ * @param {string} name - Name/identifier of the entity
+ * @param {number} seedRating - Initial seed rating to start with
+ * @param {Object} additionalFields - Additional fields to include in stats object
+ * @returns {Object} Initialized stats object with seed rating
+ */
+export function initializeStatsWithSeed(name, seedRating, additionalFields = {}) {
+  return {
+    name,
+    matches: 0,
+    wins: 0,
+    losses: 0,
+    points: seedRating,
+    confidence: 0, // Confidence starts at 0% even with seed
+    ...additionalFields
+  };
+}
+
+/**
  * Update stats for a single entity (player or team) based on match outcome
  * Uses enhanced prediction-based scoring with:
  * - Provisional K-factor (higher for new players/teams)
