@@ -1,12 +1,13 @@
+import 'dotenv/config';
 import express from 'express';
 import { readdir, readFile, writeFile, mkdir } from 'fs/promises';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import cors from 'cors';
-import { calculateRankings } from '../tools/processRankings.js';
-import { calculateTeamRankings } from '../tools/calculateTeamRankings.js';
-import { calculateRaceRankings } from '../tools/calculateRaceRankings.js';
-import { calculateTeamRaceRankings } from '../tools/calculateTeamRaceRankings.js';
+// Race and team race rankings now read from database
+// On-demand calculations removed - all rankings stored in database
+import { supabase } from '../lib/supabase.js';
+import { processTournamentMatches } from '../tools/database/databaseRankingEngine.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -20,6 +21,13 @@ app.use(express.json());
 // List all JSON files in output directory
 app.get('/api/tournaments', async (req, res) => {
   try {
+    // Ensure output directory exists
+    try {
+      await mkdir(outputDir, { recursive: true });
+    } catch (err) {
+      // Directory might already exist, ignore error
+    }
+    
     const files = await readdir(outputDir);
     const jsonFiles = files.filter(f => f.endsWith('.json') && f !== 'player_defaults.json');
     
@@ -46,7 +54,7 @@ app.get('/api/tournaments', async (req, res) => {
     res.json(tournaments.filter(t => t !== null));
   } catch (error) {
     console.error('Error listing tournaments:', error);
-    res.status(500).json({ error: 'Failed to list tournaments' });
+    res.status(500).json({ error: 'Failed to list tournaments', details: error.message });
   }
 });
 
@@ -200,78 +208,142 @@ app.put('/api/player-defaults/:playerName', async (req, res) => {
   }
 });
 
-// Get player rankings
+// Get player rankings from database
 app.get('/api/player-rankings', async (req, res) => {
   try {
-    const { rankings } = await calculateRankings();
+    const { data, error } = await supabase
+      .from('players')
+      .select('name, matches, wins, losses, current_rating, current_confidence')
+      .order('current_rating', { ascending: false });
+    
+    if (error) {
+      console.error('Supabase error:', error);
+      
+      // Check if table doesn't exist (common error code: 42P01)
+      if (error.code === '42P01' || error.message?.includes('does not exist')) {
+        return res.status(500).json({ 
+          error: 'Database tables not found',
+          message: 'Please run the database import first: node tools/import/importFromJSON.js',
+          details: error.message
+        });
+      }
+      
+      throw error;
+    }
+    
+    // Map database columns to API response format
+    const rankings = (data || []).map(player => ({
+      name: player.name,
+      matches: player.matches,
+      wins: player.wins,
+      losses: player.losses,
+      points: player.current_rating,
+      confidence: player.current_confidence
+    }));
+    
     res.json(rankings);
   } catch (error) {
-    console.error('Error calculating player rankings:', error);
-    res.status(500).json({ error: 'Failed to calculate player rankings' });
+    console.error('Error fetching player rankings:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch player rankings',
+      details: error.message || String(error),
+      code: error.code || 'UNKNOWN',
+      hint: error.code === '42P01' ? 'Run: node tools/import/importFromJSON.js' : undefined
+    });
   }
 });
 
-// Get team rankings
+// Get team rankings from database
 app.get('/api/team-rankings', async (req, res) => {
   try {
-    const { rankings } = await calculateTeamRankings();
-    res.json(rankings);
+    const { data: teams, error } = await supabase
+      .from('teams')
+      .select(`
+        team_key,
+        matches,
+        wins,
+        losses,
+        current_rating,
+        current_confidence,
+        player1:player1_id(name),
+        player2:player2_id(name)
+      `)
+      .order('current_rating', { ascending: false });
+    
+    if (error) throw error;
+    
+    // Format for frontend
+    const formatted = teams.map(team => ({
+      player1: team.player1.name,
+      player2: team.player2.name,
+      matches: team.matches,
+      wins: team.wins,
+      losses: team.losses,
+      points: team.current_rating,
+      confidence: team.current_confidence
+    }));
+    
+    res.json(formatted);
   } catch (error) {
-    console.error('Error calculating team rankings:', error);
-    res.status(500).json({ error: 'Failed to calculate team rankings' });
+    console.error('Error fetching team rankings:', error);
+    res.status(500).json({ error: 'Failed to fetch team rankings' });
   }
 });
 
-// Get seeded player rankings (from three-pass seeding process)
-app.get('/api/seeded-player-rankings', async (req, res) => {
-  try {
-    const seededRankingsFile = join(outputDir, 'seeded_player_rankings.json');
-    try {
-      const content = await readFile(seededRankingsFile, 'utf-8');
-      const rankings = JSON.parse(content);
-      res.json(rankings);
-    } catch (fileError) {
-      if (fileError.code === 'ENOENT') {
-        res.status(404).json({ error: 'Seeded rankings not found. Please run the seeding script first: node tools/runSeededRankings.js' });
-      } else {
-        throw fileError;
-      }
-    }
-  } catch (error) {
-    console.error('Error loading seeded player rankings:', error);
-    res.status(500).json({ error: 'Failed to load seeded player rankings' });
-  }
-});
+// Note: Seeded rankings endpoints removed - seeding is now automatic for Season 1
+// All rankings are read from Supabase database which includes seeded Season 1 data
+// Season 1 (2025) was initialized with three-pass seeding during migration
 
-// Get seeded team rankings (from three-pass seeding process)
-app.get('/api/seeded-team-rankings', async (req, res) => {
-  try {
-    const seededRankingsFile = join(outputDir, 'seeded_team_rankings.json');
-    try {
-      const content = await readFile(seededRankingsFile, 'utf-8');
-      const rankings = JSON.parse(content);
-      res.json(rankings);
-    } catch (fileError) {
-      if (fileError.code === 'ENOENT') {
-        res.status(404).json({ error: 'Seeded rankings not found. Please run the seeding script first: node tools/runSeededRankings.js' });
-      } else {
-        throw fileError;
-      }
-    }
-  } catch (error) {
-    console.error('Error loading seeded team rankings:', error);
-    res.status(500).json({ error: 'Failed to load seeded team rankings' });
-  }
-});
-
-// Get race rankings
+// Get race rankings from database
 app.get('/api/race-rankings', async (req, res) => {
   try {
-    const { rankings, combinedRankings, matchHistory } = await calculateRaceRankings();
-    res.json({ rankings, combinedRankings, matchHistory });
+    const { data: raceRankings, error } = await supabase
+      .from('race_rankings')
+      .select('*')
+      .order('current_rating', { ascending: false });
+    
+    if (error) throw error;
+    
+    // Format for frontend (matches old structure)
+    const rankings = raceRankings.map(r => ({
+      matchup: r.race_matchup,
+      matches: r.matches,
+      wins: r.wins,
+      losses: r.losses,
+      points: r.current_rating,
+      confidence: r.current_confidence
+    }));
+    
+    // For combined rankings (e.g., "TvX"), aggregate all matchups
+    const combinedRankings = {};
+    const races = ['P', 'T', 'Z'];
+    
+    for (const race of races) {
+      const matchups = raceRankings.filter(r => r.race_matchup.startsWith(race));
+      const totalMatches = matchups.reduce((sum, m) => sum + m.matches, 0);
+      const totalWins = matchups.reduce((sum, m) => sum + m.wins, 0);
+      const totalLosses = matchups.reduce((sum, m) => sum + m.losses, 0);
+      const avgRating = matchups.length > 0
+        ? matchups.reduce((sum, m) => sum + m.current_rating, 0) / matchups.length
+        : 0;
+      const avgConfidence = matchups.length > 0
+        ? matchups.reduce((sum, m) => sum + m.current_confidence, 0) / matchups.length
+        : 0;
+      
+      combinedRankings[`${race}vX`] = {
+        matchup: `${race}vX`,
+        matches: totalMatches,
+        wins: totalWins,
+        losses: totalLosses,
+        points: avgRating,
+        confidence: avgConfidence
+      };
+    }
+    
+    res.json({ rankings, combinedRankings, matchHistory: [] });
   } catch (error) {
-    console.error('Error calculating race rankings:', error);
-    res.status(500).json({ error: 'Failed to calculate race rankings' });
+    console.error('Error fetching race rankings:', error);
+    res.status(500).json({ error: 'Failed to fetch race rankings' });
   }
 });
 
@@ -382,11 +454,56 @@ app.get('/api/race-combo/:race', async (req, res) => {
 
 app.get('/api/team-race-rankings', async (req, res) => {
   try {
-    const { rankings, combinedRankings, matchHistory } = await calculateTeamRaceRankings();
-    res.json({ rankings, combinedRankings, matchHistory });
+    const { data: teamRaceRankings, error } = await supabase
+      .from('team_race_rankings')
+      .select('*')
+      .order('current_rating', { ascending: false });
+    
+    if (error) throw error;
+    
+    // Format for frontend (matches old structure)
+    const rankings = teamRaceRankings.map(r => ({
+      matchup: r.team_race_matchup,
+      matches: r.matches,
+      wins: r.wins,
+      losses: r.losses,
+      points: r.current_rating,
+      confidence: r.current_confidence
+    }));
+    
+    // For combined rankings (e.g., "PP vs X"), aggregate all matchups with that team composition
+    const combinedRankings = {};
+    const teamCombos = ['PP', 'PT', 'PZ', 'TT', 'TZ', 'ZZ'];
+    
+    for (const combo of teamCombos) {
+      const matchups = teamRaceRankings.filter(r => 
+        r.team_race_matchup.startsWith(combo + ' vs') || 
+        r.team_race_matchup.endsWith('vs ' + combo)
+      );
+      const totalMatches = matchups.reduce((sum, m) => sum + m.matches, 0);
+      const totalWins = matchups.reduce((sum, m) => sum + m.wins, 0);
+      const totalLosses = matchups.reduce((sum, m) => sum + m.losses, 0);
+      const avgRating = matchups.length > 0
+        ? matchups.reduce((sum, m) => sum + m.current_rating, 0) / matchups.length
+        : 0;
+      const avgConfidence = matchups.length > 0
+        ? matchups.reduce((sum, m) => sum + m.current_confidence, 0) / matchups.length
+        : 0;
+      
+      combinedRankings[`${combo} vs X`] = {
+        matchup: `${combo} vs X`,
+        matches: totalMatches,
+        wins: totalWins,
+        losses: totalLosses,
+        points: avgRating,
+        confidence: avgConfidence
+      };
+    }
+    
+    res.json({ rankings, combinedRankings, matchHistory: [] });
   } catch (error) {
-    console.error('Error calculating team race rankings:', error);
-    res.status(500).json({ error: 'Failed to calculate team race rankings' });
+    console.error('Error fetching team race rankings:', error);
+    res.status(500).json({ error: 'Failed to fetch team race rankings' });
   }
 });
 
@@ -685,6 +802,101 @@ app.get('/api/team/:player1/:player2', async (req, res) => {
   } catch (error) {
     console.error('Error getting team details:', error);
     res.status(500).json({ error: 'Failed to get team details' });
+  }
+});
+
+// Admin: Import new tournament into database
+app.post('/api/admin/import-tournament', async (req, res) => {
+  try {
+    const { filename } = req.body;
+    
+    if (!filename) {
+      return res.status(400).json({ error: 'Filename is required' });
+    }
+    
+    // Load tournament from file
+    const filePath = join(outputDir, filename);
+    const content = await readFile(filePath, 'utf-8');
+    const data = JSON.parse(content);
+    
+    if (!data.tournament || !data.matches) {
+      return res.status(400).json({ error: 'Invalid tournament data' });
+    }
+    
+    // Check if already imported
+    const { data: existing } = await supabase
+      .from('tournaments')
+      .select('id, name')
+      .eq('liquipedia_slug', data.tournament.liquipedia_slug)
+      .single();
+    
+    if (existing) {
+      return res.status(400).json({ 
+        error: 'Tournament already imported',
+        tournament: existing
+      });
+    }
+    
+    // Import tournament
+    const { data: tournamentRecord, error: insertError } = await supabase
+      .from('tournaments')
+      .insert({
+        name: data.tournament.name,
+        liquipedia_slug: data.tournament.liquipedia_slug,
+        date: data.tournament.date,
+        prize_pool: data.tournament.prize_pool,
+        format: data.tournament.format,
+        processed: false
+      })
+      .select()
+      .single();
+    
+    if (insertError) {
+      throw new Error(`Failed to insert tournament: ${insertError.message}`);
+    }
+    
+    // Process matches
+    const processed = await processTournamentMatches(data, tournamentRecord.id);
+    
+    // Mark as processed
+    await supabase
+      .from('tournaments')
+      .update({ processed: true })
+      .eq('id', tournamentRecord.id);
+    
+    res.json({ 
+      success: true, 
+      tournament: tournamentRecord,
+      matchesProcessed: processed
+    });
+  } catch (error) {
+    console.error('Error importing tournament:', error);
+    res.status(500).json({ error: error.message || 'Failed to import tournament' });
+  }
+});
+
+// Admin: Force recalculation of all rankings
+app.post('/api/admin/recalculate', async (req, res) => {
+  try {
+    console.log('Starting recalculation...');
+    
+    // Delete all data (cascade will handle related records)
+    await supabase.from('tournaments').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+    await supabase.from('players').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+    await supabase.from('teams').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+    
+    console.log('Cleared database');
+    
+    // Re-run recalculation
+    const { recalculateAllRankings } = await import('../tools/recalculation/recalculateAllRankings.js');
+    await recalculateAllRankings();
+    
+    console.log('Recalculation complete');
+    
+    res.json({ success: true, message: 'Recalculation complete' });
+  } catch (error) {
+    console.error('Error recalculating:', error);
+    res.status(500).json({ error: error.message || 'Failed to recalculate' });
   }
 });
 

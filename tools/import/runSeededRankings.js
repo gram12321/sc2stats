@@ -22,17 +22,17 @@ import {
   updateStatsForMatch,
   calculatePopulationStats,
   initializeStatsWithSeed
-} from './rankingCalculations.js';
+} from '../ranking/rankingCalculations.js';
 import {
   determineMatchOutcome,
   hasValidScores,
   initializeStats,
   sortRankings
-} from './rankingUtils.js';
+} from '../ranking/rankingUtils.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const outputDir = join(__dirname, '..', 'output');
+const outputDir = join(__dirname, '..', '..', 'output');
 
 /**
  * Round order mapping for sorting matches chronologically
@@ -350,6 +350,26 @@ function extractRatings(statsMap) {
 }
 
 /**
+ * Average ratings from Pass 1 and Pass 2
+ * Returns a new Map with averaged ratings for use as seeds in Pass 3
+ */
+function averageRatings(pass1Ratings, pass2Ratings) {
+  const averaged = new Map();
+  
+  // Get all unique keys from both passes
+  const allKeys = new Set([...pass1Ratings.keys(), ...pass2Ratings.keys()]);
+  
+  for (const key of allKeys) {
+    const pass1Rating = pass1Ratings.get(key) || 0;
+    const pass2Rating = pass2Ratings.get(key) || 0;
+    const average = (pass1Rating + pass2Rating) / 2;
+    averaged.set(key, average);
+  }
+  
+  return averaged;
+}
+
+/**
  * Run three-pass seeding process for player rankings
  */
 async function runSeededPlayerRankings(matches) {
@@ -361,19 +381,29 @@ async function runSeededPlayerRankings(matches) {
   const sortedMatches = sortAllMatches(matches, false);
   const reverseSortedMatches = sortAllMatches(matches, true);
   
-  // Pass 1: Forward chronological
+  // Pass 1: Forward chronological (all start at 0)
+  // This pass helps identify initial skill levels, but early matches have outsized impact
+  // because all players start equal. Results will be discarded after Pass 3.
   console.log('\n>>> PASS 1: Forward Chronological <<<');
   const pass1Stats = calculateRankingsFromMatches(sortedMatches, null, 'Pass 1');
   const pass1Ratings = extractRatings(pass1Stats);
   
-  // Pass 2: Reverse chronological (not used for seeding, just for analysis)
+  // Pass 2: Reverse chronological (all start at 0)
+  // This pass adjusts for recency bias and order dependency from Pass 1.
+  // By processing backwards, we get alternative skill estimates that account for
+  // the fact that early matches in Pass 1 gave too many points to skilled players
+  // beating weaker players (who all started equal). Results will be discarded after Pass 3.
   console.log('\n>>> PASS 2: Reverse Chronological <<<');
   const pass2Stats = calculateRankingsFromMatches(reverseSortedMatches, null, 'Pass 2');
   const pass2Ratings = extractRatings(pass2Stats);
   
-  // Pass 3: Forward chronological with Pass 1 seeds
-  console.log('\n>>> PASS 3: Forward Chronological with Seeding <<<');
-  const pass3Stats = calculateRankingsFromMatches(sortedMatches, pass1Ratings, 'Pass 3');
+  // Pass 3: Forward chronological with averaged seeds from Pass 1 and Pass 2
+  // This is the final pass. Players start with the average of Pass 1 and Pass 2 ratings as seeds
+  // (not cold start at 0), which means Season 1 matches are processed with better initial estimates.
+  // Only Pass 3 ratings count - Pass 1 and Pass 2 ratings are discarded.
+  console.log('\n>>> PASS 3: Forward Chronological with Averaged Seeding <<<');
+  const averagedSeeds = averageRatings(pass1Ratings, pass2Ratings);
+  const pass3Stats = calculateRankingsFromMatches(sortedMatches, averagedSeeds, 'Pass 3');
   
   // Sort and display results
   const finalRankings = sortRankings(Array.from(pass3Stats.values()));
@@ -409,19 +439,29 @@ async function runSeededTeamRankings(matches) {
   const sortedMatches = sortAllMatches(matches, false);
   const reverseSortedMatches = sortAllMatches(matches, true);
   
-  // Pass 1: Forward chronological
+  // Pass 1: Forward chronological (all start at 0)
+  // This pass helps identify initial skill levels, but early matches have outsized impact
+  // because all teams start equal. Results will be discarded after Pass 3.
   console.log('\n>>> PASS 1: Forward Chronological <<<');
   const pass1Stats = calculateTeamRankingsFromMatches(sortedMatches, null, 'Pass 1');
   const pass1Ratings = extractRatings(pass1Stats);
   
-  // Pass 2: Reverse chronological (not used for seeding, just for analysis)
+  // Pass 2: Reverse chronological (all start at 0)
+  // This pass adjusts for recency bias and order dependency from Pass 1.
+  // By processing backwards, we get alternative skill estimates that account for
+  // the fact that early matches in Pass 1 gave too many points to skilled teams
+  // beating weaker teams (who all started equal). Results will be discarded after Pass 3.
   console.log('\n>>> PASS 2: Reverse Chronological <<<');
   const pass2Stats = calculateTeamRankingsFromMatches(reverseSortedMatches, null, 'Pass 2');
   const pass2Ratings = extractRatings(pass2Stats);
   
-  // Pass 3: Forward chronological with Pass 1 seeds
-  console.log('\n>>> PASS 3: Forward Chronological with Seeding <<<');
-  const pass3Stats = calculateTeamRankingsFromMatches(sortedMatches, pass1Ratings, 'Pass 3');
+  // Pass 3: Forward chronological with averaged seeds from Pass 1 and Pass 2
+  // This is the final pass. Teams start with the average of Pass 1 and Pass 2 ratings as seeds
+  // (not cold start at 0), which means Season 1 matches are processed with better initial estimates.
+  // Only Pass 3 ratings count - Pass 1 and Pass 2 ratings are discarded.
+  console.log('\n>>> PASS 3: Forward Chronological with Averaged Seeding <<<');
+  const averagedSeeds = averageRatings(pass1Ratings, pass2Ratings);
+  const pass3Stats = calculateTeamRankingsFromMatches(sortedMatches, averagedSeeds, 'Pass 3');
   
   // Sort and display results
   const finalRankings = sortRankings(

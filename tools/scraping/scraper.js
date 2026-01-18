@@ -11,7 +11,7 @@ import { dirname, join } from 'path';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const outputDir = join(__dirname, '..', 'output');
+const outputDir = join(__dirname, '..', '..', 'output');
 
 const API_URL = 'https://liquipedia.net/starcraft2/api.php';
 const USER_AGENT = 'sc2stats/1.0 (sc2stats@example.com)';

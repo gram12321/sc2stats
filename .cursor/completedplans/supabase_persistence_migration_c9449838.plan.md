@@ -4,25 +4,25 @@ overview: Migrate from on-the-fly ranking calculations to Supabase persistence w
 todos:
   - id: phase1_schema
     content: Create Supabase schema and setup client
-    status: pending
+    status: completed
   - id: phase2_migration
     content: Build migration script with Season 1 seeding integration
-    status: pending
+    status: completed
   - id: phase3_incremental
     content: Implement incremental match processing engine
-    status: pending
+    status: completed
   - id: phase4_api
     content: Update API endpoints to read from Supabase
-    status: pending
+    status: completed
   - id: phase5_admin
     content: Add admin recalculation endpoint
-    status: pending
+    status: completed
   - id: phase6_ui
     content: Update UI components and remove seeded toggle
-    status: pending
+    status: completed
   - id: phase7_docs
     content: Update documentation and mark legacy files
-    status: pending
+    status: completed
 ---
 
 # Supabase Persistence Migration Plan

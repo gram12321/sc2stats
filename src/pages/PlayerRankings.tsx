@@ -23,7 +23,6 @@ export function PlayerRankings({ onBack, onNavigateToPlayer }: PlayerRankingsPro
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [useSeededRankings, setUseSeededRankings] = useState(false);
   const [sortColumn, setSortColumn] = useState<keyof PlayerRanking | 'rank' | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [filterLowConfidence, setFilterLowConfidence] = useState(false);
@@ -31,18 +30,14 @@ export function PlayerRankings({ onBack, onNavigateToPlayer }: PlayerRankingsPro
   useEffect(() => {
     loadRankings();
     loadPlayerRaces();
-  }, [useSeededRankings]);
+  }, []);
 
   const loadRankings = async () => {
     try {
       setIsLoading(true);
       setError(null);
-      const endpoint = useSeededRankings ? '/api/seeded-player-rankings' : '/api/player-rankings';
-      const response = await fetch(endpoint);
+      const response = await fetch('/api/player-rankings');
       if (!response.ok) {
-        if (response.status === 404 && useSeededRankings) {
-          throw new Error('Seeded rankings not found. Please run: node tools/runSeededRankings.js');
-        }
         throw new Error('Failed to load rankings');
       }
       const data = await response.json();
@@ -180,22 +175,11 @@ export function PlayerRankings({ onBack, onNavigateToPlayer }: PlayerRankingsPro
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Player Rankings</h1>
               <p className="text-gray-600 mt-1">
-                {useSeededRankings 
-                  ? 'Seeded rankings (three-pass seeding system)' 
-                  : 'Enhanced ranking system with provisional ratings and confidence tracking'}
+                Enhanced ranking system with provisional ratings and confidence tracking
               </p>
             </div>
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-4">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={useSeededRankings}
-                    onChange={(e) => setUseSeededRankings(e.target.checked)}
-                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                  />
-                  <span className="text-sm text-gray-700">Use Seeded Rankings</span>
-                </label>
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
