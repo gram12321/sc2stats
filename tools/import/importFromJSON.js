@@ -8,10 +8,10 @@
  * 1. Check if database is empty (warns if not)
  * 2. Load all tournament JSON files
  * 3. Detect Season 1 tournaments (2025)
- * 4. Run three-pass seeding for Season 1 data
- * 5. Import seeded ratings into database
- * 6. Import Season 1 matches (history only, ratings already from seeds)
- * 7. Process Season 2+ matches incrementally
+ * 4. Run three-pass seeding for Season 1 data (Pass 3 = actual Season 1 run)
+ * 5. Import final ratings from Pass 3 into database
+ * 6. Import Season 1 match records (ratings already calculated in Pass 3)
+ * 7. Process Season 2+ matches incrementally from Season 1 baseline
  * 8. Store all match history with rating snapshots
  */
 
@@ -24,10 +24,11 @@ import {
   generateSeason1Seeds,
   importPlayerSeeds,
   importTeamSeeds,
-  getPlayerIdMap
+  getPlayerIdMap,
+  importTeamRatingHistory
 } from '../database/databaseSeeding.js';
 import { processTournamentMatches } from '../database/databaseRankingEngine.js';
-import { importTournamentMatchesOnly } from '../database/importMatchesOnly.js';
+import { importMatchOnly } from '../database/importMatchesOnly.js';
 import { hasValidScores } from '../ranking/rankingUtils.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -169,8 +170,8 @@ async function processSeason1(tournaments) {
   console.log('SEASON 1 (2025) - WITH SEEDING');
   console.log('='.repeat(80));
   
-  // Generate and import seeds (includes final Pass 3 ratings with all stats)
-  const { playerSeeds, teamSeeds, playerStatsMap, teamStatsMap } = await generateSeason1Seeds();
+  // Generate and import seeds (includes final Pass 3 ratings with all stats and rating history)
+  const { playerSeeds, teamSeeds, playerStatsMap, teamStatsMap, teamRatingHistory } = await generateSeason1Seeds();
   const playerData = await importPlayerSeeds(playerSeeds, playerStatsMap);
   
   // Get player ID map for team import
@@ -179,9 +180,9 @@ async function processSeason1(tournaments) {
   
   console.log('\n✓ Seeds imported successfully');
   
-  // For Season 1, seeds ARE the final ratings (from Pass 3 of seeding)
-  // We import tournaments and matches for historical record, but don't reprocess ratings
-  // The seeded ratings already account for all Season 1 matches
+  // For Season 1, import matches for historical record only
+  // Pass 3 of seeding already processed all matches and calculated ratings
+  // We just need to import match records (rating_history created during Pass 3)
   
   tournaments.sort((a, b) => 
     new Date(a.tournament.date).getTime() - new Date(b.tournament.date).getTime()
@@ -189,14 +190,25 @@ async function processSeason1(tournaments) {
   
   console.log(`\nImporting ${tournaments.length} Season 1 tournaments (matches for history only)...`);
   let totalMatches = 0;
+  const matchIdMap = new Map(); // Map of match_id -> database ID
   
   for (const tournament of tournaments) {
     const tournamentRecord = await importTournament(tournament);
+    const tournamentKey = tournament.tournament?.liquipedia_slug || tournament.tournament?.name || 'unknown';
     
     // Import matches for historical record only (no rating updates)
-    // Ratings are already set from seeds (which are the final Pass 3 ratings)
-    const imported = await importTournamentMatchesOnly(tournament, tournamentRecord.id);
-    totalMatches += imported;
+    // We need match IDs to create rating_history records
+    for (const match of tournament.matches) {
+      if (!match.team1_score && match.team1_score !== 0) continue;
+      if (!match.team2_score && match.team2_score !== 0) continue;
+      
+      const matchRecord = await importMatchOnly(match, tournamentRecord.id);
+      if (matchRecord) {
+        const matchKey = `${match.tournament_slug || tournamentKey}::${match.match_id || 'unknown'}`;
+        matchIdMap.set(matchKey, matchRecord.id);
+        totalMatches++;
+      }
+    }
     
     // Mark tournament as processed
     await supabase
@@ -205,7 +217,17 @@ async function processSeason1(tournaments) {
       .eq('id', tournamentRecord.id);
   }
   
-  console.log(`\n✓ Season 1 complete: ${totalMatches} matches imported (ratings from seeds)`);
+  console.log(`\n✓ Season 1 matches imported: ${totalMatches} matches`);
+  
+  // Build team ID map
+  const { data: teams } = await supabase.from('teams').select('id, team_key');
+  const teamIdMap = new Map();
+  teams.forEach(team => teamIdMap.set(team.team_key, team.id));
+  
+  // Import rating history from Pass 3
+  await importTeamRatingHistory(teamRatingHistory, teamIdMap, matchIdMap);
+  
+  console.log(`\n✓ Season 1 complete: ratings and history from Pass 3`);
 }
 
 /**

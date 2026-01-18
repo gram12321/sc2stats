@@ -24,8 +24,8 @@ interface MatchHistoryEntry {
   tournament_date: string | null;
   match_date: string | null;
   round: string;
-  team1_races: string[];
-  team2_races: string[];
+  team1_races?: string[];
+  team2_races?: string[];
   team1_score: number;
   team2_score: number;
   race_impacts: Record<string, {
@@ -36,14 +36,22 @@ interface MatchHistoryEntry {
     race1: string;
     race2: string;
   }>;
-  team1_player1: string | null;
-  team1_player1_race: string | null;
-  team1_player2: string | null;
-  team1_player2_race: string | null;
-  team2_player1: string | null;
-  team2_player1_race: string | null;
-  team2_player2: string | null;
-  team2_player2_race: string | null;
+  team1_player1?: string | null;
+  team1_player1_race?: string | null;
+  team1_player2?: string | null;
+  team1_player2_race?: string | null;
+  team2_player1?: string | null;
+  team2_player1_race?: string | null;
+  team2_player2?: string | null;
+  team2_player2_race?: string | null;
+  team1?: {
+    player1?: string;
+    player2?: string;
+  };
+  team2?: {
+    player1?: string;
+    player2?: string;
+  };
   team_impacts?: Record<string, {
     ratingBefore: number;
     ratingChange: number;
@@ -236,15 +244,6 @@ export function RaceRankings({ onBack }: RaceRankingsProps) {
     }
   };
 
-  const getFullRaceName = (abbr: string) => {
-    const raceMap: Record<string, string> = {
-      'P': 'Protoss',
-      'T': 'Terran',
-      'Z': 'Zerg',
-      'R': 'Random'
-    };
-    return raceMap[abbr] || abbr;
-  };
 
   const loadMatchHistory = async (matchup: RaceRanking, isCombined: boolean = false) => {
     try {
@@ -326,9 +325,27 @@ export function RaceRankings({ onBack }: RaceRankingsProps) {
     return [player1, player2].filter(Boolean).sort().join('+');
   };
 
-  const getPlayerRank = (name: string | null) => {
-    if (!name) return null;
-    return playerRankings[name]?.rank || null;
+  const getTeamPlayers = (match: MatchHistoryEntry, team: 'team1' | 'team2') => {
+    const teamData = match[team];
+    if (teamData) {
+      return {
+        player1: teamData.player1 || '',
+        player2: teamData.player2 || ''
+      };
+    }
+    return {
+      player1: match[`${team}_player1` as const] || '',
+      player2: match[`${team}_player2` as const] || ''
+    };
+  };
+
+  const getTeamRaces = (match: MatchHistoryEntry, team: 'team1' | 'team2') => {
+    const racesFromMatch = team === 'team1' ? match.team1_races : match.team2_races;
+    if (racesFromMatch && racesFromMatch.length > 0) {
+      return racesFromMatch;
+    }
+    const teamPlayers = getTeamPlayers(match, team);
+    return [playerRaces[teamPlayers.player1], playerRaces[teamPlayers.player2]].filter(Boolean) as string[];
   };
 
   const getTeamRank = (player1: string | null, player2: string | null) => {
@@ -350,6 +367,8 @@ export function RaceRankings({ onBack }: RaceRankingsProps) {
 
   // Convert MatchHistoryEntry to format expected by MatchHistoryItem
   const convertMatchForComponent = (match: MatchHistoryEntry) => {
+    const team1Players = getTeamPlayers(match, 'team1');
+    const team2Players = getTeamPlayers(match, 'team2');
     return {
       match_id: match.match_id,
       tournament_slug: match.tournament_slug,
@@ -357,12 +376,12 @@ export function RaceRankings({ onBack }: RaceRankingsProps) {
       match_date: match.match_date,
       round: match.round,
       team1: {
-        player1: match.team1_player1 || '',
-        player2: match.team1_player2 || ''
+        player1: team1Players.player1,
+        player2: team1Players.player2
       },
       team2: {
-        player1: match.team2_player1 || '',
-        player2: match.team2_player2 || ''
+        player1: team2Players.player1,
+        player2: team2Players.player2
       },
       team1_score: match.team1_score,
       team2_score: match.team2_score,
@@ -372,10 +391,6 @@ export function RaceRankings({ onBack }: RaceRankingsProps) {
     };
   };
 
-  const getRaceAbbrev = (race: string | null | undefined): string => {
-    if (!race) return '';
-    return race === 'Random' ? 'R' : race[0];
-  };
 
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) return '—';
@@ -849,7 +864,8 @@ export function RaceRankings({ onBack }: RaceRankingsProps) {
 
                       if (isCombinedStats) {
                         // For combined stats, check if the race appears in winning team
-                        const race1InTeam1 = match.team1_races.includes(selectedMatchup.race1);
+                        const team1Races = getTeamRaces(match, 'team1');
+                        const race1InTeam1 = team1Races.includes(selectedMatchup.race1);
                         won = race1InTeam1 
                           ? match.team1_score > match.team2_score
                           : match.team2_score > match.team1_score;
@@ -873,8 +889,10 @@ export function RaceRankings({ onBack }: RaceRankingsProps) {
                       }
 
                       const convertedMatch = convertMatchForComponent(match);
-                      const team1Rank = getTeamRank(match.team1_player1, match.team1_player2);
-                      const team2Rank = getTeamRank(match.team2_player1, match.team2_player2);
+                      const team1Players = getTeamPlayers(match, 'team1');
+                      const team2Players = getTeamPlayers(match, 'team2');
+                      const team1Rank = getTeamRank(team1Players.player1, team1Players.player2);
+                      const team2Rank = getTeamRank(team2Players.player1, team2Players.player2);
                       
                       // Convert player rankings to the format expected by component
                       const playerRankingsMap: Record<string, { rank: number; points: number; confidence: number }> = {};

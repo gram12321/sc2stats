@@ -1,18 +1,25 @@
 /**
  * Seeding Runner for Initial Rankings
  * 
- * This script runs a three-pass seeding process to better initialize player/team ratings
- * for cold start scenarios with limited data:
+ * THREE-PASS SEEDING ALGORITHM:
  * 
- * Pass 1 (Forward): Process matches chronologically to get initial rating estimates
- * Pass 2 (Backward): Process matches in reverse to get alternative rating estimates
- * Pass 3 (Seeded Forward): Process matches chronologically again, but start players
- *                         with their ratings from Pass 1 as seeds
+ * Pass 1 (Forward): Process ALL Season 1 matches chronologically (everyone starts at 0)
+ *                   → Get preliminary rating estimates
+ *                   → DISCARD after Pass 2
  * 
- * The final ratings from Pass 3 are kept, with Pass 1 and Pass 2 ratings discarded.
- * This helps reduce cold start bias and produces more accurate initial ratings.
+ * Pass 2 (Backward): Process ALL Season 1 matches in REVERSE (everyone starts at 0)
+ *                    → Get alternative rating estimates (reduces order dependency)
+ *                    → DISCARD after averaging with Pass 1
  * 
- * This is a standalone script that doesn't affect the main ranking calculations.
+ * Pass 3 (Seeded Forward): Process ALL Season 1 matches chronologically again
+ *                          → Start with AVERAGED(Pass1, Pass2) ratings as seeds
+ *                          → THIS IS THE ACTUAL SEASON 1 RUN - NOT A "SEED" RUN
+ *                          → These are the FINAL ratings we keep
+ *                          → Tracks rating history for every match
+ * 
+ * IMPORTANT: Pass 3 processes all Season 1 matches with better starting values.
+ * We do NOT process matches again after seeding - that would count them twice!
+ * Pass 3 ratings ARE the final Season 1 ratings.
  */
 
 import { readdir, readFile, writeFile } from 'fs/promises';
@@ -245,10 +252,12 @@ function normalizeTeamKey(player1, player2) {
  * @param {Array} sortedMatches - Matches to process (chronologically sorted)
  * @param {Map} seedRatings - Optional map of team key -> seed rating
  * @param {string} passName - Name of the pass for logging
- * @returns {Map} Map of team stats
+ * @param {boolean} trackHistory - Whether to track rating history (for Pass 3)
+ * @returns {Object} Object with teamStats Map and ratingHistory array
  */
-function calculateTeamRankingsFromMatches(sortedMatches, seedRatings = null, passName = '') {
+function calculateTeamRankingsFromMatches(sortedMatches, seedRatings = null, passName = '', trackHistory = false) {
   const teamStats = new Map();
+  const ratingHistory = trackHistory ? [] : null;
   
   console.log(`\n${passName}: Processing ${sortedMatches.length} matches`);
   
@@ -314,8 +323,8 @@ function calculateTeamRankingsFromMatches(sortedMatches, seedRatings = null, pas
     const team1Stats = teamStats.get(team1Key);
     const team2Stats = teamStats.get(team2Key);
     
-    const team1Rating = team1Stats.points;
-    const team2Rating = team2Stats.points;
+    const team1RatingBefore = team1Stats.points;
+    const team2RatingBefore = team2Stats.points;
 
     // Recalculate population statistics
     const finalPopulationStats = calculatePopulationStats(teamStats);
@@ -328,14 +337,43 @@ function calculateTeamRankingsFromMatches(sortedMatches, seedRatings = null, pas
       match.team2_score
     );
 
-    // Update stats
-    updateStatsForMatch(team1Stats, team1Won, team2Won, team2Rating, finalPopulationStdDev, 0, null, finalPopulationMean);
-    updateStatsForMatch(team2Stats, team2Won, team1Won, team1Rating, finalPopulationStdDev, 0, null, finalPopulationMean);
+    // Update stats and capture calculation details
+    const team1Result = updateStatsForMatch(team1Stats, team1Won, team2Won, team2RatingBefore, finalPopulationStdDev, 0, null, finalPopulationMean);
+    const team2Result = updateStatsForMatch(team2Stats, team2Won, team1Won, team1RatingBefore, finalPopulationStdDev, 0, null, finalPopulationMean);
+    
+    // Track history if this is Pass 3
+    if (trackHistory) {
+      const matchKey = `${match.tournamentSlug || 'unknown'}::${match.match_id || 'unknown'}`;
+      ratingHistory.push({
+        matchId: match.match_id,
+        matchKey,
+        team1Key,
+        team2Key,
+        team1Data: {
+          ratingBefore: team1RatingBefore,
+          ratingAfter: team1Stats.points,
+          ratingChange: team1Result.ratingChange,
+          confidence: team1Stats.confidence,
+          expectedWin: team1Result.calculationDetails?.expectedWin,
+          kFactor: team1Result.calculationDetails?.adjustedK,
+          won: team1Won
+        },
+        team2Data: {
+          ratingBefore: team2RatingBefore,
+          ratingAfter: team2Stats.points,
+          ratingChange: team2Result.ratingChange,
+          confidence: team2Stats.confidence,
+          expectedWin: team2Result.calculationDetails?.expectedWin,
+          kFactor: team2Result.calculationDetails?.adjustedK,
+          won: team2Won
+        }
+      });
+    }
   }
 
   console.log(`${passName}: Completed. ${teamStats.size} teams processed.`);
   
-  return teamStats;
+  return { teamStats, ratingHistory };
 }
 
 /**
@@ -443,7 +481,8 @@ async function runSeededTeamRankings(matches) {
   // This pass helps identify initial skill levels, but early matches have outsized impact
   // because all teams start equal. Results will be discarded after Pass 3.
   console.log('\n>>> PASS 1: Forward Chronological <<<');
-  const pass1Stats = calculateTeamRankingsFromMatches(sortedMatches, null, 'Pass 1');
+  const pass1Result = calculateTeamRankingsFromMatches(sortedMatches, null, 'Pass 1', false);
+  const pass1Stats = pass1Result.teamStats;
   const pass1Ratings = extractRatings(pass1Stats);
   
   // Pass 2: Reverse chronological (all start at 0)
@@ -452,16 +491,19 @@ async function runSeededTeamRankings(matches) {
   // the fact that early matches in Pass 1 gave too many points to skilled teams
   // beating weaker teams (who all started equal). Results will be discarded after Pass 3.
   console.log('\n>>> PASS 2: Reverse Chronological <<<');
-  const pass2Stats = calculateTeamRankingsFromMatches(reverseSortedMatches, null, 'Pass 2');
+  const pass2Result = calculateTeamRankingsFromMatches(reverseSortedMatches, null, 'Pass 2', false);
+  const pass2Stats = pass2Result.teamStats;
   const pass2Ratings = extractRatings(pass2Stats);
   
   // Pass 3: Forward chronological with averaged seeds from Pass 1 and Pass 2
-  // This is the final pass. Teams start with the average of Pass 1 and Pass 2 ratings as seeds
-  // (not cold start at 0), which means Season 1 matches are processed with better initial estimates.
+  // THIS IS THE ACTUAL SEASON 1 RUN - not just seeding!
+  // Teams start with averaged Pass1+Pass2 ratings, and we track full rating history
   // Only Pass 3 ratings count - Pass 1 and Pass 2 ratings are discarded.
-  console.log('\n>>> PASS 3: Forward Chronological with Averaged Seeding <<<');
+  console.log('\n>>> PASS 3: Forward Chronological with Averaged Seeding (FINAL RUN) <<<');
   const averagedSeeds = averageRatings(pass1Ratings, pass2Ratings);
-  const pass3Stats = calculateTeamRankingsFromMatches(sortedMatches, averagedSeeds, 'Pass 3');
+  const pass3Result = calculateTeamRankingsFromMatches(sortedMatches, averagedSeeds, 'Pass 3', true);
+  const pass3Stats = pass3Result.teamStats;
+  const teamRatingHistory = pass3Result.ratingHistory;
   
   // Sort and display results
   const finalRankings = sortRankings(
@@ -486,7 +528,9 @@ async function runSeededTeamRankings(matches) {
     );
   });
   
-  return { rankings: finalRankings, pass1Ratings, pass2Ratings };
+  console.log(`\n✓ Tracked ${teamRatingHistory.length} rating changes for database import`);
+  
+  return { rankings: finalRankings, pass1Ratings, pass2Ratings, ratingHistory: teamRatingHistory };
 }
 
 /**

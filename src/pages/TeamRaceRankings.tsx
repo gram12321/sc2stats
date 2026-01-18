@@ -34,14 +34,22 @@ interface MatchHistoryEntry {
   team2_score: number;
   combo1_won: boolean;
   rating_change: number;
-  team1_player1: string | null;
-  team1_player1_race: string | null;
-  team1_player2: string | null;
-  team1_player2_race: string | null;
-  team2_player1: string | null;
-  team2_player1_race: string | null;
-  team2_player2: string | null;
-  team2_player2_race: string | null;
+  team1_player1?: string | null;
+  team1_player1_race?: string | null;
+  team1_player2?: string | null;
+  team1_player2_race?: string | null;
+  team2_player1?: string | null;
+  team2_player1_race?: string | null;
+  team2_player2?: string | null;
+  team2_player2_race?: string | null;
+  team1?: {
+    player1?: string;
+    player2?: string;
+  };
+  team2?: {
+    player1?: string;
+    player2?: string;
+  };
   team_impacts?: Record<string, {
     ratingBefore: number;
     ratingChange: number;
@@ -325,6 +333,20 @@ export function TeamRaceRankings({ onBack }: TeamRaceRankingsProps) {
     return [player1, player2].filter(Boolean).sort().join('+');
   };
 
+  const getTeamPlayers = (match: MatchHistoryEntry, team: 'team1' | 'team2') => {
+    const teamData = match[team];
+    if (teamData) {
+      return {
+        player1: teamData.player1 || '',
+        player2: teamData.player2 || ''
+      };
+    }
+    return {
+      player1: match[`${team}_player1` as const] || '',
+      player2: match[`${team}_player2` as const] || ''
+    };
+  };
+
 
   const getTeamRank = (player1: string | null, player2: string | null) => {
     if (!player1 || !player2) return null;
@@ -345,6 +367,8 @@ export function TeamRaceRankings({ onBack }: TeamRaceRankingsProps) {
 
   // Convert MatchHistoryEntry to format expected by MatchHistoryItem
   const convertMatchForComponent = (match: MatchHistoryEntry) => {
+    const team1Players = getTeamPlayers(match, 'team1');
+    const team2Players = getTeamPlayers(match, 'team2');
     return {
       match_id: match.match_id,
       tournament_slug: match.tournament_slug,
@@ -352,12 +376,12 @@ export function TeamRaceRankings({ onBack }: TeamRaceRankingsProps) {
       match_date: match.match_date,
       round: match.round,
       team1: {
-        player1: match.team1_player1 || '',
-        player2: match.team1_player2 || ''
+        player1: team1Players.player1,
+        player2: team1Players.player2
       },
       team2: {
-        player1: match.team2_player1 || '',
-        player2: match.team2_player2 || ''
+        player1: team2Players.player1,
+        player2: team2Players.player2
       },
       team1_score: match.team1_score,
       team2_score: match.team2_score,
@@ -907,14 +931,10 @@ export function TeamRaceRankings({ onBack }: TeamRaceRankingsProps) {
                       }
                       
                       const convertedMatch = convertMatchForComponent(match);
-                      const team1RankData = getTeamRank(
-                        clickedComboIsTeam1 ? match.team1_player1 : match.team2_player1,
-                        clickedComboIsTeam1 ? match.team1_player2 : match.team2_player2
-                      );
-                      const team2RankData = getTeamRank(
-                        clickedComboIsTeam1 ? match.team2_player1 : match.team1_player1,
-                        clickedComboIsTeam1 ? match.team2_player2 : match.team1_player2
-                      );
+                      const team1Players = getTeamPlayers(match, clickedComboIsTeam1 ? 'team1' : 'team2');
+                      const team2Players = getTeamPlayers(match, clickedComboIsTeam1 ? 'team2' : 'team1');
+                      const team1RankData = getTeamRank(team1Players.player1, team1Players.player2);
+                      const team2RankData = getTeamRank(team2Players.player1, team2Players.player2);
                       
                       // Convert player rankings to the format expected by component
                       const playerRankingsMap: Record<string, { rank: number; points: number; confidence: number }> = {};

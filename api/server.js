@@ -9,6 +9,248 @@ import cors from 'cors';
 import { supabase } from '../lib/supabase.js';
 import { processTournamentMatches } from '../tools/database/databaseRankingEngine.js';
 
+/**
+ * Fetch match history with rating impacts from database
+ * Replaces old on-the-fly calculation approach
+ */
+async function getMatchHistoryFromDatabase(filters = {}) {
+  try {
+    // Load race data from player_defaults.json
+    let playerRaces = {};
+    try {
+      const defaultsContent = await readFile(playerDefaultsFile, 'utf-8');
+      playerRaces = JSON.parse(defaultsContent);
+    } catch (err) {
+      console.warn('Could not load player defaults:', err.message);
+    }
+    
+    let query = supabase
+      .from('matches')
+      .select(`
+        id,
+        tournament:tournaments(name, liquipedia_slug, date),
+        date,
+        round,
+        team1:teams!matches_team1_id_fkey(team_key, player1:player1_id(name), player2:player2_id(name)),
+        team2:teams!matches_team2_id_fkey(team_key, player1:player1_id(name), player2:player2_id(name)),
+        team1_score,
+        team2_score
+      `)
+      .order('date', { ascending: true });
+    
+    const { data: matches, error } = await query;
+    if (error) throw error;
+
+    if (!matches || matches.length === 0) {
+      return [];
+    }
+    
+    // Fetch all rating history for these matches
+    const matchIds = matches.map(m => m.id);
+    let histories = [];
+    if (matchIds.length > 0) {
+      const { data: historyData, error: histError } = await supabase
+        .from('rating_history')
+        .select(`
+          match_id,
+          entity_type,
+          entity_id,
+          rating_before,
+          rating_after,
+          rating_change,
+          confidence,
+          expected_win_probability,
+          k_factor
+        `)
+        .in('match_id', matchIds);
+      
+      if (histError) throw histError;
+      histories = historyData || [];
+    }
+    
+    // Group histories by match and entity type
+    const historyByMatch = new Map();
+    for (const hist of histories) {
+      if (!historyByMatch.has(hist.match_id)) {
+        historyByMatch.set(hist.match_id, { players: [], teams: [], races: [], team_races: [] });
+      }
+      const matchHist = historyByMatch.get(hist.match_id);
+      if (hist.entity_type === 'player') matchHist.players.push(hist);
+      else if (hist.entity_type === 'team') matchHist.teams.push(hist);
+      else if (hist.entity_type === 'race') matchHist.races.push(hist);
+      else if (hist.entity_type === 'team_race') matchHist.team_races.push(hist);
+    }
+    
+    // Fetch player/team/race/team_race data to map entity_id back to names/keys
+    const playerIds = [...new Set((histories || []).filter(h => h.entity_type === 'player').map(h => h.entity_id))];
+    const teamIds = [...new Set((histories || []).filter(h => h.entity_type === 'team').map(h => h.entity_id))];
+    const raceIds = [...new Set((histories || []).filter(h => h.entity_type === 'race').map(h => h.entity_id))];
+    const teamRaceIds = [...new Set((histories || []).filter(h => h.entity_type === 'team_race').map(h => h.entity_id))];
+    
+    const players = playerIds.length > 0
+      ? (await supabase.from('players').select('id, name').in('id', playerIds)).data
+      : [];
+    const teams = teamIds.length > 0
+      ? (await supabase.from('teams').select('id, team_key').in('id', teamIds)).data
+      : [];
+    const races = raceIds.length > 0
+      ? (await supabase.from('race_rankings').select('id, race_matchup').in('id', raceIds)).data
+      : [];
+    const teamRaces = teamRaceIds.length > 0
+      ? (await supabase.from('team_race_rankings').select('id, team_race_matchup').in('id', teamRaceIds)).data
+      : [];
+    
+    const playerMap = new Map((players || []).map(p => [p.id, p.name]));
+    const teamMap = new Map((teams || []).map(t => [t.id, t.team_key]));
+    const raceMap = new Map((races || []).map(r => [r.id, r.race_matchup]));
+    const teamRaceMap = new Map((teamRaces || []).map(tr => [tr.id, tr.team_race_matchup]));
+    
+    // Format matches with impacts
+    const formattedMatches = matches.map(match => {
+      const hist = historyByMatch.get(match.id) || { players: [], teams: [], races: [], team_races: [] };
+      
+      // Determine winner
+      const team1Won = match.team1_score > match.team2_score;
+      
+      // Build player_impacts
+      const player_impacts = {};
+      for (const playerHist of hist.players) {
+        const playerName = playerMap.get(playerHist.entity_id);
+        if (!playerName) continue;
+        
+        // Determine opponent rating - find the opposing team's average player rating
+        const isTeam1Player = match.team1.player1.name === playerName || match.team1.player2.name === playerName;
+        const opponentTeamHists = hist.players.filter(ph => {
+          const pName = playerMap.get(ph.entity_id);
+          if (isTeam1Player) {
+            return pName === match.team2.player1.name || pName === match.team2.player2.name;
+          } else {
+            return pName === match.team1.player1.name || pName === match.team1.player2.name;
+          }
+        });
+        const opponentRating = opponentTeamHists.length > 0
+          ? opponentTeamHists.reduce((sum, h) => sum + h.rating_before, 0) / opponentTeamHists.length
+          : 0;
+        
+        const won = isTeam1Player ? team1Won : !team1Won;
+        
+        player_impacts[playerName] = {
+          ratingBefore: playerHist.rating_before,
+          ratingChange: playerHist.rating_change,
+          won,
+          opponentRating,
+          expectedWin: playerHist.expected_win_probability,
+          adjustedK: playerHist.k_factor,
+          baseK: playerHist.k_factor, // We don't store base K separately, use adjusted
+          confidence: playerHist.confidence
+        };
+      }
+      
+      // Build team_impacts
+      const team_impacts = {};
+      for (const teamHist of hist.teams) {
+        const teamKey = teamMap.get(teamHist.entity_id);
+        if (!teamKey) continue;
+        
+        // Determine opponent team rating
+        const isTeam1 = match.team1.team_key === teamKey;
+        const opponentTeamHist = hist.teams.find(th => teamMap.get(th.entity_id) === (isTeam1 ? match.team2.team_key : match.team1.team_key));
+        const opponentRating = opponentTeamHist ? opponentTeamHist.rating_before : 0;
+        
+        const won = isTeam1 ? team1Won : !team1Won;
+        
+        team_impacts[teamKey] = {
+          ratingBefore: teamHist.rating_before,
+          ratingChange: teamHist.rating_change,
+          won,
+          opponentRating,
+          expectedWin: teamHist.expected_win_probability,
+          adjustedK: teamHist.k_factor,
+          baseK: teamHist.k_factor,
+          confidence: teamHist.confidence
+        };
+      }
+      
+      // Build race_impacts
+      const race_impacts = {};
+      for (const raceHist of hist.races) {
+        const raceMatchup = raceMap.get(raceHist.entity_id);
+        if (!raceMatchup) continue;
+        
+        // Race matchup format is "PvT" - extract races
+        const [race1, race2] = raceMatchup.split('v');
+        
+        // Find opponent race rating (from the opposing race in this matchup)
+        const opponentRaceHist = hist.races.find(rh => {
+          const rm = raceMap.get(rh.entity_id);
+          return rm && rm !== raceMatchup && (rm.includes(race1) || rm.includes(race2));
+        });
+        const opponentRating = opponentRaceHist ? opponentRaceHist.rating_before : 0;
+        
+        // Determine if this race won (determine from rating change direction)
+        const raceWon = raceHist.rating_change > 0;
+        
+        race_impacts[raceMatchup] = {
+          ratingBefore: raceHist.rating_before,
+          ratingChange: raceHist.rating_change,
+          won: raceWon,
+          opponentRating,
+          race1: race1,
+          race2: race2,
+          expectedWin: raceHist.expected_win_probability,
+          adjustedK: raceHist.k_factor,
+          baseK: raceHist.k_factor,
+          confidence: raceHist.confidence
+        };
+      }
+      
+      return {
+        match_id: match.id,
+        tournament_slug: match.tournament.liquipedia_slug,
+        tournament_name: match.tournament.name,
+        tournament_date: match.tournament.date,
+        match_date: match.date,
+        round: match.round,
+        team1: {
+          player1: match.team1.player1.name,
+          player2: match.team1.player2.name
+        },
+        team2: {
+          player1: match.team2.player1.name,
+          player2: match.team2.player2.name
+        },
+        team1_score: match.team1_score,
+        team2_score: match.team2_score,
+        // Get race data from player_defaults.json
+        team1_races: [
+          playerRaces[match.team1.player1.name],
+          playerRaces[match.team1.player2.name]
+        ].filter(Boolean),
+        team2_races: [
+          playerRaces[match.team2.player1.name],
+          playerRaces[match.team2.player2.name]
+        ].filter(Boolean),
+        team1_combo: [
+          playerRaces[match.team1.player1.name],
+          playerRaces[match.team1.player2.name]
+        ].map(r => r?.[0] || '?').sort().join(''),
+        team2_combo: [
+          playerRaces[match.team2.player1.name],
+          playerRaces[match.team2.player2.name]
+        ].map(r => r?.[0] || '?').sort().join(''),
+        player_impacts,
+        team_impacts,
+        race_impacts
+      };
+    });
+    
+    return formattedMatches;
+  } catch (error) {
+    console.error('Error fetching match history from database:', error);
+    throw error;
+  }
+}
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const outputDir = join(__dirname, '..', 'output');
@@ -351,9 +593,6 @@ app.get('/api/race-rankings', async (req, res) => {
 app.get('/api/race-matchup/:race1/:race2', async (req, res) => {
   try {
     const { race1, race2 } = req.params;
-    const { matchHistory } = await calculateRaceRankings();
-    const { matchHistory: teamMatchHistory } = await calculateTeamRankings();
-    const { matchHistory: playerMatchHistory } = await calculateRankings();
     
     // Create matchup key (e.g., "PvT")
     const raceAbbr = {
@@ -366,35 +605,12 @@ app.get('/api/race-matchup/:race1/:race2', async (req, res) => {
     const abbr2 = raceAbbr[race2] || race2[0];
     const matchupKey = `${abbr1}v${abbr2}`;
     
-    // Create maps for quick lookup
-    const teamMatchMap = new Map();
-    if (teamMatchHistory) {
-      teamMatchHistory.forEach(match => {
-        const key = `${match.tournament_slug}-${match.match_id}`;
-        teamMatchMap.set(key, match);
-      });
-    }
+    // Fetch all match history from database
+    const matchHistory = await getMatchHistoryFromDatabase();
     
-    const playerMatchMap = new Map();
-    if (playerMatchHistory) {
-      playerMatchHistory.forEach(match => {
-        const key = `${match.tournament_slug}-${match.match_id}`;
-        playerMatchMap.set(key, match);
-      });
-    }
-    
-    // Filter matches that have this matchup in race_impacts and merge team_impacts and player_impacts
+    // Filter matches that have this matchup in race_impacts
     const matches = matchHistory.filter(match => {
       return match.race_impacts && match.race_impacts[matchupKey];
-    }).map(match => {
-      const key = `${match.tournament_slug}-${match.match_id}`;
-      const teamMatch = teamMatchMap.get(key);
-      const playerMatch = playerMatchMap.get(key);
-      return {
-        ...match,
-        team_impacts: teamMatch?.team_impacts || match.team_impacts,
-        player_impacts: playerMatch?.player_impacts || match.player_impacts
-      };
     });
     
     res.json(matches);
@@ -408,41 +624,15 @@ app.get('/api/race-matchup/:race1/:race2', async (req, res) => {
 app.get('/api/race-combo/:race', async (req, res) => {
   try {
     const { race } = req.params;
-    const { matchHistory } = await calculateRaceRankings();
-    const { matchHistory: teamMatchHistory } = await calculateTeamRankings();
-    const { matchHistory: playerMatchHistory } = await calculateRankings();
     
-    // Create maps for quick lookup
-    const teamMatchMap = new Map();
-    if (teamMatchHistory) {
-      teamMatchHistory.forEach(match => {
-        const key = `${match.tournament_slug}-${match.match_id}`;
-        teamMatchMap.set(key, match);
-      });
-    }
+    // Fetch all match history from database
+    const matchHistory = await getMatchHistoryFromDatabase();
     
-    const playerMatchMap = new Map();
-    if (playerMatchHistory) {
-      playerMatchHistory.forEach(match => {
-        const key = `${match.tournament_slug}-${match.match_id}`;
-        playerMatchMap.set(key, match);
-      });
-    }
-    
-    // Filter matches where the race appears in team1_races or team2_races and merge team_impacts and player_impacts
+    // Filter matches where the race appears in team1_races or team2_races
     const matches = matchHistory.filter(match => {
       const team1Races = match.team1_races || [];
       const team2Races = match.team2_races || [];
       return team1Races.includes(race) || team2Races.includes(race);
-    }).map(match => {
-      const key = `${match.tournament_slug}-${match.match_id}`;
-      const teamMatch = teamMatchMap.get(key);
-      const playerMatch = playerMatchMap.get(key);
-      return {
-        ...match,
-        team_impacts: teamMatch?.team_impacts || match.team_impacts,
-        player_impacts: playerMatch?.player_impacts || match.player_impacts
-      };
     });
     
     res.json(matches);
@@ -510,47 +700,21 @@ app.get('/api/team-race-rankings', async (req, res) => {
 app.get('/api/team-race-matchup/:combo1/:combo2', async (req, res) => {
   try {
     const { combo1, combo2 } = req.params;
-    const { matchHistory } = await calculateTeamRaceRankings();
-    const { matchHistory: teamMatchHistory } = await calculateTeamRankings();
-    const { matchHistory: playerMatchHistory } = await calculateRankings();
     
     // Normalize combos (sort alphabetically to match internal key format)
     const sorted = [combo1, combo2].sort();
     const combo1Normalized = sorted[0];
     const combo2Normalized = sorted[1];
     
-    // Create maps for quick lookup
-    const teamMatchMap = new Map();
-    if (teamMatchHistory) {
-      teamMatchHistory.forEach(match => {
-        const key = `${match.tournament_slug}-${match.match_id}`;
-        teamMatchMap.set(key, match);
-      });
-    }
+    // Fetch all match history from database
+    const matchHistory = await getMatchHistoryFromDatabase();
     
-    const playerMatchMap = new Map();
-    if (playerMatchHistory) {
-      playerMatchHistory.forEach(match => {
-        const key = `${match.tournament_slug}-${match.match_id}`;
-        playerMatchMap.set(key, match);
-      });
-    }
-    
-    // Filter matches for this matchup and merge team_impacts and player_impacts
+    // Filter matches for this matchup
     const matches = matchHistory.filter(match => {
       const matchTeam1Combo = match.team1_combo;
       const matchTeam2Combo = match.team2_combo;
       const matchSorted = [matchTeam1Combo, matchTeam2Combo].sort();
       return matchSorted[0] === combo1Normalized && matchSorted[1] === combo2Normalized;
-    }).map(match => {
-      const key = `${match.tournament_slug}-${match.match_id}`;
-      const teamMatch = teamMatchMap.get(key);
-      const playerMatch = playerMatchMap.get(key);
-      return {
-        ...match,
-        team_impacts: teamMatch?.team_impacts || match.team_impacts,
-        player_impacts: playerMatch?.player_impacts || match.player_impacts
-      };
     });
     
     res.json(matches);
@@ -564,39 +728,13 @@ app.get('/api/team-race-matchup/:combo1/:combo2', async (req, res) => {
 app.get('/api/team-race-combo/:combo', async (req, res) => {
   try {
     const { combo } = req.params;
-    const { matchHistory } = await calculateTeamRaceRankings();
-    const { matchHistory: teamMatchHistory } = await calculateTeamRankings();
-    const { matchHistory: playerMatchHistory } = await calculateRankings();
     
-    // Create maps for quick lookup
-    const teamMatchMap = new Map();
-    if (teamMatchHistory) {
-      teamMatchHistory.forEach(match => {
-        const key = `${match.tournament_slug}-${match.match_id}`;
-        teamMatchMap.set(key, match);
-      });
-    }
+    // Fetch all match history from database
+    const matchHistory = await getMatchHistoryFromDatabase();
     
-    const playerMatchMap = new Map();
-    if (playerMatchHistory) {
-      playerMatchHistory.forEach(match => {
-        const key = `${match.tournament_slug}-${match.match_id}`;
-        playerMatchMap.set(key, match);
-      });
-    }
-    
-    // Filter matches where either team1_combo or team2_combo matches the combo and merge team_impacts and player_impacts
+    // Filter matches where either team1_combo or team2_combo matches the combo
     const matches = matchHistory.filter(match => {
       return match.team1_combo === combo || match.team2_combo === combo;
-    }).map(match => {
-      const key = `${match.tournament_slug}-${match.match_id}`;
-      const teamMatch = teamMatchMap.get(key);
-      const playerMatch = playerMatchMap.get(key);
-      return {
-        ...match,
-        team_impacts: teamMatch?.team_impacts || match.team_impacts,
-        player_impacts: playerMatch?.player_impacts || match.player_impacts
-      };
     });
     
     res.json(matches);
@@ -606,14 +744,29 @@ app.get('/api/team-race-combo/:combo', async (req, res) => {
   }
 });
 
-// Legacy endpoint for backwards compatibility
+// Legacy endpoint for backwards compatibility - now redirects to player rankings
 app.get('/api/rankings', async (req, res) => {
   try {
-    const { rankings } = await calculateRankings();
+    const { data, error } = await supabase
+      .from('players')
+      .select('name, matches, wins, losses, current_rating, current_confidence')
+      .order('current_rating', { ascending: false });
+    
+    if (error) throw error;
+    
+    const rankings = (data || []).map(player => ({
+      name: player.name,
+      matches: player.matches,
+      wins: player.wins,
+      losses: player.losses,
+      points: player.current_rating,
+      confidence: player.current_confidence
+    }));
+    
     res.json(rankings);
   } catch (error) {
-    console.error('Error calculating rankings:', error);
-    res.status(500).json({ error: 'Failed to calculate rankings' });
+    console.error('Error fetching rankings:', error);
+    res.status(500).json({ error: 'Failed to fetch rankings' });
   }
 });
 
@@ -621,30 +774,9 @@ app.get('/api/rankings', async (req, res) => {
 app.get('/api/match-history', async (req, res) => {
   try {
     const { player, team, tournament } = req.query;
-    const { rankings, matchHistory } = await calculateRankings();
-    const { matchHistory: teamMatchHistory } = await calculateTeamRankings();
     
-    // Create a map of team match history by match_id for quick lookup
-    const teamMatchMap = new Map();
-    if (teamMatchHistory) {
-      teamMatchHistory.forEach(match => {
-        const key = `${match.tournament_slug}-${match.match_id}`;
-        teamMatchMap.set(key, match);
-      });
-    }
-    
-    // Merge team_impacts into match history
-    let filteredHistory = (matchHistory || []).map(match => {
-      const key = `${match.tournament_slug}-${match.match_id}`;
-      const teamMatch = teamMatchMap.get(key);
-      if (teamMatch && teamMatch.team_impacts) {
-        return {
-          ...match,
-          team_impacts: teamMatch.team_impacts
-        };
-      }
-      return match;
-    });
+    // Fetch all match history from database
+    let filteredHistory = await getMatchHistoryFromDatabase();
     
     // Filter by player if specified
     if (player) {
@@ -701,25 +833,32 @@ app.get('/api/match-history', async (req, res) => {
 app.get('/api/player/:playerName', async (req, res) => {
   try {
     const playerName = decodeURIComponent(req.params.playerName);
-    const { rankings, matchHistory } = await calculateRankings();
-    const { matchHistory: teamMatchHistory } = await calculateTeamRankings();
     
-    const player = rankings.find(p => p.name === playerName);
-    if (!player) {
+    // Get player from database
+    const { data: playerData, error: playerError } = await supabase
+      .from('players')
+      .select('name, matches, wins, losses, current_rating, current_confidence')
+      .eq('name', playerName)
+      .single();
+    
+    if (playerError || !playerData) {
       return res.status(404).json({ error: 'Player not found' });
     }
     
-    // Create a map of team match history by match_id for quick lookup
-    const teamMatchMap = new Map();
-    if (teamMatchHistory) {
-      teamMatchHistory.forEach(match => {
-        const key = `${match.tournament_slug}-${match.match_id}`;
-        teamMatchMap.set(key, match);
-      });
-    }
+    const player = {
+      name: playerData.name,
+      matches: playerData.matches,
+      wins: playerData.wins,
+      losses: playerData.losses,
+      points: playerData.current_rating,
+      confidence: playerData.current_confidence
+    };
+    
+    // Fetch all match history from database
+    const matchHistory = await getMatchHistoryFromDatabase();
     
     // Get player's match history
-    const playerMatches = (matchHistory || []).filter(match => {
+    const playerMatches = matchHistory.filter(match => {
       const players = [
         match.team1?.player1,
         match.team1?.player2,
@@ -729,14 +868,11 @@ app.get('/api/player/:playerName', async (req, res) => {
       return players.includes(playerName);
     }).map(match => {
       const impact = match.player_impacts?.[playerName];
-      const key = `${match.tournament_slug}-${match.match_id}`;
-      const teamMatch = teamMatchMap.get(key);
       return {
         ...match,
         ratingChange: impact?.ratingChange || 0,
         won: impact?.won || false,
-        opponentRating: impact?.opponentRating || 0,
-        team_impacts: teamMatch?.team_impacts || match.team_impacts
+        opponentRating: impact?.opponentRating || 0
       };
     });
     
@@ -757,41 +893,51 @@ app.get('/api/team/:player1/:player2', async (req, res) => {
     const player2 = decodeURIComponent(req.params.player2);
     const teamKey = [player1, player2].sort().join('+');
     
-    const { rankings, matchHistory } = await calculateTeamRankings();
+    // Get team from database
+    const { data: teamData, error: teamError } = await supabase
+      .from('teams')
+      .select(`
+        team_key,
+        matches,
+        wins,
+        losses,
+        current_rating,
+        current_confidence,
+        player1:player1_id(name),
+        player2:player2_id(name)
+      `)
+      .eq('team_key', teamKey)
+      .single();
     
-    const team = rankings.find(t => 
-      (t.player1 === player1 && t.player2 === player2) ||
-      (t.player1 === player2 && t.player2 === player1)
-    );
-    
-    if (!team) {
+    if (teamError || !teamData) {
       return res.status(404).json({ error: 'Team not found' });
     }
     
-    // Get team's match history
-    const { matchHistory: playerMatchHistory } = await calculateRankings();
-    const playerMatchMap = new Map();
-    if (playerMatchHistory) {
-      playerMatchHistory.forEach(match => {
-        const key = `${match.tournament_slug}-${match.match_id}`;
-        playerMatchMap.set(key, match);
-      });
-    }
+    const team = {
+      player1: teamData.player1.name,
+      player2: teamData.player2.name,
+      matches: teamData.matches,
+      wins: teamData.wins,
+      losses: teamData.losses,
+      points: teamData.current_rating,
+      confidence: teamData.current_confidence
+    };
     
-    const teamMatches = (matchHistory || []).filter(match => {
+    // Fetch all match history from database
+    const matchHistory = await getMatchHistoryFromDatabase();
+    
+    // Get team's match history
+    const teamMatches = matchHistory.filter(match => {
       const matchTeam1 = [match.team1?.player1, match.team1?.player2].sort().join('+');
       const matchTeam2 = [match.team2?.player1, match.team2?.player2].sort().join('+');
       return matchTeam1 === teamKey || matchTeam2 === teamKey;
     }).map(match => {
       const impact = match.team_impacts?.[teamKey];
-      const key = `${match.tournament_slug}-${match.match_id}`;
-      const playerMatch = playerMatchMap.get(key);
       return {
         ...match,
         ratingChange: impact?.ratingChange || 0,
         won: impact?.won || false,
-        opponentRating: impact?.opponentRating || 0,
-        player_impacts: playerMatch?.player_impacts || match.player_impacts
+        opponentRating: impact?.opponentRating || 0
       };
     });
     

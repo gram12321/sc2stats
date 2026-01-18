@@ -106,22 +106,38 @@ The system uses a unified database architecture:
 - Complete rating history stored for every match
 
 
-### Season 1 Seeding System
+### Season 1 Seeding System (Three-Pass Algorithm)
 
-Season 1 (2025) uses a three-pass seeding system to produce more accurate initial ratings in cold-start scenarios:
+**⚠️ IMPORTANT: Pass 3 IS the actual Season 1 run, not just "seeding"!**
 
-1. **Pass 1 (Forward)**: Process all matches chronologically starting at rating 0
-2. **Pass 2 (Backward)**: Process all matches in reverse order starting at rating 0
-3. **Pass 3 (Seeded Forward)**: Process matches chronologically using **averaged Pass 1 and Pass 2 ratings** as seeds
+Season 1 (2025) uses a three-pass algorithm to solve the cold-start problem where all players start with rating 0. Without this, early matches would give too many/too few points because everyone starts equal.
 
-**Why This Works:**
-- Pass 1 gives initial skill estimates but biased by order dependency
-- Pass 2 provides alternative estimates adjusting for order bias
-- Pass 3 combines both perspectives using averaged seeds, reducing volatility and producing more stable ratings
-- Only Pass 3 ratings are used; Pass 1 and Pass 2 are discarded after seeding
+**The Three Passes:**
+
+1. **Pass 1 (Forward)**: Process ALL Season 1 matches chronologically (everyone starts at 0)
+   - Purpose: Get preliminary rating estimates
+   - Problem: Early matches have outsized impact (all equal at start)
+   - Result: DISCARD after Pass 2
+
+2. **Pass 2 (Backward)**: Process ALL Season 1 matches in REVERSE (everyone starts at 0)
+   - Purpose: Get alternative rating estimates (reduces order bias)
+   - Problem: Still has order bias, just reversed
+   - Result: DISCARD after averaging with Pass 1
+
+3. **Pass 3 (Seeded Forward)**: Process ALL Season 1 matches chronologically AGAIN
+   - Starting Point: averaged(Pass1, Pass2) ratings as initial values
+   - **THIS IS THE ACTUAL SEASON 1 RUN** - not a "seeding run"
+   - Tracks full rating history for every match
+   - Result: **KEEP as final Season 1 ratings**
+
+**Critical Understanding:**
+- Passes 1 and 2 are ONLY used to calculate better starting values for Pass 3
+- Pass 3 processes ALL Season 1 matches from those starting values
+- Pass 3 ratings ARE the final Season 1 ratings - no further processing
+- We do NOT process matches again after Pass 3 (that would count them twice!)
 
 **When Used:**
-- Season 1 (2025): Automatic during recalculation
+- Season 1 (2025): Three-pass algorithm during initial import
 - Season 2+ (2026+): No seeding - incremental updates from Season 1 baseline
 # Recalculate
 curl -X POST http://localhost:3001/api/admin/recalculate

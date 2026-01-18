@@ -39,12 +39,31 @@
 - Dynamic confidence: 0-100%, adjusts K-factor
 - Population-based adaptive rating scale
 
-**Season 1 Seeding (Three-Pass):**
-1. Pass 1: Forward chronological (all start at 0)
-2. Pass 2: Backward chronological (all start at 0)
-3. Pass 3: Forward with averaged Pass 1+2 ratings as seeds
+**Season 1 Three-Pass Algorithm:**
 
-Only Pass 3 ratings used. Season 2+ uses incremental updates.
+⚠️ **CRITICAL**: Pass 3 IS the actual Season 1 run, NOT just "seeding"!
+
+The three-pass algorithm solves the cold-start problem:
+
+1. **Pass 1 (Forward)**: 
+   - Process ALL Season 1 matches chronologically (start at 0)
+   - Get preliminary ratings → DISCARD
+
+2. **Pass 2 (Backward)**: 
+   - Process ALL Season 1 matches in reverse (start at 0)
+   - Get alternative ratings → DISCARD
+
+3. **Pass 3 (Seeded Forward - THE ACTUAL RUN)**:
+   - Start with averaged(Pass1, Pass2) ratings
+   - Process ALL Season 1 matches chronologically
+   - Track full rating_history for every match
+   - **KEEP as final Season 1 ratings**
+
+**Why No Double Counting:**
+- Passes 1 & 2 only calculate starting values
+- Pass 3 processes matches once with those starting values
+- No further processing after Pass 3
+- Season 2+ uses incremental updates from Pass 3 baseline
 
 ## API Endpoints
 
