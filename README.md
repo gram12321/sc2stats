@@ -1,10 +1,10 @@
 # SC2 2v2 Stats - StarCraft 2 2v2 Ranking System
 
-A tournament analysis platform for StarCraft 2 2v2 tournaments that scrapes data from Liquipedia and provides real-time data visualization through a modern React web interface.
+Tournament analysis platform that scrapes Liquipedia data and provides rankings via React UI.
 
-## Overview
-
-This project scrapes tournament data from Liquipedia using the **MediaWiki API**, extracts match results, and stores them in JSON format for analysis and visualization. The scraper focuses on reliable data extraction (matches, rounds, scores, players), with player races added manually through the UI.
+## Quick Start
+This project scrapes tournament data from Liquipedia using the **MediaWiki API**, extracts match results, and stores them in JSON format for analysis and visualization. The 
+scraper focuses on reliable data extraction (matches, rounds, scores, players), with player races added manually through the UI.
 
 ## Key Design Decisions
 
@@ -13,87 +13,151 @@ This project scrapes tournament data from Liquipedia using the **MediaWiki API**
 - ✅ **Simplified scraper**: Extracts matches, rounds, scores, and players reliably
 - ✅ **Manual race entry**: Player races are added/edited manually in the UI (more reliable than automated extraction)
 - ✅ **JSON export**: Data exported for review and import
-
-## Technology Stack
-
-### Frontend
-- React 18 + TypeScript + Vite
-- Tailwind CSS
-- Express.js API server for serving tournament data
-
-### Backend
-- **API Server** - Express.js server to serve tournament JSON files
-- **MediaWiki API** - Direct API calls to Liquipedia
-- Wikitext parsing for data extraction
-- Extracts: matches, rounds, scores, players (no races - added manually in UI)
-- JSON export
-
-## Data Flow
-
-```
-Liquipedia URL → MediaWiki API → Wikitext Parser → JSON Export → Express API → React Frontend
-```
-
-## Getting Started
-
-### Installation
+- ✅ **Database persistence**: Rankings stored in Supabase for fast access
 ```bash
 npm install
+
+
+
+# Apply schema: supabase/migrations/001_initial_schema.sql
+# Then run:
+node tools/recalculation/recalculateRankings.js
+
+# Run servers:
+npm run api    # Port 3001
+npm run dev    # Port 5173
 ```
 
-### Running the Application
+## Usage
 
-You need to run two servers:
-
-1. **API Server** (in one terminal):
+**Scraper:**
 ```bash
-npm run api
+node tools/scraping/scraper.js <liquipedia-url>
 ```
-This starts the API server on `http://localhost:3001` that serves tournament JSON files.
 
-2. **Frontend Dev Server** (in another terminal):
+## Ranking System
+
+Enhanced Elo-based ranking system with Supabase database persistence. Rankings are calculated incrementally as new tournaments are added, with full rating history stored for 
+every match.
+
+**Key Features:**
+- Provisional K-factors for new players/teams (80 → 48 → 40 → adaptive)
+- Dynamic confidence tracking (0-100%)
+- Population-based adaptive rating scale
+- Season 1 (2025) initialized with three-pass seeding
+- Incremental updates for new tournaments
+- Complete rating history for match-level analysis
+
+**Admin:**
 ```bash
-npm run dev
+# Import tournament
+curl -X POST http://localhost:3001/api/admin/import-tournament \
+  -H "Content-Type: application/json" -d '{"filename": "tournament.json"}'
+## System Architecture
+
+### Architecture Overview
+
+The system uses a unified database architecture:
+- **All Rankings**: Stored in Supabase database (fast, persistent, ~50-200ms)
+  - Player Rankings
+  - Team Rankings
+  - Race Rankings (e.g., PvZ, TvT)
+  - Team Race Rankings (e.g., PT vs ZZ)
+
+### Data Flow
+
+**Normal Operation:**
+- API reads all rankings from Supabase database
+
+**Adding New Tournament:**
+1. Scraper creates tournament JSON → `output/tournament.json`
+2. Admin calls `POST /api/admin/import-tournament`
+3. System processes matches incrementally
+4. Updates all ranking types in database (player, team, race, team-race)
+5. Stores rating history
+
+**Initial Import (from JSON to Database):**
+1. Run `node tools/import/importFromJSON.js`
+2. Loads all tournament JSON files
+3. Detects Season 1 (2025) and runs three-pass seeding
+4. Imports seeded ratings
+5. Processes Season 2+ matches incrementally
+
+**Recalculation (rebuild from scratch):**
+1. Admin calls `POST /api/admin/recalculate` OR run `node tools/recalculation/recalculateAllRankings.js`
+2. Clears all database rankings
+3. Re-runs import process from JSON files
+
+### Database Schema
+
+**Tables:**
+- `tournaments` - Tournament metadata (name, date, season, prize_pool, format)
+- `players` - Player stats (name, current_rating, current_confidence, matches, wins, losses)
+- `teams` - Team stats (player1_id, player2_id, team_key, current_rating, current_confidence, matches, wins, losses)
+- `race_rankings` - Race matchup stats (race_matchup, current_rating, current_confidence, matches, wins, losses)
+- `team_race_rankings` - Team race composition stats (team_race_matchup, current_rating, current_confidence, matches, wins, losses)
+- `matches` - Match results (tournament_id, match_id, round, date, team1_id, team2_id, scores, best_of)
+- `rating_history` - Historical rating snapshots (entity_type, entity_id, match_id, rating_before, rating_after, rating_change, confidence)
+
+**Key Points:**
+- Seasons are auto-computed from tournament dates (Season = YEAR(date))
+- Player stats are aggregated from team performances
+- Teams are normalized (players stored alphabetically)
+- Complete rating history stored for every match
+
+
+### Season 1 Seeding System (Three-Pass Algorithm)
+
+**⚠️ IMPORTANT: Pass 3 IS the actual Season 1 run, not just "seeding"!**
+
+Season 1 (2025) uses a three-pass algorithm to solve the cold-start problem where all players start with rating 0. Without this, early matches would give too many/too few points because everyone starts equal.
+
+**The Three Passes:**
+
+1. **Pass 1 (Forward)**: Process ALL Season 1 matches chronologically (everyone starts at 0)
+   - Purpose: Get preliminary rating estimates
+   - Problem: Early matches have outsized impact (all equal at start)
+   - Result: DISCARD after Pass 2
+
+2. **Pass 2 (Backward)**: Process ALL Season 1 matches in REVERSE (everyone starts at 0)
+   - Purpose: Get alternative rating estimates (reduces order bias)
+   - Problem: Still has order bias, just reversed
+   - Result: DISCARD after averaging with Pass 1
+
+3. **Pass 3 (Seeded Forward)**: Process ALL Season 1 matches chronologically AGAIN
+   - Starting Point: averaged(Pass1, Pass2) ratings as initial values
+   - **THIS IS THE ACTUAL SEASON 1 RUN** - not a "seeding run"
+   - Tracks full rating history for every match
+   - Result: **KEEP as final Season 1 ratings**
+
+**Critical Understanding:**
+- Passes 1 and 2 are ONLY used to calculate better starting values for Pass 3
+- Pass 3 processes ALL Season 1 matches from those starting values
+- Pass 3 ratings ARE the final Season 1 ratings - no further processing
+- We do NOT process matches again after Pass 3 (that would count them twice!)
+
+**When Used:**
+- Season 1 (2025): Three-pass algorithm during initial import
+- Season 2+ (2026+): No seeding - incremental updates from Season 1 baseline
+# Recalculate
+curl -X POST http://localhost:3001/api/admin/recalculate
 ```
-This starts the Vite dev server (usually on `http://localhost:5173`).
 
-### Scraper
-```bash
-# Run scraper with a Liquipedia tournament URL
-node tools/scraper.js <liquipedia-url>
+## Features
 
-# Example:
-node tools/scraper.js https://liquipedia.net/starcraft2/UThermal_2v2_Circuit/1
+- ✅ Scraper: Extracts matches from Liquipedia (single/double elimination, group stages)
+- ✅ Database: Supabase PostgreSQL for persistent rankings
+- ✅ Ranking: Enhanced Elo with three-pass seeding for Season 1
+- ✅ UI: React app with bracket view and match editing
 
-# Output: JSON file saved to output/ directory
-```
+## API Endpoints
 
-### Using the UI
-
-1. Run the scraper to generate tournament JSON files in the `output/` directory
-2. Start both the API server (`npm run api`) and frontend dev server (`npm run dev`)
-3. Open the frontend URL (usually `http://localhost:5173`)
-4. Select a tournament from the list
-5. Click on any match in the bracket to edit player races
-6. Download the edited JSON when done
-
-## Current Status
-
-- ✅ Frontend: React app with compact bracket view (Liquipedia-inspired)
-- ✅ API Server: Express server to serve tournament JSON files and player defaults
-- ✅ Scraper: Simplified scraper extracts matches, rounds, scores, and players reliably
-- ✅ Player Management: UI for setting default player races
-- ✅ Tournament Editor: Compact bracket display with race editing
-- ✅ Data Export: JSON format for tournaments and player defaults
-
-## Scraper Data Output
-
-The scraper extracts the following data reliably:
-- **Tournament metadata**: Name, date, prize pool, format, maps
-- **Matches**: Round, match ID, teams (player pairs), scores, best-of format, date, individual games/maps
-
-**Note**: Player races are not extracted automatically. They can be added and edited manually through the React UI interface.
+- `GET /api/player-rankings` - Player rankings (database)
+- `GET /api/team-rankings` - Team rankings (database)
+- `GET /api/race-rankings` - Race rankings (on-demand)
+- `POST /api/admin/import-tournament` - Import tournament
+- `POST /api/admin/recalculate` - Full recalculation
 
 ## Documentation
 
-- [Data Specification](docs/data-specification.md) - Data structure and requirements
+See [TECHNICAL.md](TECHNICAL.md) for architecture, database schema, ranking algorithm, and API details.

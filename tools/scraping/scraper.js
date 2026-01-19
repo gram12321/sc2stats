@@ -11,7 +11,7 @@ import { dirname, join } from 'path';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const outputDir = join(__dirname, '..', 'output');
+const outputDir = join(__dirname, '..', '..', 'output');
 
 const API_URL = 'https://liquipedia.net/starcraft2/api.php';
 const USER_AGENT = 'sc2stats/1.0 (sc2stats@example.com)';
@@ -228,6 +228,80 @@ function parseMatch(matchText, round, matchId) {
 }
 
 /**
+ * Parse group stage/round robin matches from Matchlist templates
+ */
+function parseGroupStage(wikitext, tournamentSlug) {
+  const matches = [];
+  
+  // Find all Matchlist templates
+  let matchlistStart = -1;
+  let matchlistIndex = 0;
+  
+  while ((matchlistStart = wikitext.indexOf('{{Matchlist', matchlistStart + 1)) !== -1) {
+    matchlistIndex++;
+    
+    // Extract the Matchlist template content
+    const matchlistContent = extractNestedTemplate(wikitext, matchlistStart);
+    if (!matchlistContent) continue;
+    
+    // Try to find group name from context (look backwards for "Group A", "Group B", etc.)
+    let groupName = null;
+    const beforeMatchlist = wikitext.substring(Math.max(0, matchlistStart - 1000), matchlistStart);
+    
+    // Look for various group name patterns
+    // Pattern 1: "Group A", "Group B", etc.
+    let groupMatch = beforeMatchlist.match(/Group\s+([A-Z])\b/i);
+    if (groupMatch) {
+      groupName = `Group ${groupMatch[1]}`;
+    } else {
+      // Pattern 2: "=====Group A=====" or similar headers
+      groupMatch = beforeMatchlist.match(/={3,}\s*Group\s+([A-Z])\s*={3,}/i);
+      if (groupMatch) {
+        groupName = `Group ${groupMatch[1]}`;
+      } else {
+        // Pattern 3: Look for GroupTableLeague title
+        const groupTableMatch = beforeMatchlist.match(/\{\{GroupTableLeague[^}]*\|title\s*=\s*([^|\n}]+)/i);
+        if (groupTableMatch) {
+          groupName = groupTableMatch[1].trim().replace(/\{\{[^}]+\}\}/g, '').trim();
+        } else {
+          // Fallback: use Matchlist title if available
+          const titleMatch = matchlistContent.match(/\|title\s*=\s*([^|\n}]+)/i);
+          if (titleMatch) {
+            groupName = titleMatch[1].trim().replace(/\{\{[^}]+\}\}/g, '').trim();
+          } else {
+            groupName = `Group Stage ${matchlistIndex}`;
+          }
+        }
+      }
+    }
+    
+    // Extract matches from Matchlist (M1, M2, M3, etc.)
+    for (let i = 1; i <= 100; i++) {
+      const matchPattern = new RegExp(`\\|M${i}\\s*=\\s*\\{\\{Match`, 'i');
+      const matchPos = matchlistContent.search(matchPattern);
+      
+      if (matchPos === -1) break;
+      
+      // Find the start of the Match template
+      const matchStartPos = matchlistContent.indexOf('{{Match', matchPos);
+      if (matchStartPos === -1) break;
+      
+      const matchText = extractNestedTemplate(matchlistContent, matchStartPos);
+      if (matchText) {
+        const matchId = `GS_M${i}_${matchlistIndex}`;
+        const parsedMatch = parseMatch(matchText, groupName, matchId);
+        if (parsedMatch) {
+          parsedMatch.tournament_slug = tournamentSlug;
+          matches.push(parsedMatch);
+        }
+      }
+    }
+  }
+  
+  return matches;
+}
+
+/**
  * Parse bracket and extract all matches
  */
 function parseBracket(wikitext, tournamentSlug) {
@@ -313,8 +387,18 @@ async function scrapeTournament(url) {
   if (tournament.prize_pool) console.log(`  Prize Pool: $${tournament.prize_pool}`);
 
   console.log('⏳ Parsing matches...');
-  const matches = parseBracket(wikitext, pageTitle);
-  console.log(`✓ Found ${matches.length} matches`);
+  
+  // Parse both bracket matches and group stage matches
+  const bracketMatches = parseBracket(wikitext, pageTitle);
+  const groupStageMatches = parseGroupStage(wikitext, pageTitle);
+  
+  const matches = [...bracketMatches, ...groupStageMatches];
+  
+  console.log(`✓ Found ${bracketMatches.length} bracket matches`);
+  if (groupStageMatches.length > 0) {
+    console.log(`✓ Found ${groupStageMatches.length} group stage matches`);
+  }
+  console.log(`✓ Total: ${matches.length} matches`);
 
   return {
     tournament,

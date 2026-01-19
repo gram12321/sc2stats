@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react';
 import { formatRankingPoints } from '../lib/utils';
+import { Race } from '../types/tournament';
+import { getPlayerDefaults } from '../lib/playerDefaults';
+import { MatchHistoryItem } from '../components/MatchHistoryItem';
 
 interface RaceRanking {
   name: string; // e.g., "PvZ", "TvP"
@@ -21,8 +24,8 @@ interface MatchHistoryEntry {
   tournament_date: string | null;
   match_date: string | null;
   round: string;
-  team1_races: string[];
-  team2_races: string[];
+  team1_races?: string[];
+  team2_races?: string[];
   team1_score: number;
   team2_score: number;
   race_impacts: Record<string, {
@@ -33,14 +36,47 @@ interface MatchHistoryEntry {
     race1: string;
     race2: string;
   }>;
-  team1_player1: string | null;
-  team1_player1_race: string | null;
-  team1_player2: string | null;
-  team1_player2_race: string | null;
-  team2_player1: string | null;
-  team2_player1_race: string | null;
-  team2_player2: string | null;
-  team2_player2_race: string | null;
+  team1_player1?: string | null;
+  team1_player1_race?: string | null;
+  team1_player2?: string | null;
+  team1_player2_race?: string | null;
+  team2_player1?: string | null;
+  team2_player1_race?: string | null;
+  team2_player2?: string | null;
+  team2_player2_race?: string | null;
+  team1?: {
+    player1?: string;
+    player2?: string;
+  };
+  team2?: {
+    player1?: string;
+    player2?: string;
+  };
+  team_impacts?: Record<string, {
+    ratingBefore: number;
+    ratingChange: number;
+    won: boolean;
+    opponentRating: number;
+  }>;
+  player_impacts?: Record<string, {
+    ratingBefore: number;
+    ratingChange: number;
+    won: boolean;
+    opponentRating: number;
+  }>;
+}
+
+interface PlayerRanking {
+  name: string;
+  points: number;
+  confidence: number;
+}
+
+interface TeamRanking {
+  player1: string;
+  player2: string;
+  points: number;
+  confidence: number;
 }
 
 export function RaceRankings({ onBack }: RaceRankingsProps) {
@@ -52,11 +88,21 @@ export function RaceRankings({ onBack }: RaceRankingsProps) {
   const [hideRandom, setHideRandom] = useState(false);
   const [selectedMatchup, setSelectedMatchup] = useState<RaceRanking | null>(null);
   const [isCombinedStats, setIsCombinedStats] = useState(false);
+  const [sortColumn, setSortColumn] = useState<keyof RaceRanking | 'rank' | null>(null);
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  const [combinedSortColumn, setCombinedSortColumn] = useState<keyof RaceRanking | 'rank' | null>(null);
+  const [combinedSortDirection, setCombinedSortDirection] = useState<'asc' | 'desc'>('desc');
   const [matchHistory, setMatchHistory] = useState<MatchHistoryEntry[]>([]);
   const [isLoadingMatches, setIsLoadingMatches] = useState(false);
+  const [playerRankings, setPlayerRankings] = useState<Record<string, { rank: number; points: number; confidence: number }>>({});
+  const [teamRankings, setTeamRankings] = useState<Record<string, { rank: number; points: number; confidence: number }>>({});
+  const [playerRaces, setPlayerRaces] = useState<Record<string, Race>>({});
 
   useEffect(() => {
     loadRankings();
+    loadPlayerRankings();
+    loadTeamRankings();
+    loadAllPlayerRaces();
   }, []);
 
   const loadRankings = async () => {
@@ -96,6 +142,98 @@ export function RaceRankings({ onBack }: RaceRankingsProps) {
     );
   });
 
+  const handleSort = (column: keyof RaceRanking | 'rank', isCombined: boolean = false) => {
+    if (isCombined) {
+      if (combinedSortColumn === column) {
+        setCombinedSortDirection(combinedSortDirection === 'asc' ? 'desc' : 'asc');
+      } else {
+        setCombinedSortColumn(column);
+        setCombinedSortDirection('desc');
+      }
+    } else {
+      if (sortColumn === column) {
+        setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+      } else {
+        setSortColumn(column);
+        setSortDirection('desc');
+      }
+    }
+  };
+
+  const sortedRankings = [...filteredRankings].sort((a, b) => {
+    if (!sortColumn) return 0;
+    
+    let aValue: any;
+    let bValue: any;
+    
+    if (sortColumn === 'rank') {
+      aValue = rankings.findIndex(m => m.name === a.name) + 1;
+      bValue = rankings.findIndex(m => m.name === b.name) + 1;
+    } else if (sortColumn === 'name' || sortColumn === 'race1' || sortColumn === 'race2') {
+      aValue = a[sortColumn];
+      bValue = b[sortColumn];
+    } else {
+      aValue = a[sortColumn];
+      bValue = b[sortColumn];
+    }
+    
+    // Handle undefined/null values
+    if (aValue === undefined || aValue === null) aValue = (sortColumn === 'name' || sortColumn === 'race1' || sortColumn === 'race2') ? '' : 0;
+    if (bValue === undefined || bValue === null) bValue = (sortColumn === 'name' || sortColumn === 'race1' || sortColumn === 'race2') ? '' : 0;
+    
+    // String comparison
+    if (sortColumn === 'name' || sortColumn === 'race1' || sortColumn === 'race2') {
+      return sortDirection === 'asc' 
+        ? aValue.localeCompare(bValue)
+        : bValue.localeCompare(aValue);
+    }
+    
+    // Numeric comparison
+    const comparison = (aValue as number) - (bValue as number);
+    return sortDirection === 'asc' ? comparison : -comparison;
+  });
+
+  const filteredCombinedRankings = combinedRankings.filter(matchup => {
+    // Filter out Random matchups if hideRandom is enabled
+    if (hideRandom && matchup.race1 === 'Random') {
+      return false;
+    }
+    return true;
+  });
+
+  const sortedCombinedRankings = [...filteredCombinedRankings].sort((a, b) => {
+    if (!combinedSortColumn) return 0;
+    
+    let aValue: any;
+    let bValue: any;
+    
+    if (combinedSortColumn === 'rank') {
+      aValue = combinedRankings.findIndex(m => m.name === a.name) + 1;
+      bValue = combinedRankings.findIndex(m => m.name === b.name) + 1;
+    } else if (combinedSortColumn === 'name' || combinedSortColumn === 'race1' || combinedSortColumn === 'race2') {
+      aValue = a[combinedSortColumn];
+      bValue = b[combinedSortColumn];
+    } else {
+      aValue = a[combinedSortColumn];
+      bValue = b[combinedSortColumn];
+    }
+    
+    // Handle undefined/null values
+    if (aValue === undefined || aValue === null) aValue = (combinedSortColumn === 'name' || combinedSortColumn === 'race1' || combinedSortColumn === 'race2') ? '' : 0;
+    if (bValue === undefined || bValue === null) bValue = (combinedSortColumn === 'name' || combinedSortColumn === 'race1' || combinedSortColumn === 'race2') ? '' : 0;
+    
+    // String comparison
+    if (combinedSortColumn === 'name' || combinedSortColumn === 'race1' || combinedSortColumn === 'race2') {
+      return combinedSortDirection === 'asc' 
+        ? aValue.localeCompare(bValue)
+        : bValue.localeCompare(aValue);
+    }
+    
+    // Numeric comparison
+    const comparison = (aValue as number) - (bValue as number);
+    return combinedSortDirection === 'asc' ? comparison : -comparison;
+  });
+
   const getRaceBadgeColor = (race: string) => {
     switch (race) {
       case 'Terran': return 'bg-blue-100 text-blue-800';
@@ -106,15 +244,6 @@ export function RaceRankings({ onBack }: RaceRankingsProps) {
     }
   };
 
-  const getFullRaceName = (abbr: string) => {
-    const raceMap: Record<string, string> = {
-      'P': 'Protoss',
-      'T': 'Terran',
-      'Z': 'Zerg',
-      'R': 'Random'
-    };
-    return raceMap[abbr] || abbr;
-  };
 
   const loadMatchHistory = async (matchup: RaceRanking, isCombined: boolean = false) => {
     try {
@@ -143,6 +272,125 @@ export function RaceRankings({ onBack }: RaceRankingsProps) {
     setIsCombinedStats(isCombined);
     loadMatchHistory(matchup, isCombined);
   };
+
+  const loadPlayerRankings = async () => {
+    try {
+      const response = await fetch('/api/player-rankings');
+      if (!response.ok) throw new Error('Failed to load player rankings');
+      const data: PlayerRanking[] = await response.json();
+      const rankMap: Record<string, { rank: number; points: number; confidence: number }> = {};
+      data.forEach((player, index) => {
+        rankMap[player.name] = {
+          rank: index + 1,
+          points: player.points,
+          confidence: player.confidence || 0
+        };
+      });
+      setPlayerRankings(rankMap);
+    } catch (err) {
+      console.error('Error loading player rankings:', err);
+    }
+  };
+
+  const loadTeamRankings = async () => {
+    try {
+      const response = await fetch('/api/team-rankings');
+      if (!response.ok) throw new Error('Failed to load team rankings');
+      const data: TeamRanking[] = await response.json();
+      const rankMap: Record<string, { rank: number; points: number; confidence: number }> = {};
+      data.forEach((team, index) => {
+        const teamKey = normalizeTeamKey(team.player1, team.player2);
+        rankMap[teamKey] = {
+          rank: index + 1,
+          points: team.points,
+          confidence: team.confidence || 0
+        };
+      });
+      setTeamRankings(rankMap);
+    } catch (err) {
+      console.error('Error loading team rankings:', err);
+    }
+  };
+
+  const loadAllPlayerRaces = async () => {
+    try {
+      const defaults = await getPlayerDefaults();
+      setPlayerRaces(defaults);
+    } catch (err) {
+      console.error('Error loading player races:', err);
+    }
+  };
+
+  const normalizeTeamKey = (player1: string, player2: string): string => {
+    return [player1, player2].filter(Boolean).sort().join('+');
+  };
+
+  const getTeamPlayers = (match: MatchHistoryEntry, team: 'team1' | 'team2') => {
+    const teamData = match[team];
+    if (teamData) {
+      return {
+        player1: teamData.player1 || '',
+        player2: teamData.player2 || ''
+      };
+    }
+    return {
+      player1: match[`${team}_player1` as const] || '',
+      player2: match[`${team}_player2` as const] || ''
+    };
+  };
+
+  const getTeamRaces = (match: MatchHistoryEntry, team: 'team1' | 'team2') => {
+    const racesFromMatch = team === 'team1' ? match.team1_races : match.team2_races;
+    if (racesFromMatch && racesFromMatch.length > 0) {
+      return racesFromMatch;
+    }
+    const teamPlayers = getTeamPlayers(match, team);
+    return [playerRaces[teamPlayers.player1], playerRaces[teamPlayers.player2]].filter(Boolean) as string[];
+  };
+
+  const getTeamRank = (player1: string | null, player2: string | null) => {
+    if (!player1 || !player2) return null;
+    const teamKey = normalizeTeamKey(player1, player2);
+    return teamRankings[teamKey] || null;
+  };
+
+  const getTeamImpact = (match: MatchHistoryEntry, player1: string | null, player2: string | null) => {
+    if (!match.team_impacts || !player1 || !player2) return null;
+    const teamKey = normalizeTeamKey(player1, player2);
+    return match.team_impacts[teamKey] || null;
+  };
+
+  const getPlayerImpact = (match: MatchHistoryEntry, playerName: string | null) => {
+    if (!match.player_impacts || !playerName) return null;
+    return match.player_impacts[playerName] || null;
+  };
+
+  // Convert MatchHistoryEntry to format expected by MatchHistoryItem
+  const convertMatchForComponent = (match: MatchHistoryEntry) => {
+    const team1Players = getTeamPlayers(match, 'team1');
+    const team2Players = getTeamPlayers(match, 'team2');
+    return {
+      match_id: match.match_id,
+      tournament_slug: match.tournament_slug,
+      tournament_date: match.tournament_date,
+      match_date: match.match_date,
+      round: match.round,
+      team1: {
+        player1: team1Players.player1,
+        player2: team1Players.player2
+      },
+      team2: {
+        player1: team2Players.player1,
+        player2: team2Players.player2
+      },
+      team1_score: match.team1_score,
+      team2_score: match.team2_score,
+      player_impacts: match.player_impacts,
+      team_impacts: match.team_impacts,
+      race_impacts: match.race_impacts
+    };
+  };
+
 
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) return '—';
@@ -194,6 +442,31 @@ export function RaceRankings({ onBack }: RaceRankingsProps) {
           </div>
         ) : (
           <>
+            {/* Search and Filters */}
+            <div className="bg-white rounded-lg border border-gray-200 p-4 mb-6 shadow-sm">
+              <div className="flex items-center gap-4 mb-4">
+                <input
+                  type="text"
+                  placeholder="Search race matchups..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={hideRandom}
+                    onChange={(e) => setHideRandom(e.target.checked)}
+                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+                  />
+                  <span className="text-sm text-gray-700">Hide Random matchups</span>
+                </label>
+              </div>
+              <div className="text-sm text-gray-600">
+                Showing {filteredRankings.length} of {rankings.length} race matchups
+              </div>
+            </div>
+
             {/* Combined Race Statistics */}
             {combinedRankings.length > 0 && (
               <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden mb-6">
@@ -205,28 +478,76 @@ export function RaceRankings({ onBack }: RaceRankingsProps) {
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                       <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Rank
+                        <th 
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                          onClick={() => handleSort('rank', true)}
+                        >
+                          <div className="flex items-center gap-1">
+                            Rank
+                            {combinedSortColumn === 'rank' && (
+                              <span>{combinedSortDirection === 'asc' ? '↑' : '↓'}</span>
+                            )}
+                          </div>
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Race
+                        <th 
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                          onClick={() => handleSort('race1', true)}
+                        >
+                          <div className="flex items-center gap-1">
+                            Race
+                            {combinedSortColumn === 'race1' && (
+                              <span>{combinedSortDirection === 'asc' ? '↑' : '↓'}</span>
+                            )}
+                          </div>
                         </th>
-                        <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Matches
+                        <th 
+                          className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                          onClick={() => handleSort('matches', true)}
+                        >
+                          <div className="flex items-center justify-center gap-1">
+                            Matches
+                            {combinedSortColumn === 'matches' && (
+                              <span>{combinedSortDirection === 'asc' ? '↑' : '↓'}</span>
+                            )}
+                          </div>
                         </th>
-                        <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Wins
+                        <th 
+                          className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                          onClick={() => handleSort('wins', true)}
+                        >
+                          <div className="flex items-center justify-center gap-1">
+                            Wins
+                            {combinedSortColumn === 'wins' && (
+                              <span>{combinedSortDirection === 'asc' ? '↑' : '↓'}</span>
+                            )}
+                          </div>
                         </th>
-                        <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Losses
+                        <th 
+                          className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                          onClick={() => handleSort('losses', true)}
+                        >
+                          <div className="flex items-center justify-center gap-1">
+                            Losses
+                            {combinedSortColumn === 'losses' && (
+                              <span>{combinedSortDirection === 'asc' ? '↑' : '↓'}</span>
+                            )}
+                          </div>
                         </th>
-                        <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Points
+                        <th 
+                          className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                          onClick={() => handleSort('points', true)}
+                        >
+                          <div className="flex items-center justify-center gap-1">
+                            Points
+                            {combinedSortColumn === 'points' && (
+                              <span>{combinedSortDirection === 'asc' ? '↑' : '↓'}</span>
+                            )}
+                          </div>
                         </th>
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                      {combinedRankings.map((matchup, index) => (
+                      {sortedCombinedRankings.map((matchup, index) => (
                         <tr
                           key={matchup.name}
                           className="hover:bg-gray-50 transition-colors cursor-pointer"
@@ -290,31 +611,6 @@ export function RaceRankings({ onBack }: RaceRankingsProps) {
               </div>
             )}
 
-            {/* Search and Filters */}
-            <div className="bg-white rounded-lg border border-gray-200 p-4 mb-6 shadow-sm">
-              <div className="flex items-center gap-4 mb-4">
-                <input
-                  type="text"
-                  placeholder="Search race matchups..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={hideRandom}
-                    onChange={(e) => setHideRandom(e.target.checked)}
-                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
-                  />
-                  <span className="text-sm text-gray-700">Hide Random matchups</span>
-                </label>
-              </div>
-              <div className="text-sm text-gray-600">
-                Showing {filteredRankings.length} of {rankings.length} race matchups
-              </div>
-            </div>
-
             {/* Individual Matchups Table */}
             <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
               <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
@@ -325,23 +621,71 @@ export function RaceRankings({ onBack }: RaceRankingsProps) {
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Rank
+                      <th 
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                        onClick={() => handleSort('rank', false)}
+                      >
+                        <div className="flex items-center gap-1">
+                          Rank
+                          {sortColumn === 'rank' && (
+                            <span>{sortDirection === 'asc' ? '↑' : '↓'}</span>
+                          )}
+                        </div>
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Matchup
+                      <th 
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                        onClick={() => handleSort('name', false)}
+                      >
+                        <div className="flex items-center gap-1">
+                          Matchup
+                          {sortColumn === 'name' && (
+                            <span>{sortDirection === 'asc' ? '↑' : '↓'}</span>
+                          )}
+                        </div>
                       </th>
-                      <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Matches
+                      <th 
+                        className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                        onClick={() => handleSort('matches', false)}
+                      >
+                        <div className="flex items-center justify-center gap-1">
+                          Matches
+                          {sortColumn === 'matches' && (
+                            <span>{sortDirection === 'asc' ? '↑' : '↓'}</span>
+                          )}
+                        </div>
                       </th>
-                      <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Wins
+                      <th 
+                        className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                        onClick={() => handleSort('wins', false)}
+                      >
+                        <div className="flex items-center justify-center gap-1">
+                          Wins
+                          {sortColumn === 'wins' && (
+                            <span>{sortDirection === 'asc' ? '↑' : '↓'}</span>
+                          )}
+                        </div>
                       </th>
-                      <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Losses
+                      <th 
+                        className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                        onClick={() => handleSort('losses', false)}
+                      >
+                        <div className="flex items-center justify-center gap-1">
+                          Losses
+                          {sortColumn === 'losses' && (
+                            <span>{sortDirection === 'asc' ? '↑' : '↓'}</span>
+                          )}
+                        </div>
                       </th>
-                      <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Points
+                      <th 
+                        className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                        onClick={() => handleSort('points', false)}
+                      >
+                        <div className="flex items-center justify-center gap-1">
+                          Points
+                          {sortColumn === 'points' && (
+                            <span>{sortDirection === 'asc' ? '↑' : '↓'}</span>
+                          )}
+                        </div>
                       </th>
                     </tr>
                   </thead>
@@ -353,7 +697,7 @@ export function RaceRankings({ onBack }: RaceRankingsProps) {
                         </td>
                       </tr>
                     ) : (
-                      filteredRankings.map((matchup, index) => {
+                      sortedRankings.map((matchup, index) => {
                         const rank = rankings.findIndex(m => m.name === matchup.name) + 1;
                         return (
                           <tr
@@ -517,18 +861,11 @@ export function RaceRankings({ onBack }: RaceRankingsProps) {
                       let ratingChange = 0;
                       let displayedRace1 = selectedMatchup.race1;
                       let displayedRace2 = selectedMatchup.race2;
-                      let team1Players, team2Players, team1Score, team2Score;
-                      
-                      // Format player names with races
-                      const formatPlayerWithRace = (name: string | null, race: string | null) => {
-                        if (!name) return '';
-                        return race ? `${name} (${race})` : name;
-                      };
 
                       if (isCombinedStats) {
                         // For combined stats, check if the race appears in winning team
-                        const race1InTeam1 = match.team1_races.includes(selectedMatchup.race1);
-                        const race1InTeam2 = match.team2_races.includes(selectedMatchup.race1);
+                        const team1Races = getTeamRaces(match, 'team1');
+                        const race1InTeam1 = team1Races.includes(selectedMatchup.race1);
                         won = race1InTeam1 
                           ? match.team1_score > match.team2_score
                           : match.team2_score > match.team1_score;
@@ -541,34 +878,6 @@ export function RaceRankings({ onBack }: RaceRankingsProps) {
                             break;
                           }
                         }
-                        
-                        // Show clicked race first
-                        if (race1InTeam1) {
-                          team1Players = [
-                            formatPlayerWithRace(match.team1_player1, match.team1_player1_race),
-                            formatPlayerWithRace(match.team1_player2, match.team1_player2_race)
-                          ].filter(Boolean).join(' + ') || 'Unknown';
-                          team2Players = [
-                            formatPlayerWithRace(match.team2_player1, match.team2_player1_race),
-                            formatPlayerWithRace(match.team2_player2, match.team2_player2_race)
-                          ].filter(Boolean).join(' + ') || 'Unknown';
-                          team1Score = match.team1_score;
-                          team2Score = match.team2_score;
-                          displayedRace2 = match.team2_races.join(' + ');
-                        } else {
-                          // Swap to show clicked race first
-                          team1Players = [
-                            formatPlayerWithRace(match.team2_player1, match.team2_player1_race),
-                            formatPlayerWithRace(match.team2_player2, match.team2_player2_race)
-                          ].filter(Boolean).join(' + ') || 'Unknown';
-                          team2Players = [
-                            formatPlayerWithRace(match.team1_player1, match.team1_player1_race),
-                            formatPlayerWithRace(match.team1_player2, match.team1_player2_race)
-                          ].filter(Boolean).join(' + ') || 'Unknown';
-                          team1Score = match.team2_score;
-                          team2Score = match.team1_score;
-                          displayedRace2 = match.team1_races.join(' + ');
-                        }
                       } else {
                         // For individual matchups, find the specific matchup impact
                         const matchupKey = selectedMatchup.name; // e.g., "PvT"
@@ -577,99 +886,59 @@ export function RaceRankings({ onBack }: RaceRankingsProps) {
                           won = impact.won;
                           ratingChange = impact.ratingChange;
                         }
-                        
-                        // Determine which team has race1 and which has race2
-                        const team1HasRace1 = match.team1_races.includes(selectedMatchup.race1);
-                        const team2HasRace1 = match.team2_races.includes(selectedMatchup.race1);
-                        
-                        if (team1HasRace1) {
-                          team1Players = [
-                            formatPlayerWithRace(match.team1_player1, match.team1_player1_race),
-                            formatPlayerWithRace(match.team1_player2, match.team1_player2_race)
-                          ].filter(Boolean).join(' + ') || 'Unknown';
-                          team2Players = [
-                            formatPlayerWithRace(match.team2_player1, match.team2_player1_race),
-                            formatPlayerWithRace(match.team2_player2, match.team2_player2_race)
-                          ].filter(Boolean).join(' + ') || 'Unknown';
-                          team1Score = match.team1_score;
-                          team2Score = match.team2_score;
-                          displayedRace2 = match.team2_races.join(' + ');
-                        } else if (team2HasRace1) {
-                          // Swap to show race1 first
-                          team1Players = [
-                            formatPlayerWithRace(match.team2_player1, match.team2_player1_race),
-                            formatPlayerWithRace(match.team2_player2, match.team2_player2_race)
-                          ].filter(Boolean).join(' + ') || 'Unknown';
-                          team2Players = [
-                            formatPlayerWithRace(match.team1_player1, match.team1_player1_race),
-                            formatPlayerWithRace(match.team1_player2, match.team1_player2_race)
-                          ].filter(Boolean).join(' + ') || 'Unknown';
-                          team1Score = match.team2_score;
-                          team2Score = match.team1_score;
-                          displayedRace2 = match.team1_races.join(' + ');
-                        } else {
-                          // Fallback: keep original order
-                          team1Players = [
-                            formatPlayerWithRace(match.team1_player1, match.team1_player1_race),
-                            formatPlayerWithRace(match.team1_player2, match.team1_player2_race)
-                          ].filter(Boolean).join(' + ') || 'Unknown';
-                          team2Players = [
-                            formatPlayerWithRace(match.team2_player1, match.team2_player1_race),
-                            formatPlayerWithRace(match.team2_player2, match.team2_player2_race)
-                          ].filter(Boolean).join(' + ') || 'Unknown';
-                          team1Score = match.team1_score;
-                          team2Score = match.team2_score;
-                        }
                       }
 
+                      const convertedMatch = convertMatchForComponent(match);
+                      const team1Players = getTeamPlayers(match, 'team1');
+                      const team2Players = getTeamPlayers(match, 'team2');
+                      const team1Rank = getTeamRank(team1Players.player1, team1Players.player2);
+                      const team2Rank = getTeamRank(team2Players.player1, team2Players.player2);
+                      
+                      // Convert player rankings to the format expected by component
+                      const playerRankingsMap: Record<string, { rank: number; points: number; confidence: number }> = {};
+                      Object.keys(playerRankings).forEach(name => {
+                        const ranking = playerRankings[name];
+                        if (ranking) {
+                          playerRankingsMap[name] = {
+                            rank: ranking.rank,
+                            points: ranking.points,
+                            confidence: ranking.confidence
+                          };
+                        }
+                      });
+
+                      // Build race info for component
+                      const raceInfo = isCombinedStats ? {
+                        race1: selectedMatchup.race1,
+                        race2: '',
+                        ratingChange,
+                        isCombinedStats: true
+                      } : {
+                        race1: displayedRace1,
+                        race2: displayedRace2,
+                        ratingChange: 0,
+                        isCombinedStats: false,
+                        matchupKey: selectedMatchup.name
+                      };
+
                       return (
-                        <div
+                        <MatchHistoryItem
                           key={`${match.tournament_slug}-${match.match_id}`}
-                          className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50"
-                        >
-                          <div className="flex items-center justify-between">
-                            <div className="flex-1">
-                              <div className="flex items-center gap-3 mb-2">
-                                <span className={`px-2 py-1 rounded text-xs font-medium ${
-                                  won ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                                }`}>
-                                  {won ? 'W' : 'L'}
-                                </span>
-                                <span className="text-sm font-medium text-gray-900">
-                                  {team1Score} - {team2Score}
-                                </span>
-                              </div>
-                              <div className="mb-1">
-                                <div className="text-sm text-gray-900">
-                                  <span className="font-medium">{team1Players}</span>
-                                  <span className="text-gray-400 mx-2">vs</span>
-                                  <span className="font-medium">{team2Players}</span>
-                                </div>
-                                <div className="text-xs text-gray-500 mt-1">
-                                  <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getRaceBadgeColor(displayedRace1)}`}>
-                                    {displayedRace1}
-                                  </span>
-                                  <span className="text-gray-400 mx-2">vs</span>
-                                  {displayedRace2.split(' + ').map((race, idx) => (
-                                    <span key={idx} className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getRaceBadgeColor(race)}`}>
-                                      {race}
-                                    </span>
-                                  ))}
-                                </div>
-                              </div>
-                              <div className="text-xs text-gray-500">
-                                {match.tournament_slug} • {match.round} • {formatDate(match.match_date || match.tournament_date)}
-                              </div>
-                            </div>
-                            <div className="text-right">
-                              <div className={`text-sm font-medium ${
-                                ratingChange >= 0 ? 'text-green-600' : 'text-red-600'
-                              }`}>
-                                {ratingChange >= 0 ? '+' : ''}{formatRankingPoints(ratingChange)}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
+                          match={convertedMatch}
+                          team1Rank={team1Rank ? { rank: team1Rank.rank, points: team1Rank.points, confidence: team1Rank.confidence } : null}
+                          team2Rank={team2Rank ? { rank: team2Rank.rank, points: team2Rank.points, confidence: team2Rank.confidence } : null}
+                          playerRankings={playerRankingsMap}
+                          playerRaces={playerRaces}
+                          showWinLoss={true}
+                          winLossValue={won}
+                          showRatingBreakdown={true}
+                          showRaceInfo={true}
+                          raceInfo={raceInfo}
+                          normalizeTeamKey={normalizeTeamKey}
+                          getTeamImpact={(match, player1, player2) => getTeamImpact(match as MatchHistoryEntry, player1, player2)}
+                          getPlayerImpact={(match, playerName) => getPlayerImpact(match as MatchHistoryEntry, playerName)}
+                          formatDate={formatDate}
+                        />
                       );
                     })}
                 </div>

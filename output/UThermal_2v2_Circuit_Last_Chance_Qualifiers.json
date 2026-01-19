@@ -1,0 +1,403 @@
+{
+  "tournament": {
+    "name": "uThermal 2v2 Circuit: Last Chance Qualifiers 2025",
+    "liquipedia_slug": "UThermal_2v2_Circuit/Last_Chance_Qualifiers",
+    "date": "2025-06-20",
+    "prize_pool": null,
+    "format": "2v2 Playoffs",
+    "maps": [
+      "Arctic Flowers",
+      "Breakwater",
+      "Crimson Research Lab",
+      "Emerald City",
+      "Reclamation LE",
+      "Rhoskallian",
+      "Rohana",
+      "Undercurrent",
+      "Yellowjacket"
+    ]
+  },
+  "matches": [
+    {
+      "match_id": "R1M1",
+      "round": "Round of 16",
+      "team1": {
+        "player1": {
+          "name": "Gerald"
+        },
+        "player2": {
+          "name": "Nicoract"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "MaxGio"
+        },
+        "player2": {
+          "name": "Ryoku"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 0,
+      "best_of": 3,
+      "date": null,
+      "games": [],
+      "tournament_slug": "UThermal_2v2_Circuit/Last_Chance_Qualifiers"
+    },
+    {
+      "match_id": "R1M2",
+      "round": "Round of 16",
+      "team1": {
+        "player1": {
+          "name": "FIGARO"
+        },
+        "player2": {
+          "name": "RiSky"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Moja"
+        },
+        "player2": {
+          "name": "OpTiMiStC"
+        }
+      },
+      "team1_score": 0,
+      "team2_score": 2,
+      "best_of": 3,
+      "date": null,
+      "games": [],
+      "tournament_slug": "UThermal_2v2_Circuit/Last_Chance_Qualifiers"
+    },
+    {
+      "match_id": "R1M3",
+      "round": "Round of 16",
+      "team1": {
+        "player1": {
+          "name": "Replicant"
+        },
+        "player2": {
+          "name": "Tiger"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "ErebusBlack"
+        },
+        "player2": {
+          "name": "Goswser"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 0,
+      "best_of": 3,
+      "date": null,
+      "games": [],
+      "tournament_slug": "UThermal_2v2_Circuit/Last_Chance_Qualifiers"
+    },
+    {
+      "match_id": "R1M4",
+      "round": "Round of 16",
+      "team1": {
+        "player1": {
+          "name": "Jumy"
+        },
+        "player2": {
+          "name": "YoungYakov"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Sivean"
+        },
+        "player2": {
+          "name": "armonox"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 0,
+      "best_of": 3,
+      "date": null,
+      "games": [],
+      "tournament_slug": "UThermal_2v2_Circuit/Last_Chance_Qualifiers"
+    },
+    {
+      "match_id": "R1M5",
+      "round": "Round of 16",
+      "team1": {
+        "player1": {
+          "name": "DIMAGA"
+        },
+        "player2": {
+          "name": "Starfish"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "FightingFrog"
+        },
+        "player2": {
+          "name": "HolyHit"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 0,
+      "best_of": 3,
+      "date": null,
+      "games": [],
+      "tournament_slug": "UThermal_2v2_Circuit/Last_Chance_Qualifiers"
+    },
+    {
+      "match_id": "R1M6",
+      "round": "Round of 16",
+      "team1": {
+        "player1": {
+          "name": "DnS"
+        },
+        "player2": {
+          "name": "Kelazhur"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Aelith"
+        },
+        "player2": {
+          "name": "Elimisu"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 0,
+      "best_of": 3,
+      "date": null,
+      "games": [],
+      "tournament_slug": "UThermal_2v2_Circuit/Last_Chance_Qualifiers"
+    },
+    {
+      "match_id": "R1M7",
+      "round": "Round of 16",
+      "team1": {
+        "player1": {
+          "name": "Krystianer"
+        },
+        "player2": {
+          "name": "arrogfire"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Dolan"
+        },
+        "player2": {
+          "name": "Hardwell"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 0,
+      "best_of": 3,
+      "date": null,
+      "games": [],
+      "tournament_slug": "UThermal_2v2_Circuit/Last_Chance_Qualifiers"
+    },
+    {
+      "match_id": "R2M1",
+      "round": "Quarterfinals",
+      "team1": {
+        "player1": {
+          "name": "Gerald"
+        },
+        "player2": {
+          "name": "Nicoract"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Moja"
+        },
+        "player2": {
+          "name": "OpTiMiStC"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 0,
+      "best_of": 3,
+      "date": null,
+      "games": [],
+      "tournament_slug": "UThermal_2v2_Circuit/Last_Chance_Qualifiers"
+    },
+    {
+      "match_id": "R2M2",
+      "round": "Quarterfinals",
+      "team1": {
+        "player1": {
+          "name": "DefMars"
+        },
+        "player2": {
+          "name": "ZaRDieNT"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Replicant"
+        },
+        "player2": {
+          "name": "Tiger"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 0,
+      "best_of": 3,
+      "date": null,
+      "games": [],
+      "tournament_slug": "UThermal_2v2_Circuit/Last_Chance_Qualifiers"
+    },
+    {
+      "match_id": "R2M3",
+      "round": "Quarterfinals",
+      "team1": {
+        "player1": {
+          "name": "Jumy"
+        },
+        "player2": {
+          "name": "YoungYakov"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "DIMAGA"
+        },
+        "player2": {
+          "name": "Starfish"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 0,
+      "best_of": 3,
+      "date": null,
+      "games": [],
+      "tournament_slug": "UThermal_2v2_Circuit/Last_Chance_Qualifiers"
+    },
+    {
+      "match_id": "R2M4",
+      "round": "Quarterfinals",
+      "team1": {
+        "player1": {
+          "name": "DnS"
+        },
+        "player2": {
+          "name": "Kelazhur"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Krystianer"
+        },
+        "player2": {
+          "name": "arrogfire"
+        }
+      },
+      "team1_score": 0,
+      "team2_score": 2,
+      "best_of": 3,
+      "date": null,
+      "games": [],
+      "tournament_slug": "UThermal_2v2_Circuit/Last_Chance_Qualifiers"
+    },
+    {
+      "match_id": "R3M1",
+      "round": "Semifinals",
+      "team1": {
+        "player1": {
+          "name": "Gerald"
+        },
+        "player2": {
+          "name": "Nicoract"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "DefMars"
+        },
+        "player2": {
+          "name": "ZaRDieNT"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 0,
+      "best_of": 3,
+      "date": null,
+      "games": [],
+      "tournament_slug": "UThermal_2v2_Circuit/Last_Chance_Qualifiers"
+    },
+    {
+      "match_id": "R3M2",
+      "round": "Semifinals",
+      "team1": {
+        "player1": {
+          "name": "Jumy"
+        },
+        "player2": {
+          "name": "YoungYakov"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Krystianer"
+        },
+        "player2": {
+          "name": "arrogfire"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 1,
+      "best_of": 3,
+      "date": null,
+      "games": [],
+      "tournament_slug": "UThermal_2v2_Circuit/Last_Chance_Qualifiers"
+    },
+    {
+      "match_id": "R4M1",
+      "round": "Grand Final",
+      "team1": {
+        "player1": {
+          "name": "Gerald"
+        },
+        "player2": {
+          "name": "Nicoract"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Jumy"
+        },
+        "player2": {
+          "name": "YoungYakov"
+        }
+      },
+      "team1_score": 1,
+      "team2_score": 3,
+      "best_of": 5,
+      "date": "2025-06-20 21:00",
+      "games": [
+        {
+          "map": "Crimson Research Lab",
+          "winner": 1
+        },
+        {
+          "map": "Emerald City",
+          "winner": 2
+        },
+        {
+          "map": "Arctic Flowers",
+          "winner": 2
+        },
+        {
+          "map": "Breakwater",
+          "winner": 2
+        }
+      ],
+      "tournament_slug": "UThermal_2v2_Circuit/Last_Chance_Qualifiers"
+    }
+  ]
+}
