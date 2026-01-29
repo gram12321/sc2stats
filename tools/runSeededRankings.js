@@ -52,15 +52,15 @@ const ROUND_ORDER = {
 async function loadTournamentFiles() {
   const files = await readdir(outputDir);
   const jsonFiles = files.filter(f => f.endsWith('.json') && f !== 'player_defaults.json');
-  
+
   const tournaments = [];
-  
+
   for (const file of jsonFiles) {
     try {
       const filePath = join(outputDir, file);
       const content = await readFile(filePath, 'utf-8');
       const data = JSON.parse(content);
-      
+
       if (data.matches && Array.isArray(data.matches)) {
         tournaments.push(data);
       }
@@ -68,7 +68,7 @@ async function loadTournamentFiles() {
       console.error(`Error processing ${file}:`, err);
     }
   }
-  
+
   return tournaments;
 }
 
@@ -77,11 +77,11 @@ async function loadTournamentFiles() {
  */
 function collectMatchesFromTournaments(tournaments) {
   const allMatches = [];
-  
+
   for (const tournament of tournaments) {
     const tournamentDate = tournament.tournament?.date || null;
     const tournamentSlug = tournament.tournament?.liquipedia_slug || null;
-    
+
     for (const match of tournament.matches) {
       if (hasValidScores(match)) {
         allMatches.push({
@@ -92,7 +92,7 @@ function collectMatchesFromTournaments(tournaments) {
       }
     }
   }
-  
+
   return allMatches;
 }
 
@@ -109,7 +109,7 @@ function sortAllMatches(matches, reverse = false) {
         return dateA.getTime() - dateB.getTime();
       }
     }
-    
+
     // Then by match date within tournament
     if (a.date && b.date) {
       const dateA = new Date(a.date);
@@ -122,18 +122,18 @@ function sortAllMatches(matches, reverse = false) {
     } else if (!a.date && b.date) {
       return 1;
     }
-    
+
     // Then by round order
     const roundA = ROUND_ORDER[a.round] || 999;
     const roundB = ROUND_ORDER[b.round] || 999;
     if (roundA !== roundB) {
       return roundA - roundB;
     }
-    
+
     // Finally by match_id
     return (a.match_id || '').localeCompare(b.match_id || '');
   });
-  
+
   return reverse ? sorted.reverse() : sorted;
 }
 
@@ -142,16 +142,16 @@ function sortAllMatches(matches, reverse = false) {
  */
 function getAverageOpponentRating(opponentNames, playerStats) {
   if (opponentNames.length === 0) return 0;
-  
+
   const ratings = opponentNames
     .map(name => {
       const stats = playerStats.get(name);
       return stats ? stats.points : 0;
     })
     .filter(rating => rating !== undefined);
-  
+
   if (ratings.length === 0) return 0;
-  
+
   return ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length;
 }
 
@@ -165,9 +165,9 @@ function getAverageOpponentRating(opponentNames, playerStats) {
  */
 function calculateRankingsFromMatches(sortedMatches, seedRatings = null, passName = '') {
   const playerStats = new Map();
-  
+
   console.log(`\n${passName}: Processing ${sortedMatches.length} matches`);
-  
+
   for (const match of sortedMatches) {
     // Determine winner
     const { team1Won, team2Won } = determineMatchOutcome(
@@ -227,7 +227,7 @@ function calculateRankingsFromMatches(sortedMatches, seedRatings = null, passNam
   }
 
   console.log(`${passName}: Completed. ${playerStats.size} players processed.`);
-  
+
   return playerStats;
 }
 
@@ -249,9 +249,9 @@ function normalizeTeamKey(player1, player2) {
  */
 function calculateTeamRankingsFromMatches(sortedMatches, seedRatings = null, passName = '') {
   const teamStats = new Map();
-  
+
   console.log(`\n${passName}: Processing ${sortedMatches.length} matches`);
-  
+
   for (const match of sortedMatches) {
     // Get player names for each team
     const team1Player1 = match.team1?.player1?.name;
@@ -313,7 +313,7 @@ function calculateTeamRankingsFromMatches(sortedMatches, seedRatings = null, pas
     // Get current team ratings
     const team1Stats = teamStats.get(team1Key);
     const team2Stats = teamStats.get(team2Key);
-    
+
     const team1Rating = team1Stats.points;
     const team2Rating = team2Stats.points;
 
@@ -334,7 +334,7 @@ function calculateTeamRankingsFromMatches(sortedMatches, seedRatings = null, pas
   }
 
   console.log(`${passName}: Completed. ${teamStats.size} teams processed.`);
-  
+
   return teamStats;
 }
 
@@ -350,38 +350,57 @@ function extractRatings(statsMap) {
 }
 
 /**
+ * Calculate average of two rating maps
+ */
+function calculateAverageRatings(ratings1, ratings2) {
+  const averageRatings = new Map();
+  // Use keys from both maps (though they should be identical)
+  const allKeys = new Set([...ratings1.keys(), ...ratings2.keys()]);
+
+  for (const key of allKeys) {
+    const val1 = ratings1.get(key) || 0;
+    const val2 = ratings2.get(key) || 0;
+    averageRatings.set(key, (val1 + val2) / 2);
+  }
+
+  return averageRatings;
+}
+
+/**
  * Run three-pass seeding process for player rankings
  */
 async function runSeededPlayerRankings(matches) {
   console.log('\n' + '='.repeat(80));
   console.log('PLAYER RANKINGS - THREE-PASS SEEDING');
   console.log('='.repeat(80));
-  
+
   // Sort matches chronologically
   const sortedMatches = sortAllMatches(matches, false);
   const reverseSortedMatches = sortAllMatches(matches, true);
-  
+
   // Pass 1: Forward chronological
   console.log('\n>>> PASS 1: Forward Chronological <<<');
   const pass1Stats = calculateRankingsFromMatches(sortedMatches, null, 'Pass 1');
   const pass1Ratings = extractRatings(pass1Stats);
-  
+
   // Pass 2: Reverse chronological (not used for seeding, just for analysis)
   console.log('\n>>> PASS 2: Reverse Chronological <<<');
   const pass2Stats = calculateRankingsFromMatches(reverseSortedMatches, null, 'Pass 2');
   const pass2Ratings = extractRatings(pass2Stats);
-  
+
   // Pass 3: Forward chronological with Pass 1 seeds
-  console.log('\n>>> PASS 3: Forward Chronological with Seeding <<<');
-  const pass3Stats = calculateRankingsFromMatches(sortedMatches, pass1Ratings, 'Pass 3');
-  
+  // Pass 3: Forward chronological with Averaged seeds
+  console.log('\n>>> PASS 3: Forward Chronological with Averaged Seeding <<<');
+  const averageRatings = calculateAverageRatings(pass1Ratings, pass2Ratings);
+  const pass3Stats = calculateRankingsFromMatches(sortedMatches, averageRatings, 'Pass 3');
+
   // Sort and display results
   const finalRankings = sortRankings(Array.from(pass3Stats.values()));
-  
+
   console.log('\n' + '='.repeat(80));
   console.log('FINAL SEEDED PLAYER RANKINGS');
   console.log('='.repeat(80) + '\n');
-  
+
   finalRankings.forEach((player, index) => {
     const pass1Rating = pass1Ratings.get(player.name) || 0;
     const pass2Rating = pass2Ratings.get(player.name) || 0;
@@ -393,7 +412,7 @@ async function runSeededPlayerRankings(matches) {
       `Pass2: ${pass2Rating.toFixed(1).padStart(7)})`
     );
   });
-  
+
   return { rankings: finalRankings, pass1Ratings, pass2Ratings };
 }
 
@@ -404,35 +423,37 @@ async function runSeededTeamRankings(matches) {
   console.log('\n' + '='.repeat(80));
   console.log('TEAM RANKINGS - THREE-PASS SEEDING');
   console.log('='.repeat(80));
-  
+
   // Sort matches chronologically
   const sortedMatches = sortAllMatches(matches, false);
   const reverseSortedMatches = sortAllMatches(matches, true);
-  
+
   // Pass 1: Forward chronological
   console.log('\n>>> PASS 1: Forward Chronological <<<');
   const pass1Stats = calculateTeamRankingsFromMatches(sortedMatches, null, 'Pass 1');
   const pass1Ratings = extractRatings(pass1Stats);
-  
+
   // Pass 2: Reverse chronological (not used for seeding, just for analysis)
   console.log('\n>>> PASS 2: Reverse Chronological <<<');
   const pass2Stats = calculateTeamRankingsFromMatches(reverseSortedMatches, null, 'Pass 2');
   const pass2Ratings = extractRatings(pass2Stats);
-  
+
   // Pass 3: Forward chronological with Pass 1 seeds
-  console.log('\n>>> PASS 3: Forward Chronological with Seeding <<<');
-  const pass3Stats = calculateTeamRankingsFromMatches(sortedMatches, pass1Ratings, 'Pass 3');
-  
+  // Pass 3: Forward chronological with Averaged seeds
+  console.log('\n>>> PASS 3: Forward Chronological with Averaged Seeding <<<');
+  const averageRatings = calculateAverageRatings(pass1Ratings, pass2Ratings);
+  const pass3Stats = calculateTeamRankingsFromMatches(sortedMatches, averageRatings, 'Pass 3');
+
   // Sort and display results
   const finalRankings = sortRankings(
     Array.from(pass3Stats.values()),
     (team) => `${team.player1}+${team.player2}`
   );
-  
+
   console.log('\n' + '='.repeat(80));
   console.log('FINAL SEEDED TEAM RANKINGS');
   console.log('='.repeat(80) + '\n');
-  
+
   finalRankings.forEach((team, index) => {
     const teamKey = `${team.player1}+${team.player2}`;
     const pass1Rating = pass1Ratings.get(teamKey) || 0;
@@ -445,7 +466,7 @@ async function runSeededTeamRankings(matches) {
       `Pass2: ${pass2Rating.toFixed(1).padStart(7)})`
     );
   });
-  
+
   return { rankings: finalRankings, pass1Ratings, pass2Ratings };
 }
 
@@ -457,25 +478,25 @@ async function main() {
     console.log('Loading tournament data...');
     const tournaments = await loadTournamentFiles();
     console.log(`Loaded ${tournaments.length} tournament files`);
-    
+
     const allMatches = collectMatchesFromTournaments(tournaments);
     console.log(`Collected ${allMatches.length} valid matches`);
-    
+
     if (allMatches.length === 0) {
       console.error('No matches found to process');
       return;
     }
-    
+
     // Run seeding for player rankings
     const playerResults = await runSeededPlayerRankings(allMatches);
-    
+
     // Run seeding for team rankings
     const teamResults = await runSeededTeamRankings(allMatches);
-    
+
     // Save results to JSON files for API consumption
     const seededPlayerRankingsFile = join(outputDir, 'seeded_player_rankings.json');
     const seededTeamRankingsFile = join(outputDir, 'seeded_team_rankings.json');
-    
+
     // Format player rankings for API (match the structure expected by UI)
     const playerRankingsData = playerResults.rankings.map(player => ({
       name: player.name,
@@ -485,7 +506,7 @@ async function main() {
       points: player.points,
       confidence: player.confidence || 0
     }));
-    
+
     // Format team rankings for API (match the structure expected by UI)
     const teamRankingsData = teamResults.rankings.map(team => ({
       player1: team.player1,
@@ -496,11 +517,11 @@ async function main() {
       points: team.points,
       confidence: team.confidence || 0
     }));
-    
+
     // Save to files
     await writeFile(seededPlayerRankingsFile, JSON.stringify(playerRankingsData, null, 2), 'utf-8');
     await writeFile(seededTeamRankingsFile, JSON.stringify(teamRankingsData, null, 2), 'utf-8');
-    
+
     console.log('\n' + '='.repeat(80));
     console.log('Seeding process complete!');
     console.log('='.repeat(80));
@@ -510,7 +531,7 @@ async function main() {
     console.log('\nThese rankings are now available via API endpoints:');
     console.log('  - GET /api/seeded-player-rankings');
     console.log('  - GET /api/seeded-team-rankings');
-    
+
   } catch (error) {
     console.error('Error running seeded rankings:', error);
     throw error;

@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { formatRankingPoints } from '../lib/utils';
 import { Race } from '../types/tournament';
 import { getPlayerDefaults } from '../lib/playerDefaults';
 import { MatchHistoryItem } from '../components/MatchHistoryItem';
@@ -180,12 +179,12 @@ export function MatchesList({ onBack }: MatchesListProps) {
   };
 
   // Extract race changes from match data
-  const extractRaceChanges = (match: MatchHistory) => {
+  const extractRaceChanges = (match: any) => {
     if (!match.race_impacts) return null;
     const raceChanges: Array<{ race: string; change: number }> = [];
     const seenRaces = new Set<string>();
     
-    Object.values(match.race_impacts).forEach(impact => {
+    Object.values(match.race_impacts).forEach((impact: any) => {
       // Get race abbreviations
       const getRaceAbbrev = (race: string) => {
         if (race === 'Random') return 'R';
@@ -208,12 +207,8 @@ export function MatchesList({ onBack }: MatchesListProps) {
     return raceChanges.length > 0 ? raceChanges : null;
   };
 
-  const getPlayerImpact = (match: MatchHistory, playerName: string) => {
+  const getPlayerImpact = (match: any, playerName: string) => {
     return match.player_impacts?.[playerName];
-  };
-
-  const getPlayerRank = (playerName: string) => {
-    return playerRankings[playerName]?.rank || null;
   };
 
   const getTeamRank = (player1: string, player2: string) => {
@@ -221,15 +216,10 @@ export function MatchesList({ onBack }: MatchesListProps) {
     return teamRankings[teamKey] || null;
   };
 
-  const getTeamImpact = (match: MatchHistory, player1: string, player2: string) => {
+  const getTeamImpact = (match: any, player1: string, player2: string) => {
     if (!match.team_impacts) return null;
     const teamKey = normalizeTeamKey(player1, player2);
     return match.team_impacts[teamKey] || null;
-  };
-
-  const getRaceAbbrev = (race: Race | null | undefined): string => {
-    if (!race) return '';
-    return race === 'Random' ? 'R' : race[0];
   };
 
   return (

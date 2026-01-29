@@ -23,7 +23,7 @@ export function getProvisionalKFactor(matchCount) {
   if (matchCount <= 5) return 80;
   if (matchCount <= 10) return 48;
   if (matchCount <= 20) return 40;
-  
+
   // Adaptive K-factor after provisional period
   const adaptiveK = 32 * (1 + 3 / matchCount);
   return Math.min(40, adaptiveK);
@@ -45,16 +45,16 @@ export function updateConfidence(stats, expectedWin, actualWin) {
   if (typeof stats.confidence !== 'number' || isNaN(stats.confidence)) {
     stats.confidence = 0;
   }
-  
+
   // Determine if prediction was correct based on expected outcome
   // If expected win probability > 0.5, we predicted a win
   // If expected win probability < 0.5, we predicted a loss
   const predictedWin = expectedWin > 0.5;
   const isCorrect = predictedWin === actualWin;
-  
+
   const baseChange = 5; // 5% base change
   let change;
-  
+
   if (isCorrect) {
     // Increase confidence: faster when low, slower when high
     change = baseChange * (1 - stats.confidence / 100);
@@ -62,14 +62,14 @@ export function updateConfidence(stats, expectedWin, actualWin) {
     // Decrease confidence: slower when low, faster when high
     change = -baseChange * (stats.confidence / 100);
   }
-  
+
   // Ensure change is a valid number
   if (isNaN(change) || !isFinite(change)) {
     change = 0;
   }
-  
+
   stats.confidence = Math.max(0, Math.min(100, stats.confidence + change));
-  
+
   // Final safety check
   if (isNaN(stats.confidence) || !isFinite(stats.confidence)) {
     stats.confidence = 0;
@@ -103,32 +103,32 @@ export function applyConfidenceAdjustment(baseK, confidence) {
  */
 export function calculatePopulationStats(playerStats) {
   // Convert Map to Array if needed
-  const ratings = playerStats instanceof Map 
+  const ratings = playerStats instanceof Map
     ? Array.from(playerStats.values()).map(s => s.points)
     : playerStats.map(s => s.points);
-  
+
   if (ratings.length === 0) {
     // Default fallback if no players
     return { mean: 0, stdDev: 350 };
   }
-  
+
   // Calculate mean
   const mean = ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length;
-  
+
   // Calculate variance
   const variance = ratings.reduce((sum, rating) => {
     const diff = rating - mean;
     return sum + (diff * diff);
   }, 0) / ratings.length;
-  
+
   // Calculate standard deviation
   const stdDev = Math.sqrt(variance);
-  
+
   // Ensure minimum std dev to avoid division by zero
   // Use 350 as minimum (fallback to old system if population is too uniform)
   const minStdDev = 50; // Minimum reasonable std dev
   const finalStdDev = Math.max(stdDev, minStdDev);
-  
+
   return { mean, stdDev: finalStdDev };
 }
 
@@ -197,6 +197,7 @@ export function initializeStatsWithSeed(name, seedRating, additionalFields = {})
     losses: 0,
     points: seedRating,
     confidence: 0, // Confidence starts at 0% even with seed
+    isSeeded: true,
     ...additionalFields
   };
 }
@@ -221,53 +222,54 @@ export function initializeStatsWithSeed(name, seedRating, additionalFields = {})
 export function updateStatsForMatch(stats, won, lost, opponentRating, populationStdDev = 350, opponentConfidence = 0, currentRating = null, populationMean = null) {
   // Check if this is the first match (before incrementing)
   const isFirstMatch = stats.matches === 0;
-  
+
   // Increment match count BEFORE calculating K-factor (uses current match count)
   stats.matches++;
-  
+
   // Initialize confidence if not present or invalid
   if (typeof stats.confidence !== 'number' || isNaN(stats.confidence)) {
     stats.confidence = 0;
   }
-  
+
   // Get base K-factor from provisional system
   const baseK = getProvisionalKFactor(stats.matches);
-  
+
   // Apply confidence adjustment individually
   const adjustedK = applyConfidenceAdjustment(baseK, stats.confidence);
-  
+
   // Calculate expected win probability using population-based scale
   // For first match: use population mean instead of current rating (which might be 0 or mean)
   // This ensures reasonable expected win probabilities for new players
   // Use explicit currentRating if provided (for zero-sum calculations)
+  // CRITICAL: If player has a seed (isSeeded), use their seed rating (stats.points) instead of populationMean
   let ratingToUse;
   if (currentRating !== null) {
     ratingToUse = currentRating;
-  } else if (isFirstMatch && populationMean !== null) {
-    // First match: use population mean for expected win calculation
+  } else if (isFirstMatch && populationMean !== null && !stats.isSeeded) {
+    // First match AND NOT SEEDED: use population mean
     ratingToUse = populationMean;
   } else {
     ratingToUse = stats.points;
   }
-  
+
   const expectedWin = predictWinProbability(ratingToUse, opponentRating, populationStdDev);
-  
+
   // Calculate rating change
   const ratingChange = calculateRatingChange(expectedWin, won, adjustedK);
-  
+
   // Update confidence based on prediction accuracy
   updateConfidence(stats, expectedWin, won);
-  
+
   // Update stats
   if (won) {
     stats.wins++;
   } else if (lost) {
     stats.losses++;
   }
-  
+
   // Update points based on prediction performance
   stats.points += ratingChange;
-  
+
   // Return the rating change and calculation details for tracking purposes
   return {
     ratingChange,

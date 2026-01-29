@@ -236,16 +236,6 @@ export function RaceRankings({ onBack }: RaceRankingsProps) {
     }
   };
 
-  const getFullRaceName = (abbr: string) => {
-    const raceMap: Record<string, string> = {
-      'P': 'Protoss',
-      'T': 'Terran',
-      'Z': 'Zerg',
-      'R': 'Random'
-    };
-    return raceMap[abbr] || abbr;
-  };
-
   const loadMatchHistory = async (matchup: RaceRanking, isCombined: boolean = false) => {
     try {
       setIsLoadingMatches(true);
@@ -326,24 +316,19 @@ export function RaceRankings({ onBack }: RaceRankingsProps) {
     return [player1, player2].filter(Boolean).sort().join('+');
   };
 
-  const getPlayerRank = (name: string | null) => {
-    if (!name) return null;
-    return playerRankings[name]?.rank || null;
-  };
-
   const getTeamRank = (player1: string | null, player2: string | null) => {
     if (!player1 || !player2) return null;
     const teamKey = normalizeTeamKey(player1, player2);
     return teamRankings[teamKey] || null;
   };
 
-  const getTeamImpact = (match: MatchHistoryEntry, player1: string | null, player2: string | null) => {
+  const getTeamImpact = (match: any, player1: string | null, player2: string | null) => {
     if (!match.team_impacts || !player1 || !player2) return null;
     const teamKey = normalizeTeamKey(player1, player2);
     return match.team_impacts[teamKey] || null;
   };
 
-  const getPlayerImpact = (match: MatchHistoryEntry, playerName: string | null) => {
+  const getPlayerImpact = (match: any, playerName: string | null) => {
     if (!match.player_impacts || !playerName) return null;
     return match.player_impacts[playerName] || null;
   };
@@ -370,11 +355,6 @@ export function RaceRankings({ onBack }: RaceRankingsProps) {
       team_impacts: match.team_impacts,
       race_impacts: match.race_impacts
     };
-  };
-
-  const getRaceAbbrev = (race: string | null | undefined): string => {
-    if (!race) return '';
-    return race === 'Random' ? 'R' : race[0];
   };
 
   const formatDate = (dateStr: string | null) => {
@@ -682,7 +662,7 @@ export function RaceRankings({ onBack }: RaceRankingsProps) {
                         </td>
                       </tr>
                     ) : (
-                      sortedRankings.map((matchup, index) => {
+                      sortedRankings.map((matchup) => {
                         const rank = rankings.findIndex(m => m.name === matchup.name) + 1;
                         return (
                           <tr
@@ -856,7 +836,7 @@ export function RaceRankings({ onBack }: RaceRankingsProps) {
                         
                         // Find the first race_impact involving this race
                         const raceImpacts = match.race_impacts || {};
-                        for (const [key, impact] of Object.entries(raceImpacts)) {
+                        for (const [, impact] of Object.entries(raceImpacts)) {
                           if (impact.race1 === selectedMatchup.race1 || impact.race2 === selectedMatchup.race1) {
                             ratingChange = impact.race1 === selectedMatchup.race1 ? impact.ratingChange : -impact.ratingChange;
                             break;
@@ -917,8 +897,8 @@ export function RaceRankings({ onBack }: RaceRankingsProps) {
                           showRaceInfo={true}
                           raceInfo={raceInfo}
                           normalizeTeamKey={normalizeTeamKey}
-                          getTeamImpact={(match, player1, player2) => getTeamImpact(match as MatchHistoryEntry, player1, player2)}
-                          getPlayerImpact={(match, playerName) => getPlayerImpact(match as MatchHistoryEntry, playerName)}
+                          getTeamImpact={(match, player1, player2) => getTeamImpact(match as any, player1, player2)}
+                          getPlayerImpact={(match, playerName) => getPlayerImpact(match as any, playerName)}
                           formatDate={formatDate}
                         />
                       );
@@ -932,3 +912,5 @@ export function RaceRankings({ onBack }: RaceRankingsProps) {
     </div>
   );
 }
+
+

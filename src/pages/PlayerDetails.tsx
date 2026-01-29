@@ -173,22 +173,18 @@ export function PlayerDetails({ playerName, onBack }: PlayerDetailsProps) {
     return [player1, player2].filter(Boolean).sort().join('+');
   };
 
-  const getPlayerRank = (name: string) => {
-    return playerRankings[name]?.rank || null;
-  };
-
   const getTeamRank = (player1: string, player2: string) => {
     const teamKey = normalizeTeamKey(player1, player2);
     return teamRankings[teamKey] || null;
   };
 
-  const getTeamImpact = (match: PlayerMatch, player1: string, player2: string) => {
+  const getTeamImpact = (match: any, player1: string, player2: string) => {
     if (!match.team_impacts) return null;
     const teamKey = normalizeTeamKey(player1, player2);
     return match.team_impacts[teamKey] || null;
   };
 
-  const getPlayerImpact = (match: PlayerMatch, playerName: string) => {
+  const getPlayerImpact = (match: any, playerName: string) => {
     return match.player_impacts?.[playerName] || null;
   };
 
@@ -202,12 +198,12 @@ export function PlayerDetails({ playerName, onBack }: PlayerDetailsProps) {
   };
 
   // Extract race changes from match data
-  const extractRaceChanges = (match: PlayerMatch) => {
+  const extractRaceChanges = (match: any) => {
     if (!match.race_impacts) return null;
     const raceChanges: Array<{ race: string; change: number }> = [];
     const seenRaces = new Set<string>();
     
-    Object.values(match.race_impacts).forEach(impact => {
+    Object.values(match.race_impacts).forEach((impact: any) => {
       const getRaceAbbrev = (race: string) => {
         if (race === 'Random') return 'R';
         return race[0];

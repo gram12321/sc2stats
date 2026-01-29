@@ -1,5 +1,5 @@
 import express from 'express';
-import { readdir, readFile, writeFile, mkdir } from 'fs/promises';
+import { readdir, readFile, writeFile, mkdir, appendFile } from 'fs/promises';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import cors from 'cors';
@@ -22,7 +22,7 @@ app.get('/api/tournaments', async (req, res) => {
   try {
     const files = await readdir(outputDir);
     const jsonFiles = files.filter(f => f.endsWith('.json') && f !== 'player_defaults.json');
-    
+
     const tournaments = await Promise.all(
       jsonFiles.map(async (file) => {
         try {
@@ -31,21 +31,23 @@ app.get('/api/tournaments', async (req, res) => {
           const data = JSON.parse(content);
           return {
             filename: file,
-            name: data.tournament?.name || file.replace('.json', ''),
-            slug: data.tournament?.liquipedia_slug || file.replace('.json', ''),
-            date: data.tournament?.date || null,
-            matchCount: data.matches?.length || 0
+            name: data?.tournament?.name || file.replace('.json', ''),
+            slug: data?.tournament?.liquipedia_slug || file.replace('.json', ''),
+            date: data?.tournament?.date || null,
+            matchCount: data?.matches?.length || 0
           };
         } catch (err) {
           console.error(`Error reading ${file}:`, err);
+          await appendFile(join(__dirname, '..', 'server_errors.log'), `${new Date().toISOString()} Error reading ${file}: ${err.stack}\n`).catch(() => { });
           return null;
         }
       })
     );
-    
+
     res.json(tournaments.filter(t => t !== null));
   } catch (error) {
     console.error('Error listing tournaments:', error);
+    await appendFile(join(__dirname, '..', 'server_errors.log'), `${new Date().toISOString()} Error listing tournaments: ${error.stack}\n`).catch(() => { });
     res.status(500).json({ error: 'Failed to list tournaments' });
   }
 });
@@ -69,20 +71,20 @@ app.post('/api/tournaments/:filename', async (req, res) => {
   try {
     const filename = decodeURIComponent(req.params.filename);
     const data = req.body;
-    
+
     console.log(`Saving tournament: ${filename}`);
-    
+
     // Validate data structure
     if (!data.tournament || !data.matches) {
       console.error('Invalid data structure:', { hasTournament: !!data.tournament, hasMatches: !!data.matches });
       return res.status(400).json({ error: 'Invalid tournament data format' });
     }
-    
+
     const filePath = join(outputDir, filename);
     console.log(`Writing to: ${filePath}`);
-    
+
     await writeFile(filePath, JSON.stringify(data, null, 2), 'utf-8');
-    
+
     console.log(`Successfully saved tournament: ${filename}`);
     res.json({ success: true, message: 'Tournament saved successfully' });
   } catch (error) {
@@ -96,15 +98,15 @@ app.get('/api/players', async (req, res) => {
   try {
     const files = await readdir(outputDir);
     const jsonFiles = files.filter(f => f.endsWith('.json') && f !== 'player_defaults.json');
-    
+
     const playerSet = new Set();
-    
+
     for (const file of jsonFiles) {
       try {
         const filePath = join(outputDir, file);
         const content = await readFile(filePath, 'utf-8');
         const data = JSON.parse(content);
-        
+
         if (data.matches && Array.isArray(data.matches)) {
           data.matches.forEach(match => {
             if (match.team1?.player1?.name) playerSet.add(match.team1.player1.name);
@@ -117,7 +119,7 @@ app.get('/api/players', async (req, res) => {
         console.error(`Error reading ${file}:`, err);
       }
     }
-    
+
     const players = Array.from(playerSet).sort();
     res.json(players);
   } catch (error) {
@@ -151,13 +153,13 @@ app.get('/api/player-defaults', async (req, res) => {
 app.post('/api/player-defaults', async (req, res) => {
   try {
     const defaults = req.body;
-    
+
     // Ensure output directory exists
     await mkdir(outputDir, { recursive: true });
-    
+
     // Write to JSON file
     await writeFile(playerDefaultsFile, JSON.stringify(defaults, null, 2), 'utf-8');
-    
+
     res.json({ success: true });
   } catch (error) {
     console.error('Error saving player defaults:', error);
@@ -170,7 +172,7 @@ app.put('/api/player-defaults/:playerName', async (req, res) => {
   try {
     const playerName = decodeURIComponent(req.params.playerName);
     const { race } = req.body;
-    
+
     // Read existing defaults
     let defaults = {};
     try {
@@ -179,20 +181,20 @@ app.put('/api/player-defaults/:playerName', async (req, res) => {
     } catch (err) {
       if (err.code !== 'ENOENT') throw err;
     }
-    
+
     // Update or delete
     if (race === null || race === '') {
       delete defaults[playerName];
     } else {
       defaults[playerName] = race;
     }
-    
+
     // Ensure output directory exists
     await mkdir(outputDir, { recursive: true });
-    
+
     // Write back
     await writeFile(playerDefaultsFile, JSON.stringify(defaults, null, 2), 'utf-8');
-    
+
     res.json({ success: true });
   } catch (error) {
     console.error('Error updating player default:', error);
@@ -282,7 +284,7 @@ app.get('/api/race-matchup/:race1/:race2', async (req, res) => {
     const { matchHistory } = await calculateRaceRankings();
     const { matchHistory: teamMatchHistory } = await calculateTeamRankings();
     const { matchHistory: playerMatchHistory } = await calculateRankings();
-    
+
     // Create matchup key (e.g., "PvT")
     const raceAbbr = {
       'Protoss': 'P',
@@ -293,7 +295,7 @@ app.get('/api/race-matchup/:race1/:race2', async (req, res) => {
     const abbr1 = raceAbbr[race1] || race1[0];
     const abbr2 = raceAbbr[race2] || race2[0];
     const matchupKey = `${abbr1}v${abbr2}`;
-    
+
     // Create maps for quick lookup
     const teamMatchMap = new Map();
     if (teamMatchHistory) {
@@ -302,7 +304,7 @@ app.get('/api/race-matchup/:race1/:race2', async (req, res) => {
         teamMatchMap.set(key, match);
       });
     }
-    
+
     const playerMatchMap = new Map();
     if (playerMatchHistory) {
       playerMatchHistory.forEach(match => {
@@ -310,7 +312,7 @@ app.get('/api/race-matchup/:race1/:race2', async (req, res) => {
         playerMatchMap.set(key, match);
       });
     }
-    
+
     // Filter matches that have this matchup in race_impacts and merge team_impacts and player_impacts
     const matches = matchHistory.filter(match => {
       return match.race_impacts && match.race_impacts[matchupKey];
@@ -324,7 +326,7 @@ app.get('/api/race-matchup/:race1/:race2', async (req, res) => {
         player_impacts: playerMatch?.player_impacts || match.player_impacts
       };
     });
-    
+
     res.json(matches);
   } catch (error) {
     console.error('Error fetching race matchup matches:', error);
@@ -339,7 +341,7 @@ app.get('/api/race-combo/:race', async (req, res) => {
     const { matchHistory } = await calculateRaceRankings();
     const { matchHistory: teamMatchHistory } = await calculateTeamRankings();
     const { matchHistory: playerMatchHistory } = await calculateRankings();
-    
+
     // Create maps for quick lookup
     const teamMatchMap = new Map();
     if (teamMatchHistory) {
@@ -348,7 +350,7 @@ app.get('/api/race-combo/:race', async (req, res) => {
         teamMatchMap.set(key, match);
       });
     }
-    
+
     const playerMatchMap = new Map();
     if (playerMatchHistory) {
       playerMatchHistory.forEach(match => {
@@ -356,7 +358,7 @@ app.get('/api/race-combo/:race', async (req, res) => {
         playerMatchMap.set(key, match);
       });
     }
-    
+
     // Filter matches where the race appears in team1_races or team2_races and merge team_impacts and player_impacts
     const matches = matchHistory.filter(match => {
       const team1Races = match.team1_races || [];
@@ -372,7 +374,7 @@ app.get('/api/race-combo/:race', async (req, res) => {
         player_impacts: playerMatch?.player_impacts || match.player_impacts
       };
     });
-    
+
     res.json(matches);
   } catch (error) {
     console.error('Error fetching race combo matches:', error);
@@ -396,12 +398,12 @@ app.get('/api/team-race-matchup/:combo1/:combo2', async (req, res) => {
     const { matchHistory } = await calculateTeamRaceRankings();
     const { matchHistory: teamMatchHistory } = await calculateTeamRankings();
     const { matchHistory: playerMatchHistory } = await calculateRankings();
-    
+
     // Normalize combos (sort alphabetically to match internal key format)
     const sorted = [combo1, combo2].sort();
     const combo1Normalized = sorted[0];
     const combo2Normalized = sorted[1];
-    
+
     // Create maps for quick lookup
     const teamMatchMap = new Map();
     if (teamMatchHistory) {
@@ -410,7 +412,7 @@ app.get('/api/team-race-matchup/:combo1/:combo2', async (req, res) => {
         teamMatchMap.set(key, match);
       });
     }
-    
+
     const playerMatchMap = new Map();
     if (playerMatchHistory) {
       playerMatchHistory.forEach(match => {
@@ -418,7 +420,7 @@ app.get('/api/team-race-matchup/:combo1/:combo2', async (req, res) => {
         playerMatchMap.set(key, match);
       });
     }
-    
+
     // Filter matches for this matchup and merge team_impacts and player_impacts
     const matches = matchHistory.filter(match => {
       const matchTeam1Combo = match.team1_combo;
@@ -435,7 +437,7 @@ app.get('/api/team-race-matchup/:combo1/:combo2', async (req, res) => {
         player_impacts: playerMatch?.player_impacts || match.player_impacts
       };
     });
-    
+
     res.json(matches);
   } catch (error) {
     console.error('Error fetching team race matchup matches:', error);
@@ -450,7 +452,7 @@ app.get('/api/team-race-combo/:combo', async (req, res) => {
     const { matchHistory } = await calculateTeamRaceRankings();
     const { matchHistory: teamMatchHistory } = await calculateTeamRankings();
     const { matchHistory: playerMatchHistory } = await calculateRankings();
-    
+
     // Create maps for quick lookup
     const teamMatchMap = new Map();
     if (teamMatchHistory) {
@@ -459,7 +461,7 @@ app.get('/api/team-race-combo/:combo', async (req, res) => {
         teamMatchMap.set(key, match);
       });
     }
-    
+
     const playerMatchMap = new Map();
     if (playerMatchHistory) {
       playerMatchHistory.forEach(match => {
@@ -467,7 +469,7 @@ app.get('/api/team-race-combo/:combo', async (req, res) => {
         playerMatchMap.set(key, match);
       });
     }
-    
+
     // Filter matches where either team1_combo or team2_combo matches the combo and merge team_impacts and player_impacts
     const matches = matchHistory.filter(match => {
       return match.team1_combo === combo || match.team2_combo === combo;
@@ -481,7 +483,7 @@ app.get('/api/team-race-combo/:combo', async (req, res) => {
         player_impacts: playerMatch?.player_impacts || match.player_impacts
       };
     });
-    
+
     res.json(matches);
   } catch (error) {
     console.error('Error fetching team race combo matches:', error);
@@ -506,7 +508,7 @@ app.get('/api/match-history', async (req, res) => {
     const { player, team, tournament } = req.query;
     const { rankings, matchHistory } = await calculateRankings();
     const { matchHistory: teamMatchHistory } = await calculateTeamRankings();
-    
+
     // Create a map of team match history by match_id for quick lookup
     const teamMatchMap = new Map();
     if (teamMatchHistory) {
@@ -515,7 +517,7 @@ app.get('/api/match-history', async (req, res) => {
         teamMatchMap.set(key, match);
       });
     }
-    
+
     // Merge team_impacts into match history
     let filteredHistory = (matchHistory || []).map(match => {
       const key = `${match.tournament_slug}-${match.match_id}`;
@@ -528,7 +530,7 @@ app.get('/api/match-history', async (req, res) => {
       }
       return match;
     });
-    
+
     // Filter by player if specified
     if (player) {
       filteredHistory = filteredHistory.filter(match => {
@@ -541,14 +543,14 @@ app.get('/api/match-history', async (req, res) => {
         return players.includes(player);
       });
     }
-    
+
     // Filter by tournament if specified
     if (tournament) {
-      filteredHistory = filteredHistory.filter(match => 
+      filteredHistory = filteredHistory.filter(match =>
         match.tournament_slug === tournament
       );
     }
-    
+
     // Sort by newest first (reverse chronological)
     filteredHistory.sort((a, b) => {
       // First by tournament date
@@ -559,7 +561,7 @@ app.get('/api/match-history', async (req, res) => {
           return dateB.getTime() - dateA.getTime();
         }
       }
-      
+
       // Then by match date
       if (a.match_date && b.match_date) {
         const dateA = new Date(a.match_date);
@@ -568,11 +570,11 @@ app.get('/api/match-history', async (req, res) => {
           return dateB.getTime() - dateA.getTime();
         }
       }
-      
+
       // Finally by match_id (reverse)
       return (b.match_id || '').localeCompare(a.match_id || '');
     });
-    
+
     res.json(filteredHistory);
   } catch (error) {
     console.error('Error getting match history:', error);
@@ -586,12 +588,12 @@ app.get('/api/player/:playerName', async (req, res) => {
     const playerName = decodeURIComponent(req.params.playerName);
     const { rankings, matchHistory } = await calculateRankings();
     const { matchHistory: teamMatchHistory } = await calculateTeamRankings();
-    
+
     const player = rankings.find(p => p.name === playerName);
     if (!player) {
       return res.status(404).json({ error: 'Player not found' });
     }
-    
+
     // Create a map of team match history by match_id for quick lookup
     const teamMatchMap = new Map();
     if (teamMatchHistory) {
@@ -600,7 +602,7 @@ app.get('/api/player/:playerName', async (req, res) => {
         teamMatchMap.set(key, match);
       });
     }
-    
+
     // Get player's match history
     const playerMatches = (matchHistory || []).filter(match => {
       const players = [
@@ -622,7 +624,7 @@ app.get('/api/player/:playerName', async (req, res) => {
         team_impacts: teamMatch?.team_impacts || match.team_impacts
       };
     });
-    
+
     res.json({
       ...player,
       matchHistory: playerMatches
@@ -639,18 +641,18 @@ app.get('/api/team/:player1/:player2', async (req, res) => {
     const player1 = decodeURIComponent(req.params.player1);
     const player2 = decodeURIComponent(req.params.player2);
     const teamKey = [player1, player2].sort().join('+');
-    
+
     const { rankings, matchHistory } = await calculateTeamRankings();
-    
-    const team = rankings.find(t => 
+
+    const team = rankings.find(t =>
       (t.player1 === player1 && t.player2 === player2) ||
       (t.player1 === player2 && t.player2 === player1)
     );
-    
+
     if (!team) {
       return res.status(404).json({ error: 'Team not found' });
     }
-    
+
     // Get team's match history
     const { matchHistory: playerMatchHistory } = await calculateRankings();
     const playerMatchMap = new Map();
@@ -660,7 +662,7 @@ app.get('/api/team/:player1/:player2', async (req, res) => {
         playerMatchMap.set(key, match);
       });
     }
-    
+
     const teamMatches = (matchHistory || []).filter(match => {
       const matchTeam1 = [match.team1?.player1, match.team1?.player2].sort().join('+');
       const matchTeam2 = [match.team2?.player1, match.team2?.player2].sort().join('+');
@@ -677,7 +679,7 @@ app.get('/api/team/:player1/:player2', async (req, res) => {
         player_impacts: playerMatch?.player_impacts || match.player_impacts
       };
     });
-    
+
     res.json({
       ...team,
       matchHistory: teamMatches
@@ -688,7 +690,7 @@ app.get('/api/team/:player1/:player2', async (req, res) => {
   }
 });
 
-const PORT = 3001;
+const PORT = 3002;
 app.listen(PORT, () => {
   console.log(`API server running on http://localhost:${PORT}`);
 });

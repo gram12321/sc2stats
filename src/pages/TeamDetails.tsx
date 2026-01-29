@@ -163,28 +163,19 @@ export function TeamDetails({ player1, player2, onBack }: TeamDetailsProps) {
     return [p1, p2].filter(Boolean).sort().join('+');
   };
 
-  const getPlayerRank = (name: string) => {
-    return playerRankings[name]?.rank || null;
-  };
-
   const getTeamRank = (p1: string, p2: string) => {
     const teamKey = normalizeTeamKey(p1, p2);
     return teamRankings[teamKey] || null;
   };
 
-  const getTeamImpact = (match: TeamMatch, p1: string, p2: string) => {
+  const getTeamImpact = (match: any, p1: string, p2: string) => {
     if (!match.team_impacts) return null;
     const teamKey = normalizeTeamKey(p1, p2);
     return match.team_impacts[teamKey] || null;
   };
 
-  const getPlayerImpact = (match: TeamMatch, playerName: string) => {
+  const getPlayerImpact = (match: any, playerName: string) => {
     return match.player_impacts?.[playerName] || null;
-  };
-
-  const getRaceAbbrev = (race: Race | null | undefined): string => {
-    if (!race) return '';
-    return race === 'Random' ? 'R' : race[0];
   };
 
   const formatDate = (dateStr: string | null) => {
@@ -197,12 +188,12 @@ export function TeamDetails({ player1, player2, onBack }: TeamDetailsProps) {
   };
 
   // Extract race changes from match data
-  const extractRaceChanges = (match: TeamMatch) => {
+  const extractRaceChanges = (match: any) => {
     if (!match.race_impacts) return null;
     const raceChanges: Array<{ race: string; change: number }> = [];
     const seenRaces = new Set<string>();
     
-    Object.values(match.race_impacts).forEach(impact => {
+    Object.values(match.race_impacts).forEach((impact: any) => {
       const getRaceAbbrev = (race: string) => {
         if (race === 'Random') return 'R';
         return race[0];
