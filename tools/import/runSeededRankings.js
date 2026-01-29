@@ -1,25 +1,18 @@
 /**
  * Seeding Runner for Initial Rankings
  * 
- * THREE-PASS SEEDING ALGORITHM:
+ * TWO-PASS SEEDING ALGORITHM:
  * 
  * Pass 1 (Forward): Process ALL Season 1 matches chronologically (everyone starts at 0)
- *                   → Get preliminary rating estimates
- *                   → DISCARD after Pass 2
+ *                   -> Get preliminary rating estimates
+ *                   -> DISCARD after Pass 2
  * 
  * Pass 2 (Backward): Process ALL Season 1 matches in REVERSE (everyone starts at 0)
- *                    → Get alternative rating estimates (reduces order dependency)
- *                    → DISCARD after averaging with Pass 1
+ *                    -> Get alternative rating estimates (reduces order dependency)
+ *                    -> DISCARD after averaging with Pass 1
  * 
- * Pass 3 (Seeded Forward): Process ALL Season 1 matches chronologically again
- *                          → Start with AVERAGED(Pass1, Pass2) ratings as seeds
- *                          → THIS IS THE ACTUAL SEASON 1 RUN - NOT A "SEED" RUN
- *                          → These are the FINAL ratings we keep
- *                          → Tracks rating history for every match
- * 
- * IMPORTANT: Pass 3 processes all Season 1 matches with better starting values.
- * We do NOT process matches again after seeding - that would count them twice!
- * Pass 3 ratings ARE the final Season 1 ratings.
+ * IMPORTANT: The output of this script is ONLY seed ratings.
+ * All matches will be processed by the main ranking engine.
  */
 
 import { readdir, readFile, writeFile } from 'fs/promises';
@@ -412,7 +405,7 @@ function averageRatings(pass1Ratings, pass2Ratings) {
  */
 async function runSeededPlayerRankings(matches) {
   console.log('\n' + '='.repeat(80));
-  console.log('PLAYER RANKINGS - THREE-PASS SEEDING');
+  console.log('PLAYER RANKINGS - TWO-PASS SEEDING');
   console.log('='.repeat(80));
   
   // Sort matches chronologically
@@ -435,19 +428,20 @@ async function runSeededPlayerRankings(matches) {
   const pass2Stats = calculateRankingsFromMatches(reverseSortedMatches, null, 'Pass 2');
   const pass2Ratings = extractRatings(pass2Stats);
   
-  // Pass 3: Forward chronological with averaged seeds from Pass 1 and Pass 2
-  // This is the final pass. Players start with the average of Pass 1 and Pass 2 ratings as seeds
-  // (not cold start at 0), which means Season 1 matches are processed with better initial estimates.
-  // Only Pass 3 ratings count - Pass 1 and Pass 2 ratings are discarded.
-  console.log('\n>>> PASS 3: Forward Chronological with Averaged Seeding <<<');
   const averagedSeeds = averageRatings(pass1Ratings, pass2Ratings);
-  const pass3Stats = calculateRankingsFromMatches(sortedMatches, averagedSeeds, 'Pass 3');
-  
-  // Sort and display results
-  const finalRankings = sortRankings(Array.from(pass3Stats.values()));
+  const finalRankings = sortRankings(
+    Array.from(averagedSeeds.entries()).map(([name, points]) => ({
+      name,
+      matches: 0,
+      wins: 0,
+      losses: 0,
+      points,
+      confidence: 0
+    }))
+  );
   
   console.log('\n' + '='.repeat(80));
-  console.log('FINAL SEEDED PLAYER RANKINGS');
+  console.log('FINAL SEEDED PLAYER RATINGS');
   console.log('='.repeat(80) + '\n');
   
   finalRankings.forEach((player, index) => {
@@ -462,7 +456,7 @@ async function runSeededPlayerRankings(matches) {
     );
   });
   
-  return { rankings: finalRankings, pass1Ratings, pass2Ratings };
+  return { rankings: finalRankings, seeds: averagedSeeds, pass1Ratings, pass2Ratings };
 }
 
 /**
@@ -470,7 +464,7 @@ async function runSeededPlayerRankings(matches) {
  */
 async function runSeededTeamRankings(matches) {
   console.log('\n' + '='.repeat(80));
-  console.log('TEAM RANKINGS - THREE-PASS SEEDING');
+  console.log('TEAM RANKINGS - TWO-PASS SEEDING');
   console.log('='.repeat(80));
   
   // Sort matches chronologically
@@ -495,19 +489,22 @@ async function runSeededTeamRankings(matches) {
   const pass2Stats = pass2Result.teamStats;
   const pass2Ratings = extractRatings(pass2Stats);
   
-  // Pass 3: Forward chronological with averaged seeds from Pass 1 and Pass 2
-  // THIS IS THE ACTUAL SEASON 1 RUN - not just seeding!
-  // Teams start with averaged Pass1+Pass2 ratings, and we track full rating history
-  // Only Pass 3 ratings count - Pass 1 and Pass 2 ratings are discarded.
-  console.log('\n>>> PASS 3: Forward Chronological with Averaged Seeding (FINAL RUN) <<<');
   const averagedSeeds = averageRatings(pass1Ratings, pass2Ratings);
-  const pass3Result = calculateTeamRankingsFromMatches(sortedMatches, averagedSeeds, 'Pass 3', true);
-  const pass3Stats = pass3Result.teamStats;
-  const teamRatingHistory = pass3Result.ratingHistory;
   
   // Sort and display results
   const finalRankings = sortRankings(
-    Array.from(pass3Stats.values()),
+    Array.from(averagedSeeds.entries()).map(([teamKey, points]) => {
+      const [player1, player2] = teamKey.split('+');
+      return {
+        player1,
+        player2,
+        matches: 0,
+        wins: 0,
+        losses: 0,
+        points,
+        confidence: 0
+      };
+    }),
     (team) => `${team.player1}+${team.player2}`
   );
   
@@ -528,9 +525,7 @@ async function runSeededTeamRankings(matches) {
     );
   });
   
-  console.log(`\n✓ Tracked ${teamRatingHistory.length} rating changes for database import`);
-  
-  return { rankings: finalRankings, pass1Ratings, pass2Ratings, ratingHistory: teamRatingHistory };
+  return { rankings: finalRankings, seeds: averagedSeeds, pass1Ratings, pass2Ratings };
 }
 
 /**

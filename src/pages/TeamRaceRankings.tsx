@@ -110,13 +110,53 @@ export function TeamRaceRankings({ onBack }: TeamRaceRankingsProps) {
       const response = await fetch('/api/team-race-rankings');
       if (!response.ok) throw new Error('Failed to load team race rankings');
       const data = await response.json();
+      const raceLetterToName: Record<string, string> = {
+        P: 'Protoss',
+        T: 'Terran',
+        Z: 'Zerg',
+        R: 'Random'
+      };
+      const toRaceName = (letter?: string | null) => {
+        if (!letter) return '';
+        return raceLetterToName[letter.toUpperCase()] || '';
+      };
+      const normalizeRanking = (item: any): TeamRaceRanking | null => {
+        const matchup = typeof item?.matchup === 'string' ? item.matchup : item?.name;
+        if (!matchup || typeof matchup !== 'string') {
+          return null;
+        }
+        const [combo1Raw, combo2Raw] = matchup.split(' vs ').map(part => part?.trim());
+        const combo1 = combo1Raw || '';
+        const combo2 = combo2Raw || '';
+        const combo1Race1 = toRaceName(combo1[0]);
+        const combo1Race2 = toRaceName(combo1[1]);
+        const combo2Race1 = toRaceName(combo2[0]);
+        const combo2Race2 = toRaceName(combo2[1]);
+        return {
+          name: matchup,
+          combo1,
+          combo2,
+          combo1Race1,
+          combo1Race2,
+          combo2Race1,
+          combo2Race2,
+          matches: Number(item?.matches) || 0,
+          wins: Number(item?.wins) || 0,
+          losses: Number(item?.losses) || 0,
+          points: Number(item?.points ?? item?.current_rating) || 0
+        };
+      };
       // Handle both old format (array) and new format (object with rankings, combinedRankings, and matchHistory)
       if (Array.isArray(data)) {
-        setRankings(data);
+        setRankings(data.map(normalizeRanking).filter(Boolean) as TeamRaceRanking[]);
         setCombinedRankings([]);
       } else {
-        setRankings(data.rankings || []);
-        setCombinedRankings(data.combinedRankings || []);
+        const nextRankingsRaw = Array.isArray(data?.rankings) ? data.rankings : [];
+        const combinedRankingsRaw = Array.isArray(data?.combinedRankings)
+          ? data.combinedRankings
+          : Object.values(data?.combinedRankings || {});
+        setRankings(nextRankingsRaw.map(normalizeRanking).filter(Boolean) as TeamRaceRanking[]);
+        setCombinedRankings(combinedRankingsRaw.map(normalizeRanking).filter(Boolean) as TeamRaceRanking[]);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load team race rankings');
@@ -166,12 +206,13 @@ export function TeamRaceRankings({ onBack }: TeamRaceRankingsProps) {
     
     // Apply search filter
     const searchLower = searchTerm.toLowerCase();
+    const safeLower = (value?: string | null) => (value ?? '').toLowerCase();
     return (
-      matchup.name.toLowerCase().includes(searchLower) ||
-      matchup.combo1.toLowerCase().includes(searchLower) ||
-      matchup.combo2.toLowerCase().includes(searchLower) ||
-      `${matchup.combo1Race1} ${matchup.combo1Race2}`.toLowerCase().includes(searchLower) ||
-      `${matchup.combo2Race1} ${matchup.combo2Race2}`.toLowerCase().includes(searchLower)
+      safeLower(matchup.name).includes(searchLower) ||
+      safeLower(matchup.combo1).includes(searchLower) ||
+      safeLower(matchup.combo2).includes(searchLower) ||
+      safeLower(`${matchup.combo1Race1 ?? ''} ${matchup.combo1Race2 ?? ''}`).includes(searchLower) ||
+      safeLower(`${matchup.combo2Race1 ?? ''} ${matchup.combo2Race2 ?? ''}`).includes(searchLower)
     );
   });
 
@@ -280,6 +321,11 @@ export function TeamRaceRankings({ onBack }: TeamRaceRankingsProps) {
     }
   };
 
+  const getRaceInitial = (race?: string | null, combo?: string | null, comboIndex: number = 0) => {
+    if (race && race[0]) return race[0];
+    if (combo && combo[comboIndex]) return combo[comboIndex];
+    return '?';
+  };
 
   const loadPlayerRankings = async () => {
     try {
@@ -548,7 +594,7 @@ export function TeamRaceRankings({ onBack }: TeamRaceRankingsProps) {
                     <tbody className="bg-white divide-y divide-gray-200">
                       {sortedCombinedRankings.map((matchup, index) => (
                         <tr
-                          key={matchup.name}
+                          key={`${matchup.name}-${matchup.combo1}-${matchup.combo2}-${index}`}
                           className="hover:bg-gray-50 transition-colors cursor-pointer"
                           onClick={() => handleMatchupClick(matchup, true)}
                         >
@@ -570,10 +616,10 @@ export function TeamRaceRankings({ onBack }: TeamRaceRankingsProps) {
                             <div className="flex items-center gap-3">
                               <div className="flex items-center gap-1">
                                 <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getRaceBadgeColor(matchup.combo1Race1)}`}>
-                                  {matchup.combo1Race1[0]}
+                                  {getRaceInitial(matchup.combo1Race1, matchup.combo1, 0)}
                                 </span>
                                 <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getRaceBadgeColor(matchup.combo1Race2)}`}>
-                                  {matchup.combo1Race2[0]}
+                                  {getRaceInitial(matchup.combo1Race2, matchup.combo1, 1)}
                                 </span>
                               </div>
                               <span className="text-gray-400 font-medium">vs</span>
@@ -701,11 +747,11 @@ export function TeamRaceRankings({ onBack }: TeamRaceRankingsProps) {
                         </td>
                       </tr>
                     ) : (
-                      sortedRankings.map((matchup) => {
+                      sortedRankings.map((matchup, index) => {
                         const rank = rankings.findIndex(m => m.name === matchup.name) + 1;
                         return (
                           <tr
-                            key={matchup.name}
+                            key={`${matchup.name}-${matchup.combo1}-${matchup.combo2}-${index}`}
                             onClick={() => handleMatchupClick(matchup)}
                             className="hover:bg-gray-50 transition-colors cursor-pointer"
                           >
@@ -727,20 +773,20 @@ export function TeamRaceRankings({ onBack }: TeamRaceRankingsProps) {
                               <div className="flex items-center gap-3">
                                 <div className="flex items-center gap-1">
                                   <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getRaceBadgeColor(matchup.combo1Race1)}`}>
-                                    {matchup.combo1Race1[0]}
-                                  </span>
-                                  <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getRaceBadgeColor(matchup.combo1Race2)}`}>
-                                    {matchup.combo1Race2[0]}
-                                  </span>
-                                </div>
-                                <span className="text-gray-400 font-medium">vs</span>
-                                <div className="flex items-center gap-1">
-                                  <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getRaceBadgeColor(matchup.combo2Race1)}`}>
-                                    {matchup.combo2Race1[0]}
-                                  </span>
-                                  <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getRaceBadgeColor(matchup.combo2Race2)}`}>
-                                    {matchup.combo2Race2[0]}
-                                  </span>
+                                  {getRaceInitial(matchup.combo1Race1, matchup.combo1, 0)}
+                                </span>
+                                <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getRaceBadgeColor(matchup.combo1Race2)}`}>
+                                    {getRaceInitial(matchup.combo1Race2, matchup.combo1, 1)}
+                                </span>
+                              </div>
+                              <span className="text-gray-400 font-medium">vs</span>
+                              <div className="flex items-center gap-1">
+                                <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getRaceBadgeColor(matchup.combo2Race1)}`}>
+                                  {getRaceInitial(matchup.combo2Race1, matchup.combo2, 0)}
+                                </span>
+                                <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getRaceBadgeColor(matchup.combo2Race2)}`}>
+                                  {getRaceInitial(matchup.combo2Race2, matchup.combo2, 1)}
+                                </span>
                                 </div>
                                 <span className="text-sm text-gray-500 ml-2">({matchup.name})</span>
                               </div>

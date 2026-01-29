@@ -21,16 +21,46 @@ export async function recalculateAllRankings() {
   console.log('Step 1: Clearing all ranking data...');
   
   try {
+    const deleteAll = async (table) => {
+      const { error } = await supabase
+        .from(table)
+        .delete()
+        .neq('id', '00000000-0000-0000-0000-000000000000');
+      if (error) {
+        throw new Error(`Failed to clear ${table}: ${error.message}`);
+      }
+    };
+
+    const verifyEmpty = async (table) => {
+      const { count, error } = await supabase
+        .from(table)
+        .select('*', { count: 'exact', head: true });
+      if (error) {
+        throw new Error(`Failed to verify ${table}: ${error.message}`);
+      }
+      if ((count || 0) > 0) {
+        throw new Error(`Table ${table} not empty after delete (count=${count})`);
+      }
+    };
+
     // Clear all rankings (using a condition that's always true to delete all)
-    await supabase.from('players').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-    await supabase.from('teams').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-    await supabase.from('race_rankings').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-    await supabase.from('team_race_rankings').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-    await supabase.from('matches').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-    await supabase.from('rating_history').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-    await supabase.from('tournaments').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+    await deleteAll('rating_history');
+    await deleteAll('matches');
+    await deleteAll('team_race_rankings');
+    await deleteAll('race_rankings');
+    await deleteAll('teams');
+    await deleteAll('players');
+    await deleteAll('tournaments');
+
+    await verifyEmpty('rating_history');
+    await verifyEmpty('matches');
+    await verifyEmpty('team_race_rankings');
+    await verifyEmpty('race_rankings');
+    await verifyEmpty('teams');
+    await verifyEmpty('players');
+    await verifyEmpty('tournaments');
     
-    console.log('✓ All ranking data cleared\n');
+    console.log('All ranking data cleared\n');
   } catch (error) {
     console.error('Error clearing data:', error.message);
     throw error;

@@ -163,10 +163,6 @@ export function TeamDetails({ player1, player2, onBack }: TeamDetailsProps) {
     return [p1, p2].filter(Boolean).sort().join('+');
   };
 
-  const getPlayerRank = (name: string) => {
-    return playerRankings[name]?.rank || null;
-  };
-
   const getTeamRank = (p1: string, p2: string) => {
     const teamKey = normalizeTeamKey(p1, p2);
     return teamRankings[teamKey] || null;
@@ -180,11 +176,6 @@ export function TeamDetails({ player1, player2, onBack }: TeamDetailsProps) {
 
   const getPlayerImpact = (match: TeamMatch, playerName: string) => {
     return match.player_impacts?.[playerName] || null;
-  };
-
-  const getRaceAbbrev = (race: Race | null | undefined): string => {
-    if (!race) return '';
-    return race === 'Random' ? 'R' : race[0];
   };
 
   const formatDate = (dateStr: string | null) => {

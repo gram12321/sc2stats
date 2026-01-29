@@ -23,6 +23,9 @@ todos:
   - id: todo-1768732919152-5i3r3k9bg
     content: "Future: Updata scraper to get data directly into the database, eliminating the json intermediate process"
     status: pending
+  - id: todo-1768775186634-825amken1
+    content: "Make sure that we update server.js to use the new database data replacing calls to calculations\\ files. "
+    status: pending
 ---
 
 # Unified Ranking Architecture

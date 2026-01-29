@@ -71,8 +71,7 @@ function collectMatches(tournaments) {
 
 /**
  * Generate seeds for Season 1 (2025)
- * Returns final ratings from Pass 3 of three-pass seeding
- * Pass 3 IS the actual Season 1 run, not just starting seeds
+ * Returns averaged seed ratings for the initial baseline
  */
 export async function generateSeason1Seeds() {
   console.log('Loading Season 1 tournaments (2025)...');
@@ -86,21 +85,21 @@ export async function generateSeason1Seeds() {
   const matches = collectMatches(tournaments);
   console.log(`Collected ${matches.length} matches`);
   
-  // Run three-pass seeding
-  console.log('\nRunning three-pass seeding process...');
+  // Run two-pass seeding
+  console.log('\nRunning two-pass seeding process...');
   const playerResults = await runSeededPlayerRankings(matches);
   const teamResults = await runSeededTeamRankings(matches);
   
-  // Extract seed ratings from final pass (Pass 3 final ratings)
+  // Extract seed ratings (baseline only, no match stats)
   const playerSeeds = new Map();
   const playerStatsMap = new Map(); // Store full stats for import
   playerResults.rankings.forEach(player => {
     playerSeeds.set(player.name, player.points);
     playerStatsMap.set(player.name, {
-      matches: player.matches,
-      wins: player.wins,
-      losses: player.losses,
-      confidence: player.confidence || 0
+      matches: 0,
+      wins: 0,
+      losses: 0,
+      confidence: 0
     });
   });
   
@@ -110,36 +109,33 @@ export async function generateSeason1Seeds() {
     const teamKey = [team.player1, team.player2].sort().join('+');
     teamSeeds.set(teamKey, team.points);
     teamStatsMap.set(teamKey, {
-      matches: team.matches,
-      wins: team.wins,
-      losses: team.losses,
-      confidence: team.confidence || 0
+      matches: 0,
+      wins: 0,
+      losses: 0,
+      confidence: 0
     });
   });
   
   console.log(`Generated seeds for ${playerSeeds.size} players and ${teamSeeds.size} teams`);
   
-  // Extract rating history from Pass 3 (for tooltips)
-  const teamRatingHistory = teamResults.ratingHistory || [];
-  
-  return { playerSeeds, teamSeeds, playerStatsMap, teamStatsMap, teamRatingHistory };
+  return { playerSeeds, teamSeeds, playerStatsMap, teamStatsMap };
 }
 
 /**
  * Import player seeds into database
- * These are FINAL ratings from Pass 3, not starting seeds
+ * These are baseline ratings used before main match processing
  */
 export async function importPlayerSeeds(playerSeeds, playerStatsMap = null) {
   console.log('\nImporting player seeds...');
   
-  // If playerStatsMap is provided (from Pass 3 results), use those stats
+  // If playerStatsMap is provided, use those stats
   // Otherwise, just import ratings with default stats
   const players = Array.from(playerSeeds.entries()).map(([name, rating]) => {
     if (playerStatsMap && playerStatsMap.has(name)) {
       const stats = playerStatsMap.get(name);
       return {
         name,
-        current_rating: rating, // Final rating from Pass 3
+        current_rating: rating, // Seed baseline rating
         current_confidence: stats.confidence || 0,
         matches: stats.matches || 0,
         wins: stats.wins || 0,
@@ -172,7 +168,7 @@ export async function importPlayerSeeds(playerSeeds, playerStatsMap = null) {
 
 /**
  * Import team seeds into database
- * These are FINAL ratings from Pass 3, not starting seeds
+ * These are baseline ratings used before main match processing
  */
 export async function importTeamSeeds(teamSeeds, playerIdMap, teamStatsMap = null) {
   console.log('\nImporting team seeds...');
@@ -195,7 +191,7 @@ export async function importTeamSeeds(teamSeeds, playerIdMap, teamStatsMap = nul
       player1_id: player1Id,
       player2_id: player2Id,
       team_key: teamKey,
-      current_rating: rating, // Final rating from Pass 3
+      current_rating: rating, // Seed baseline rating
       current_confidence: stats?.confidence || 0,
       matches: stats?.matches || 0,
       wins: stats?.wins || 0,
@@ -215,6 +211,49 @@ export async function importTeamSeeds(teamSeeds, playerIdMap, teamStatsMap = nul
   
   console.log(`Imported ${data.length} teams`);
   return data;
+}
+
+/**
+ * Persist seed ratings in the database for auditing/reuse
+ */
+export async function saveSeasonSeeds(season, playerSeeds, teamSeeds) {
+  const rows = [];
+  for (const [name, rating] of playerSeeds.entries()) {
+    rows.push({
+      season,
+      entity_type: 'player',
+      entity_key: name,
+      rating,
+      confidence: 0,
+      matches: 0,
+      wins: 0,
+      losses: 0
+    });
+  }
+  for (const [teamKey, rating] of teamSeeds.entries()) {
+    rows.push({
+      season,
+      entity_type: 'team',
+      entity_key: teamKey,
+      rating,
+      confidence: 0,
+      matches: 0,
+      wins: 0,
+      losses: 0
+    });
+  }
+
+  if (rows.length === 0) {
+    return;
+  }
+
+  const { error } = await supabase
+    .from('rating_seeds')
+    .upsert(rows, { onConflict: 'season,entity_type,entity_key' });
+
+  if (error) {
+    throw new Error(`Failed to persist rating seeds: ${error.message}`);
+  }
 }
 
 /**

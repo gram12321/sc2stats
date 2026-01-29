@@ -160,16 +160,31 @@ export function RaceRankings({ onBack }: RaceRankingsProps) {
     }
   };
 
+  const normalizeStringSortValue = (value: string | number | null | undefined) => {
+    if (value === undefined || value === null) {
+      return '';
+    }
+    return String(value);
+  };
+
+  const normalizeNumberSortValue = (value: string | number | null | undefined) => {
+    if (value === undefined || value === null) {
+      return 0;
+    }
+    return typeof value === 'number' ? value : Number(value) || 0;
+  };
+
   const sortedRankings = [...filteredRankings].sort((a, b) => {
     if (!sortColumn) return 0;
     
-    let aValue: any;
-    let bValue: any;
+    let aValue: string | number;
+    let bValue: string | number;
+    const isStringSort = sortColumn === 'name' || sortColumn === 'race1' || sortColumn === 'race2';
     
     if (sortColumn === 'rank') {
       aValue = rankings.findIndex(m => m.name === a.name) + 1;
       bValue = rankings.findIndex(m => m.name === b.name) + 1;
-    } else if (sortColumn === 'name' || sortColumn === 'race1' || sortColumn === 'race2') {
+    } else if (isStringSort) {
       aValue = a[sortColumn];
       bValue = b[sortColumn];
     } else {
@@ -178,14 +193,19 @@ export function RaceRankings({ onBack }: RaceRankingsProps) {
     }
     
     // Handle undefined/null values
-    if (aValue === undefined || aValue === null) aValue = (sortColumn === 'name' || sortColumn === 'race1' || sortColumn === 'race2') ? '' : 0;
-    if (bValue === undefined || bValue === null) bValue = (sortColumn === 'name' || sortColumn === 'race1' || sortColumn === 'race2') ? '' : 0;
+    if (isStringSort) {
+      aValue = normalizeStringSortValue(aValue);
+      bValue = normalizeStringSortValue(bValue);
+    } else {
+      aValue = normalizeNumberSortValue(aValue);
+      bValue = normalizeNumberSortValue(bValue);
+    }
     
     // String comparison
-    if (sortColumn === 'name' || sortColumn === 'race1' || sortColumn === 'race2') {
+    if (isStringSort) {
       return sortDirection === 'asc' 
-        ? aValue.localeCompare(bValue)
-        : bValue.localeCompare(aValue);
+        ? (aValue as string).localeCompare(bValue as string)
+        : (bValue as string).localeCompare(aValue as string);
     }
     
     // Numeric comparison
@@ -204,13 +224,14 @@ export function RaceRankings({ onBack }: RaceRankingsProps) {
   const sortedCombinedRankings = [...filteredCombinedRankings].sort((a, b) => {
     if (!combinedSortColumn) return 0;
     
-    let aValue: any;
-    let bValue: any;
+    let aValue: string | number;
+    let bValue: string | number;
+    const isStringSort = combinedSortColumn === 'name' || combinedSortColumn === 'race1' || combinedSortColumn === 'race2';
     
     if (combinedSortColumn === 'rank') {
       aValue = combinedRankings.findIndex(m => m.name === a.name) + 1;
       bValue = combinedRankings.findIndex(m => m.name === b.name) + 1;
-    } else if (combinedSortColumn === 'name' || combinedSortColumn === 'race1' || combinedSortColumn === 'race2') {
+    } else if (isStringSort) {
       aValue = a[combinedSortColumn];
       bValue = b[combinedSortColumn];
     } else {
@@ -219,14 +240,19 @@ export function RaceRankings({ onBack }: RaceRankingsProps) {
     }
     
     // Handle undefined/null values
-    if (aValue === undefined || aValue === null) aValue = (combinedSortColumn === 'name' || combinedSortColumn === 'race1' || combinedSortColumn === 'race2') ? '' : 0;
-    if (bValue === undefined || bValue === null) bValue = (combinedSortColumn === 'name' || combinedSortColumn === 'race1' || combinedSortColumn === 'race2') ? '' : 0;
+    if (isStringSort) {
+      aValue = normalizeStringSortValue(aValue);
+      bValue = normalizeStringSortValue(bValue);
+    } else {
+      aValue = normalizeNumberSortValue(aValue);
+      bValue = normalizeNumberSortValue(bValue);
+    }
     
     // String comparison
-    if (combinedSortColumn === 'name' || combinedSortColumn === 'race1' || combinedSortColumn === 'race2') {
+    if (isStringSort) {
       return combinedSortDirection === 'asc' 
-        ? aValue.localeCompare(bValue)
-        : bValue.localeCompare(aValue);
+        ? (aValue as string).localeCompare(bValue as string)
+        : (bValue as string).localeCompare(aValue as string);
     }
     
     // Numeric comparison
@@ -697,7 +723,7 @@ export function RaceRankings({ onBack }: RaceRankingsProps) {
                         </td>
                       </tr>
                     ) : (
-                      sortedRankings.map((matchup, index) => {
+                      sortedRankings.map((matchup) => {
                         const rank = rankings.findIndex(m => m.name === matchup.name) + 1;
                         return (
                           <tr
@@ -872,7 +898,7 @@ export function RaceRankings({ onBack }: RaceRankingsProps) {
                         
                         // Find the first race_impact involving this race
                         const raceImpacts = match.race_impacts || {};
-                        for (const [key, impact] of Object.entries(raceImpacts)) {
+                        for (const [, impact] of Object.entries(raceImpacts)) {
                           if (impact.race1 === selectedMatchup.race1 || impact.race2 === selectedMatchup.race1) {
                             ratingChange = impact.race1 === selectedMatchup.race1 ? impact.ratingChange : -impact.ratingChange;
                             break;

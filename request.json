@@ -1,0 +1,13 @@
+﻿{
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are a test assistant."
+    },
+    {
+      "role": "user",
+      "content": "Testing. Just say hi and nothing else."
+    }
+  ],
+  "model": "gpt-3.5-turbo"
+}

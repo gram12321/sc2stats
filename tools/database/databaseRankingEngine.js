@@ -495,7 +495,7 @@ async function processTeamRaceRankings(match, matchRecord, team1Won, team2Won, p
 /**
  * Process a single match and update database
  */
-export async function processMatch(match, tournamentId) {
+export async function processMatch(match, tournamentId, options = {}) {
   // Extract team information
   const team1Player1 = match.team1?.player1?.name;
   const team1Player2 = match.team1?.player2?.name;
@@ -652,8 +652,17 @@ export async function processMatch(match, tournamentId) {
     console.warn(`Failed to store rating history: ${historyError.message}`);
   }
   
-  // Update player stats (aggregate from team stats)
-  await updatePlayerStatsFromTeams([team1Player1, team1Player2, team2Player1, team2Player2]);
+  if (options.playerNames) {
+    options.playerNames.add(team1Player1);
+    options.playerNames.add(team1Player2);
+    options.playerNames.add(team2Player1);
+    options.playerNames.add(team2Player2);
+  }
+
+  if (!options.deferPlayerStats) {
+    // Update player stats (aggregate from team stats)
+    await updatePlayerStatsFromTeams([team1Player1, team1Player2, team2Player1, team2Player2]);
+  }
   
   // Process race rankings
   try {
@@ -665,6 +674,19 @@ export async function processMatch(match, tournamentId) {
   }
   
   return matchRecord;
+}
+
+export async function processRaceAndTeamRaceOnly(match, matchRecord) {
+  if (!matchRecord) return;
+  if (!match?.team1 || !match?.team2) return;
+
+  const { team1Won, team2Won } = determineMatchOutcome(
+    match.team1_score,
+    match.team2_score
+  );
+  const playerDefaults = await loadPlayerDefaults();
+  await processRaceRankings(match, matchRecord, team1Won, team2Won, playerDefaults);
+  await processTeamRaceRankings(match, matchRecord, team1Won, team2Won, playerDefaults);
 }
 
 /**
@@ -728,13 +750,18 @@ export async function processTournamentMatches(tournament, tournamentId) {
   console.log(`  ${matches.length} valid matches to process`);
   
   let processed = 0;
+  const playerNames = new Set();
   for (const match of matches) {
     try {
-      await processMatch(match, tournamentId);
+      await processMatch(match, tournamentId, { deferPlayerStats: true, playerNames });
       processed++;
     } catch (error) {
       console.error(`  Error processing match ${match.match_id}:`, error.message);
     }
+  }
+
+  if (playerNames.size > 0) {
+    await updatePlayerStatsFromTeams(Array.from(playerNames));
   }
   
   console.log(`  Processed ${processed}/${matches.length} matches`);

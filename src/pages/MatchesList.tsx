@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { formatRankingPoints } from '../lib/utils';
 import { Race } from '../types/tournament';
 import { getPlayerDefaults } from '../lib/playerDefaults';
 import { MatchHistoryItem } from '../components/MatchHistoryItem';
@@ -20,17 +19,27 @@ interface MatchHistory {
   };
   team1_score: number;
   team2_score: number;
-  player_impacts: Record<string, {
+  player_impacts?: Record<string, {
     ratingBefore: number;
     ratingChange: number;
     won: boolean;
     opponentRating: number;
+    expectedWin?: number;
+    baseK?: number;
+    adjustedK?: number;
+    confidence?: number;
+    matchCount?: number;
   }>;
   team_impacts?: Record<string, {
     ratingBefore: number;
     ratingChange: number;
     won: boolean;
     opponentRating: number;
+    expectedWin?: number;
+    baseK?: number;
+    adjustedK?: number;
+    confidence?: number;
+    matchCount?: number;
   }>;
   race_impacts?: Record<string, {
     ratingBefore: number;
@@ -39,6 +48,11 @@ interface MatchHistory {
     opponentRating: number;
     race1: string;
     race2: string;
+    expectedWin?: number;
+    baseK?: number;
+    adjustedK?: number;
+    confidence?: number;
+    matchCount?: number;
   }>;
 }
 
@@ -209,11 +223,7 @@ export function MatchesList({ onBack }: MatchesListProps) {
   };
 
   const getPlayerImpact = (match: MatchHistory, playerName: string) => {
-    return match.player_impacts?.[playerName];
-  };
-
-  const getPlayerRank = (playerName: string) => {
-    return playerRankings[playerName]?.rank || null;
+    return match.player_impacts?.[playerName] || null;
   };
 
   const getTeamRank = (player1: string, player2: string) => {
@@ -225,11 +235,6 @@ export function MatchesList({ onBack }: MatchesListProps) {
     if (!match.team_impacts) return null;
     const teamKey = normalizeTeamKey(player1, player2);
     return match.team_impacts[teamKey] || null;
-  };
-
-  const getRaceAbbrev = (race: Race | null | undefined): string => {
-    if (!race) return '';
-    return race === 'Random' ? 'R' : race[0];
   };
 
   return (
@@ -322,10 +327,10 @@ export function MatchesList({ onBack }: MatchesListProps) {
                     playerRankings={playerRankingsMap}
                     playerRaces={playerRaces}
                     showRatingBreakdown={true}
-                    extractRaceChanges={extractRaceChanges}
+                    extractRaceChanges={(matchData) => extractRaceChanges(matchData as MatchHistory)}
                     normalizeTeamKey={normalizeTeamKey}
-                    getTeamImpact={getTeamImpact}
-                    getPlayerImpact={getPlayerImpact}
+                    getTeamImpact={(matchData, player1, player2) => getTeamImpact(matchData as MatchHistory, player1, player2)}
+                    getPlayerImpact={(matchData, playerName) => getPlayerImpact(matchData as MatchHistory, playerName)}
                     formatDate={formatDate}
                   />
               );
