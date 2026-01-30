@@ -11,16 +11,10 @@ interface TournamentInfo {
 }
 
 interface TournamentEditorProps {
-  onNavigateToPlayers?: () => void;
-  onNavigateToPlayerRankings?: () => void;
-  onNavigateToTeamRankings?: () => void;
-  onNavigateToRaceRankings?: () => void;
-  onNavigateToTeamRaceRankings?: () => void;
-  onNavigateToMatches?: () => void;
-  onNavigateToInfo?: () => void;
+  // no props needed for now
 }
 
-export function TournamentEditor({ onNavigateToPlayers, onNavigateToPlayerRankings, onNavigateToTeamRankings, onNavigateToRaceRankings, onNavigateToTeamRaceRankings, onNavigateToMatches, onNavigateToInfo }: TournamentEditorProps) {
+export function TournamentEditor({ }: TournamentEditorProps) {
   const [tournaments, setTournaments] = useState<TournamentInfo[]>([]);
   const [selectedTournament, setSelectedTournament] = useState<TournamentData | null>(null);
   const [selectedFilename, setSelectedFilename] = useState<string | null>(null);
@@ -38,8 +32,12 @@ export function TournamentEditor({ onNavigateToPlayers, onNavigateToPlayerRankin
       const response = await fetch('/api/tournaments');
       if (!response.ok) throw new Error('Failed to load tournaments');
       const data = await response.json();
+      // Filter out non-tournament files
+      const filtered = data.filter((t: TournamentInfo) =>
+        !t.filename.startsWith('seeded_') && t.filename !== 'player_defaults.json'
+      );
       // Sort by date descending (newest first), then by name if no date
-      const sorted = data.sort((a: TournamentInfo, b: TournamentInfo) => {
+      const sorted = filtered.sort((a: TournamentInfo, b: TournamentInfo) => {
         if (a.date && b.date) {
           return new Date(b.date).getTime() - new Date(a.date).getTime();
         }
@@ -110,78 +108,13 @@ export function TournamentEditor({ onNavigateToPlayers, onNavigateToPlayerRankin
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="bg-white border-b border-gray-200 shadow-sm">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Tournament Editor</h1>
-              <p className="text-gray-600 mt-1">
-                Select a tournament to view and edit player races
-              </p>
-            </div>
-            <div className="flex gap-2">
-              {onNavigateToPlayerRankings && (
-                <button
-                  onClick={onNavigateToPlayerRankings}
-                  className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
-                >
-                  Player Rankings
-                </button>
-              )}
-              {onNavigateToTeamRankings && (
-                <button
-                  onClick={onNavigateToTeamRankings}
-                  className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                >
-                  Team Rankings
-                </button>
-              )}
-              {onNavigateToRaceRankings && (
-                <button
-                  onClick={onNavigateToRaceRankings}
-                  className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                >
-                  Race Statistics
-                </button>
-              )}
-              {onNavigateToTeamRaceRankings && (
-                <button
-                  onClick={onNavigateToTeamRaceRankings}
-                  className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                >
-                  Team Race Statistics
-                </button>
-              )}
-              {onNavigateToPlayers && (
-                <button
-                  onClick={onNavigateToPlayers}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  Manage Players
-                </button>
-              )}
-              {onNavigateToMatches && (
-                <button
-                  onClick={onNavigateToMatches}
-                  className="px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500"
-                >
-                  Match History
-                </button>
-              )}
-              {onNavigateToInfo && (
-                <button
-                  onClick={onNavigateToInfo}
-                  className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500"
-                >
-                  Info
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-
       <div className="max-w-4xl mx-auto p-6">
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-gray-900">Tournaments</h1>
+          <p className="text-gray-600 mt-1">
+            Select a tournament to view details and edit player races
+          </p>
+        </div>
         {isLoading ? (
           <div className="text-center py-12">
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>

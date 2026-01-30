@@ -42,7 +42,7 @@ async function loadSeeds() {
 app.get('/api/tournaments', async (req, res) => {
   try {
     const files = await readdir(outputDir);
-    const jsonFiles = files.filter(f => f.endsWith('.json') && f !== 'player_defaults.json');
+    const jsonFiles = files.filter(f => f.endsWith('.json') && f !== 'player_defaults.json' && !f.startsWith('seeded_'));
 
     const tournaments = await Promise.all(
       jsonFiles.map(async (file) => {

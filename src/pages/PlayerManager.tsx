@@ -4,17 +4,16 @@ import { getPlayerDefaults, setPlayerDefault, clearPlayerDefaults } from '../lib
 
 const RACES: Exclude<Race, null>[] = ['Terran', 'Zerg', 'Protoss', 'Random'];
 
-interface PlayerManagerProps {
-  onBack?: () => void;
-}
+interface PlayerManagerProps { }
 
-export function PlayerManager({ onBack }: PlayerManagerProps) {
+export function PlayerManager({ }: PlayerManagerProps) {
   const [players, setPlayers] = useState<string[]>([]);
   const [defaults, setDefaults] = useState<Record<string, Race>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [hideWithDefaults, setHideWithDefaults] = useState(true);
+  const [filterRace, setFilterRace] = useState<Race | 'All'>('All');
 
   useEffect(() => {
     loadPlayers();
@@ -89,43 +88,41 @@ export function PlayerManager({ onBack }: PlayerManagerProps) {
 
   const filtered = useMemo(() => {
     let result = players;
-    
+
     // Filter by search term
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
       result = result.filter(p => p.toLowerCase().includes(term));
     }
-    
+
+    // Filter by race
+    if (filterRace !== 'All') {
+      result = result.filter(p => defaults[p] === filterRace);
+    }
+
     // Filter out players with defaults if toggle is on
-    if (hideWithDefaults) {
+    // Only apply this if we are NOT filtering by a specific race,
+    // because if we filter by "Zerg", we likely want to see the Zergs whether they have defaults or not (they inherently have defaults if they match the race).
+    // Actually, if filterRace is set, it implies they have a default (since defaults map player -> race).
+    // So 'hideWithDefaults' and 'filterRace' conflict logically if 'filterRace' is anything other than 'All'.
+    // If I select 'Zerg', I see only players with default=Zerg. 'Hide with defaults' would hide them all.
+    // So if filterRace is set, we should probably ignore hideWithDefaults or disable it.
+    if (hideWithDefaults && filterRace === 'All') {
       result = result.filter(p => !defaults[p]);
     }
-    
+
     return result;
-  }, [players, searchTerm, hideWithDefaults, defaults]);
+  }, [players, searchTerm, hideWithDefaults, defaults, filterRace]);
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="bg-white border-b border-gray-200 shadow-sm">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Player Manager</h1>
-              <p className="text-gray-600 mt-1">
-                Set default races for players ({players.length} total players)
-              </p>
-            </div>
-            <button
-              onClick={onBack}
-              className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500"
-            >
-              ← Back to Tournaments
-            </button>
-          </div>
-        </div>
-      </div>
-
       <div className="max-w-6xl mx-auto p-6">
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-gray-900">Player Manager</h1>
+          <p className="text-gray-600 mt-1">
+            Set default races for players ({players.length} total players)
+          </p>
+        </div>
         {isLoading ? (
           <div className="text-center py-12">
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
@@ -145,7 +142,7 @@ export function PlayerManager({ onBack }: PlayerManagerProps) {
           <>
             {/* Search and Bulk Actions */}
             <div className="bg-white rounded-lg border border-gray-200 p-4 mb-6 shadow-sm">
-              <div className="flex items-center gap-4 mb-4">
+              <div className="flex flex-col md:flex-row md:items-center gap-4 mb-4">
                 <div className="flex-1">
                   <input
                     type="text"
@@ -155,37 +152,51 @@ export function PlayerManager({ onBack }: PlayerManagerProps) {
                     className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4 flex-wrap">
+                  <select
+                    value={filterRace || 'All'}
+                    onChange={(e) => setFilterRace((e.target.value as Race | 'All'))}
+                    className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="All">All Races</option>
+                    {RACES.map((race) => (
+                      <option key={race} value={race}>
+                        {race}
+                      </option>
+                    ))}
+                  </select>
+
                   <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={hideWithDefaults}
                       onChange={(e) => setHideWithDefaults(e.target.checked)}
-                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                      disabled={filterRace !== 'All'}
+                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 disabled:opacity-50"
                     />
-                    <span>Hide players with defaults</span>
+                    <span className={filterRace !== 'All' ? 'text-gray-400' : ''}>Hide players with defaults</span>
                   </label>
-                  <div className="text-sm text-gray-600">
-                    Showing {filtered.length} of {players.length} players
+                  <div className="text-sm text-gray-600 whitespace-nowrap">
+                    Showing {filtered.length} of {players.length}
                   </div>
                 </div>
               </div>
-              
+
               {filtered.length > 0 && (
-                <div className="flex items-center gap-2 pt-4 border-t border-gray-200">
-                  <span className="text-sm text-gray-700">Bulk set for filtered players:</span>
+                <div className="flex items-center gap-2 pt-4 border-t border-gray-200 overflow-x-auto">
+                  <span className="text-sm text-gray-700 whitespace-nowrap">Bulk set for filtered players:</span>
                   {RACES.map((race) => (
                     <button
                       key={race}
                       onClick={() => handleBulkSet(race)}
-                      className="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
+                      className="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200 whitespace-nowrap"
                     >
                       Set {race}
                     </button>
                   ))}
                   <button
                     onClick={handleClearAll}
-                    className="px-3 py-1 text-sm bg-red-100 text-red-700 rounded hover:bg-red-200 ml-auto"
+                    className="px-3 py-1 text-sm bg-red-100 text-red-700 rounded hover:bg-red-200 ml-auto whitespace-nowrap"
                   >
                     Clear All Defaults
                   </button>

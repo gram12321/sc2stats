@@ -1,29 +1,13 @@
 
-interface InfoProps {
-      onBack?: () => void;
-}
+interface InfoProps { }
 
-export function Info({ onBack }: InfoProps) {
+export function Info({ }: InfoProps) {
       return (
             <div className="min-h-screen bg-gray-50">
-                  {/* Header */}
-                  <div className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-10">
-                        <div className="max-w-7xl mx-auto px-6 py-4">
-                              <div className="flex items-center justify-between">
-                                    <h1 className="text-2xl font-bold text-gray-900">System Information</h1>
-                                    {onBack && (
-                                          <button
-                                                onClick={onBack}
-                                                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500"
-                                          >
-                                                ← Back
-                                          </button>
-                                    )}
-                              </div>
-                        </div>
-                  </div>
-
                   <div className="max-w-4xl mx-auto p-6 space-y-8">
+                        <div className="mb-2">
+                              <h1 className="text-2xl font-bold text-gray-900">System Information</h1>
+                        </div>
                         {/* System Overview */}
                         <section className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
                               <h2 className="text-xl font-semibold text-gray-900 mb-4">System Overview</h2>

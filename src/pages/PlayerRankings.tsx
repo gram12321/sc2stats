@@ -13,11 +13,10 @@ interface PlayerRanking {
 }
 
 interface PlayerRankingsProps {
-  onBack?: () => void;
   onNavigateToPlayer?: (playerName: string) => void;
 }
 
-export function PlayerRankings({ onBack, onNavigateToPlayer }: PlayerRankingsProps) {
+export function PlayerRankings({ onNavigateToPlayer }: PlayerRankingsProps) {
   const [rankings, setRankings] = useState<PlayerRanking[]>([]);
   const [playerRaces, setPlayerRaces] = useState<Record<string, Race>>({});
   const [isLoading, setIsLoading] = useState(true);
@@ -174,62 +173,47 @@ export function PlayerRankings({ onBack, onNavigateToPlayer }: PlayerRankingsPro
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="bg-white border-b border-gray-200 shadow-sm">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Player Rankings</h1>
-              <p className="text-gray-600 mt-1">
-                {useSeededRankings
-                  ? 'Seeded rankings (three-pass seeding system)'
-                  : 'Enhanced ranking system with provisional ratings and confidence tracking'}
-              </p>
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-4">
-                <div className="flex items-center">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={useSeededRankings}
-                      onChange={(e) => setUseSeededRankings(e.target.checked)}
-                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                    />
-                    <span className="text-sm text-gray-700">Use Initial Seeds (Average of Pass 1 & 2)</span>
-                  </label>
-                  <div className="ml-2 group relative">
-                    <span className="cursor-help text-gray-400 text-xs border border-gray-400 rounded-full w-4 h-4 inline-flex items-center justify-center">?</span>
-                    <div className="invisible group-hover:visible absolute top-full left-1/2 transform -translate-x-1/2 mt-2 w-64 p-2 bg-gray-800 text-white text-xs rounded shadow-lg z-10">
-                      When checked, rankings start from a seed value derived from a preliminary analysis of all matches. Without this, everyone starts at 0.
-                    </div>
-                  </div>
+      <div className="max-w-6xl mx-auto p-6">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Player Rankings</h1>
+            <p className="text-gray-600 mt-1">
+              {useSeededRankings
+                ? 'Seeded rankings (three-pass seeding system)'
+                : 'Enhanced ranking system with provisional ratings and confidence tracking'}
+            </p>
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={useSeededRankings}
+                  onChange={(e) => setUseSeededRankings(e.target.checked)}
+                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                />
+                <span className="text-sm text-gray-700">Use Initial Seeds (Average of Pass 1 & 2)</span>
+              </label>
+              <div className="ml-2 group relative">
+                <span className="cursor-help text-gray-400 text-xs border border-gray-400 rounded-full w-4 h-4 inline-flex items-center justify-center">?</span>
+                <div className="invisible group-hover:visible absolute right-0 top-full mt-2 w-64 p-2 bg-gray-800 text-white text-xs rounded shadow-lg z-10">
+                  When checked, rankings start from a seed value derived from a preliminary analysis of all matches. Without this, everyone starts at 0.
                 </div>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={filterLowConfidence}
-                    onChange={(e) => setFilterLowConfidence(e.target.checked)}
-                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                  />
-                  <span className="text-sm text-gray-700">
-                    Filter Low Confidence ({confidenceThreshold.toFixed(1)}% threshold)
-                  </span>
-                </label>
               </div>
-              {onBack && (
-                <button
-                  onClick={onBack}
-                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500"
-                >
-                  ← Back
-                </button>
-              )}
             </div>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={filterLowConfidence}
+                onChange={(e) => setFilterLowConfidence(e.target.checked)}
+                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              />
+              <span className="text-sm text-gray-700">
+                Filter Low Confidence ({confidenceThreshold.toFixed(1)}% threshold)
+              </span>
+            </label>
           </div>
         </div>
-      </div>
-
-      <div className="max-w-6xl mx-auto p-6">
         {isLoading ? (
           <div className="text-center py-12">
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>

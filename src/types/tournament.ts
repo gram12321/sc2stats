@@ -35,6 +35,8 @@ export interface Tournament {
   prize_pool: number | null;
   format: string | null;
   maps: string[];
+  is_main_circuit?: boolean;
+  season?: number;
 }
 
 export interface TournamentData {

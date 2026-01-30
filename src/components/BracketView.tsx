@@ -15,7 +15,7 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [teamRankings, setTeamRankings] = useState<Record<string, number>>({});
-  
+
   // Load team rankings
   useEffect(() => {
     const loadTeamRankings = async () => {
@@ -36,13 +36,54 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
     };
     loadTeamRankings();
   }, []);
-  
+
+  // Update effect to handle prop changes and auto-detection
+  useEffect(() => {
+    const updatedTournament = { ...data.tournament };
+    let hasChanges = false;
+
+    // Auto-detect Main Circuit
+    // Check if filename starts with variations of "Uthermal" (case insensitive for safety)
+    if (updatedTournament.is_main_circuit === undefined) {
+      const lowerFilename = filename.toLowerCase();
+      if (lowerFilename.startsWith('utermal_2v2_circuit') || lowerFilename.startsWith('uthermal_2v2_circuit')) {
+        updatedTournament.is_main_circuit = true;
+        hasChanges = true;
+      } else {
+        updatedTournament.is_main_circuit = false;
+        hasChanges = true;
+      }
+    }
+
+    // Auto-detect Season
+    if (updatedTournament.season === undefined && updatedTournament.date) {
+      const year = new Date(updatedTournament.date).getFullYear();
+      if (!isNaN(year)) {
+        updatedTournament.season = year;
+        hasChanges = true;
+      }
+    }
+
+    if (hasChanges) {
+      const newData = {
+        ...data,
+        tournament: updatedTournament
+      };
+      setTournamentData(newData);
+      // Propagate changes to parent so they persist if we navigate away or save
+      onDataChange?.(newData);
+    } else {
+      setTournamentData(data);
+    }
+  }, [data, filename, onDataChange]);
+
+
   // Separate group stage matches from bracket matches
   const { groupStageMatches, bracketMatches, groupNames } = useMemo(() => {
     const groups: Match[] = [];
     const bracket: Match[] = [];
     const groupSet = new Set<string>();
-    
+
     tournamentData.matches.forEach(match => {
       if (match.round.startsWith('Group ')) {
         groups.push(match);
@@ -51,17 +92,17 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
         bracket.push(match);
       }
     });
-    
+
     return {
       groupStageMatches: groups,
       bracketMatches: bracket,
       groupNames: Array.from(groupSet).sort()
     };
   }, [tournamentData.matches]);
-  
+
   // Default to groups if no bracket matches, otherwise playoffs
   const [activeTab, setActiveTab] = useState<'playoffs' | 'groups'>('playoffs');
-  
+
   // Update active tab when data changes
   useEffect(() => {
     if (bracketMatches.length === 0 && groupStageMatches.length > 0) {
@@ -88,7 +129,7 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
   // Lower bracket rounds are explicitly named "Lower Bracket", everything else is upper bracket
   const { upperBracketRounds, lowerBracketRounds } = useMemo(() => {
     const uniqueRounds = Array.from(new Set(bracketMatches.map(m => m.round)));
-    
+
     // Define round order for upper bracket (single-elimination or upper bracket of double-elimination)
     const upperBracketOrder = [
       'Round of 16',
@@ -98,17 +139,17 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
       'Semifinals',
       'Grand Final'
     ];
-    
+
     // Define round order for lower bracket
     const lowerBracketOrder = [
       'Lower Bracket Quarterfinals',
       'Lower Bracket Semifinals',
       'Lower Bracket Final'
     ];
-    
+
     const upperRounds: string[] = [];
     const lowerRounds: string[] = [];
-    
+
     uniqueRounds.forEach(round => {
       if (round.includes('Lower Bracket')) {
         lowerRounds.push(round);
@@ -116,7 +157,7 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
         upperRounds.push(round);
       }
     });
-    
+
     // Sort upper bracket rounds
     const sortedUpper = upperRounds.sort((a, b) => {
       const aIndex = upperBracketOrder.indexOf(a);
@@ -126,7 +167,7 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
       if (bIndex !== -1) return 1;
       return a.localeCompare(b);
     });
-    
+
     // Sort lower bracket rounds
     const sortedLower = lowerRounds.sort((a, b) => {
       const aIndex = lowerBracketOrder.indexOf(a);
@@ -136,7 +177,7 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
       if (bIndex !== -1) return 1;
       return a.localeCompare(b);
     });
-    
+
     return {
       upperBracketRounds: sortedUpper,
       lowerBracketRounds: sortedLower
@@ -165,7 +206,7 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
       return acc;
     }, {} as Record<string, Match[]>);
   }, [groupStageMatches, groupNames]);
-  
+
   const isDoubleElimination = lowerBracketRounds.length > 0;
 
   const saveTournament = async () => {
@@ -179,12 +220,12 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
         },
         body: JSON.stringify(tournamentData),
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
         throw new Error(errorData.error || `Failed to save tournament (${response.status})`);
       }
-      
+
       setSaveMessage('Tournament saved successfully!');
       setTimeout(() => setSaveMessage(null), 3000);
     } catch (err) {
@@ -213,14 +254,56 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
                 )}
                 <span>{tournamentData.matches.length} matches</span>
               </div>
+              <div className="flex items-center gap-4 mt-2">
+                <label className="flex items-center gap-2 cursor-pointer bg-gray-50 px-3 py-1 rounded border border-gray-200 hover:bg-gray-100">
+                  <input
+                    type="checkbox"
+                    checked={tournamentData.tournament.is_main_circuit || false}
+                    onChange={(e) => {
+                      const newData = {
+                        ...tournamentData,
+                        tournament: {
+                          ...tournamentData.tournament,
+                          is_main_circuit: e.target.checked
+                        }
+                      };
+                      setTournamentData(newData);
+                      onDataChange?.(newData);
+                    }}
+                    className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                  />
+                  <span className="text-sm font-medium text-gray-700">Main Circuit</span>
+                </label>
+
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-gray-700">Season:</span>
+                  <input
+                    type="number"
+                    value={tournamentData.tournament.season || ''}
+                    placeholder="Year"
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value);
+                      const newData = {
+                        ...tournamentData,
+                        tournament: {
+                          ...tournamentData.tournament,
+                          season: isNaN(val) ? undefined : val
+                        }
+                      };
+                      setTournamentData(newData);
+                      onDataChange?.(newData);
+                    }}
+                    className="w-20 px-2 py-1 text-sm border border-gray-300 rounded focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
             </div>
             <div className="flex items-center gap-2">
               {saveMessage && (
-                <span className={`text-sm px-3 py-1 rounded ${
-                  saveMessage.includes('success') 
-                    ? 'bg-green-100 text-green-800' 
-                    : 'bg-red-100 text-red-800'
-                }`}>
+                <span className={`text-sm px-3 py-1 rounded ${saveMessage.includes('success')
+                  ? 'bg-green-100 text-green-800'
+                  : 'bg-red-100 text-red-800'
+                  }`}>
                   {saveMessage}
                 </span>
               )}
@@ -243,21 +326,19 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
             <div className="flex gap-1">
               <button
                 onClick={() => setActiveTab('playoffs')}
-                className={`px-4 py-2 text-sm font-medium transition-colors ${
-                  activeTab === 'playoffs'
-                    ? 'text-blue-600 border-b-2 border-blue-600'
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
+                className={`px-4 py-2 text-sm font-medium transition-colors ${activeTab === 'playoffs'
+                  ? 'text-blue-600 border-b-2 border-blue-600'
+                  : 'text-gray-600 hover:text-gray-900'
+                  }`}
               >
                 Playoffs ({bracketMatches.length})
               </button>
               <button
                 onClick={() => setActiveTab('groups')}
-                className={`px-4 py-2 text-sm font-medium transition-colors ${
-                  activeTab === 'groups'
-                    ? 'text-blue-600 border-b-2 border-blue-600'
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
+                className={`px-4 py-2 text-sm font-medium transition-colors ${activeTab === 'groups'
+                  ? 'text-blue-600 border-b-2 border-blue-600'
+                  : 'text-gray-600 hover:text-gray-900'
+                  }`}
               >
                 Group Stage ({groupStageMatches.length})
               </button>
@@ -301,24 +382,71 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
 
       {/* Bracket/Playoffs View */}
       {activeTab === 'playoffs' && bracketMatches.length > 0 && (
-      <div className="max-w-full overflow-x-auto py-6">
-        {isDoubleElimination ? (
-          // Double-elimination: Show upper and lower brackets side by side
-          <div className="flex gap-12 px-6">
-            {/* Upper Bracket */}
-            <div className="flex-shrink-0">
-              <div className="mb-4 text-center">
-                <h2 className="text-lg font-bold text-gray-900 bg-blue-100 px-4 py-2 rounded">
-                  Upper Bracket
-                </h2>
+        <div className="max-w-full overflow-x-auto py-6">
+          {isDoubleElimination ? (
+            // Double-elimination: Show upper and lower brackets side by side
+            <div className="flex gap-12 px-6">
+              {/* Upper Bracket */}
+              <div className="flex-shrink-0">
+                <div className="mb-4 text-center">
+                  <h2 className="text-lg font-bold text-gray-900 bg-blue-100 px-4 py-2 rounded">
+                    Upper Bracket
+                  </h2>
+                </div>
+                <div className="inline-flex gap-8">
+                  {upperBracketRounds
+                    .filter(round => round !== 'Grand Final')
+                    .map((round, roundIndex) => {
+                      const matches = groupedMatches[round] || [];
+                      if (matches.length === 0) return null;
+                      const filteredRounds = upperBracketRounds.filter(r => r !== 'Grand Final');
+
+                      return (
+                        <div key={round} className="flex flex-col">
+                          {/* Round Header */}
+                          <div className="mb-4 text-center">
+                            <h3 className="text-sm font-semibold text-gray-700 bg-gray-100 px-3 py-1 rounded">
+                              {round}
+                            </h3>
+                          </div>
+
+                          {/* Matches */}
+                          <div className="flex flex-col gap-4 justify-center min-h-[400px]">
+                            {matches.map((match) => (
+                              <div key={match.match_id} className="relative">
+                                <MatchBox
+                                  match={match}
+                                  teamRankings={teamRankings}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setSelectedMatch(match);
+                                  }}
+                                />
+
+                                {/* Connecting line to next round */}
+                                {roundIndex < filteredRounds.length - 1 && (
+                                  <div className="absolute top-1/2 -right-4 w-4 h-px bg-gray-400"></div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
               </div>
-              <div className="inline-flex gap-8">
-                {upperBracketRounds
-                  .filter(round => round !== 'Grand Final')
-                  .map((round, roundIndex) => {
+
+              {/* Lower Bracket */}
+              <div className="flex-shrink-0">
+                <div className="mb-4 text-center">
+                  <h2 className="text-lg font-bold text-gray-900 bg-red-100 px-4 py-2 rounded">
+                    Lower Bracket
+                  </h2>
+                </div>
+                <div className="inline-flex gap-8">
+                  {lowerBracketRounds.map((round, roundIndex) => {
                     const matches = groupedMatches[round] || [];
                     if (matches.length === 0) return null;
-                    const filteredRounds = upperBracketRounds.filter(r => r !== 'Grand Final');
 
                     return (
                       <div key={round} className="flex flex-col">
@@ -341,9 +469,9 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
                                   setSelectedMatch(match);
                                 }}
                               />
-                              
+
                               {/* Connecting line to next round */}
-                              {roundIndex < filteredRounds.length - 1 && (
+                              {roundIndex < lowerBracketRounds.length - 1 && (
                                 <div className="absolute top-1/2 -right-4 w-4 h-px bg-gray-400"></div>
                               )}
                             </div>
@@ -352,101 +480,20 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
                       </div>
                     );
                   })}
-              </div>
-            </div>
-
-            {/* Lower Bracket */}
-            <div className="flex-shrink-0">
-              <div className="mb-4 text-center">
-                <h2 className="text-lg font-bold text-gray-900 bg-red-100 px-4 py-2 rounded">
-                  Lower Bracket
-                </h2>
-              </div>
-              <div className="inline-flex gap-8">
-                {lowerBracketRounds.map((round, roundIndex) => {
-                  const matches = groupedMatches[round] || [];
-                  if (matches.length === 0) return null;
-
-                  return (
-                    <div key={round} className="flex flex-col">
-                      {/* Round Header */}
-                      <div className="mb-4 text-center">
-                        <h3 className="text-sm font-semibold text-gray-700 bg-gray-100 px-3 py-1 rounded">
-                          {round}
-                        </h3>
-                      </div>
-
-                      {/* Matches */}
-                      <div className="flex flex-col gap-4 justify-center min-h-[400px]">
-                        {matches.map((match) => (
-                          <div key={match.match_id} className="relative">
-                            <MatchBox
-                              match={match}
-                              teamRankings={teamRankings}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setSelectedMatch(match);
-                              }}
-                            />
-                            
-                            {/* Connecting line to next round */}
-                            {roundIndex < lowerBracketRounds.length - 1 && (
-                              <div className="absolute top-1/2 -right-4 w-4 h-px bg-gray-400"></div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Grand Final (if exists) - shown separately after lower bracket */}
-            {upperBracketRounds.includes('Grand Final') && (
-              <div className="flex-shrink-0">
-                <div className="mb-4 text-center">
-                  <h2 className="text-lg font-bold text-gray-900 bg-yellow-100 px-4 py-2 rounded">
-                    Grand Final
-                  </h2>
-                </div>
-                <div className="flex flex-col">
-                  {groupedMatches['Grand Final']?.map((match) => (
-                    <div key={match.match_id}>
-                      <MatchBox
-                        match={match}
-                        teamRankings={teamRankings}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedMatch(match);
-                        }}
-                      />
-                    </div>
-                  ))}
                 </div>
               </div>
-            )}
-          </div>
-        ) : (
-          // Single-elimination: Show all rounds in a single row
-          <div className="inline-flex gap-8 px-6">
-            {upperBracketRounds.map((round, roundIndex) => {
-              const matches = groupedMatches[round] || [];
-              if (matches.length === 0) return null;
 
-              return (
-                <div key={round} className="flex flex-col">
-                  {/* Round Header */}
+              {/* Grand Final (if exists) - shown separately after lower bracket */}
+              {upperBracketRounds.includes('Grand Final') && (
+                <div className="flex-shrink-0">
                   <div className="mb-4 text-center">
-                    <h2 className="text-sm font-semibold text-gray-700 bg-gray-100 px-3 py-1 rounded">
-                      {round}
+                    <h2 className="text-lg font-bold text-gray-900 bg-yellow-100 px-4 py-2 rounded">
+                      Grand Final
                     </h2>
                   </div>
-
-                  {/* Matches */}
-                  <div className="flex flex-col gap-4 justify-center min-h-[400px]">
-                    {matches.map((match) => (
-                      <div key={match.match_id} className="relative">
+                  <div className="flex flex-col">
+                    {groupedMatches['Grand Final']?.map((match) => (
+                      <div key={match.match_id}>
                         <MatchBox
                           match={match}
                           teamRankings={teamRankings}
@@ -455,20 +502,54 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
                             setSelectedMatch(match);
                           }}
                         />
-                        
-                        {/* Connecting line to next round */}
-                        {roundIndex < upperBracketRounds.length - 1 && (
-                          <div className="absolute top-1/2 -right-4 w-4 h-px bg-gray-400"></div>
-                        )}
                       </div>
                     ))}
                   </div>
                 </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
+              )}
+            </div>
+          ) : (
+            // Single-elimination: Show all rounds in a single row
+            <div className="inline-flex gap-8 px-6">
+              {upperBracketRounds.map((round, roundIndex) => {
+                const matches = groupedMatches[round] || [];
+                if (matches.length === 0) return null;
+
+                return (
+                  <div key={round} className="flex flex-col">
+                    {/* Round Header */}
+                    <div className="mb-4 text-center">
+                      <h2 className="text-sm font-semibold text-gray-700 bg-gray-100 px-3 py-1 rounded">
+                        {round}
+                      </h2>
+                    </div>
+
+                    {/* Matches */}
+                    <div className="flex flex-col gap-4 justify-center min-h-[400px]">
+                      {matches.map((match) => (
+                        <div key={match.match_id} className="relative">
+                          <MatchBox
+                            match={match}
+                            teamRankings={teamRankings}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedMatch(match);
+                            }}
+                          />
+
+                          {/* Connecting line to next round */}
+                          {roundIndex < upperBracketRounds.length - 1 && (
+                            <div className="absolute top-1/2 -right-4 w-4 h-px bg-gray-400"></div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
       )}
 
       {/* Edit Modal */}

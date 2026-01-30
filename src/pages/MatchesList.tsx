@@ -62,11 +62,9 @@ interface TeamRanking {
   confidence: number;
 }
 
-interface MatchesListProps {
-  onBack?: () => void;
-}
+interface MatchesListProps { }
 
-export function MatchesList({ onBack }: MatchesListProps) {
+export function MatchesList({ }: MatchesListProps) {
   const [matches, setMatches] = useState<MatchHistory[]>([]);
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [selectedTournament, setSelectedTournament] = useState<string>('');
@@ -227,59 +225,45 @@ export function MatchesList({ onBack }: MatchesListProps) {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="bg-white border-b border-gray-200 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 py-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-xl font-bold text-gray-900">Match History</h1>
-            </div>
-            {onBack && (
-              <button
-                onClick={onBack}
-                className="px-3 py-1.5 text-sm text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500"
-              >
-                ← Back
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
-
       <div className="max-w-7xl mx-auto p-4">
-        {/* Filters */}
-        <div className="bg-white rounded-lg border border-gray-200 p-3 mb-3 shadow-sm">
-          <div className="flex items-center gap-3">
-            <label className="text-xs font-medium text-gray-700">Tournament:</label>
-            <select
-              value={selectedTournament}
-              onChange={(e) => setSelectedTournament(e.target.value)}
-              className="px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">All Tournaments</option>
-              {tournaments.map(tournament => (
-                <option key={tournament.slug} value={tournament.slug}>
-                  {tournament.name}
-                </option>
-              ))}
-            </select>
-            <div className="text-xs text-gray-600 ml-auto">
-              {matches.length} matches
-            </div>
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Match History</h1>
+            <p className="text-gray-600 mt-1">
+              Displaying {matches.length} matches{selectedTournament ? ` from selected tournament` : ''}
+            </p>
           </div>
-          <div className="mt-2 flex items-center">
-            <label className="flex items-center space-x-2 text-sm text-gray-700 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={useSeededRankings}
-                onChange={(e) => setUseSeededRankings(e.target.checked)}
-                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-              />
-              <span>Use Initial Seeds (Average of Pass 1 & 2)</span>
-            </label>
-            <div className="ml-2 group relative">
-              <span className="cursor-help text-gray-400 text-xs border border-gray-400 rounded-full w-4 h-4 inline-flex items-center justify-center">?</span>
-              <div className="invisible group-hover:visible absolute left-full top-0 ml-2 w-64 p-2 bg-gray-800 text-white text-xs rounded shadow-lg z-10">
-                When checked, rankings start from a seed value derived from a preliminary analysis of all matches. Without this, everyone starts at 0.
+          <div className="flex flex-col md:flex-row items-end md:items-center gap-4">
+            <div className="flex items-center gap-2">
+              <label className="text-sm font-medium text-gray-700">Tournament:</label>
+              <select
+                value={selectedTournament}
+                onChange={(e) => setSelectedTournament(e.target.value)}
+                className="px-3 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">All Tournaments</option>
+                {tournaments.map(tournament => (
+                  <option key={tournament.slug} value={tournament.slug}>
+                    {tournament.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex items-center">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={useSeededRankings}
+                  onChange={(e) => setUseSeededRankings(e.target.checked)}
+                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+                />
+                <span className="text-sm text-gray-700 ml-2">Use Initial Seeds</span>
+              </label>
+              <div className="ml-2 group relative">
+                <span className="cursor-help text-gray-400 text-xs border border-gray-400 rounded-full w-4 h-4 inline-flex items-center justify-center">?</span>
+                <div className="invisible group-hover:visible absolute right-0 top-full mt-2 w-64 p-2 bg-gray-800 text-white text-xs rounded shadow-lg z-10">
+                  When checked, rankings start from a seed value derived from a preliminary analysis of all matches. Without this, everyone starts at 0.
+                </div>
               </div>
             </div>
           </div>

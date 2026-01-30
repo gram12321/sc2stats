@@ -28,9 +28,7 @@ interface TeamRaceRanking {
   points: number; // net points for combo1
 }
 
-interface TeamRaceRankingsProps {
-  onBack?: () => void;
-}
+interface TeamRaceRankingsProps { }
 
 interface MatchHistoryEntry {
   match_id: string;
@@ -85,7 +83,7 @@ interface TeamRanking {
   confidence: number;
 }
 
-export function TeamRaceRankings({ onBack }: TeamRaceRankingsProps) {
+export function TeamRaceRankings({ }: TeamRaceRankingsProps) {
   const [rankings, setRankings] = useState<TeamRaceRanking[]>([]);
   const [combinedRankings, setCombinedRankings] = useState<TeamRaceRanking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -396,28 +394,26 @@ export function TeamRaceRankings({ onBack }: TeamRaceRankingsProps) {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="bg-white border-b border-gray-200 shadow-sm">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Team Race Statistics</h1>
-              <p className="text-gray-600 mt-1">
-                Team race combination matchup statistics (PT vs ZZ, etc.)
-              </p>
-            </div>
-            {onBack && (
-              <button
-                onClick={onBack}
-                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500"
-              >
-                ← Back
-              </button>
-            )}
+      <div className="max-w-7xl mx-auto p-6">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Team Race Statistics</h1>
+            <p className="text-gray-600 mt-1">
+              Team race combination matchup statistics (PT vs ZZ, etc.)
+            </p>
+          </div>
+          <div className="flex items-center gap-4">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={hideRandom}
+                onChange={(e) => setHideRandom(e.target.checked)}
+                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+              />
+              <span className="text-sm text-gray-700">Hide Random matchups</span>
+            </label>
           </div>
         </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto p-6">
         {isLoading ? (
           <div className="text-center py-12">
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
@@ -445,15 +441,7 @@ export function TeamRaceRankings({ onBack }: TeamRaceRankingsProps) {
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={hideRandom}
-                    onChange={(e) => setHideRandom(e.target.checked)}
-                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
-                  />
-                  <span className="text-sm text-gray-700">Hide Random matchups</span>
-                </label>
+
               </div>
               <div className="text-sm text-gray-600">
                 Showing {filteredRankings.length} of {rankings.length} team race matchups

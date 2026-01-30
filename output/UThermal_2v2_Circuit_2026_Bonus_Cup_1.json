@@ -15,7 +15,9 @@
       "Rust Bucket",
       "Undercurrent",
       "Yellowjacket"
-    ]
+    ],
+    "is_main_circuit": true,
+    "season": 2026
   },
   "matches": [
     {
