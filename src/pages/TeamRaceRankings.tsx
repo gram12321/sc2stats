@@ -900,21 +900,11 @@ export function TeamRaceRankings({ onBack }: TeamRaceRankingsProps) {
                         ratingChange = match.rating_change || 0;
                       }
 
-                      // Determine which team is which based on combo ordering
-                      let clickedComboIsTeam1 = false;
-                      if (isCombinedStats) {
-                        clickedComboIsTeam1 = match.team1_combo === selectedMatchup.combo1;
-                      }
+
 
                       const convertedMatch = convertMatchForComponent(match);
-                      const team1RankData = getTeamRank(
-                        clickedComboIsTeam1 ? match.team1_player1 : match.team2_player1,
-                        clickedComboIsTeam1 ? match.team1_player2 : match.team2_player2
-                      );
-                      const team2RankData = getTeamRank(
-                        clickedComboIsTeam1 ? match.team2_player1 : match.team1_player1,
-                        clickedComboIsTeam1 ? match.team2_player2 : match.team1_player2
-                      );
+                      const team1RankData = getTeamRank(match.team1_player1, match.team1_player2);
+                      const team2RankData = getTeamRank(match.team2_player1, match.team2_player2);
 
                       // Convert player rankings to the format expected by component
                       const playerRankingsMap: Record<string, { rank: number; points: number; confidence: number }> = {};
@@ -937,6 +927,7 @@ export function TeamRaceRankings({ onBack }: TeamRaceRankingsProps) {
                           team2Rank={team2RankData ? { rank: team2RankData.rank, points: team2RankData.points, confidence: team2RankData.confidence } : null}
                           playerRankings={playerRankingsMap}
                           playerRaces={playerRaces}
+                          highlightCombo={selectedMatchup.combo1}
                           showWinLoss={true}
                           winLossValue={displayedCombo1Won}
                           showRatingBreakdown={true}

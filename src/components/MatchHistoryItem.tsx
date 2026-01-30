@@ -84,6 +84,8 @@ interface MatchHistoryItemProps {
   playerRaces?: Record<string, Race>;
   highlightPlayers?: string[]; // Players to highlight (e.g., current player or team players)
   highlightTeamKey?: string; // Team key to highlight (e.g., current team)
+  highlightRace?: string; // Race to highlight (e.g., "Zerg")
+  highlightCombo?: string; // Combo to highlight (e.g., "PT")
   showWinLoss?: boolean; // Show W/L badge
   winLossValue?: boolean; // Whether this entity won
   showRatingBreakdown?: boolean; // Show detailed rating breakdown at bottom
@@ -212,6 +214,8 @@ export function MatchHistoryItem({
   playerRaces = {},
   highlightPlayers = [],
   highlightTeamKey,
+  highlightRace, // Race to highlight/move to left (e.g. "Zerg")
+  highlightCombo, // Combo to highlight/move to left (e.g. "PT")
   showWinLoss = false,
   winLossValue,
   showRatingBreakdown = true,
@@ -227,17 +231,66 @@ export function MatchHistoryItem({
 }: MatchHistoryItemProps) {
   // Determine if we should swap positions (to show highlighted team/player on left)
   const shouldSwap = (() => {
+    // 1. Team Key Highlight
     if (highlightTeamKey) {
       const t2Key = normalizeTeamKey(match.team2.player1, match.team2.player2);
       return highlightTeamKey === t2Key;
     }
+
+    const t1Players = [match.team1.player1, match.team1.player2].filter(Boolean);
+    const t2Players = [match.team2.player1, match.team2.player2].filter(Boolean);
+
+    // 2. Player Highlight
     if (highlightPlayers.length > 0) {
-      const matchTeam1Players = [match.team1.player1, match.team1.player2].filter(Boolean);
-      const matchTeam2Players = [match.team2.player1, match.team2.player2].filter(Boolean);
-      const team1HasHighlight = matchTeam1Players.some(p => highlightPlayers.includes(p));
-      const team2HasHighlight = matchTeam2Players.some(p => highlightPlayers.includes(p));
+      const team1HasHighlight = t1Players.some(p => highlightPlayers.includes(p));
+      const team2HasHighlight = t2Players.some(p => highlightPlayers.includes(p));
       return team2HasHighlight && !team1HasHighlight;
     }
+
+    // 3. Race Highlight
+    if (highlightRace && playerRaces) {
+      const getTeamRaces = (players: string[]) => players.map(p => playerRaces[p]).filter(Boolean);
+
+      const t1Races = getTeamRaces(t1Players);
+      const t2Races = getTeamRaces(t2Players);
+
+      // Robust check: match full string or first letter (Zerg == Z)
+      const hasRace = (races: (string | null | undefined)[]) => {
+        if (!highlightRace) return false;
+        const raceCheck = highlightRace;
+        const raceCheckAbbr = raceCheck[0];
+
+        return races.some(r => {
+          if (!r) return false;
+          return r === raceCheck || r === raceCheckAbbr || (r[0] && r[0] === raceCheckAbbr);
+        });
+      };
+
+      const t1HasRace = hasRace(t1Races);
+      const t2HasRace = hasRace(t2Races);
+
+      // If team 2 has race and team 1 doesn't, swap (prioritize highlight on left)
+      return t2HasRace && !t1HasRace;
+    }
+
+    // 4. Combo Highlight
+    if (highlightCombo && playerRaces) {
+      const getTeamCombo = (players: string[]) => {
+        const races = players.map(p => {
+          const r = playerRaces[p];
+          return r === 'Random' ? 'R' : (r ? r[0] : '');
+        }).filter(Boolean).sort();
+        return races.join('');
+      };
+
+      const t1Combo = getTeamCombo(t1Players);
+      const t2Combo = getTeamCombo(t2Players);
+
+      // Simple check: if team 2 matches combo and team 1 doesn't (or just team 2 matches and we prefer left)
+      // Since highlightCombo target is usually "PT" or "ZZ", we match exactly.
+      return t2Combo === highlightCombo && t1Combo !== highlightCombo;
+    }
+
     return false;
   })();
 

@@ -567,10 +567,10 @@ export function RaceRankings({ onBack }: RaceRankingsProps) {
                           <td className="px-6 py-4 whitespace-nowrap text-center">
                             <span
                               className={`text-sm font-bold ${matchup.points > 0
-                                  ? 'text-green-600'
-                                  : matchup.points < 0
-                                    ? 'text-red-600'
-                                    : 'text-gray-600'
+                                ? 'text-green-600'
+                                : matchup.points < 0
+                                  ? 'text-red-600'
+                                  : 'text-gray-600'
                                 }`}
                             >
                               {matchup.points > 0 ? '+' : ''}{formatRankingPoints(matchup.points)}
@@ -720,10 +720,10 @@ export function RaceRankings({ onBack }: RaceRankingsProps) {
                             <td className="px-6 py-4 whitespace-nowrap text-center">
                               <span
                                 className={`text-sm font-bold ${matchup.points > 0
-                                    ? 'text-green-600'
-                                    : matchup.points < 0
-                                      ? 'text-red-600'
-                                      : 'text-gray-600'
+                                  ? 'text-green-600'
+                                  : matchup.points < 0
+                                    ? 'text-red-600'
+                                    : 'text-gray-600'
                                   }`}
                               >
                                 {matchup.points > 0 ? '+' : ''}{formatRankingPoints(matchup.points)}
@@ -915,6 +915,7 @@ export function RaceRankings({ onBack }: RaceRankingsProps) {
                           showRatingBreakdown={true}
                           showRaceInfo={true}
                           raceInfo={raceInfo}
+                          highlightRace={selectedMatchup.race1}
                           normalizeTeamKey={normalizeTeamKey}
                           getTeamImpact={(match, player1, player2) => getTeamImpact(match as any, player1, player2)}
                           getPlayerImpact={(match, playerName) => getPlayerImpact(match as any, playerName)}
