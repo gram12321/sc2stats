@@ -766,7 +766,13 @@ app.get('/api/team/:player1/:player2', async (req, res) => {
   }
 });
 
-const PORT = 3002;
-app.listen(PORT, () => {
-  console.log(`API server running on http://localhost:${PORT}`);
-});
+// Export for Vercel
+export default app;
+
+// Only listen if run directly
+if (process.env.NODE_ENV !== 'production') {
+  const PORT = process.env.PORT || 3002;
+  app.listen(PORT, () => {
+    console.log(`API server running on http://localhost:${PORT}`);
+  });
+}
