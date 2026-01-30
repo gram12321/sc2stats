@@ -17,6 +17,27 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Helper to load seeds
+async function loadSeeds() {
+  try {
+    const playerSeedsFile = join(outputDir, 'seeded_player_seeds.json');
+    const teamSeedsFile = join(outputDir, 'seeded_team_seeds.json');
+
+    const [playerContent, teamContent] = await Promise.all([
+      readFile(playerSeedsFile, 'utf-8').catch(() => null),
+      readFile(teamSeedsFile, 'utf-8').catch(() => null)
+    ]);
+
+    return {
+      playerSeeds: playerContent ? JSON.parse(playerContent) : null,
+      teamSeeds: teamContent ? JSON.parse(teamContent) : null
+    };
+  } catch (err) {
+    console.error('Error loading seeds:', err);
+    return { playerSeeds: null, teamSeeds: null };
+  }
+}
+
 // List all JSON files in output directory
 app.get('/api/tournaments', async (req, res) => {
   try {
@@ -505,9 +526,21 @@ app.get('/api/rankings', async (req, res) => {
 // Get match history with ranking impacts
 app.get('/api/match-history', async (req, res) => {
   try {
-    const { player, team, tournament } = req.query;
-    const { rankings, matchHistory } = await calculateRankings();
-    const { matchHistory: teamMatchHistory } = await calculateTeamRankings();
+    const { player, team, tournament, useSeeds } = req.query;
+
+    let playerSeeds = null;
+    let teamSeeds = null;
+
+    if (useSeeds === 'true') {
+      console.log('API: useSeeds=true requested');
+      const seeds = await loadSeeds();
+      playerSeeds = seeds.playerSeeds;
+      teamSeeds = seeds.teamSeeds;
+      console.log(`API: Loaded seeds - Players: ${playerSeeds ? Object.keys(playerSeeds).length : 0}, Teams: ${teamSeeds ? Object.keys(teamSeeds).length : 0}`);
+    }
+
+    const { rankings, matchHistory } = await calculateRankings(playerSeeds);
+    const { matchHistory: teamMatchHistory } = await calculateTeamRankings(teamSeeds);
 
     // Create a map of team match history by match_id for quick lookup
     const teamMatchMap = new Map();

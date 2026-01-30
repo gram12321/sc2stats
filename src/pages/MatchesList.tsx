@@ -70,6 +70,7 @@ export function MatchesList({ onBack }: MatchesListProps) {
   const [matches, setMatches] = useState<MatchHistory[]>([]);
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [selectedTournament, setSelectedTournament] = useState<string>('');
+  const [useSeededRankings, setUseSeededRankings] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [playerRankings, setPlayerRankings] = useState<Record<string, { rank: number; points: number; confidence: number }>>({});
@@ -86,7 +87,7 @@ export function MatchesList({ onBack }: MatchesListProps) {
 
   useEffect(() => {
     loadMatches();
-  }, [selectedTournament]);
+  }, [selectedTournament, useSeededRankings]);
 
   const loadTournaments = async () => {
     try {
@@ -155,9 +156,11 @@ export function MatchesList({ onBack }: MatchesListProps) {
     try {
       setIsLoading(true);
       setError(null);
-      const url = selectedTournament 
-        ? `/api/match-history?tournament=${encodeURIComponent(selectedTournament)}`
-        : '/api/match-history';
+      const params = new URLSearchParams();
+      if (selectedTournament) params.append('tournament', selectedTournament);
+      if (useSeededRankings) params.append('useSeeds', 'true');
+
+      const url = `/api/match-history?${params.toString()}`;
       const response = await fetch(url);
       if (!response.ok) throw new Error('Failed to load matches');
       const data = await response.json();
@@ -183,17 +186,17 @@ export function MatchesList({ onBack }: MatchesListProps) {
     if (!match.race_impacts) return null;
     const raceChanges: Array<{ race: string; change: number }> = [];
     const seenRaces = new Set<string>();
-    
+
     Object.values(match.race_impacts).forEach((impact: any) => {
       // Get race abbreviations
       const getRaceAbbrev = (race: string) => {
         if (race === 'Random') return 'R';
         return race[0];
       };
-      
+
       const race1Abbr = getRaceAbbrev(impact.race1);
       const race2Abbr = getRaceAbbrev(impact.race2);
-      
+
       if (!seenRaces.has(race1Abbr)) {
         raceChanges.push({ race: race1Abbr, change: impact.ratingChange });
         seenRaces.add(race1Abbr);
@@ -203,7 +206,7 @@ export function MatchesList({ onBack }: MatchesListProps) {
         seenRaces.add(race2Abbr);
       }
     });
-    
+
     return raceChanges.length > 0 ? raceChanges : null;
   };
 
@@ -263,6 +266,23 @@ export function MatchesList({ onBack }: MatchesListProps) {
               {matches.length} matches
             </div>
           </div>
+          <div className="mt-2 flex items-center">
+            <label className="flex items-center space-x-2 text-sm text-gray-700 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={useSeededRankings}
+                onChange={(e) => setUseSeededRankings(e.target.checked)}
+                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <span>Use Initial Seeds (Average of Pass 1 & 2)</span>
+            </label>
+            <div className="ml-2 group relative">
+              <span className="cursor-help text-gray-400 text-xs border border-gray-400 rounded-full w-4 h-4 inline-flex items-center justify-center">?</span>
+              <div className="invisible group-hover:visible absolute left-full top-0 ml-2 w-64 p-2 bg-gray-800 text-white text-xs rounded shadow-lg z-10">
+                When checked, rankings start from a seed value derived from a preliminary analysis of all matches. Without this, everyone starts at 0.
+              </div>
+            </div>
+          </div>
         </div>
 
         {isLoading ? (
@@ -289,7 +309,7 @@ export function MatchesList({ onBack }: MatchesListProps) {
             {matches.map((match) => {
               const team1Rank = getTeamRank(match.team1.player1, match.team1.player2);
               const team2Rank = getTeamRank(match.team2.player1, match.team2.player2);
-              
+
               // Convert player rankings to the format expected by component
               const playerRankingsMap: Record<string, { rank: number; points: number; confidence: number }> = {};
               Object.keys(playerRankings).forEach(name => {
@@ -302,22 +322,22 @@ export function MatchesList({ onBack }: MatchesListProps) {
                   };
                 }
               });
-              
+
               return (
-                  <MatchHistoryItem
-                    key={`${match.tournament_slug}-${match.match_id}`}
-                    match={match}
-                    team1Rank={team1Rank ? { rank: team1Rank.rank, points: team1Rank.points, confidence: team1Rank.confidence } : null}
-                    team2Rank={team2Rank ? { rank: team2Rank.rank, points: team2Rank.points, confidence: team2Rank.confidence } : null}
-                    playerRankings={playerRankingsMap}
-                    playerRaces={playerRaces}
-                    showRatingBreakdown={true}
-                    extractRaceChanges={extractRaceChanges}
-                    normalizeTeamKey={normalizeTeamKey}
-                    getTeamImpact={getTeamImpact}
-                    getPlayerImpact={getPlayerImpact}
-                    formatDate={formatDate}
-                  />
+                <MatchHistoryItem
+                  key={`${match.tournament_slug}-${match.match_id}`}
+                  match={match}
+                  team1Rank={team1Rank ? { rank: team1Rank.rank, points: team1Rank.points, confidence: team1Rank.confidence } : null}
+                  team2Rank={team2Rank ? { rank: team2Rank.rank, points: team2Rank.points, confidence: team2Rank.confidence } : null}
+                  playerRankings={playerRankingsMap}
+                  playerRaces={playerRaces}
+                  showRatingBreakdown={true}
+                  extractRaceChanges={extractRaceChanges}
+                  normalizeTeamKey={normalizeTeamKey}
+                  getTeamImpact={getTeamImpact}
+                  getPlayerImpact={getPlayerImpact}
+                  formatDate={formatDate}
+                />
               );
             })}
           </div>

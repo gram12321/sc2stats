@@ -3,7 +3,8 @@ import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import {
   updateStatsForMatch,
-  calculatePopulationStats
+  calculatePopulationStats,
+  initializeStatsWithSeed
 } from './rankingCalculations.js';
 import {
   determineMatchOutcome,
@@ -25,89 +26,15 @@ function normalizeTeamKey(player1, player2) {
 }
 
 /**
- * Calculate team rankings from all tournament JSON files
- * Uses prediction-based scoring: points change based on outperforming/underperforming expectations
- * Predictions are based on previous ranking points vs opponent's previous ranking points
- * Teams are identified by the same two players (normalized alphabetically)
- * 
- * @returns {Promise<Object>} Object with rankings and matchHistory
+ * Calculate team rankings from matches with optional initial seeds
  */
-export async function calculateTeamRankings() {
+export function calculateTeamRankingsFromMatches(sortedMatches, seeds = null) {
   const teamStats = new Map();
-  const allMatches = [];
+  const matchHistory = [];
 
   try {
-    // Read all JSON files from output directory
-    const files = await readdir(outputDir);
-    const jsonFiles = files.filter(f => f.endsWith('.json') && f !== 'player_defaults.json');
-
-    // Collect all matches with tournament metadata
-    for (const file of jsonFiles) {
-      try {
-        const filePath = join(outputDir, file);
-        const content = await readFile(filePath, 'utf-8');
-        const data = JSON.parse(content);
-
-        if (!data.matches || !Array.isArray(data.matches)) {
-          continue;
-        }
-
-        const tournamentDate = data.tournament?.date || null;
-        
-        // Add tournament date and slug to each match for sorting
-        for (const match of data.matches) {
-          if (hasValidScores(match)) {
-            allMatches.push({
-              ...match,
-              tournamentDate,
-              tournamentSlug: data.tournament?.liquipedia_slug || file
-            });
-          }
-        }
-      } catch (err) {
-        console.error(`Error processing ${file}:`, err);
-      }
-    }
-
-    // Sort matches chronologically (by tournament date, then round, then match order)
-    allMatches.sort((a, b) => {
-      // First by tournament date
-      if (a.tournamentDate && b.tournamentDate) {
-        const dateA = new Date(a.tournamentDate);
-        const dateB = new Date(b.tournamentDate);
-        if (dateA.getTime() !== dateB.getTime()) {
-          return dateA.getTime() - dateB.getTime();
-        }
-      }
-      
-      // Then by match date within tournament
-      if (a.date && b.date) {
-        const dateA = new Date(a.date);
-        const dateB = new Date(b.date);
-        if (dateA.getTime() !== dateB.getTime()) {
-          return dateA.getTime() - dateB.getTime();
-        }
-      }
-      
-      // Then by round order
-      const roundOrder = {
-        'Round of 16': 1, 'Round of 8': 2, 'Quarterfinals': 3,
-        'Semifinals': 4, 'Grand Final': 5, 'Final': 5
-      };
-      const roundA = roundOrder[a.round] || 999;
-      const roundB = roundOrder[b.round] || 999;
-      if (roundA !== roundB) {
-        return roundA - roundB;
-      }
-      
-      // Finally by match_id
-      return (a.match_id || '').localeCompare(b.match_id || '');
-    });
-
     // Process matches in chronological order
-    const matchHistory = [];
-    
-    for (const match of allMatches) {
+    for (const match of sortedMatches) {
       // Get player names for each team
       const team1Player1 = match.team1?.player1?.name;
       const team1Player2 = match.team1?.player2?.name;
@@ -128,30 +55,44 @@ export async function calculateTeamRankings() {
       const team2PlayersSorted = [team2Player1, team2Player2].sort();
 
       // Calculate population statistics BEFORE initializing new teams
-      // This allows us to start new teams at the population mean
       const existingPopulationStats = calculatePopulationStats(teamStats);
       const populationMean = existingPopulationStats.mean;
       const populationStdDev = existingPopulationStats.stdDev;
 
-      // Initialize teams if they don't exist yet, starting them at population mean
+      // Initialize teams if they don't exist yet
       if (!teamStats.has(team1Key)) {
-        teamStats.set(team1Key, initializeStats(team1Key, {
-          player1: team1PlayersSorted[0],
-          player2: team1PlayersSorted[1]
-        }, populationMean));
+        if (seeds && seeds[team1Key] !== undefined) {
+          teamStats.set(team1Key, initializeStatsWithSeed(team1Key, seeds[team1Key], {
+            player1: team1PlayersSorted[0],
+            player2: team1PlayersSorted[1]
+          }));
+          console.log(`Seeded team ${team1Key} with ${seeds[team1Key]}`);
+        } else {
+          teamStats.set(team1Key, initializeStats(team1Key, {
+            player1: team1PlayersSorted[0],
+            player2: team1PlayersSorted[1]
+          }, populationMean));
+        }
       }
 
       if (!teamStats.has(team2Key)) {
-        teamStats.set(team2Key, initializeStats(team2Key, {
-          player1: team2PlayersSorted[0],
-          player2: team2PlayersSorted[1]
-        }, populationMean));
+        if (seeds && seeds[team2Key] !== undefined) {
+          teamStats.set(team2Key, initializeStatsWithSeed(team2Key, seeds[team2Key], {
+            player1: team2PlayersSorted[0],
+            player2: team2PlayersSorted[1]
+          }));
+        } else {
+          teamStats.set(team2Key, initializeStats(team2Key, {
+            player1: team2PlayersSorted[0],
+            player2: team2PlayersSorted[1]
+          }, populationMean));
+        }
       }
 
       // Get current team ratings BEFORE updating (to use previous ratings for prediction)
       const team1Stats = teamStats.get(team1Key);
       const team2Stats = teamStats.get(team2Key);
-      
+
       // Store opponent ratings before any updates
       const team1Rating = team1Stats.points;
       const team2Rating = team2Stats.points;
@@ -168,10 +109,7 @@ export async function calculateTeamRankings() {
       );
 
       // Update stats using prediction-based scoring
-      // Compare team1 rating vs team2 rating (using previous ratings)
       const team1Result = updateStatsForMatch(team1Stats, team1Won, team2Won, team2Rating, finalPopulationStdDev, 0, null, finalPopulationMean);
-      
-      // Compare team2 rating vs team1 rating (using previous ratings)
       const team2Result = updateStatsForMatch(team2Stats, team2Won, team1Won, team1Rating, finalPopulationStdDev, 0, null, finalPopulationMean);
 
       // Store match history entry
@@ -210,8 +148,7 @@ export async function calculateTeamRankings() {
       });
     }
 
-    // Convert to array and sort using shared sorting function
-    // For teams, we need a custom getNameFn since teams have player1+player2 format
+    // Convert to array and sort
     const rankings = sortRankings(
       Array.from(teamStats.values()),
       (team) => `${team.player1}+${team.player2}`
@@ -221,6 +158,92 @@ export async function calculateTeamRankings() {
   } catch (error) {
     console.error('Error calculating team rankings:', error);
     throw error;
+  }
+}
+
+/**
+ * Calculate team rankings (Reads files and calls logic)
+ */
+export async function calculateTeamRankings(seeds = null) {
+  const allMatches = [];
+
+  try {
+    // Read all JSON files from output directory
+    const files = await readdir(outputDir);
+    const jsonFiles = files.filter(f => f.endsWith('.json') && f !== 'player_defaults.json' && !f.startsWith('seeded_'));
+
+    // Collect all matches with tournament metadata
+    for (const file of jsonFiles) {
+      try {
+        const filePath = join(outputDir, file);
+        const content = await readFile(filePath, 'utf-8');
+        const data = JSON.parse(content);
+
+        if (!data.matches || !Array.isArray(data.matches)) {
+          continue;
+        }
+
+        const tournamentDate = data.tournament?.date || null;
+
+        // Add tournament date and slug to each match for sorting
+        for (const match of data.matches) {
+          if (hasValidScores(match)) {
+            allMatches.push({
+              ...match,
+              tournamentDate,
+              tournamentSlug: data.tournament?.liquipedia_slug || file
+            });
+          }
+        }
+      } catch (err) {
+        console.error(`Error processing ${file}:`, err);
+      }
+    }
+
+    // Sort matches chronologically
+    allMatches.sort((a, b) => {
+      // First by tournament date
+      if (a.tournamentDate && b.tournamentDate) {
+        const dateA = new Date(a.tournamentDate);
+        const dateB = new Date(b.tournamentDate);
+        if (dateA.getTime() !== dateB.getTime()) {
+          return dateA.getTime() - dateB.getTime();
+        }
+      }
+
+      // Then by match date within tournament
+      if (a.date && b.date) {
+        const dateA = new Date(a.date);
+        const dateB = new Date(b.date);
+        if (dateA.getTime() !== dateB.getTime()) {
+          return dateA.getTime() - dateB.getTime();
+        }
+      } else if (a.date && !b.date) {
+        return -1;
+      } else if (!a.date && b.date) {
+        return 1;
+      }
+
+      // Then by round order
+      const roundOrder = {
+        'Round of 16': 1, 'Round of 8': 2, 'Quarterfinals': 3,
+        'Semifinals': 4, 'Grand Final': 5, 'Final': 5
+      };
+      const roundA = roundOrder[a.round] || 999;
+      const roundB = roundOrder[b.round] || 999;
+      if (roundA !== roundB) {
+        return roundA - roundB;
+      }
+
+      // Finally by match_id
+      return (a.match_id || '').localeCompare(b.match_id || '');
+    });
+
+    return calculateTeamRankingsFromMatches(allMatches, seeds);
+
+  } catch (err) {
+    console.error('Error calculating team rankings:', err);
+    throw err;
   }
 }
 

@@ -413,7 +413,7 @@ async function runSeededPlayerRankings(matches) {
     );
   });
 
-  return { rankings: finalRankings, pass1Ratings, pass2Ratings };
+  return { rankings: finalRankings, pass1Ratings, pass2Ratings, averageRatings };
 }
 
 /**
@@ -467,7 +467,7 @@ async function runSeededTeamRankings(matches) {
     );
   });
 
-  return { rankings: finalRankings, pass1Ratings, pass2Ratings };
+  return { rankings: finalRankings, pass1Ratings, pass2Ratings, averageRatings };
 }
 
 /**
@@ -496,6 +496,8 @@ async function main() {
     // Save results to JSON files for API consumption
     const seededPlayerRankingsFile = join(outputDir, 'seeded_player_rankings.json');
     const seededTeamRankingsFile = join(outputDir, 'seeded_team_rankings.json');
+    const seededPlayerSeedsFile = join(outputDir, 'seeded_player_seeds.json');
+    const seededTeamSeedsFile = join(outputDir, 'seeded_team_seeds.json');
 
     // Format player rankings for API (match the structure expected by UI)
     const playerRankingsData = playerResults.rankings.map(player => ({
@@ -521,13 +523,17 @@ async function main() {
     // Save to files
     await writeFile(seededPlayerRankingsFile, JSON.stringify(playerRankingsData, null, 2), 'utf-8');
     await writeFile(seededTeamRankingsFile, JSON.stringify(teamRankingsData, null, 2), 'utf-8');
+    await writeFile(seededPlayerSeedsFile, JSON.stringify(Object.fromEntries(playerResults.averageRatings), null, 2), 'utf-8');
+    await writeFile(seededTeamSeedsFile, JSON.stringify(Object.fromEntries(teamResults.averageRatings), null, 2), 'utf-8');
 
     console.log('\n' + '='.repeat(80));
     console.log('Seeding process complete!');
     console.log('='.repeat(80));
-    console.log(`\nSaved seeded rankings to:`);
+    console.log(`\nSaved seeded rankings and initial seeds to:`);
     console.log(`  - ${seededPlayerRankingsFile}`);
     console.log(`  - ${seededTeamRankingsFile}`);
+    console.log(`  - ${seededPlayerSeedsFile}`);
+    console.log(`  - ${seededTeamSeedsFile}`);
     console.log('\nThese rankings are now available via API endpoints:');
     console.log('  - GET /api/seeded-player-rankings');
     console.log('  - GET /api/seeded-team-rankings');
