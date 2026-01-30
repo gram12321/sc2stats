@@ -234,6 +234,24 @@ export function Info({ }: InfoProps) {
                                                 Since the system processes matches chronologically, adding an older tournament triggers a full recalculation of the history to ensure every subsequent match rating remains accurate.
                                           </p>
                                     </div>
+
+                                    <div className="border-b border-gray-100 pb-4 last:border-0 last:pb-0">
+                                          <h3 className="font-bold text-gray-900 mb-2">Why is X tournament not counted in the ranking?</h3>
+                                          <p className="text-gray-700 text-sm leading-relaxed">
+                                                For now the main focus of the ranking system is the Uthermal 2v2 circuit. We do add other tournaments, but provide an option for user to view the ranking without these non-circuit tournament matches.
+                                                <br /><br />
+                                                We however require at least one team in any non-main circuit tournament to be already ranked in the ranking system (otherwise the system will create "Parallel Rankings". That is, if the system has no context of the teams in a non-circuit tournament it will not know what level the players of that tournament are - and treat it as if it was a circuit tournament filled with players it does not know. i.e. It will likely value a non-circuit tournament win too high).
+                                                <br /><br />
+                                                Notice that this is not just a UI filter. Filtering out Non-Circuit matches will not just hide them, it will exclude them from the ranking calculation altogether.
+                                          </p>
+                                    </div>
+
+                                    <div className="border-b border-gray-100 pb-4 last:border-0 last:pb-0">
+                                          <h3 className="font-bold text-gray-900 mb-2">Can I suggest you add a tournament?</h3>
+                                          <p className="text-gray-700 text-sm leading-relaxed">
+                                                Absolutely! Make sure that at least one team in the target tournament is already ranked in the system, then contact me @Gram in the Uthermal Discord and give me a hint that this tournament should be added.
+                                          </p>
+                                    </div>
                               </div>
                         </section>
                   </div>

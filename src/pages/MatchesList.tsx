@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { useRankingSettings } from '../context/RankingSettingsContext';
+import { RankingFilters } from '../components/RankingFilters';
 import { Race } from '../types/tournament';
 import { getPlayerDefaults } from '../lib/playerDefaults';
 import { MatchHistoryItem } from '../components/MatchHistoryItem';
@@ -68,28 +70,34 @@ export function MatchesList({ }: MatchesListProps) {
   const [matches, setMatches] = useState<MatchHistory[]>([]);
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [selectedTournament, setSelectedTournament] = useState<string>('');
-  const [useSeededRankings, setUseSeededRankings] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [playerRankings, setPlayerRankings] = useState<Record<string, { rank: number; points: number; confidence: number }>>({});
   const [teamRankings, setTeamRankings] = useState<Record<string, { rank: number; points: number; confidence: number }>>({});
   const [playerRaces, setPlayerRaces] = useState<Record<string, Race>>({});
+  const { seasons, useSeededRankings, mainCircuitOnly } = useRankingSettings();
 
   useEffect(() => {
-    loadTournaments();
-    loadMatches();
-    loadPlayerRankings();
-    loadTeamRankings();
     loadPlayerRaces();
   }, []);
 
   useEffect(() => {
+    loadTournaments();
+    loadPlayerRankings();
+    loadTeamRankings();
+  }, [seasons, mainCircuitOnly]);
+
+  useEffect(() => {
     loadMatches();
-  }, [selectedTournament, useSeededRankings]);
+  }, [selectedTournament, useSeededRankings, seasons, mainCircuitOnly]);
 
   const loadTournaments = async () => {
     try {
-      const response = await fetch('/api/tournaments');
+      const params = new URLSearchParams();
+      if (mainCircuitOnly) params.append('mainCircuitOnly', 'true');
+      if (seasons && seasons.length > 0) params.append('seasons', seasons.join(','));
+
+      const response = await fetch(`/api/tournaments?${params.toString()}`);
       if (!response.ok) throw new Error('Failed to load tournaments');
       const data = await response.json();
       setTournaments(data);
@@ -100,7 +108,11 @@ export function MatchesList({ }: MatchesListProps) {
 
   const loadPlayerRankings = async () => {
     try {
-      const response = await fetch('/api/player-rankings');
+      const params = new URLSearchParams();
+      if (mainCircuitOnly) params.append('mainCircuitOnly', 'true');
+      if (seasons && seasons.length > 0) params.append('seasons', seasons.join(','));
+
+      const response = await fetch(`/api/player-rankings?${params.toString()}`);
       if (!response.ok) throw new Error('Failed to load player rankings');
       const data: PlayerRanking[] = await response.json();
       const rankMap: Record<string, { rank: number; points: number; confidence: number }> = {};
@@ -119,7 +131,11 @@ export function MatchesList({ }: MatchesListProps) {
 
   const loadTeamRankings = async () => {
     try {
-      const response = await fetch('/api/team-rankings');
+      const params = new URLSearchParams();
+      if (mainCircuitOnly) params.append('mainCircuitOnly', 'true');
+      if (seasons && seasons.length > 0) params.append('seasons', seasons.join(','));
+
+      const response = await fetch(`/api/team-rankings?${params.toString()}`);
       if (!response.ok) throw new Error('Failed to load team rankings');
       const data: TeamRanking[] = await response.json();
       const rankMap: Record<string, { rank: number; points: number; confidence: number }> = {};
@@ -157,6 +173,8 @@ export function MatchesList({ }: MatchesListProps) {
       const params = new URLSearchParams();
       if (selectedTournament) params.append('tournament', selectedTournament);
       if (useSeededRankings) params.append('useSeeds', 'true');
+      if (mainCircuitOnly) params.append('mainCircuitOnly', 'true');
+      if (seasons && seasons.length > 0) params.append('seasons', seasons.join(','));
 
       const url = `/api/match-history?${params.toString()}`;
       const response = await fetch(url);
@@ -250,21 +268,11 @@ export function MatchesList({ }: MatchesListProps) {
               </select>
             </div>
             <div className="flex items-center">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={useSeededRankings}
-                  onChange={(e) => setUseSeededRankings(e.target.checked)}
-                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
-                />
-                <span className="text-sm text-gray-700 ml-2">Use Initial Seeds</span>
-              </label>
-              <div className="ml-2 group relative">
-                <span className="cursor-help text-gray-400 text-xs border border-gray-400 rounded-full w-4 h-4 inline-flex items-center justify-center">?</span>
-                <div className="invisible group-hover:visible absolute right-0 top-full mt-2 w-64 p-2 bg-gray-800 text-white text-xs rounded shadow-lg z-10">
-                  When checked, rankings start from a seed value derived from a preliminary analysis of all matches. Without this, everyone starts at 0.
-                </div>
-              </div>
+              <RankingFilters
+                showSeeded={true}
+                showMainCircuit={true}
+                showConfidence={false}
+              />
             </div>
           </div>
         </div>

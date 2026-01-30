@@ -47,6 +47,8 @@ async function loadTournamentFiles() {
       const data = JSON.parse(content);
 
       if (data.matches && Array.isArray(data.matches)) {
+        // Attach filename for fallback filtering logic
+        data.filename = file;
         tournaments.push(data);
       }
     } catch (err) {
@@ -62,13 +64,46 @@ async function loadTournamentFiles() {
  * Adds tournament metadata to each match and filters out invalid matches
  * 
  * @param {Array} tournaments - Array of tournament data objects
+ * @param {boolean} mainCircuitOnly - Whether to include only main circuit tournaments
+ * @param {Array} seasons - Array of allowed seasons (strings like "2025")
  * @returns {Array} Array of enriched match objects
  */
-function collectMatchesFromTournaments(tournaments) {
+function collectMatchesFromTournaments(tournaments, mainCircuitOnly = false, seasons = null) {
   const allMatches = [];
 
   for (const tournament of tournaments) {
+    // Determine season (explicit or from date)
+    let season = tournament.tournament?.season;
+    if (season === undefined && tournament.tournament?.date) {
+      const year = new Date(tournament.tournament.date).getFullYear();
+      if (!isNaN(year)) {
+        season = String(year);
+      }
+    }
+    // Ensure season is string for comparison
+    season = season?.toString();
+
+    // Filter by season if requested
+    if (seasons && Array.isArray(seasons) && seasons.length > 0) {
+      if (!season || !seasons.includes(season)) {
+        continue;
+      }
+    }
+
+    // Determine if main circuit (check flag or filename)
+    const isMainCircuit = tournament.tournament?.is_main_circuit ||
+      (tournament.filename && (
+        tournament.filename.toLowerCase().startsWith('utermal_2v2_circuit') ||
+        tournament.filename.toLowerCase().startsWith('uthermal_2v2_circuit')
+      ));
+
+    // Filter by main circuit if requested
+    if (mainCircuitOnly && !isMainCircuit) {
+      continue;
+    }
+
     const tournamentDate = tournament.tournament?.date || null;
+
     const tournamentSlug = tournament.tournament?.liquipedia_slug || null;
 
     for (const match of tournament.matches) {
@@ -283,13 +318,13 @@ function calculateRankingsFromMatches(sortedMatches, seeds = null) {
  * 
  * @returns {Promise<Object>} Object with rankings and matchHistory
  */
-export async function calculateRankings(seeds = null) {
+export async function calculateRankings(seeds = null, mainCircuitOnly = false, seasons = null) {
   try {
     // Load tournament files
     const tournaments = await loadTournamentFiles();
 
     // Collect matches from tournaments
-    const allMatches = collectMatchesFromTournaments(tournaments);
+    const allMatches = collectMatchesFromTournaments(tournaments, mainCircuitOnly, seasons);
 
     // Sort matches chronologically
     const sortedMatches = sortAllMatches(allMatches);

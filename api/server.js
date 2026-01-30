@@ -65,7 +65,29 @@ app.get('/api/tournaments', async (req, res) => {
       })
     );
 
-    res.json(tournaments.filter(t => t !== null));
+    const seasons = req.query.seasons ? req.query.seasons.split(',') : null;
+    const isMainCircuitOnly = req.query.mainCircuitOnly === 'true';
+
+    const filteredTournaments = tournaments.filter(t => {
+      if (!t) return false;
+
+      // Filter by season
+      if (seasons && seasons.length > 0) {
+        if (!t.date) return false;
+        const year = t.date.split('-')[0];
+        if (!seasons.includes(year)) return false;
+      }
+
+      // Filter by main circuit
+      if (isMainCircuitOnly) {
+        const nameLower = t.name.toLowerCase();
+        if (!nameLower.includes('uthermal')) return false;
+      }
+
+      return true;
+    });
+
+    res.json(filteredTournaments);
   } catch (error) {
     console.error('Error listing tournaments:', error);
     await appendFile(join(__dirname, '..', 'server_errors.log'), `${new Date().toISOString()} Error listing tournaments: ${error.stack}\n`).catch(() => { });
@@ -226,7 +248,9 @@ app.put('/api/player-defaults/:playerName', async (req, res) => {
 // Get player rankings
 app.get('/api/player-rankings', async (req, res) => {
   try {
-    const { rankings } = await calculateRankings();
+    const isMainCircuitOnly = req.query.mainCircuitOnly === 'true';
+    const seasons = req.query.seasons ? req.query.seasons.split(',') : null;
+    const { rankings } = await calculateRankings(null, isMainCircuitOnly, seasons);
     res.json(rankings);
   } catch (error) {
     console.error('Error calculating player rankings:', error);
@@ -237,7 +261,9 @@ app.get('/api/player-rankings', async (req, res) => {
 // Get team rankings
 app.get('/api/team-rankings', async (req, res) => {
   try {
-    const { rankings } = await calculateTeamRankings();
+    const isMainCircuitOnly = req.query.mainCircuitOnly === 'true';
+    const seasons = req.query.seasons ? req.query.seasons.split(',') : null;
+    const { rankings } = await calculateTeamRankings(null, isMainCircuitOnly, seasons);
     res.json(rankings);
   } catch (error) {
     console.error('Error calculating team rankings:', error);
@@ -290,7 +316,9 @@ app.get('/api/seeded-team-rankings', async (req, res) => {
 // Get race rankings
 app.get('/api/race-rankings', async (req, res) => {
   try {
-    const { rankings, combinedRankings, matchHistory } = await calculateRaceRankings();
+    const isMainCircuitOnly = req.query.mainCircuitOnly === 'true';
+    const seasons = req.query.seasons ? req.query.seasons.split(',') : null;
+    const { rankings, combinedRankings, matchHistory } = await calculateRaceRankings(isMainCircuitOnly, seasons);
     res.json({ rankings, combinedRankings, matchHistory });
   } catch (error) {
     console.error('Error calculating race rankings:', error);
@@ -302,9 +330,11 @@ app.get('/api/race-rankings', async (req, res) => {
 app.get('/api/race-matchup/:race1/:race2', async (req, res) => {
   try {
     const { race1, race2 } = req.params;
-    const { matchHistory } = await calculateRaceRankings();
-    const { matchHistory: teamMatchHistory } = await calculateTeamRankings();
-    const { matchHistory: playerMatchHistory } = await calculateRankings();
+    const isMainCircuitOnly = req.query.mainCircuitOnly === 'true';
+    const seasons = req.query.seasons ? req.query.seasons.split(',') : null;
+    const { matchHistory } = await calculateRaceRankings(isMainCircuitOnly, seasons);
+    const { matchHistory: teamMatchHistory } = await calculateTeamRankings(null, isMainCircuitOnly, seasons);
+    const { matchHistory: playerMatchHistory } = await calculateRankings(null, isMainCircuitOnly, seasons);
 
     // Create matchup key (e.g., "PvT")
     const raceAbbr = {
@@ -359,9 +389,11 @@ app.get('/api/race-matchup/:race1/:race2', async (req, res) => {
 app.get('/api/race-combo/:race', async (req, res) => {
   try {
     const { race } = req.params;
-    const { matchHistory } = await calculateRaceRankings();
-    const { matchHistory: teamMatchHistory } = await calculateTeamRankings();
-    const { matchHistory: playerMatchHistory } = await calculateRankings();
+    const isMainCircuitOnly = req.query.mainCircuitOnly === 'true';
+    const seasons = req.query.seasons ? req.query.seasons.split(',') : null;
+    const { matchHistory } = await calculateRaceRankings(isMainCircuitOnly, seasons);
+    const { matchHistory: teamMatchHistory } = await calculateTeamRankings(null, isMainCircuitOnly, seasons);
+    const { matchHistory: playerMatchHistory } = await calculateRankings(null, isMainCircuitOnly, seasons);
 
     // Create maps for quick lookup
     const teamMatchMap = new Map();
@@ -405,8 +437,10 @@ app.get('/api/race-combo/:race', async (req, res) => {
 
 app.get('/api/team-race-rankings', async (req, res) => {
   try {
-    const { rankings, combinedRankings, matchHistory } = await calculateTeamRaceRankings();
-    const { matchHistory: teamMatchHistory } = await calculateTeamRankings();
+    const isMainCircuitOnly = req.query.mainCircuitOnly === 'true';
+    const seasons = req.query.seasons ? req.query.seasons.split(',') : null;
+    const { rankings, combinedRankings, matchHistory } = await calculateTeamRaceRankings(isMainCircuitOnly, seasons);
+    const { matchHistory: teamMatchHistory } = await calculateTeamRankings(null, isMainCircuitOnly, seasons);
 
     // Create map of team match history for quick lookup
     const teamMatchMap = new Map();
@@ -438,9 +472,11 @@ app.get('/api/team-race-rankings', async (req, res) => {
 app.get('/api/team-race-matchup/:combo1/:combo2', async (req, res) => {
   try {
     const { combo1, combo2 } = req.params;
-    const { matchHistory } = await calculateTeamRaceRankings();
-    const { matchHistory: teamMatchHistory } = await calculateTeamRankings();
-    const { matchHistory: playerMatchHistory } = await calculateRankings();
+    const isMainCircuitOnly = req.query.mainCircuitOnly === 'true';
+    const seasons = req.query.seasons ? req.query.seasons.split(',') : null;
+    const { matchHistory } = await calculateTeamRaceRankings(isMainCircuitOnly, seasons);
+    const { matchHistory: teamMatchHistory } = await calculateTeamRankings(null, isMainCircuitOnly, seasons);
+    const { matchHistory: playerMatchHistory } = await calculateRankings(null, isMainCircuitOnly, seasons);
 
     // Normalize combos (sort alphabetically to match internal key format)
     const sorted = [combo1, combo2].sort();
@@ -492,9 +528,11 @@ app.get('/api/team-race-matchup/:combo1/:combo2', async (req, res) => {
 app.get('/api/team-race-combo/:combo', async (req, res) => {
   try {
     const { combo } = req.params;
-    const { matchHistory } = await calculateTeamRaceRankings();
-    const { matchHistory: teamMatchHistory } = await calculateTeamRankings();
-    const { matchHistory: playerMatchHistory } = await calculateRankings();
+    const isMainCircuitOnly = req.query.mainCircuitOnly === 'true';
+    const seasons = req.query.seasons ? req.query.seasons.split(',') : null;
+    const { matchHistory } = await calculateTeamRaceRankings(isMainCircuitOnly, seasons);
+    const { matchHistory: teamMatchHistory } = await calculateTeamRankings(null, isMainCircuitOnly, seasons);
+    const { matchHistory: playerMatchHistory } = await calculateRankings(null, isMainCircuitOnly, seasons);
 
     // Create maps for quick lookup
     const teamMatchMap = new Map();
@@ -537,7 +575,9 @@ app.get('/api/team-race-combo/:combo', async (req, res) => {
 // Legacy endpoint for backwards compatibility
 app.get('/api/rankings', async (req, res) => {
   try {
-    const { rankings } = await calculateRankings();
+    const isMainCircuitOnly = req.query.mainCircuitOnly === 'true';
+    const seasons = req.query.seasons ? req.query.seasons.split(',') : null;
+    const { rankings } = await calculateRankings(null, isMainCircuitOnly, seasons);
     res.json(rankings);
   } catch (error) {
     console.error('Error calculating rankings:', error);
@@ -561,8 +601,9 @@ app.get('/api/match-history', async (req, res) => {
       console.log(`API: Loaded seeds - Players: ${playerSeeds ? Object.keys(playerSeeds).length : 0}, Teams: ${teamSeeds ? Object.keys(teamSeeds).length : 0}`);
     }
 
-    const { rankings, matchHistory } = await calculateRankings(playerSeeds);
-    const { matchHistory: teamMatchHistory } = await calculateTeamRankings(teamSeeds);
+    const seasons = req.query.seasons ? req.query.seasons.split(',') : null;
+    const { rankings, matchHistory } = await calculateRankings(playerSeeds, req.query.mainCircuitOnly === 'true', seasons);
+    const { matchHistory: teamMatchHistory } = await calculateTeamRankings(teamSeeds, req.query.mainCircuitOnly === 'true', seasons);
 
     // Create a map of team match history by match_id for quick lookup
     const teamMatchMap = new Map();
@@ -652,8 +693,9 @@ app.get('/api/player/:playerName', async (req, res) => {
       teamSeeds = seeds.teamSeeds;
     }
 
-    const { rankings, matchHistory } = await calculateRankings(playerSeeds);
-    const { matchHistory: teamMatchHistory } = await calculateTeamRankings(teamSeeds);
+    const seasons = req.query.seasons ? req.query.seasons.split(',') : null;
+    const { rankings, matchHistory } = await calculateRankings(playerSeeds, req.query.mainCircuitOnly === 'true', seasons);
+    const { matchHistory: teamMatchHistory } = await calculateTeamRankings(teamSeeds, req.query.mainCircuitOnly === 'true', seasons);
 
     const player = rankings.find(p => p.name === playerName);
     if (!player) {
@@ -718,7 +760,8 @@ app.get('/api/team/:player1/:player2', async (req, res) => {
       teamSeeds = seeds.teamSeeds;
     }
 
-    const { rankings, matchHistory } = await calculateTeamRankings(teamSeeds);
+    const seasons = req.query.seasons ? req.query.seasons.split(',') : null;
+    const { rankings, matchHistory } = await calculateTeamRankings(teamSeeds, req.query.mainCircuitOnly === 'true', seasons);
 
     const team = rankings.find(t =>
       (t.player1 === player1 && t.player2 === player2) ||
@@ -730,7 +773,7 @@ app.get('/api/team/:player1/:player2', async (req, res) => {
     }
 
     // Get team's match history
-    const { matchHistory: playerMatchHistory } = await calculateRankings(playerSeeds);
+    const { matchHistory: playerMatchHistory } = await calculateRankings(playerSeeds, req.query.mainCircuitOnly === 'true', seasons);
     const playerMatchMap = new Map();
     if (playerMatchHistory) {
       playerMatchHistory.forEach(match => {

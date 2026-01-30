@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { useRankingSettings } from '../context/RankingSettingsContext';
+import { RankingFilters } from '../components/RankingFilters';
 import { formatRankingPoints } from '../lib/utils';
 import { Race } from '../types/tournament';
 import { getPlayerDefaults } from '../lib/playerDefaults';
@@ -90,6 +92,7 @@ export function TeamRaceRankings({ }: TeamRaceRankingsProps) {
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [hideRandom, setHideRandom] = useState(false);
+  const { mainCircuitOnly, seasons } = useRankingSettings();
   const [selectedMatchup, setSelectedMatchup] = useState<TeamRaceRanking | null>(null);
   const [isCombinedStats, setIsCombinedStats] = useState(false);
   const [sortColumn, setSortColumn] = useState<keyof TeamRaceRanking | 'rank' | null>(null);
@@ -107,13 +110,16 @@ export function TeamRaceRankings({ }: TeamRaceRankingsProps) {
     loadPlayerRankings();
     loadTeamRankings();
     loadAllPlayerRaces();
-  }, []);
+  }, [mainCircuitOnly, seasons]);
 
   const loadRankings = async () => {
     try {
       setIsLoading(true);
       setError(null);
-      const response = await fetch('/api/team-race-rankings');
+      const queryParams = new URLSearchParams();
+      if (mainCircuitOnly) queryParams.append('mainCircuitOnly', 'true');
+      if (seasons.length > 0) queryParams.append('seasons', seasons.join(','));
+      const response = await fetch(`/api/team-race-rankings?${queryParams.toString()}`);
       if (!response.ok) throw new Error('Failed to load team race rankings');
       const data = await response.json();
       // Handle both old format (array) and new format (object with rankings, combinedRankings, and matchHistory)
@@ -135,12 +141,16 @@ export function TeamRaceRankings({ }: TeamRaceRankingsProps) {
     try {
       setIsLoadingMatches(true);
       let response;
+      const queryParams = new URLSearchParams();
+      if (mainCircuitOnly) queryParams.append('mainCircuitOnly', 'true');
+      if (seasons.length > 0) queryParams.append('seasons', seasons.join(','));
+
       if (isCombined) {
         // For combined stats, fetch all matches involving this combo
-        response = await fetch(`/api/team-race-combo/${encodeURIComponent(matchup.combo1)}`);
+        response = await fetch(`/api/team-race-combo/${encodeURIComponent(matchup.combo1)}?${queryParams.toString()}`);
       } else {
         // For individual matchups, fetch matches for this specific matchup
-        response = await fetch(`/api/team-race-matchup/${encodeURIComponent(matchup.combo1)}/${encodeURIComponent(matchup.combo2)}`);
+        response = await fetch(`/api/team-race-matchup/${encodeURIComponent(matchup.combo1)}/${encodeURIComponent(matchup.combo2)}?${queryParams.toString()}`);
       }
       if (!response.ok) throw new Error('Failed to load match history');
       const data = await response.json();
@@ -289,7 +299,10 @@ export function TeamRaceRankings({ }: TeamRaceRankingsProps) {
 
   const loadPlayerRankings = async () => {
     try {
-      const response = await fetch('/api/player-rankings');
+      const queryParams = new URLSearchParams();
+      if (mainCircuitOnly) queryParams.append('mainCircuitOnly', 'true');
+      if (seasons.length > 0) queryParams.append('seasons', seasons.join(','));
+      const response = await fetch(`/api/player-rankings?${queryParams.toString()}`);
       if (!response.ok) throw new Error('Failed to load player rankings');
       const data: PlayerRanking[] = await response.json();
       const rankMap: Record<string, { rank: number; points: number; confidence: number }> = {};
@@ -308,7 +321,10 @@ export function TeamRaceRankings({ }: TeamRaceRankingsProps) {
 
   const loadTeamRankings = async () => {
     try {
-      const response = await fetch('/api/team-rankings');
+      const queryParams = new URLSearchParams();
+      if (mainCircuitOnly) queryParams.append('mainCircuitOnly', 'true');
+      if (seasons.length > 0) queryParams.append('seasons', seasons.join(','));
+      const response = await fetch(`/api/team-rankings?${queryParams.toString()}`);
       if (!response.ok) throw new Error('Failed to load team rankings');
       const data: TeamRanking[] = await response.json();
       const rankMap: Record<string, { rank: number; points: number; confidence: number }> = {};
@@ -412,6 +428,7 @@ export function TeamRaceRankings({ }: TeamRaceRankingsProps) {
               />
               <span className="text-sm text-gray-700">Hide Random matchups</span>
             </label>
+            <RankingFilters showMainCircuit={true} />
           </div>
         </div>
         {isLoading ? (

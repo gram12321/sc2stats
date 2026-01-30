@@ -181,7 +181,7 @@ export function calculateTeamRankingsFromMatches(sortedMatches, seeds = null) {
 /**
  * Calculate team rankings (Reads files and calls logic)
  */
-export async function calculateTeamRankings(seeds = null) {
+export async function calculateTeamRankings(seeds = null, mainCircuitOnly = false, seasons = null) {
   const allMatches = [];
 
   try {
@@ -197,6 +197,33 @@ export async function calculateTeamRankings(seeds = null) {
         const data = JSON.parse(content);
 
         if (!data.matches || !Array.isArray(data.matches)) {
+          continue;
+        }
+
+        // Determine season (explicit or from date)
+        let season = data.tournament?.season;
+        if (season === undefined && data.tournament?.date) {
+          const year = new Date(data.tournament.date).getFullYear();
+          if (!isNaN(year)) {
+            season = String(year);
+          }
+        }
+        season = season?.toString();
+
+        // Filter by season
+        if (seasons && Array.isArray(seasons) && seasons.length > 0) {
+          if (!season || !seasons.includes(season)) {
+            continue;
+          }
+        }
+
+        // Determine if main circuit (check flag or filename)
+        const isMainCircuit = data.tournament?.is_main_circuit ||
+          (file.toLowerCase().startsWith('utermal_2v2_circuit') ||
+            file.toLowerCase().startsWith('uthermal_2v2_circuit'));
+
+        // Filter by main circuit if requested
+        if (mainCircuitOnly && !isMainCircuit) {
           continue;
         }
 

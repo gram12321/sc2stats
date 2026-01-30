@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { useRankingSettings } from '../context/RankingSettingsContext';
+import { RankingFilters } from '../components/RankingFilters';
 import { formatRankingPoints } from '../lib/utils';
 import { Race } from '../types/tournament';
 import { getPlayerDefaults } from '../lib/playerDefaults';
@@ -96,19 +98,23 @@ export function RaceRankings({ }: RaceRankingsProps) {
   const [playerRankings, setPlayerRankings] = useState<Record<string, { rank: number; points: number; confidence: number }>>({});
   const [teamRankings, setTeamRankings] = useState<Record<string, { rank: number; points: number; confidence: number }>>({});
   const [playerRaces, setPlayerRaces] = useState<Record<string, Race>>({});
+  const { mainCircuitOnly, seasons } = useRankingSettings();
 
   useEffect(() => {
     loadRankings();
     loadPlayerRankings();
     loadTeamRankings();
     loadAllPlayerRaces();
-  }, []);
+  }, [mainCircuitOnly, seasons]);
 
   const loadRankings = async () => {
     try {
       setIsLoading(true);
       setError(null);
-      const response = await fetch('/api/race-rankings');
+      const queryParams = new URLSearchParams();
+      if (mainCircuitOnly) queryParams.append('mainCircuitOnly', 'true');
+      if (seasons.length > 0) queryParams.append('seasons', seasons.join(','));
+      const response = await fetch(`/api/race-rankings?${queryParams.toString()}`);
       if (!response.ok) throw new Error('Failed to load race rankings');
       const data = await response.json();
       // Handle both old format (array) and new format (object with rankings and combinedRankings)
@@ -247,12 +253,16 @@ export function RaceRankings({ }: RaceRankingsProps) {
     try {
       setIsLoadingMatches(true);
       let response;
+      const queryParams = new URLSearchParams();
+      if (mainCircuitOnly) queryParams.append('mainCircuitOnly', 'true');
+      if (seasons.length > 0) queryParams.append('seasons', seasons.join(','));
+
       if (isCombined) {
         // For combined stats, fetch all matches involving this race
-        response = await fetch(`/api/race-combo/${encodeURIComponent(matchup.race1)}`);
+        response = await fetch(`/api/race-combo/${encodeURIComponent(matchup.race1)}?${queryParams.toString()}`);
       } else {
         // For individual matchups, fetch matches for this specific matchup
-        response = await fetch(`/api/race-matchup/${encodeURIComponent(matchup.race1)}/${encodeURIComponent(matchup.race2)}`);
+        response = await fetch(`/api/race-matchup/${encodeURIComponent(matchup.race1)}/${encodeURIComponent(matchup.race2)}?${queryParams.toString()}`);
       }
       if (!response.ok) throw new Error('Failed to load match history');
       const data = await response.json();
@@ -273,7 +283,10 @@ export function RaceRankings({ }: RaceRankingsProps) {
 
   const loadPlayerRankings = async () => {
     try {
-      const response = await fetch('/api/player-rankings');
+      const queryParams = new URLSearchParams();
+      if (mainCircuitOnly) queryParams.append('mainCircuitOnly', 'true');
+      if (seasons.length > 0) queryParams.append('seasons', seasons.join(','));
+      const response = await fetch(`/api/player-rankings?${queryParams.toString()}`);
       if (!response.ok) throw new Error('Failed to load player rankings');
       const data: PlayerRanking[] = await response.json();
       const rankMap: Record<string, { rank: number; points: number; confidence: number }> = {};
@@ -292,7 +305,10 @@ export function RaceRankings({ }: RaceRankingsProps) {
 
   const loadTeamRankings = async () => {
     try {
-      const response = await fetch('/api/team-rankings');
+      const queryParams = new URLSearchParams();
+      if (mainCircuitOnly) queryParams.append('mainCircuitOnly', 'true');
+      if (seasons.length > 0) queryParams.append('seasons', seasons.join(','));
+      const response = await fetch(`/api/team-rankings?${queryParams.toString()}`);
       if (!response.ok) throw new Error('Failed to load team rankings');
       const data: TeamRanking[] = await response.json();
       const rankMap: Record<string, { rank: number; points: number; confidence: number }> = {};
@@ -393,6 +409,7 @@ export function RaceRankings({ }: RaceRankingsProps) {
               />
               <span className="text-sm text-gray-700">Hide Random matchups</span>
             </label>
+            <RankingFilters showMainCircuit={true} />
           </div>
         </div>
         {isLoading ? (

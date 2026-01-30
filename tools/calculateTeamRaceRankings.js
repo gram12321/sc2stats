@@ -138,7 +138,7 @@ function getFullRaceNames(combo) {
  * 
  * @returns {Promise<Object>} Object with rankings and matchHistory
  */
-export async function calculateTeamRaceRankings() {
+export async function calculateTeamRaceRankings(mainCircuitOnly = false, seasons = null) {
   const teamRaceStats = new Map(); // Key: matchup (e.g., "PT vs ZZ"), Value: stats object
   const allMatches = [];
 
@@ -160,6 +160,33 @@ export async function calculateTeamRaceRankings() {
         const data = JSON.parse(content);
 
         if (!data.matches || !Array.isArray(data.matches)) {
+          continue;
+        }
+
+        // Determine season (explicit or from date)
+        let season = data.tournament?.season;
+        if (season === undefined && data.tournament?.date) {
+          const year = new Date(data.tournament.date).getFullYear();
+          if (!isNaN(year)) {
+            season = String(year);
+          }
+        }
+        season = season?.toString();
+
+        // Filter by season
+        if (seasons && Array.isArray(seasons) && seasons.length > 0) {
+          if (!season || !seasons.includes(season)) {
+            continue;
+          }
+        }
+
+        // Determine if main circuit (check flag or filename)
+        const isMainCircuit = data.tournament?.is_main_circuit ||
+          (file.toLowerCase().startsWith('utermal_2v2_circuit') ||
+            file.toLowerCase().startsWith('uthermal_2v2_circuit'));
+
+        // Filter by main circuit if requested
+        if (mainCircuitOnly && !isMainCircuit) {
           continue;
         }
 

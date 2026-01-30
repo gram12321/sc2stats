@@ -1,0 +1,217 @@
+{
+  "tournament": {
+    "name": "UrsaTV 2v2 Open",
+    "liquipedia_slug": "UrsaTV_2v2_Open",
+    "date": "2025-11-06",
+    "prize_pool": 5000,
+    "format": "2v2 Playoffs",
+    "maps": [
+      "Arctic Flowers",
+      "Breakwater",
+      "Crimson Research Lab",
+      "Emerald City",
+      "Reclamation LE",
+      "Rhoskallian",
+      "Rohana",
+      "Undercurrent",
+      "Yellowjacket"
+    ]
+  },
+  "matches": [
+    {
+      "match_id": "R1M1",
+      "round": "Round of 16",
+      "team1": {
+        "player1": {
+          "name": "ByuN"
+        },
+        "player2": {
+          "name": "Zoun"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Maze"
+        },
+        "player2": {
+          "name": "monkeypop"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 0,
+      "best_of": 3,
+      "date": null,
+      "games": [],
+      "tournament_slug": "UrsaTV_2v2_Open"
+    },
+    {
+      "match_id": "R1M2",
+      "round": "Round of 16",
+      "team1": {
+        "player1": {
+          "name": "Clem"
+        },
+        "player2": {
+          "name": "trigger"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Gerald"
+        },
+        "player2": {
+          "name": "Maplez"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 0,
+      "best_of": 3,
+      "date": null,
+      "games": [],
+      "tournament_slug": "UrsaTV_2v2_Open"
+    },
+    {
+      "match_id": "R1M3",
+      "round": "Round of 16",
+      "team1": {
+        "player1": {
+          "name": "Future"
+        },
+        "player2": {
+          "name": "Scarlett"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "FoxeR"
+        },
+        "player2": {
+          "name": "Mixu"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 0,
+      "best_of": 3,
+      "date": null,
+      "games": [],
+      "tournament_slug": "UrsaTV_2v2_Open"
+    },
+    {
+      "match_id": "R1M4",
+      "round": "Round of 16",
+      "team1": {
+        "player1": {
+          "name": "Harstem"
+        },
+        "player2": {
+          "name": "Lambo"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "AwesomeSauce"
+        },
+        "player2": {
+          "name": "VaST"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 0,
+      "best_of": 3,
+      "date": null,
+      "games": [],
+      "tournament_slug": "UrsaTV_2v2_Open"
+    },
+    {
+      "match_id": "R2M1",
+      "round": "Quarterfinals",
+      "team1": {
+        "player1": {
+          "name": "ByuN"
+        },
+        "player2": {
+          "name": "Zoun"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Clem"
+        },
+        "player2": {
+          "name": "trigger"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 0,
+      "best_of": 3,
+      "date": "2025-11-06 21:00",
+      "games": [],
+      "tournament_slug": "UrsaTV_2v2_Open"
+    },
+    {
+      "match_id": "R2M2",
+      "round": "Quarterfinals",
+      "team1": {
+        "player1": {
+          "name": "Future"
+        },
+        "player2": {
+          "name": "Scarlett"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Harstem"
+        },
+        "player2": {
+          "name": "Lambo"
+        }
+      },
+      "team1_score": 1,
+      "team2_score": 2,
+      "best_of": 3,
+      "date": "2025-11-06 20:10",
+      "games": [],
+      "tournament_slug": "UrsaTV_2v2_Open"
+    },
+    {
+      "match_id": "R3M1",
+      "round": "Semifinals",
+      "team1": {
+        "player1": {
+          "name": "ByuN"
+        },
+        "player2": {
+          "name": "Zoun"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Harstem"
+        },
+        "player2": {
+          "name": "Lambo"
+        }
+      },
+      "team1_score": 1,
+      "team2_score": 2,
+      "best_of": 3,
+      "date": "2025-11-06 21:50",
+      "games": [
+        {
+          "map": "Yellowjacket",
+          "winner": 2
+        },
+        {
+          "map": "New Bed of Chaos",
+          "winner": 1
+        },
+        {
+          "map": "Rohana",
+          "winner": 2
+        }
+      ],
+      "tournament_slug": "UrsaTV_2v2_Open"
+    }
+  ]
+}

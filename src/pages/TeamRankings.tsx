@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { useRankingSettings } from '../context/RankingSettingsContext';
+import { RankingFilters } from '../components/RankingFilters';
 import { Race } from '../types/tournament';
 import { getPlayerDefaults } from '../lib/playerDefaults';
 import { formatRankingPoints } from '../lib/utils';
@@ -29,23 +31,31 @@ export function TeamRankings({ onNavigateToTeam }: TeamRankingsProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [useSeededRankings, setUseSeededRankings] = useState(false);
   const [sortColumn, setSortColumn] = useState<keyof TeamRanking | 'rank' | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
-  const [filterLowConfidence, setFilterLowConfidence] = useState(false);
+
+  const {
+    useSeededRankings,
+    filterLowConfidence,
+    mainCircuitOnly,
+    seasons,
+  } = useRankingSettings();
 
   useEffect(() => {
     loadRankings();
     loadPlayerRaces();
     loadPlayerRankings();
-  }, [useSeededRankings]);
+  }, [useSeededRankings, mainCircuitOnly, seasons]);
 
   const loadRankings = async () => {
     try {
       setIsLoading(true);
       setError(null);
       const endpoint = useSeededRankings ? '/api/seeded-team-rankings' : '/api/team-rankings';
-      const response = await fetch(endpoint);
+      const queryParams = new URLSearchParams();
+      if (mainCircuitOnly) queryParams.append('mainCircuitOnly', 'true');
+      if (seasons.length > 0) queryParams.append('seasons', seasons.join(','));
+      const response = await fetch(`${endpoint}?${queryParams.toString()}`);
       if (!response.ok) {
         if (response.status === 404 && useSeededRankings) {
           throw new Error('Seeded rankings not found. Please run: node tools/runSeededRankings.js');
@@ -72,7 +82,10 @@ export function TeamRankings({ onNavigateToTeam }: TeamRankingsProps) {
 
   const loadPlayerRankings = async () => {
     try {
-      const response = await fetch('/api/player-rankings');
+      const queryParams = new URLSearchParams();
+      if (mainCircuitOnly) queryParams.append('mainCircuitOnly', 'true');
+      if (seasons.length > 0) queryParams.append('seasons', seasons.join(','));
+      const response = await fetch(`/api/player-rankings?${queryParams.toString()}`);
       if (!response.ok) throw new Error('Failed to load player rankings');
       const data: PlayerRanking[] = await response.json();
       // Create a map of player name -> rank (1-indexed)
@@ -225,36 +238,12 @@ export function TeamRankings({ onNavigateToTeam }: TeamRankingsProps) {
                 : 'Ranking by team (same two players). Each player can appear in multiple teams.'}
             </p>
           </div>
-          <div className="flex items-center gap-4">
-            <div className="flex items-center">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={useSeededRankings}
-                  onChange={(e) => setUseSeededRankings(e.target.checked)}
-                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                />
-                <span className="text-sm text-gray-700">Use Initial Seeds (Average of Pass 1 & 2)</span>
-              </label>
-              <div className="ml-2 group relative">
-                <span className="cursor-help text-gray-400 text-xs border border-gray-400 rounded-full w-4 h-4 inline-flex items-center justify-center">?</span>
-                <div className="invisible group-hover:visible absolute right-0 top-full mt-2 w-64 p-2 bg-gray-800 text-white text-xs rounded shadow-lg z-10">
-                  When checked, rankings start from a seed value derived from a preliminary analysis of all matches. Without this, everyone starts at 0.
-                </div>
-              </div>
-            </div>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={filterLowConfidence}
-                onChange={(e) => setFilterLowConfidence(e.target.checked)}
-                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-              />
-              <span className="text-sm text-gray-700">
-                Filter Low Confidence ({confidenceThreshold.toFixed(1)}% threshold)
-              </span>
-            </label>
-          </div>
+          <RankingFilters
+            showSeeded={true}
+            showConfidence={true}
+            showMainCircuit={true}
+            confidenceThreshold={confidenceThreshold}
+          />
         </div>
         {isLoading ? (
           <div className="text-center py-12">

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useRankingSettings } from '../context/RankingSettingsContext';
 import { formatRankingPoints } from '../lib/utils';
 import { Race } from '../types/tournament';
 import { getPlayerDefaults } from '../lib/playerDefaults';
@@ -93,6 +94,7 @@ export function TeamDetails({ player1, player2, onBack }: TeamDetailsProps) {
   const [teamRankings, setTeamRankings] = useState<Record<string, { rank: number; points: number; confidence: number }>>({});
   const [playerRaces, setPlayerRaces] = useState<Record<string, Race>>({});
   const [useSeededRankings, setUseSeededRankings] = useState(false);
+  const { seasons } = useRankingSettings();
 
   useEffect(() => {
     loadTeamDetails();
@@ -100,14 +102,17 @@ export function TeamDetails({ player1, player2, onBack }: TeamDetailsProps) {
     loadTeamRankings();
     loadTeamRankings();
     loadAllPlayerRaces();
-  }, [player1, player2, useSeededRankings]);
+  }, [player1, player2, useSeededRankings, seasons]);
 
   const loadTeamDetails = async () => {
     try {
       setIsLoading(true);
       setError(null);
-      const seedParam = useSeededRankings ? '?useSeeds=true' : '';
-      const response = await fetch(`/api/team/${encodeURIComponent(player1)}/${encodeURIComponent(player2)}${seedParam}`);
+      const params = new URLSearchParams();
+      if (useSeededRankings) params.append('useSeeds', 'true');
+      if (seasons && seasons.length > 0) params.append('seasons', seasons.join(','));
+
+      const response = await fetch(`/api/team/${encodeURIComponent(player1)}/${encodeURIComponent(player2)}?${params.toString()}`);
       if (!response.ok) {
         if (response.status === 404) {
           throw new Error('Team not found');
@@ -125,7 +130,10 @@ export function TeamDetails({ player1, player2, onBack }: TeamDetailsProps) {
 
   const loadPlayerRankings = async () => {
     try {
-      const response = await fetch('/api/player-rankings');
+      const params = new URLSearchParams();
+      if (seasons && seasons.length > 0) params.append('seasons', seasons.join(','));
+
+      const response = await fetch(`/api/player-rankings?${params.toString()}`);
       if (!response.ok) throw new Error('Failed to load player rankings');
       const data: PlayerRanking[] = await response.json();
       const rankMap: Record<string, { rank: number; points: number; confidence: number }> = {};
@@ -144,7 +152,10 @@ export function TeamDetails({ player1, player2, onBack }: TeamDetailsProps) {
 
   const loadTeamRankings = async () => {
     try {
-      const response = await fetch('/api/team-rankings');
+      const params = new URLSearchParams();
+      if (seasons && seasons.length > 0) params.append('seasons', seasons.join(','));
+
+      const response = await fetch(`/api/team-rankings?${params.toString()}`);
       if (!response.ok) throw new Error('Failed to load team rankings');
       const data: TeamRanking[] = await response.json();
       const rankMap: Record<string, { rank: number; points: number; confidence: number }> = {};

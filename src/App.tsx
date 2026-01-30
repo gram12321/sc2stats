@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { RankingSettingsProvider } from './context/RankingSettingsContext';
 import { TournamentEditor } from './pages/TournamentEditor';
 import { PlayerManager } from './pages/PlayerManager';
 import { PlayerRankings } from './pages/PlayerRankings';
@@ -79,10 +80,12 @@ export function App() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header onNavigate={(view) => navigate(view as View)} currentView={navState.view} />
-      <main>
-        {renderContent()}
-      </main>
+      <RankingSettingsProvider>
+        <Header onNavigate={(view) => navigate(view as View)} currentView={navState.view} />
+        <main>
+          {renderContent()}
+        </main>
+      </RankingSettingsProvider>
     </div>
   );
 }

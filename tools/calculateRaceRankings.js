@@ -61,7 +61,7 @@ function getPlayerRace(player, playerDefaults = {}) {
  */
 function getRaceMatchupKey(race1, race2) {
   if (!race1 || !race2) return null;
-  
+
   // Race abbreviations
   const raceAbbr = {
     'Protoss': 'P',
@@ -69,10 +69,10 @@ function getRaceMatchupKey(race1, race2) {
     'Zerg': 'Z',
     'Random': 'R'
   };
-  
+
   const abbr1 = raceAbbr[race1] || race1;
   const abbr2 = raceAbbr[race2] || race2;
-  
+
   // Directional: PvT is different from TvP
   return `${abbr1}v${abbr2}`;
 }
@@ -113,7 +113,7 @@ function getTeamRaces(team, playerDefaults = {}) {
  * 
  * @returns {Promise<Object>} Object with rankings and matchHistory
  */
-export async function calculateRaceRankings() {
+export async function calculateRaceRankings(mainCircuitOnly = false, seasons = null) {
   const raceStats = new Map(); // Key: race matchup (e.g., "PvZ"), Value: stats object
   const allMatches = [];
 
@@ -138,8 +138,35 @@ export async function calculateRaceRankings() {
           continue;
         }
 
+        // Determine season (explicit or from date)
+        let season = data.tournament?.season;
+        if (season === undefined && data.tournament?.date) {
+          const year = new Date(data.tournament.date).getFullYear();
+          if (!isNaN(year)) {
+            season = String(year);
+          }
+        }
+        season = season?.toString();
+
+        // Filter by season
+        if (seasons && Array.isArray(seasons) && seasons.length > 0) {
+          if (!season || !seasons.includes(season)) {
+            continue;
+          }
+        }
+
+        // Determine if main circuit (check flag or filename)
+        const isMainCircuit = data.tournament?.is_main_circuit ||
+          (file.toLowerCase().startsWith('utermal_2v2_circuit') ||
+            file.toLowerCase().startsWith('uthermal_2v2_circuit'));
+
+        // Filter by main circuit if requested
+        if (mainCircuitOnly && !isMainCircuit) {
+          continue;
+        }
+
         const tournamentDate = data.tournament?.date || null;
-        
+
         // Add tournament date and slug to each match for sorting
         for (const match of data.matches) {
           if (hasValidScores(match)) {
@@ -165,7 +192,7 @@ export async function calculateRaceRankings() {
           return dateA.getTime() - dateB.getTime();
         }
       }
-      
+
       // Then by match date within tournament
       if (a.date && b.date) {
         const dateA = new Date(a.date);
@@ -174,7 +201,7 @@ export async function calculateRaceRankings() {
           return dateA.getTime() - dateB.getTime();
         }
       }
-      
+
       // Then by round order
       const roundOrder = {
         'Round of 16': 1, 'Round of 8': 2, 'Quarterfinals': 3,
@@ -185,18 +212,18 @@ export async function calculateRaceRankings() {
       if (roundA !== roundB) {
         return roundA - roundB;
       }
-      
+
       // Finally by match_id
       return (a.match_id || '').localeCompare(b.match_id || '');
     });
 
     // Process matches in chronological order
     const matchHistory = [];
-    
+
     console.log(`Processing ${allMatches.length} matches`);
     let matchesWithRaces = 0;
     let matchesWithoutRaces = 0;
-    
+
     for (const match of allMatches) {
       // Get races from each team, applying player defaults if needed
       // Match data races take precedence over defaults
@@ -209,7 +236,7 @@ export async function calculateRaceRankings() {
         continue;
       }
       matchesWithRaces++;
-      
+
       // Debug: log if we see Random race
       const allRaces = [...team1Races, ...team2Races];
       if (allRaces.includes('Random')) {
@@ -231,8 +258,8 @@ export async function calculateRaceRankings() {
         // Sort both arrays and compare - if they have the same races, it's a mirror
         const sorted1 = [...team1Races].sort();
         const sorted2 = [...team2Races].sort();
-        return sorted1.length === sorted2.length && 
-               sorted1.every((race, idx) => race === sorted2[idx]);
+        return sorted1.length === sorted2.length &&
+          sorted1.every((race, idx) => race === sorted2[idx]);
       })();
 
       // Track race matchup impacts for this match
@@ -242,16 +269,16 @@ export async function calculateRaceRankings() {
       // This ensures that even if the same matchup pair is processed multiple times
       // (e.g., in mirror matchups), we use the original baseline ratings
       const matchupRatingsBefore = new Map();
-      
+
       // First pass: initialize all matchups and capture their BEFORE ratings
       for (const race1 of team1Races) {
         for (const race2 of team2Races) {
           if (race1 === race2) continue;
-          
+
           const matchupKey = getRaceMatchupKey(race1, race2);
           const inverseKey = getInverseMatchupKey(matchupKey);
           if (!matchupKey || !inverseKey) continue;
-          
+
           // Calculate population statistics BEFORE initializing new matchups
           // This allows us to start new matchups at the population mean
           const existingPopulationStats = calculatePopulationStats(raceStats);
@@ -270,7 +297,7 @@ export async function calculateRaceRankings() {
               race2: race1
             }, populationMean));
           }
-          
+
           // Capture BEFORE ratings (only once per unique matchup key)
           if (!matchupRatingsBefore.has(matchupKey)) {
             matchupRatingsBefore.set(matchupKey, raceStats.get(matchupKey).points);
@@ -312,7 +339,7 @@ export async function calculateRaceRankings() {
 
             // Determine winner: if team1 won, race1 beats race2
             const matchupWon = team1Won;
-            
+
             const matchupStats = raceStats.get(matchupKey);
             const inverseStats = raceStats.get(inverseKey);
 
@@ -331,7 +358,7 @@ export async function calculateRaceRankings() {
             // IMPORTANT: Use BEFORE ratings for both sides to ensure true zero-sum
             // Note: Since we use explicit currentRating, first-match logic doesn't apply here,
             // but we pass populationMean for consistency
-            
+
             // Update PvT: compare its BEFORE rating against TvP's BEFORE rating
             const matchupResult = updateStatsForMatch(
               matchupStats,
@@ -409,7 +436,7 @@ export async function calculateRaceRankings() {
 
     // Convert to array and sort using shared sorting function
     const rankings = sortRankings(Array.from(raceStats.values()));
-    
+
     // Calculate combined race statistics (TvX, ZvX, PvX)
     const combinedStats = new Map();
     const raceAbbr = {
@@ -418,14 +445,14 @@ export async function calculateRaceRankings() {
       'Zerg': 'Z',
       'Random': 'R'
     };
-    
+
     // Aggregate all matchups for each race
     for (const matchup of rankings) {
       const race1 = matchup.race1;
       const raceAbbr1 = raceAbbr[race1];
-      
+
       const combinedKey = `${raceAbbr1}vX`;
-      
+
       if (!combinedStats.has(combinedKey)) {
         combinedStats.set(combinedKey, {
           name: combinedKey,
@@ -437,17 +464,17 @@ export async function calculateRaceRankings() {
           points: 0
         });
       }
-      
+
       const combined = combinedStats.get(combinedKey);
       combined.matches += matchup.matches;
       combined.wins += matchup.wins;
       combined.losses += matchup.losses;
       combined.points += matchup.points;
     }
-    
+
     // Convert combined stats to array and sort
     const combinedRankings = sortRankings(Array.from(combinedStats.values()));
-    
+
     console.log(`Matches with races: ${matchesWithRaces}, without races: ${matchesWithoutRaces}`);
     console.log(`Found ${rankings.length} race matchups`);
     console.log(`Found ${combinedRankings.length} combined race statistics`);
@@ -477,7 +504,7 @@ if (import.meta.url === `file://${process.argv[1]}` || process.argv[1]?.endsWith
           );
         });
       }
-      
+
       console.log('\nRace Matchup Rankings:');
       console.log('======================\n');
       rankings.forEach((matchup, index) => {
