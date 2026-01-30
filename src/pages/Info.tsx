@@ -129,7 +129,7 @@ export function Info({ onBack }: InfoProps) {
                                                             A separate "Confidence" score (0-100%) tracks prediction accuracy.
                                                             High confidence reduces the K-factor (rating becomes harder to shift).
                                                             Unexpected results lower confidence, making the rating more volatile again to correct itself.
-                                                            The confidence score is used as a treshold for aquiring a ranking. Both Players and Teams require a confidence score above average confidence to be ranked. 
+                                                            The confidence score is used as a treshold for aquiring a ranking. Both Players and Teams require a confidence score above average confidence to be ranked.
                                                             The system tracks Players/Teams below average confidence and they can be shown in the rankings. But they do not receive a rank.
                                                       </p>
                                                 </div>
@@ -142,7 +142,7 @@ export function Info({ onBack }: InfoProps) {
                                           <p className="text-sm">
                                                 To ensure historical accuracy, all matches from all tournaments are aggregated and strictly sorted by time.
                                                 <code>Tournament Date → Match Date → Round (Ro16, QF, SF, F) → Match ID</code>.
-                                                This ensures the chronological processing of matches, which is important because the system values wins against higher rated players. 
+                                                This ensures the chronological processing of matches, which is important because the system values wins against higher rated players.
                                                 Thus its important that if you face a team that has consistantly (Before your match) performed good, you get rewarded for winning against them. Rather than the system not realizing your opponent is a established team. (IE Only truely new teams, are infact treated as new teams.)
                                           </p>
                                     </div>
@@ -152,7 +152,7 @@ export function Info({ onBack }: InfoProps) {
                                           <h3 className="font-bold text-gray-900 mb-2">Advanced: "Seeded" Rankings</h3>
                                           <p className="text-sm mb-3">
                                                 Standard rankings start everyone at the population average (or 0). This creates a "Cold Start" problem where
-                                                early history is inaccurate until ratings settle. IE. Team maxpax+spirit are by default rated just the same as every other team in the beginning of season one, but we all know they are not equal strength to every other team. 
+                                                early history is inaccurate until ratings settle. IE. Team maxpax+spirit are by default rated just the same as every other team in the beginning of season one, but we all know they are not equal strength to every other team.
                                                 We solve this with an optional <strong>3-Pass Seeding System</strong>:
                                           </p>
                                           <ol className="list-decimal list-inside space-y-2 text-sm bg-amber-50 p-4 rounded-md border border-amber-100">
@@ -161,6 +161,94 @@ export function Info({ onBack }: InfoProps) {
                                                 <li><strong>Pass 3 (Final):</strong> A new forward run where every player <strong>starts</strong> (at match #1) with a seed rating derived from the average of Pass 1 & 2. Once this is done we discard the points given from Pass 1 & 2, and only keep the points given from Pass 3. Now we have a single run final score that takes into account the strength of the players from the very first match</li>
                                           </ol>
 
+                                    </div>
+                              </div>
+                        </section>
+
+                        {/* FAQ Section */}
+                        <section className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+                              <h2 className="text-xl font-semibold text-gray-900 mb-4">Frequently Asked Questions (FAQ)</h2>
+
+                              <div className="space-y-4">
+                                    <div className="border-b border-gray-100 pb-4 last:border-0 last:pb-0">
+                                          <h3 className="font-bold text-gray-900 mb-2">Why do some Teams/Players not have a rank?</h3>
+                                          <p className="text-gray-700 text-sm leading-relaxed">
+                                                Some players/teams are not ranked because their "Confidence" score is too low. Confidence is the system's way of
+                                                describing how sure we are of the Player/Team's strength.
+                                                <br /><br />
+                                                Confidence goes up when a Team/Player plays more matches—especially if the result of the match is as the system predicted
+                                                (e.g., the team predicted to be stronger wins). If a team significantly outperforms or underperforms the expected result,
+                                                we lower the confidence in their rating.
+                                                <br /><br />
+                                                To receive a rank, a Team/Player must have a Confidence score above a set threshold (currently set to be greater than the average confidence).
+                                                Entities below this threshold are still tracked but do not receive a numerical rank.
+                                          </p>
+                                    </div>
+                                    <div className="border-b border-gray-100 pb-4 last:border-0 last:pb-0">
+                                          <h3 className="font-bold text-gray-900 mb-2">Does my individual performance affect my Team Rating?</h3>
+                                          <p className="text-gray-700 text-sm leading-relaxed">
+                                                No. Team Ratings treat a unique pair of players (e.g., Maru + Oliveira) as a single, distinct entity.
+                                                If Maru plays with a different partner (e.g., Maru + ByuN), that is considered a completely separate team with its own independent rating history.
+                                                <br /><br />
+                                                However, your <strong>Individual Player Rating</strong> tracks your personal performance across <i>all</i> the different teams you play in.
+                                                For example, Maru's individual rating is updated after matches played with Oliveira AND matches played with ByuN.
+                                          </p>
+                                    </div>
+
+                                    <div className="border-b border-gray-100 pb-4 last:border-0 last:pb-0">
+                                          <h3 className="font-bold text-gray-900 mb-2">Are Race Statistics used to adjust player ratings?</h3>
+                                          <p className="text-gray-700 text-sm leading-relaxed">
+                                                Currently, no. Race statistics (e.g., "Zerg is winning 60% of TvZ matchups") are tracked purely for analytical purposes to monitor game balance and meta trends.
+                                                The ranking system does not give "bonus points" for playing a weaker race or penalize playing a stronger one.
+                                                A win is a win, regardless of the racial matchup.
+                                          </p>
+                                    </div>
+
+                                    <div className="border-b border-gray-100 pb-4 last:border-0 last:pb-0">
+                                          <h3 className="font-bold text-gray-900 mb-2">Do Grand Final matches count more than Group Stage matches?</h3>
+                                          <p className="text-gray-700 text-sm leading-relaxed">
+                                                Strictly speaking, no. The ranking algorithm calculates points based on the <strong>skill difference</strong> between opponents, not the prestige of the match.
+                                                <br /><br />
+                                                Winning against a world-class team yields high points whether it happens in the Round of 16 or the Grand Finals. However, since players need to win to reach the Grand Finals, you are far more likely to face highly-rated opponents in later stages. Defeating these strong opponents yields more points. Additionally, both you and your opponents will likely have gained rating from your previous victories leading up to the final, increasing the stakes of the match naturally.
+                                          </p>
+                                    </div>
+
+                                    <div className="border-b border-gray-100 pb-4 last:border-0 last:pb-0">
+                                          <h3 className="font-bold text-gray-900 mb-2">How quickly can a new, strong team reach rank #1?</h3>
+                                          <p className="text-gray-700 text-sm leading-relaxed">
+                                                Very quickly due to the <strong>Provisional "K-Factor"</strong>.
+                                                <br /><br />
+                                                For the first 20 matches of a new Player or Team, the system allows for much larger rating swings (up to twice the normal amount).
+                                                This ensures that if a pro team forms and dominates, they don't have to grind hundreds of games to reach the top.
+                                                <br /><br />
+                                                It is common for a newly formed super-team to achieve a #1 <i>rating</i> immediately after winning their first tournament. However, they might not appear on the official leaderboard immediately because they haven't met the <strong>Confidence Threshold</strong> (see above). They need to play enough games to prove their consistency before being awarded an official rank.
+                                          </p>
+                                    </div>
+
+                                    <div className="border-b border-gray-100 pb-4 last:border-0 last:pb-0">
+                                          <h3 className="font-bold text-gray-900 mb-2">What does the "Use Initial Seeds" toggle do?</h3>
+                                          <p className="text-gray-700 text-sm leading-relaxed">
+                                                By default, everyone starts at the same baseline. This represents "clean slate" performance.
+                                                Checking "Use Initial Seeds" activates a 3-pass algorithm where we simulate history forward, backward, and forward again.
+                                                This gives established players a starting rating based on their estimated skill, providing a more predictive ranking list from Day 1 of the season.
+                                          </p>
+                                    </div>
+
+                                    <div className="border-b border-gray-100 pb-4 last:border-0 last:pb-0">
+                                          <h3 className="font-bold text-gray-900 mb-2">Why is the Confidence Threshold necessary?</h3>
+                                          <p className="text-gray-700 text-sm leading-relaxed">
+                                                It prevents "One-Hit Wonders" from cluttering the top of the rankings.
+                                                Without it, a new team could play one lucky game against a top team, win, and get a massive inflated rating.
+                                                The threshold ensures that the leaderboard only shows players and teams with a statistically significant sample size of games.
+                                          </p>
+                                    </div>
+
+                                    <div className="border-b border-gray-100 pb-4 last:border-0 last:pb-0">
+                                          <h3 className="font-bold text-gray-900 mb-2">How often are rankings processed?</h3>
+                                          <p className="text-gray-700 text-sm leading-relaxed">
+                                                Rankings are recalculated automatically whenever new tournament data is added to the system.
+                                                Since the system processes matches chronologically, adding an older tournament triggers a full recalculation of the history to ensure every subsequent match rating remains accurate.
+                                          </p>
                                     </div>
                               </div>
                         </section>
