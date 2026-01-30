@@ -97,6 +97,19 @@ export function calculateTeamRankingsFromMatches(sortedMatches, seeds = null) {
       const team1Rating = team1Stats.points;
       const team2Rating = team2Stats.points;
 
+      // Calculate current rankings to determine rank before match
+      const currentRankings = sortRankings(
+        Array.from(teamStats.values()),
+        (team) => `${team.player1}+${team.player2}`
+      );
+      const rankMap = new Map();
+      currentRankings.forEach((t, index) => rankMap.set(`${t.player1}+${t.player2}`, index + 1));
+
+      const team1RankBefore = rankMap.get(team1Key) || '-';
+      const team2RankBefore = rankMap.get(team2Key) || '-';
+      const team1RankBeforeConfidence = team1Stats.confidence || 0;
+      const team2RankBeforeConfidence = team2Stats.confidence || 0;
+
       // Recalculate population statistics after adding new teams
       const finalPopulationStats = calculatePopulationStats(teamStats);
       const finalPopulationMean = finalPopulationStats.mean;
@@ -132,6 +145,8 @@ export function calculateTeamRankingsFromMatches(sortedMatches, seeds = null) {
         team_impacts: {
           [team1Key]: {
             ratingBefore: team1Rating,
+            rankBefore: team1RankBefore,
+            rankBeforeConfidence: team1RankBeforeConfidence,
             ratingChange: team1Result.ratingChange,
             won: team1Won,
             opponentRating: team2Rating,
@@ -139,6 +154,8 @@ export function calculateTeamRankingsFromMatches(sortedMatches, seeds = null) {
           },
           [team2Key]: {
             ratingBefore: team2Rating,
+            rankBefore: team2RankBefore,
+            rankBeforeConfidence: team2RankBeforeConfidence,
             ratingChange: team2Result.ratingChange,
             won: team2Won,
             opponentRating: team1Rating,

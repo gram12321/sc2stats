@@ -204,6 +204,13 @@ function calculateRankingsFromMatches(sortedMatches, seeds = null) {
     const team1AvgOpponentRating = getAverageOpponentRating(team2Players, playerStats);
     const team2AvgOpponentRating = getAverageOpponentRating(team1Players, playerStats);
 
+    // Calculate current rankings to determine rank before match
+    // This is O(N log N) where N is number of players, done for every match
+    // Optimization: only sort if needed, or maintain sorted list
+    const currentRankings = sortRankings(Array.from(playerStats.values()));
+    const rankMap = new Map();
+    currentRankings.forEach((p, index) => rankMap.set(p.name, index + 1));
+
     // Track rating changes for each player
     const playerImpacts = new Map();
 
@@ -211,9 +218,13 @@ function calculateRankingsFromMatches(sortedMatches, seeds = null) {
     for (const playerName of team1Players) {
       const stats = playerStats.get(playerName);
       const ratingBefore = stats.points;
+      const rankBefore = rankMap.get(playerName) || '-';
+      const rankBeforeConfidence = stats.confidence || 0;
       const result = updateStatsForMatch(stats, team1Won, team2Won, team1AvgOpponentRating, finalPopulationStdDev, 0, null, finalPopulationMean);
       playerImpacts.set(playerName, {
         ratingBefore,
+        rankBefore,
+        rankBeforeConfidence,
         ratingChange: result.ratingChange,
         won: team1Won,
         opponentRating: team1AvgOpponentRating,
@@ -225,9 +236,13 @@ function calculateRankingsFromMatches(sortedMatches, seeds = null) {
     for (const playerName of team2Players) {
       const stats = playerStats.get(playerName);
       const ratingBefore = stats.points;
+      const rankBefore = rankMap.get(playerName) || '-';
+      const rankBeforeConfidence = stats.confidence || 0;
       const result = updateStatsForMatch(stats, team2Won, team1Won, team2AvgOpponentRating, finalPopulationStdDev, 0, null, finalPopulationMean);
       playerImpacts.set(playerName, {
         ratingBefore,
+        rankBefore,
+        rankBeforeConfidence,
         ratingChange: result.ratingChange,
         won: team2Won,
         opponentRating: team2AvgOpponentRating,
