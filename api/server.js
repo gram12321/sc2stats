@@ -343,7 +343,7 @@ app.get('/api/race-matchup/:race1/:race2', async (req, res) => {
       const playerMatch = playerMatchMap.get(key);
       return {
         ...match,
-        team_impacts: teamMatch?.team_impacts || match.team_impacts,
+        team_impacts: match.team_impacts || teamMatch?.team_impacts,
         player_impacts: playerMatch?.player_impacts || match.player_impacts
       };
     });
@@ -391,7 +391,7 @@ app.get('/api/race-combo/:race', async (req, res) => {
       const playerMatch = playerMatchMap.get(key);
       return {
         ...match,
-        team_impacts: teamMatch?.team_impacts || match.team_impacts,
+        team_impacts: match.team_impacts || teamMatch?.team_impacts,
         player_impacts: playerMatch?.player_impacts || match.player_impacts
       };
     });
@@ -406,7 +406,29 @@ app.get('/api/race-combo/:race', async (req, res) => {
 app.get('/api/team-race-rankings', async (req, res) => {
   try {
     const { rankings, combinedRankings, matchHistory } = await calculateTeamRaceRankings();
-    res.json({ rankings, combinedRankings, matchHistory });
+    const { matchHistory: teamMatchHistory } = await calculateTeamRankings();
+
+    // Create map of team match history for quick lookup
+    const teamMatchMap = new Map();
+    if (teamMatchHistory) {
+      teamMatchHistory.forEach(match => {
+        const key = `${match.tournament_slug}-${match.match_id}`;
+        teamMatchMap.set(key, match);
+      });
+    }
+
+    // Merge team_impacts (Generic) into match history
+    // match.combo_impacts (Race) falls through via spread
+    const mergedMatchHistory = (matchHistory || []).map(match => {
+      const key = `${match.tournament_slug}-${match.match_id}`;
+      const teamMatch = teamMatchMap.get(key);
+      return {
+        ...match,
+        team_impacts: teamMatch?.team_impacts
+      };
+    });
+
+    res.json({ rankings, combinedRankings, matchHistory: mergedMatchHistory });
   } catch (error) {
     console.error('Error calculating team race rankings:', error);
     res.status(500).json({ error: 'Failed to calculate team race rankings' });
@@ -454,7 +476,7 @@ app.get('/api/team-race-matchup/:combo1/:combo2', async (req, res) => {
       const playerMatch = playerMatchMap.get(key);
       return {
         ...match,
-        team_impacts: teamMatch?.team_impacts || match.team_impacts,
+        team_impacts: teamMatch?.team_impacts,
         player_impacts: playerMatch?.player_impacts || match.player_impacts
       };
     });
@@ -500,7 +522,7 @@ app.get('/api/team-race-combo/:combo', async (req, res) => {
       const playerMatch = playerMatchMap.get(key);
       return {
         ...match,
-        team_impacts: teamMatch?.team_impacts || match.team_impacts,
+        team_impacts: teamMatch?.team_impacts,
         player_impacts: playerMatch?.player_impacts || match.player_impacts
       };
     });

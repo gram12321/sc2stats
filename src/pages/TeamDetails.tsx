@@ -4,6 +4,15 @@ import { Race } from '../types/tournament';
 import { getPlayerDefaults } from '../lib/playerDefaults';
 import { MatchHistoryItem } from '../components/MatchHistoryItem';
 
+const ROUND_ORDER: Record<string, number> = {
+  'Round of 16': 1,
+  'Round of 8': 2,
+  'Quarterfinals': 3,
+  'Semifinals': 4,
+  'Final': 5,
+  'Grand Final': 5
+};
+
 interface TeamMatch {
   match_id: string;
   tournament_slug: string;
@@ -192,16 +201,16 @@ export function TeamDetails({ player1, player2, onBack }: TeamDetailsProps) {
     if (!match.race_impacts) return null;
     const raceChanges: Array<{ race: string; change: number }> = [];
     const seenRaces = new Set<string>();
-    
+
     Object.values(match.race_impacts).forEach((impact: any) => {
       const getRaceAbbrev = (race: string) => {
         if (race === 'Random') return 'R';
         return race[0];
       };
-      
+
       const race1Abbr = getRaceAbbrev(impact.race1);
       const race2Abbr = getRaceAbbrev(impact.race2);
-      
+
       if (!seenRaces.has(race1Abbr)) {
         raceChanges.push({ race: race1Abbr, change: impact.ratingChange });
         seenRaces.add(race1Abbr);
@@ -211,7 +220,7 @@ export function TeamDetails({ player1, player2, onBack }: TeamDetailsProps) {
         seenRaces.add(race2Abbr);
       }
     });
-    
+
     return raceChanges.length > 0 ? raceChanges : null;
   };
 
@@ -233,6 +242,14 @@ export function TeamDetails({ player1, player2, onBack }: TeamDetailsProps) {
         return dateB.getTime() - dateA.getTime();
       }
     }
+
+    // Then by round order (higher round first = newest first)
+    const roundA = ROUND_ORDER[a.round] || 0;
+    const roundB = ROUND_ORDER[b.round] || 0;
+    if (roundA !== roundB) {
+      return roundB - roundA;
+    }
+
     // Finally by match_id (reverse)
     return (b.match_id || '').localeCompare(a.match_id || '');
   }) : [];
@@ -334,7 +351,7 @@ export function TeamDetails({ player1, player2, onBack }: TeamDetailsProps) {
                 const teamKey = normalizeTeamKey(team.player1, team.player2);
                 const team1Rank = getTeamRank(match.team1.player1, match.team1.player2);
                 const team2Rank = getTeamRank(match.team2.player1, match.team2.player2);
-                
+
                 // Convert player rankings to the format expected by component
                 const playerRankingsMap: Record<string, { rank: number; points: number; confidence: number }> = {};
                 Object.keys(playerRankings).forEach(name => {
@@ -347,7 +364,7 @@ export function TeamDetails({ player1, player2, onBack }: TeamDetailsProps) {
                     };
                   }
                 });
-                
+
                 return (
                   <MatchHistoryItem
                     key={`${match.tournament_slug}-${match.match_id}`}

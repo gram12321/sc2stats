@@ -21,6 +21,14 @@ const playerDefaultsFile = join(outputDir, 'player_defaults.json');
  * Load player defaults from JSON file
  * @returns {Promise<Object>} Object mapping player names to races
  */
+/**
+ * Normalize team key - sort player names alphabetically
+ */
+function normalizeTeamKey(player1, player2) {
+  const players = [player1, player2].filter(Boolean).sort();
+  return players.join('+');
+}
+
 async function loadPlayerDefaults() {
   try {
     const content = await readFile(playerDefaultsFile, 'utf-8');
@@ -73,7 +81,7 @@ function getTeamRaces(team, playerDefaults = {}) {
  */
 function normalizeTeamRaceCombo(race1, race2) {
   if (!race1 || !race2) return null;
-  
+
   // Race abbreviations
   const raceAbbr = {
     'Protoss': 'P',
@@ -81,10 +89,10 @@ function normalizeTeamRaceCombo(race1, race2) {
     'Zerg': 'Z',
     'Random': 'R'
   };
-  
+
   const abbr1 = raceAbbr[race1] || race1;
   const abbr2 = raceAbbr[race2] || race2;
-  
+
   // Sort alphabetically to normalize (PT = TP)
   const sorted = [abbr1, abbr2].sort();
   return sorted.join('');
@@ -98,7 +106,7 @@ function normalizeTeamRaceCombo(race1, race2) {
  */
 function getTeamRaceMatchupKey(team1Combo, team2Combo) {
   if (!team1Combo || !team2Combo) return null;
-  
+
   // Sort alphabetically to make symmetric (PT vs ZZ = ZZ vs PT)
   const sorted = [team1Combo, team2Combo].sort();
   return `${sorted[0]} vs ${sorted[1]}`;
@@ -116,10 +124,10 @@ function getFullRaceNames(combo) {
     'Z': 'Zerg',
     'R': 'Random'
   };
-  
+
   const race1 = raceMap[combo[0]] || combo[0];
   const race2 = combo.length > 1 ? (raceMap[combo[1]] || combo[1]) : null;
-  
+
   return { race1, race2 };
 }
 
@@ -156,7 +164,7 @@ export async function calculateTeamRaceRankings() {
         }
 
         const tournamentDate = data.tournament?.date || null;
-        
+
         // Add tournament date and slug to each match for sorting
         for (const match of data.matches) {
           if (hasValidScores(match)) {
@@ -182,7 +190,7 @@ export async function calculateTeamRaceRankings() {
           return dateA.getTime() - dateB.getTime();
         }
       }
-      
+
       // Then by match date within tournament
       if (a.date && b.date) {
         const dateA = new Date(a.date);
@@ -191,7 +199,7 @@ export async function calculateTeamRaceRankings() {
           return dateA.getTime() - dateB.getTime();
         }
       }
-      
+
       // Then by round order
       const roundOrder = {
         'Round of 16': 1, 'Round of 8': 2, 'Quarterfinals': 3,
@@ -202,18 +210,18 @@ export async function calculateTeamRaceRankings() {
       if (roundA !== roundB) {
         return roundA - roundB;
       }
-      
+
       // Finally by match_id
       return (a.match_id || '').localeCompare(b.match_id || '');
     });
 
     // Process matches in chronological order
     const matchHistory = [];
-    
+
     console.log(`Processing ${allMatches.length} matches`);
     let matchesWithRaces = 0;
     let matchesWithoutRaces = 0;
-    
+
     for (const match of allMatches) {
       // Get races from each team
       const team1Races = getTeamRaces(match.team1, playerDefaults);
@@ -229,7 +237,7 @@ export async function calculateTeamRaceRankings() {
       // Normalize team race combinations (PT = TP)
       const team1Combo = normalizeTeamRaceCombo(team1Races[0], team1Races[1]);
       const team2Combo = normalizeTeamRaceCombo(team2Races[0], team2Races[1]);
-      
+
       if (!team1Combo || !team2Combo) {
         matchesWithoutRaces++;
         continue;
@@ -255,7 +263,7 @@ export async function calculateTeamRaceRankings() {
         const [combo1, combo2] = matchupKey.split(' vs ');
         const team1RacesFull = getFullRaceNames(combo1);
         const team2RacesFull = getFullRaceNames(combo2);
-        
+
         // Initialize with separate stats for each combo
         teamRaceStats.set(matchupKey, {
           name: matchupKey,
@@ -285,11 +293,11 @@ export async function calculateTeamRaceRankings() {
 
       const matchupStats = teamRaceStats.get(matchupKey);
       const [combo1, combo2] = matchupKey.split(' vs ');
-      
+
       // Determine which combo won
       // combo1 is the one that comes first alphabetically in the matchup key
       const combo1Won = (team1Combo === combo1 && team1Won) || (team2Combo === combo1 && team2Won);
-      
+
       // Update overall matchup stats
       matchupStats.matches++;
       if (combo1Won) {
@@ -297,11 +305,11 @@ export async function calculateTeamRaceRankings() {
       } else {
         matchupStats.losses++;
       }
-      
+
       // Update combo-specific stats
       matchupStats.combo1Matches++;
       matchupStats.combo2Matches++;
-      
+
       if (combo1Won) {
         matchupStats.combo1Wins++;
         matchupStats.combo2Losses++;
@@ -309,17 +317,17 @@ export async function calculateTeamRaceRankings() {
         matchupStats.combo1Losses++;
         matchupStats.combo2Wins++;
       }
-      
+
       // Use Elo-like scoring: compare combo1's rating against combo2's rating
       // This creates a zero-sum relationship within the matchup
       const combo1RatingBefore = matchupStats.combo1Points;
       const combo2RatingBefore = matchupStats.combo2Points;
-      
+
       // Calculate population statistics for team race matchups (adapts to actual skill distribution)
       const populationStats = calculatePopulationStats(teamRaceStats);
       const populationStdDev = populationStats.stdDev;
       const populationMean = populationStats.mean;
-      
+
       // Create temporary stats objects for updateStatsForMatch
       const combo1TempStats = {
         matches: matchupStats.combo1Matches,
@@ -327,14 +335,14 @@ export async function calculateTeamRaceRankings() {
         losses: matchupStats.combo1Losses,
         points: matchupStats.combo1Points
       };
-      
+
       const combo2TempStats = {
         matches: matchupStats.combo2Matches,
         wins: matchupStats.combo2Wins,
         losses: matchupStats.combo2Losses,
         points: matchupStats.combo2Points
       };
-      
+
       // Update combo1 stats comparing against combo2
       const combo1Result = updateStatsForMatch(
         combo1TempStats,
@@ -346,7 +354,7 @@ export async function calculateTeamRaceRankings() {
         null,
         populationMean
       );
-      
+
       // Update combo2 stats comparing against combo1 (before combo1 update)
       const combo2Result = updateStatsForMatch(
         combo2TempStats,
@@ -358,15 +366,25 @@ export async function calculateTeamRaceRankings() {
         null,
         populationMean
       );
-      
+
       // Apply changes back to matchup stats
       matchupStats.combo1Points = combo1TempStats.points;
       matchupStats.combo2Points = combo2TempStats.points;
-      
+
       // Net points for combo1 (used for overall ranking)
       matchupStats.points = matchupStats.combo1Points - matchupStats.combo2Points;
-      
-      const ratingChange = combo1Result.ratingChange;
+
+      // Determine team/combo correspondence for detailed stats
+      const team1Key = normalizeTeamKey(match.team1?.player1?.name, match.team1?.player2?.name);
+      const team2Key = normalizeTeamKey(match.team2?.player1?.name, match.team2?.player2?.name);
+
+      const team1Stats = (team1Combo === combo1)
+        ? { ratingBefore: combo1RatingBefore, result: combo1Result, won: combo1Won, opponentRating: combo2RatingBefore }
+        : { ratingBefore: combo2RatingBefore, result: combo2Result, won: !combo1Won, opponentRating: combo1RatingBefore };
+
+      const team2Stats = (team2Combo === combo1)
+        ? { ratingBefore: combo1RatingBefore, result: combo1Result, won: combo1Won, opponentRating: combo2RatingBefore }
+        : { ratingBefore: combo2RatingBefore, result: combo2Result, won: !combo1Won, opponentRating: combo1RatingBefore };
 
       // Get player races for display
       const getRaceAbbr = (race) => {
@@ -382,17 +400,28 @@ export async function calculateTeamRaceRankings() {
 
       // Store match history entry
       matchHistory.push({
-        match_id: match.match_id,
-        tournament_slug: match.tournamentSlug,
-        tournament_date: match.tournamentDate,
-        match_date: match.date,
-        round: match.round,
+        ...match, // Spread existing match properties
         team1_combo: team1Combo,
         team2_combo: team2Combo,
-        team1_score: match.team1_score,
-        team2_score: match.team2_score,
         combo1_won: combo1Won,
-        rating_change: ratingChange,
+        rating_change: team1Stats.result.ratingChange,
+        // Detailed impacts for tooltips (explains why rating change is what it is)
+        combo_impacts: {
+          [team1Key]: {
+            ratingBefore: team1Stats.ratingBefore,
+            ratingChange: team1Stats.result.ratingChange,
+            won: team1Stats.result.calculationDetails.actualResult === 1,
+            opponentRating: team1Stats.opponentRating,
+            ...team1Stats.result.calculationDetails
+          },
+          [team2Key]: {
+            ratingBefore: team2Stats.ratingBefore,
+            ratingChange: team2Stats.result.ratingChange,
+            won: team2Stats.result.calculationDetails.actualResult === 1,
+            opponentRating: team2Stats.opponentRating,
+            ...team2Stats.result.calculationDetails
+          }
+        },
         // Include player names and races
         team1_player1: match.team1?.player1?.name || null,
         team1_player1_race: getRaceAbbr(getPlayerRace(match.team1?.player1, playerDefaults)),
@@ -442,14 +471,14 @@ export async function calculateTeamRaceRankings() {
         }
       })
     );
-    
+
     // Calculate combined team race statistics (PTvX, PPvX, etc.)
     const combinedStats = new Map();
-    
+
     // Helper function to add/update combined stats for a combo
     const addToCombinedStats = (combo, matches, wins, losses, points) => {
       const combinedKey = `${combo}vX`;
-      
+
       if (!combinedStats.has(combinedKey)) {
         const comboRacesFull = getFullRaceNames(combo);
         combinedStats.set(combinedKey, {
@@ -466,20 +495,20 @@ export async function calculateTeamRaceRankings() {
           points: 0
         });
       }
-      
+
       const combined = combinedStats.get(combinedKey);
       combined.matches += matches;
       combined.wins += wins;
       combined.losses += losses;
       combined.points += points;
     };
-    
+
     // Aggregate all matchups for each team race combination
     // We need to process BOTH combo1 and combo2 from each matchup
     for (const matchup of rankings) {
       const combo1 = matchup.combo1; // combo1 is the one shown first (winning combo)
       const combo2 = matchup.combo2; // combo2 is the losing combo in this matchup
-      
+
       // Add stats for combo1 (wins from this matchup)
       addToCombinedStats(
         combo1,
@@ -488,7 +517,7 @@ export async function calculateTeamRaceRankings() {
         matchup.losses,
         matchup.points
       );
-      
+
       // Add stats for combo2 (losses from this matchup, but wins from combo2's perspective)
       // When combo1 wins, combo2 loses, so we swap wins/losses
       addToCombinedStats(
@@ -499,10 +528,10 @@ export async function calculateTeamRaceRankings() {
         -matchup.points // combo2's points are negative of combo1's points
       );
     }
-    
+
     // Convert combined stats to array and sort
     const combinedRankings = sortRankings(Array.from(combinedStats.values()));
-    
+
     console.log(`Matches with races: ${matchesWithRaces}, without races: ${matchesWithoutRaces}`);
     console.log(`Found ${rankings.length} team race matchup combinations`);
     console.log(`Found ${combinedRankings.length} combined team race statistics`);
@@ -531,7 +560,7 @@ if (import.meta.url === `file://${process.argv[1]}` || process.argv[1]?.endsWith
           );
         });
       }
-      
+
       console.log('\nTeam Race Matchup Rankings:');
       console.log('============================\n');
       rankings.forEach((matchup, index) => {

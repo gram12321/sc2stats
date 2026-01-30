@@ -4,6 +4,15 @@ import { Race } from '../types/tournament';
 import { getPlayerDefaults } from '../lib/playerDefaults';
 import { MatchHistoryItem } from '../components/MatchHistoryItem';
 
+const ROUND_ORDER: Record<string, number> = {
+  'Round of 16': 1,
+  'Round of 8': 2,
+  'Quarterfinals': 3,
+  'Semifinals': 4,
+  'Final': 5,
+  'Grand Final': 5
+};
+
 interface RaceRanking {
   name: string; // e.g., "PvZ", "TvP"
   race1: string; // e.g., "Protoss", "Terran"
@@ -124,7 +133,7 @@ export function RaceRankings({ onBack }: RaceRankingsProps) {
     if (hideRandom && (matchup.race1 === 'Random' || matchup.race2 === 'Random')) {
       return false;
     }
-    
+
     // Apply search filter
     const searchLower = searchTerm.toLowerCase();
     return (
@@ -154,10 +163,10 @@ export function RaceRankings({ onBack }: RaceRankingsProps) {
 
   const sortedRankings = [...filteredRankings].sort((a, b) => {
     if (!sortColumn) return 0;
-    
+
     let aValue: any;
     let bValue: any;
-    
+
     if (sortColumn === 'rank') {
       aValue = rankings.findIndex(m => m.name === a.name) + 1;
       bValue = rankings.findIndex(m => m.name === b.name) + 1;
@@ -168,18 +177,18 @@ export function RaceRankings({ onBack }: RaceRankingsProps) {
       aValue = a[sortColumn];
       bValue = b[sortColumn];
     }
-    
+
     // Handle undefined/null values
     if (aValue === undefined || aValue === null) aValue = (sortColumn === 'name' || sortColumn === 'race1' || sortColumn === 'race2') ? '' : 0;
     if (bValue === undefined || bValue === null) bValue = (sortColumn === 'name' || sortColumn === 'race1' || sortColumn === 'race2') ? '' : 0;
-    
+
     // String comparison
     if (sortColumn === 'name' || sortColumn === 'race1' || sortColumn === 'race2') {
-      return sortDirection === 'asc' 
+      return sortDirection === 'asc'
         ? aValue.localeCompare(bValue)
         : bValue.localeCompare(aValue);
     }
-    
+
     // Numeric comparison
     const comparison = (aValue as number) - (bValue as number);
     return sortDirection === 'asc' ? comparison : -comparison;
@@ -195,10 +204,10 @@ export function RaceRankings({ onBack }: RaceRankingsProps) {
 
   const sortedCombinedRankings = [...filteredCombinedRankings].sort((a, b) => {
     if (!combinedSortColumn) return 0;
-    
+
     let aValue: any;
     let bValue: any;
-    
+
     if (combinedSortColumn === 'rank') {
       aValue = combinedRankings.findIndex(m => m.name === a.name) + 1;
       bValue = combinedRankings.findIndex(m => m.name === b.name) + 1;
@@ -209,18 +218,18 @@ export function RaceRankings({ onBack }: RaceRankingsProps) {
       aValue = a[combinedSortColumn];
       bValue = b[combinedSortColumn];
     }
-    
+
     // Handle undefined/null values
     if (aValue === undefined || aValue === null) aValue = (combinedSortColumn === 'name' || combinedSortColumn === 'race1' || combinedSortColumn === 'race2') ? '' : 0;
     if (bValue === undefined || bValue === null) bValue = (combinedSortColumn === 'name' || combinedSortColumn === 'race1' || combinedSortColumn === 'race2') ? '' : 0;
-    
+
     // String comparison
     if (combinedSortColumn === 'name' || combinedSortColumn === 'race1' || combinedSortColumn === 'race2') {
-      return combinedSortDirection === 'asc' 
+      return combinedSortDirection === 'asc'
         ? aValue.localeCompare(bValue)
         : bValue.localeCompare(aValue);
     }
-    
+
     // Numeric comparison
     const comparison = (aValue as number) - (bValue as number);
     return combinedSortDirection === 'asc' ? comparison : -comparison;
@@ -443,7 +452,7 @@ export function RaceRankings({ onBack }: RaceRankingsProps) {
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                       <tr>
-                        <th 
+                        <th
                           className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
                           onClick={() => handleSort('rank', true)}
                         >
@@ -454,7 +463,7 @@ export function RaceRankings({ onBack }: RaceRankingsProps) {
                             )}
                           </div>
                         </th>
-                        <th 
+                        <th
                           className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
                           onClick={() => handleSort('race1', true)}
                         >
@@ -465,7 +474,7 @@ export function RaceRankings({ onBack }: RaceRankingsProps) {
                             )}
                           </div>
                         </th>
-                        <th 
+                        <th
                           className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
                           onClick={() => handleSort('matches', true)}
                         >
@@ -476,7 +485,7 @@ export function RaceRankings({ onBack }: RaceRankingsProps) {
                             )}
                           </div>
                         </th>
-                        <th 
+                        <th
                           className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
                           onClick={() => handleSort('wins', true)}
                         >
@@ -487,7 +496,7 @@ export function RaceRankings({ onBack }: RaceRankingsProps) {
                             )}
                           </div>
                         </th>
-                        <th 
+                        <th
                           className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
                           onClick={() => handleSort('losses', true)}
                         >
@@ -498,7 +507,7 @@ export function RaceRankings({ onBack }: RaceRankingsProps) {
                             )}
                           </div>
                         </th>
-                        <th 
+                        <th
                           className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
                           onClick={() => handleSort('points', true)}
                         >
@@ -557,13 +566,12 @@ export function RaceRankings({ onBack }: RaceRankingsProps) {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-center">
                             <span
-                              className={`text-sm font-bold ${
-                                matchup.points > 0
+                              className={`text-sm font-bold ${matchup.points > 0
                                   ? 'text-green-600'
                                   : matchup.points < 0
-                                  ? 'text-red-600'
-                                  : 'text-gray-600'
-                              }`}
+                                    ? 'text-red-600'
+                                    : 'text-gray-600'
+                                }`}
                             >
                               {matchup.points > 0 ? '+' : ''}{formatRankingPoints(matchup.points)}
                             </span>
@@ -586,7 +594,7 @@ export function RaceRankings({ onBack }: RaceRankingsProps) {
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th 
+                      <th
                         className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
                         onClick={() => handleSort('rank', false)}
                       >
@@ -597,7 +605,7 @@ export function RaceRankings({ onBack }: RaceRankingsProps) {
                           )}
                         </div>
                       </th>
-                      <th 
+                      <th
                         className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
                         onClick={() => handleSort('name', false)}
                       >
@@ -608,7 +616,7 @@ export function RaceRankings({ onBack }: RaceRankingsProps) {
                           )}
                         </div>
                       </th>
-                      <th 
+                      <th
                         className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
                         onClick={() => handleSort('matches', false)}
                       >
@@ -619,7 +627,7 @@ export function RaceRankings({ onBack }: RaceRankingsProps) {
                           )}
                         </div>
                       </th>
-                      <th 
+                      <th
                         className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
                         onClick={() => handleSort('wins', false)}
                       >
@@ -630,7 +638,7 @@ export function RaceRankings({ onBack }: RaceRankingsProps) {
                           )}
                         </div>
                       </th>
-                      <th 
+                      <th
                         className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
                         onClick={() => handleSort('losses', false)}
                       >
@@ -641,7 +649,7 @@ export function RaceRankings({ onBack }: RaceRankingsProps) {
                           )}
                         </div>
                       </th>
-                      <th 
+                      <th
                         className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
                         onClick={() => handleSort('points', false)}
                       >
@@ -711,13 +719,12 @@ export function RaceRankings({ onBack }: RaceRankingsProps) {
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-center">
                               <span
-                                className={`text-sm font-bold ${
-                                  matchup.points > 0
+                                className={`text-sm font-bold ${matchup.points > 0
                                     ? 'text-green-600'
                                     : matchup.points < 0
-                                    ? 'text-red-600'
-                                    : 'text-gray-600'
-                                }`}
+                                      ? 'text-red-600'
+                                      : 'text-gray-600'
+                                  }`}
                               >
                                 {matchup.points > 0 ? '+' : ''}{formatRankingPoints(matchup.points)}
                               </span>
@@ -816,8 +823,20 @@ export function RaceRankings({ onBack }: RaceRankingsProps) {
                       const dateA = a.match_date || a.tournament_date || '';
                       const dateB = b.match_date || b.tournament_date || '';
                       if (dateA && dateB) {
-                        return new Date(dateB).getTime() - new Date(dateA).getTime();
+                        const timeA = new Date(dateA).getTime();
+                        const timeB = new Date(dateB).getTime();
+                        if (timeA !== timeB) {
+                          return timeB - timeA;
+                        }
                       }
+
+                      // Fallback to round order (higher round first = newest first)
+                      const roundA = ROUND_ORDER[a.round] || 0;
+                      const roundB = ROUND_ORDER[b.round] || 0;
+                      if (roundA !== roundB) {
+                        return roundB - roundA;
+                      }
+
                       return 0;
                     })
                     .map((match) => {
@@ -830,10 +849,10 @@ export function RaceRankings({ onBack }: RaceRankingsProps) {
                       if (isCombinedStats) {
                         // For combined stats, check if the race appears in winning team
                         const race1InTeam1 = match.team1_races.includes(selectedMatchup.race1);
-                        won = race1InTeam1 
+                        won = race1InTeam1
                           ? match.team1_score > match.team2_score
                           : match.team2_score > match.team1_score;
-                        
+
                         // Find the first race_impact involving this race
                         const raceImpacts = match.race_impacts || {};
                         for (const [, impact] of Object.entries(raceImpacts)) {
@@ -855,7 +874,7 @@ export function RaceRankings({ onBack }: RaceRankingsProps) {
                       const convertedMatch = convertMatchForComponent(match);
                       const team1Rank = getTeamRank(match.team1_player1, match.team1_player2);
                       const team2Rank = getTeamRank(match.team2_player1, match.team2_player2);
-                      
+
                       // Convert player rankings to the format expected by component
                       const playerRankingsMap: Record<string, { rank: number; points: number; confidence: number }> = {};
                       Object.keys(playerRankings).forEach(name => {

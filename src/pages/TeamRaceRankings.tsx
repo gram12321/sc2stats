@@ -4,6 +4,7 @@ import { Race } from '../types/tournament';
 import { getPlayerDefaults } from '../lib/playerDefaults';
 import { MatchHistoryItem } from '../components/MatchHistoryItem';
 
+
 interface TeamRaceRanking {
   name: string; // e.g., "PT vs ZZ"
   combo1: string; // e.g., "PT"
@@ -43,6 +44,12 @@ interface MatchHistoryEntry {
   team2_player2: string | null;
   team2_player2_race: string | null;
   team_impacts?: Record<string, {
+    ratingBefore: number;
+    ratingChange: number;
+    won: boolean;
+    opponentRating: number;
+  }>;
+  combo_impacts?: Record<string, {
     ratingBefore: number;
     ratingChange: number;
     won: boolean;
@@ -148,14 +155,14 @@ export function TeamRaceRankings({ onBack }: TeamRaceRankingsProps) {
   const filteredRankings = rankings.filter(matchup => {
     // Filter out Random matchups if hideRandom is enabled
     if (hideRandom && (
-      matchup.combo1Race1 === 'Random' || 
-      matchup.combo1Race2 === 'Random' || 
-      matchup.combo2Race1 === 'Random' || 
+      matchup.combo1Race1 === 'Random' ||
+      matchup.combo1Race2 === 'Random' ||
+      matchup.combo2Race1 === 'Random' ||
       matchup.combo2Race2 === 'Random'
     )) {
       return false;
     }
-    
+
     // Apply search filter
     const searchLower = searchTerm.toLowerCase();
     return (
@@ -170,7 +177,7 @@ export function TeamRaceRankings({ onBack }: TeamRaceRankingsProps) {
   const filteredCombinedRankings = combinedRankings.filter(matchup => {
     // Filter out Random matchups if hideRandom is enabled
     if (hideRandom && (
-      matchup.combo1Race1 === 'Random' || 
+      matchup.combo1Race1 === 'Random' ||
       matchup.combo1Race2 === 'Random'
     )) {
       return false;
@@ -198,10 +205,10 @@ export function TeamRaceRankings({ onBack }: TeamRaceRankingsProps) {
 
   const sortedRankings = [...filteredRankings].sort((a, b) => {
     if (!sortColumn) return 0;
-    
+
     let aValue: any;
     let bValue: any;
-    
+
     if (sortColumn === 'rank') {
       aValue = rankings.findIndex(m => m.name === a.name) + 1;
       bValue = rankings.findIndex(m => m.name === b.name) + 1;
@@ -212,18 +219,18 @@ export function TeamRaceRankings({ onBack }: TeamRaceRankingsProps) {
       aValue = a[sortColumn];
       bValue = b[sortColumn];
     }
-    
+
     // Handle undefined/null values
     if (aValue === undefined || aValue === null) aValue = (sortColumn === 'name' || sortColumn === 'combo1' || sortColumn === 'combo2') ? '' : 0;
     if (bValue === undefined || bValue === null) bValue = (sortColumn === 'name' || sortColumn === 'combo1' || sortColumn === 'combo2') ? '' : 0;
-    
+
     // String comparison
     if (sortColumn === 'name' || sortColumn === 'combo1' || sortColumn === 'combo2') {
-      return sortDirection === 'asc' 
+      return sortDirection === 'asc'
         ? aValue.localeCompare(bValue)
         : bValue.localeCompare(aValue);
     }
-    
+
     // Numeric comparison
     const comparison = (aValue as number) - (bValue as number);
     return sortDirection === 'asc' ? comparison : -comparison;
@@ -231,10 +238,10 @@ export function TeamRaceRankings({ onBack }: TeamRaceRankingsProps) {
 
   const sortedCombinedRankings = [...filteredCombinedRankings].sort((a, b) => {
     if (!combinedSortColumn) return 0;
-    
+
     let aValue: any;
     let bValue: any;
-    
+
     if (combinedSortColumn === 'rank') {
       aValue = combinedRankings.findIndex(m => m.name === a.name) + 1;
       bValue = combinedRankings.findIndex(m => m.name === b.name) + 1;
@@ -245,18 +252,18 @@ export function TeamRaceRankings({ onBack }: TeamRaceRankingsProps) {
       aValue = a[combinedSortColumn];
       bValue = b[combinedSortColumn];
     }
-    
+
     // Handle undefined/null values
     if (aValue === undefined || aValue === null) aValue = (combinedSortColumn === 'name' || combinedSortColumn === 'combo1' || combinedSortColumn === 'combo2') ? '' : 0;
     if (bValue === undefined || bValue === null) bValue = (combinedSortColumn === 'name' || combinedSortColumn === 'combo1' || combinedSortColumn === 'combo2') ? '' : 0;
-    
+
     // String comparison
     if (combinedSortColumn === 'name' || combinedSortColumn === 'combo1' || combinedSortColumn === 'combo2') {
-      return combinedSortDirection === 'asc' 
+      return combinedSortDirection === 'asc'
         ? aValue.localeCompare(bValue)
         : bValue.localeCompare(aValue);
     }
-    
+
     // Numeric comparison
     const comparison = (aValue as number) - (bValue as number);
     return combinedSortDirection === 'asc' ? comparison : -comparison;
@@ -361,8 +368,10 @@ export function TeamRaceRankings({ onBack }: TeamRaceRankingsProps) {
       },
       team1_score: match.team1_score,
       team2_score: match.team2_score,
+
       player_impacts: match.player_impacts,
-      team_impacts: match.team_impacts
+      team_impacts: match.team_impacts,
+      combo_impacts: match.combo_impacts
     };
   };
 
@@ -453,7 +462,7 @@ export function TeamRaceRankings({ onBack }: TeamRaceRankingsProps) {
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                       <tr>
-                        <th 
+                        <th
                           className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
                           onClick={() => handleSort('rank', true)}
                         >
@@ -464,7 +473,7 @@ export function TeamRaceRankings({ onBack }: TeamRaceRankingsProps) {
                             )}
                           </div>
                         </th>
-                        <th 
+                        <th
                           className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
                           onClick={() => handleSort('combo1', true)}
                         >
@@ -475,7 +484,7 @@ export function TeamRaceRankings({ onBack }: TeamRaceRankingsProps) {
                             )}
                           </div>
                         </th>
-                        <th 
+                        <th
                           className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
                           onClick={() => handleSort('matches', true)}
                         >
@@ -486,7 +495,7 @@ export function TeamRaceRankings({ onBack }: TeamRaceRankingsProps) {
                             )}
                           </div>
                         </th>
-                        <th 
+                        <th
                           className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
                           onClick={() => handleSort('wins', true)}
                         >
@@ -497,7 +506,7 @@ export function TeamRaceRankings({ onBack }: TeamRaceRankingsProps) {
                             )}
                           </div>
                         </th>
-                        <th 
+                        <th
                           className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
                           onClick={() => handleSort('losses', true)}
                         >
@@ -508,7 +517,7 @@ export function TeamRaceRankings({ onBack }: TeamRaceRankingsProps) {
                             )}
                           </div>
                         </th>
-                        <th 
+                        <th
                           className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
                           onClick={() => handleSort('points', true)}
                         >
@@ -572,13 +581,12 @@ export function TeamRaceRankings({ onBack }: TeamRaceRankingsProps) {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-center">
                             <span
-                              className={`text-sm font-bold ${
-                                matchup.points > 0
-                                  ? 'text-green-600'
-                                  : matchup.points < 0
+                              className={`text-sm font-bold ${matchup.points > 0
+                                ? 'text-green-600'
+                                : matchup.points < 0
                                   ? 'text-red-600'
                                   : 'text-gray-600'
-                              }`}
+                                }`}
                             >
                               {matchup.points > 0 ? '+' : ''}{formatRankingPoints(matchup.points)}
                             </span>
@@ -601,7 +609,7 @@ export function TeamRaceRankings({ onBack }: TeamRaceRankingsProps) {
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th 
+                      <th
                         className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
                         onClick={() => handleSort('rank', false)}
                       >
@@ -612,7 +620,7 @@ export function TeamRaceRankings({ onBack }: TeamRaceRankingsProps) {
                           )}
                         </div>
                       </th>
-                      <th 
+                      <th
                         className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
                         onClick={() => handleSort('name', false)}
                       >
@@ -623,7 +631,7 @@ export function TeamRaceRankings({ onBack }: TeamRaceRankingsProps) {
                           )}
                         </div>
                       </th>
-                      <th 
+                      <th
                         className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
                         onClick={() => handleSort('matches', false)}
                       >
@@ -634,7 +642,7 @@ export function TeamRaceRankings({ onBack }: TeamRaceRankingsProps) {
                           )}
                         </div>
                       </th>
-                      <th 
+                      <th
                         className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
                         onClick={() => handleSort('wins', false)}
                       >
@@ -645,7 +653,7 @@ export function TeamRaceRankings({ onBack }: TeamRaceRankingsProps) {
                           )}
                         </div>
                       </th>
-                      <th 
+                      <th
                         className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
                         onClick={() => handleSort('losses', false)}
                       >
@@ -656,7 +664,7 @@ export function TeamRaceRankings({ onBack }: TeamRaceRankingsProps) {
                           )}
                         </div>
                       </th>
-                      <th 
+                      <th
                         className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
                         onClick={() => handleSort('points', false)}
                       >
@@ -736,13 +744,12 @@ export function TeamRaceRankings({ onBack }: TeamRaceRankingsProps) {
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-center">
                               <span
-                                className={`text-sm font-bold ${
-                                  matchup.points > 0
-                                    ? 'text-green-600'
-                                    : matchup.points < 0
+                                className={`text-sm font-bold ${matchup.points > 0
+                                  ? 'text-green-600'
+                                  : matchup.points < 0
                                     ? 'text-red-600'
                                     : 'text-gray-600'
-                                }`}
+                                  }`}
                               >
                                 {matchup.points > 0 ? '+' : ''}{formatRankingPoints(matchup.points)}
                               </span>
@@ -801,7 +808,7 @@ export function TeamRaceRankings({ onBack }: TeamRaceRankingsProps) {
             className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between z-10">
               <div>
                 <h3 className="text-lg font-semibold">Match History: {selectedMatchup.name}</h3>
                 <p className="text-sm text-gray-600 mt-1">
@@ -834,51 +841,44 @@ export function TeamRaceRankings({ onBack }: TeamRaceRankingsProps) {
               ) : (
                 <div className="space-y-3">
                   {matchHistory
-                    .sort((a, b) => {
-                      // Sort by date (newest first)
-                      const dateA = a.match_date || a.tournament_date || '';
-                      const dateB = b.match_date || b.tournament_date || '';
-                      if (dateA && dateB) {
-                        return new Date(dateB).getTime() - new Date(dateA).getTime();
-                      }
-                      return 0;
-                    })
+                    .slice() // Create a copy
+                    .reverse() // Reverse to show newest first (assuming server sends oldest first)
                     .map((match) => {
                       // For combined stats, determine if the clicked combo won
                       // For individual matchups, use the existing logic
                       let displayedCombo1Won: boolean;
-                      
+
                       if (isCombinedStats) {
                         // For combined stats, check if the clicked combo (selectedMatchup.combo1) won
                         const clickedCombo = selectedMatchup.combo1;
                         const clickedComboIsTeam1 = match.team1_combo === clickedCombo;
-                        displayedCombo1Won = clickedComboIsTeam1 
+                        displayedCombo1Won = clickedComboIsTeam1
                           ? match.team1_score > match.team2_score
                           : match.team2_score > match.team1_score;
                       } else {
                         // Normalize match combos to match the selected matchup format
                         const matchCombosSorted = [match.team1_combo, match.team2_combo].sort();
                         const matchCombo1 = matchCombosSorted[0];
-                        
+
                         // Determine which combo won in the match
                         // If team1_combo comes first alphabetically, team1 winning means combo1 won
-                        const matchCombo1Won = 
+                        const matchCombo1Won =
                           (match.team1_combo === matchCombo1 && match.team1_score > match.team2_score) ||
                           (match.team2_combo === matchCombo1 && match.team2_score > match.team1_score);
-                        
+
                         // Check if the displayed combo1 (from selectedMatchup) matches matchCombo1
                         // If they match, use matchCombo1Won; otherwise flip it
-                        displayedCombo1Won = 
+                        displayedCombo1Won =
                           (selectedMatchup.combo1 === matchCombo1) ? matchCombo1Won : !matchCombo1Won;
                       }
 
                       // For combined stats, show clicked combo first; for individual matchups, keep original order
                       let team1Combo, team2Combo, ratingChange;
-                      
+
                       if (isCombinedStats) {
                         const clickedCombo = selectedMatchup.combo1;
                         const clickedComboIsTeam1 = match.team1_combo === clickedCombo;
-                        
+
                         if (clickedComboIsTeam1) {
                           // Clicked combo is team1, keep original order
                           team1Combo = match.team1_combo;
@@ -905,7 +905,7 @@ export function TeamRaceRankings({ onBack }: TeamRaceRankingsProps) {
                       if (isCombinedStats) {
                         clickedComboIsTeam1 = match.team1_combo === selectedMatchup.combo1;
                       }
-                      
+
                       const convertedMatch = convertMatchForComponent(match);
                       const team1RankData = getTeamRank(
                         clickedComboIsTeam1 ? match.team1_player1 : match.team2_player1,
@@ -915,7 +915,7 @@ export function TeamRaceRankings({ onBack }: TeamRaceRankingsProps) {
                         clickedComboIsTeam1 ? match.team2_player1 : match.team1_player1,
                         clickedComboIsTeam1 ? match.team2_player2 : match.team1_player2
                       );
-                      
+
                       // Convert player rankings to the format expected by component
                       const playerRankingsMap: Record<string, { rank: number; points: number; confidence: number }> = {};
                       Object.keys(playerRankings).forEach(name => {

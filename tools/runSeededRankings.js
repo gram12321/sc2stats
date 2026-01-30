@@ -117,10 +117,6 @@ function sortAllMatches(matches, reverse = false) {
       if (dateA.getTime() !== dateB.getTime()) {
         return dateA.getTime() - dateB.getTime();
       }
-    } else if (a.date && !b.date) {
-      return -1;
-    } else if (!a.date && b.date) {
-      return 1;
     }
 
     // Then by round order

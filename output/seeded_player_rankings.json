@@ -4,207 +4,191 @@
     "matches": 27,
     "wins": 25,
     "losses": 2,
-    "points": 216.05412157190642,
-    "confidence": 68.90719412888821
+    "points": 226.8802370010127,
+    "confidence": 67.0931197452783
   },
   {
     "name": "Spirit",
     "matches": 40,
     "wins": 34,
     "losses": 6,
-    "points": 188.40605988543953,
-    "confidence": 70.46825851128763
-  },
-  {
-    "name": "Larry",
-    "matches": 4,
-    "wins": 2,
-    "losses": 2,
-    "points": 168.18904068161623,
-    "confidence": 4.5125
-  },
-  {
-    "name": "Night",
-    "matches": 4,
-    "wins": 2,
-    "losses": 2,
-    "points": 168.18904068161623,
-    "confidence": 4.5125
-  },
-  {
-    "name": "NightPhoenix",
-    "matches": 8,
-    "wins": 5,
-    "losses": 3,
-    "points": 154.19224409339046,
-    "confidence": 12.110591167968748
+    "points": 190.80777693310324,
+    "confidence": 69.22731050518755
   },
   {
     "name": "trigger",
     "matches": 25,
     "wins": 16,
     "losses": 9,
-    "points": 153.6789193784506,
-    "confidence": 49.664854552293924
-  },
-  {
-    "name": "ShoWTimE",
-    "matches": 32,
-    "wins": 22,
-    "losses": 10,
-    "points": 148.13037497848828,
-    "confidence": 46.396955880661
-  },
-  {
-    "name": "SKillous",
-    "matches": 20,
-    "wins": 11,
-    "losses": 9,
-    "points": 143.70551024876937,
-    "confidence": 37.22530407575099
+    "points": 158.7978581472555,
+    "confidence": 50.8941003943669
   },
   {
     "name": "Clem",
     "matches": 12,
     "wins": 8,
     "losses": 4,
-    "points": 129.25152499431917,
-    "confidence": 41.6771162337363
+    "points": 158.68752361078387,
+    "confidence": 29.74110938979099
   },
   {
-    "name": "Jumy",
-    "matches": 31,
-    "wins": 19,
-    "losses": 12,
-    "points": 122.50795511820505,
-    "confidence": 49.41355584105377
+    "name": "Larry",
+    "matches": 4,
+    "wins": 2,
+    "losses": 2,
+    "points": 153.11596063505405,
+    "confidence": 5
   },
   {
-    "name": "Elazer",
-    "matches": 37,
-    "wins": 23,
-    "losses": 14,
-    "points": 107.05645319433195,
-    "confidence": 52.443608607849626
+    "name": "Night",
+    "matches": 4,
+    "wins": 2,
+    "losses": 2,
+    "points": 153.11596063505405,
+    "confidence": 5
   },
   {
-    "name": "YoungYakov",
-    "matches": 30,
-    "wins": 17,
-    "losses": 13,
-    "points": 106.49027148102032,
-    "confidence": 39.003020293217645
+    "name": "ShoWTimE",
+    "matches": 32,
+    "wins": 22,
+    "losses": 10,
+    "points": 151.60911466678252,
+    "confidence": 47.0701876182953
   },
   {
-    "name": "Serral",
-    "matches": 19,
-    "wins": 10,
+    "name": "SKillous",
+    "matches": 20,
+    "wins": 11,
     "losses": 9,
-    "points": 105.76996746127104,
-    "confidence": 27.609077561544602
-  },
-  {
-    "name": "DefMars",
-    "matches": 10,
-    "wins": 4,
-    "losses": 6,
-    "points": 100.70471742003838,
-    "confidence": 16.343739140624997
+    "points": 148.75426380830942,
+    "confidence": 40.07876617350707
   },
   {
     "name": "Harstem",
     "matches": 12,
     "wins": 8,
     "losses": 4,
-    "points": 96.39320618597957,
-    "confidence": 33.907127093111306
+    "points": 127.71105245254341,
+    "confidence": 28.735680296236303
+  },
+  {
+    "name": "Jumy",
+    "matches": 31,
+    "wins": 19,
+    "losses": 12,
+    "points": 127.16371495868538,
+    "confidence": 46.580117868141144
+  },
+  {
+    "name": "NightPhoenix",
+    "matches": 8,
+    "wins": 5,
+    "losses": 3,
+    "points": 120.52264449985209,
+    "confidence": 8.155779687499999
+  },
+  {
+    "name": "Serral",
+    "matches": 19,
+    "wins": 10,
+    "losses": 9,
+    "points": 109.1087936942694,
+    "confidence": 25.26272003649181
+  },
+  {
+    "name": "YoungYakov",
+    "matches": 30,
+    "wins": 17,
+    "losses": 13,
+    "points": 108.16089542745685,
+    "confidence": 43.20432434564141
+  },
+  {
+    "name": "Elazer",
+    "matches": 37,
+    "wins": 23,
+    "losses": 14,
+    "points": 107.61672242055828,
+    "confidence": 52.97394143160687
   },
   {
     "name": "uThermal",
     "matches": 30,
     "wins": 16,
     "losses": 14,
-    "points": 95.21701932059221,
-    "confidence": 34.16463500974327
-  },
-  {
-    "name": "goblin",
-    "matches": 31,
-    "wins": 17,
-    "losses": 14,
-    "points": 86.13174053716324,
-    "confidence": 47.95351831006795
+    "points": 97.80301784196888,
+    "confidence": 34.36601941602172
   },
   {
     "name": "Wayne",
     "matches": 30,
     "wins": 17,
     "losses": 13,
-    "points": 82.89864795334526,
-    "confidence": 44.32453944200124
-  },
-  {
-    "name": "ZaRDieNT",
-    "matches": 8,
-    "wins": 3,
-    "losses": 5,
-    "points": 82.3749623436411,
-    "confidence": 19.835425621093748
+    "points": 91.21602203409917,
+    "confidence": 48.36273673392771
   },
   {
     "name": "GgMaChine",
     "matches": 35,
     "wins": 20,
     "losses": 15,
-    "points": 82.25844618986056,
-    "confidence": 58.660674260549975
+    "points": 87.01694083292534,
+    "confidence": 54.69061005814108
   },
   {
-    "name": "HeRoMaRinE",
-    "matches": 6,
+    "name": "goblin",
+    "matches": 31,
+    "wins": 17,
+    "losses": 14,
+    "points": 84.81626843601205,
+    "confidence": 53.390587105765114
+  },
+  {
+    "name": "DefMars",
+    "matches": 10,
     "wins": 4,
-    "losses": 2,
-    "points": 81.99500779809927,
-    "confidence": 21.490810937499997
+    "losses": 6,
+    "points": 81.0967098116997,
+    "confidence": 17.034865703125
   },
   {
     "name": "MilkiCow",
     "matches": 24,
     "wins": 12,
     "losses": 12,
-    "points": 71.2185253517776,
-    "confidence": 35.86875285700421
+    "points": 78.77501191173289,
+    "confidence": 32.63415978524254
+  },
+  {
+    "name": "HeRoMaRinE",
+    "matches": 6,
+    "wins": 4,
+    "losses": 2,
+    "points": 78.51434220017376,
+    "confidence": 21.490810937499997
+  },
+  {
+    "name": "ZaRDieNT",
+    "matches": 8,
+    "wins": 3,
+    "losses": 5,
+    "points": 77.25683777892918,
+    "confidence": 24.39545687109375
   },
   {
     "name": "Shameless",
     "matches": 36,
     "wins": 23,
     "losses": 13,
-    "points": 69.00467459525215,
-    "confidence": 67.30223184459278
-  },
-  {
-    "name": "Lambo",
-    "matches": 28,
-    "wins": 16,
-    "losses": 12,
-    "points": 65.68974548278172,
-    "confidence": 54.33196419072264
-  },
-  {
-    "name": "Nicoract",
-    "matches": 19,
-    "wins": 9,
-    "losses": 10,
-    "points": 59.14680361724436,
-    "confidence": 34.31867142551663
+    "points": 68.71613448270008,
+    "confidence": 63.53067085230433
   },
   {
     "name": "SpeCial",
     "matches": 2,
     "wins": 1,
     "losses": 1,
-    "points": 51.86604824902898,
+    "points": 65.4663065336816,
     "confidence": 5
   },
   {
@@ -212,7 +196,39 @@
     "matches": 3,
     "wins": 1,
     "losses": 2,
-    "points": 49.35104926376349,
+    "points": 64.8691393843434,
+    "confidence": 9.75
+  },
+  {
+    "name": "Lambo",
+    "matches": 28,
+    "wins": 16,
+    "losses": 12,
+    "points": 64.83586732847328,
+    "confidence": 46.959223701463195
+  },
+  {
+    "name": "Nicoract",
+    "matches": 19,
+    "wins": 9,
+    "losses": 10,
+    "points": 59.730099110886684,
+    "confidence": 37.16267188689893
+  },
+  {
+    "name": "OpTiMiStC",
+    "matches": 5,
+    "wins": 2,
+    "losses": 3,
+    "points": 49.94635659072826,
+    "confidence": 17.87190625
+  },
+  {
+    "name": "Kinpach",
+    "matches": 2,
+    "wins": 1,
+    "losses": 1,
+    "points": 46.06106444460682,
     "confidence": 9.75
   },
   {
@@ -220,159 +236,71 @@
     "matches": 16,
     "wins": 6,
     "losses": 10,
-    "points": 41.928610895411694,
-    "confidence": 40.10191029092725
-  },
-  {
-    "name": "Kinpach",
-    "matches": 2,
-    "wins": 1,
-    "losses": 1,
-    "points": 26.846541952079193,
-    "confidence": 9.75
-  },
-  {
-    "name": "OpTiMiStC",
-    "matches": 5,
-    "wins": 2,
-    "losses": 3,
-    "points": 19.701749788671698,
-    "confidence": 17.87190625
-  },
-  {
-    "name": "Statis",
-    "matches": 5,
-    "wins": 3,
-    "losses": 2,
-    "points": 18.792249431456057,
-    "confidence": 13.335031249999998
-  },
-  {
-    "name": "DIMAGA",
-    "matches": 8,
-    "wins": 3,
-    "losses": 5,
-    "points": 17.26067982288285,
-    "confidence": 24.371081871093754
-  },
-  {
-    "name": "Starfish",
-    "matches": 7,
-    "wins": 3,
-    "losses": 4,
-    "points": 16.400455621100328,
-    "confidence": 17.010490703124997
+    "points": 35.73019215848405,
+    "confidence": 40.2092348228122
   },
   {
     "name": "ART",
     "matches": 4,
     "wins": 1,
     "losses": 3,
-    "points": 9.794859907856885,
+    "points": 16.293393900445885,
     "confidence": 18.549374999999998
-  },
-  {
-    "name": "Fjant",
-    "matches": 2,
-    "wins": 1,
-    "losses": 1,
-    "points": 6.312678458051925,
-    "confidence": 9.75
   },
   {
     "name": "Moja",
     "matches": 9,
     "wins": 3,
     "losses": 6,
-    "points": 2.336069228168167,
+    "points": 15.048874953227614,
     "confidence": 23.64002777753906
   },
   {
-    "name": "Gref",
-    "matches": 4,
-    "wins": 1,
-    "losses": 3,
-    "points": 2.155924530366967,
-    "confidence": 9.75
+    "name": "DIMAGA",
+    "matches": 8,
+    "wins": 3,
+    "losses": 5,
+    "points": 8.370298146982531,
+    "confidence": 25.502177183593748
+  },
+  {
+    "name": "Statis",
+    "matches": 5,
+    "wins": 3,
+    "losses": 2,
+    "points": 7.751896290977385,
+    "confidence": 17.62190625
+  },
+  {
+    "name": "Starfish",
+    "matches": 7,
+    "wins": 3,
+    "losses": 4,
+    "points": 6.944620631561463,
+    "confidence": 22.010490703124997
   },
   {
     "name": "arrogfire",
     "matches": 3,
     "wins": 2,
     "losses": 1,
-    "points": -3.6843619229204307,
+    "points": -11.956559831212104,
     "confidence": 9.2625
   },
   {
-    "name": "Blademaster",
-    "matches": 1,
-    "wins": 0,
-    "losses": 1,
-    "points": -17.345839387515895,
-    "confidence": 5
-  },
-  {
-    "name": "RyeRye",
-    "matches": 1,
-    "wins": 0,
-    "losses": 1,
-    "points": -18.740541559296407,
-    "confidence": 5
-  },
-  {
-    "name": "Darjeeling",
-    "matches": 1,
-    "wins": 0,
-    "losses": 1,
-    "points": -22.517253429705132,
-    "confidence": 5
-  },
-  {
-    "name": "Havertz",
-    "matches": 1,
-    "wins": 0,
-    "losses": 1,
-    "points": -22.517253429705132,
-    "confidence": 5
-  },
-  {
-    "name": "GuGus",
-    "matches": 1,
-    "wins": 0,
-    "losses": 1,
-    "points": -23.577929516581356,
-    "confidence": 5
-  },
-  {
-    "name": "SickNess",
-    "matches": 1,
-    "wins": 0,
-    "losses": 1,
-    "points": -23.792980591024932,
-    "confidence": 5
-  },
-  {
-    "name": "EchoSoldier",
-    "matches": 1,
-    "wins": 0,
-    "losses": 1,
-    "points": -27.814283505201026,
-    "confidence": 5
-  },
-  {
-    "name": "Lena",
-    "matches": 1,
-    "wins": 0,
-    "losses": 1,
-    "points": -27.814283505201026,
-    "confidence": 5
+    "name": "Gerald",
+    "matches": 16,
+    "wins": 7,
+    "losses": 9,
+    "points": -13.419058442514086,
+    "confidence": 46.70045813482343
   },
   {
     "name": "Brat_OK",
     "matches": 9,
     "wins": 2,
     "losses": 7,
-    "points": -27.948696000558222,
+    "points": -16.335431621066924,
     "confidence": 27.902527777539067
   },
   {
@@ -380,71 +308,71 @@
     "matches": 9,
     "wins": 2,
     "losses": 7,
-    "points": -27.948696000558222,
+    "points": -16.335431621066924,
     "confidence": 27.902527777539067
   },
   {
-    "name": "Gerald",
-    "matches": 16,
-    "wins": 7,
-    "losses": 9,
-    "points": -30.586118671406524,
-    "confidence": 39.13624040435468
+    "name": "RyeRye",
+    "matches": 1,
+    "wins": 0,
+    "losses": 1,
+    "points": -16.58398914793164,
+    "confidence": 5
   },
   {
-    "name": "Jaeger",
-    "matches": 2,
+    "name": "Darjeeling",
+    "matches": 1,
     "wins": 0,
-    "losses": 2,
-    "points": -32.940694288390006,
-    "confidence": 9.75
+    "losses": 1,
+    "points": -20.85252519372621,
+    "confidence": 5
   },
   {
-    "name": "RACCOON",
-    "matches": 2,
+    "name": "Havertz",
+    "matches": 1,
     "wins": 0,
-    "losses": 2,
-    "points": -32.940694288390006,
-    "confidence": 9.75
+    "losses": 1,
+    "points": -20.85252519372621,
+    "confidence": 5
   },
   {
     "name": "starfish",
     "matches": 1,
     "wins": 0,
     "losses": 1,
-    "points": -33.85126541688954,
+    "points": -22.47759703690719,
     "confidence": 5
   },
   {
-    "name": "Aimliloke",
+    "name": "SickNess",
     "matches": 1,
     "wins": 0,
     "losses": 1,
-    "points": -33.87496384754532,
+    "points": -22.668047424371814,
     "confidence": 5
   },
   {
-    "name": "Nokota",
+    "name": "Blademaster",
     "matches": 1,
     "wins": 0,
     "losses": 1,
-    "points": -33.87496384754532,
+    "points": -23.517612837206794,
     "confidence": 5
   },
   {
-    "name": "Loviuf",
+    "name": "EchoSoldier",
     "matches": 1,
     "wins": 0,
     "losses": 1,
-    "points": -36.23874207873584,
+    "points": -25.057875250816394,
     "confidence": 5
   },
   {
-    "name": "Purce",
+    "name": "Lena",
     "matches": 1,
     "wins": 0,
     "losses": 1,
-    "points": -36.23874207873584,
+    "points": -25.057875250816394,
     "confidence": 5
   },
   {
@@ -452,15 +380,39 @@
     "matches": 1,
     "wins": 0,
     "losses": 1,
-    "points": -36.575579370712006,
+    "points": -26.59977264847759,
     "confidence": 5
   },
   {
-    "name": "LordGG",
+    "name": "Loviuf",
     "matches": 1,
     "wins": 0,
     "losses": 1,
-    "points": -37.96712301776014,
+    "points": -27.429478024508494,
+    "confidence": 5
+  },
+  {
+    "name": "Purce",
+    "matches": 1,
+    "wins": 0,
+    "losses": 1,
+    "points": -27.429478024508494,
+    "confidence": 5
+  },
+  {
+    "name": "Aimliloke",
+    "matches": 1,
+    "wins": 0,
+    "losses": 1,
+    "points": -29.381376983722568,
+    "confidence": 5
+  },
+  {
+    "name": "Nokota",
+    "matches": 1,
+    "wins": 0,
+    "losses": 1,
+    "points": -29.381376983722568,
     "confidence": 5
   },
   {
@@ -468,7 +420,31 @@
     "matches": 1,
     "wins": 0,
     "losses": 1,
-    "points": -40.59415216166671,
+    "points": -30.443608453916028,
+    "confidence": 5
+  },
+  {
+    "name": "Jaeger",
+    "matches": 2,
+    "wins": 0,
+    "losses": 2,
+    "points": -30.754811982956376,
+    "confidence": 9.75
+  },
+  {
+    "name": "RACCOON",
+    "matches": 2,
+    "wins": 0,
+    "losses": 2,
+    "points": -30.754811982956376,
+    "confidence": 9.75
+  },
+  {
+    "name": "LordGG",
+    "matches": 1,
+    "wins": 0,
+    "losses": 1,
+    "points": -33.32404232988129,
     "confidence": 5
   },
   {
@@ -476,15 +452,23 @@
     "matches": 4,
     "wins": 2,
     "losses": 2,
-    "points": -42.3879136130435,
-    "confidence": 9.75
+    "points": -36.27880693018427,
+    "confidence": 13.549375
   },
   {
-    "name": "Urono",
-    "matches": 2,
+    "name": "GuGus",
+    "matches": 1,
     "wins": 0,
-    "losses": 2,
-    "points": -43.33772613028219,
+    "losses": 1,
+    "points": -38.917707680768764,
+    "confidence": 5
+  },
+  {
+    "name": "Fjant",
+    "matches": 2,
+    "wins": 1,
+    "losses": 1,
+    "points": -39.527788675709196,
     "confidence": 9.75
   },
   {
@@ -492,15 +476,23 @@
     "matches": 2,
     "wins": 1,
     "losses": 1,
-    "points": -43.544264134097446,
+    "points": -44.3939354883381,
     "confidence": 9.75
+  },
+  {
+    "name": "Gref",
+    "matches": 4,
+    "wins": 1,
+    "losses": 3,
+    "points": -45.17123215857865,
+    "confidence": 9.5125
   },
   {
     "name": "CaptainSam",
     "matches": 2,
     "wins": 0,
     "losses": 2,
-    "points": -48.339399087905605,
+    "points": -47.15714928739595,
     "confidence": 9.75
   },
   {
@@ -508,319 +500,15 @@
     "matches": 2,
     "wins": 0,
     "losses": 2,
-    "points": -48.339399087905605,
+    "points": -47.15714928739595,
     "confidence": 9.75
-  },
-  {
-    "name": "threepoint",
-    "matches": 3,
-    "wins": 1,
-    "losses": 2,
-    "points": -49.28878511767793,
-    "confidence": 0
-  },
-  {
-    "name": "Tikky",
-    "matches": 3,
-    "wins": 1,
-    "losses": 2,
-    "points": -49.28878511767793,
-    "confidence": 0
-  },
-  {
-    "name": "EruptioN",
-    "matches": 2,
-    "wins": 0,
-    "losses": 2,
-    "points": -55.64286486804661,
-    "confidence": 9.75
-  },
-  {
-    "name": "Rate",
-    "matches": 1,
-    "wins": 0,
-    "losses": 1,
-    "points": -57.14808521691925,
-    "confidence": 5
-  },
-  {
-    "name": "ShaDoWn",
-    "matches": 1,
-    "wins": 0,
-    "losses": 1,
-    "points": -59.86309069384907,
-    "confidence": 5
-  },
-  {
-    "name": "HeroMarine",
-    "matches": 1,
-    "wins": 0,
-    "losses": 1,
-    "points": -63.006570582749276,
-    "confidence": 5
-  },
-  {
-    "name": "Calftowin",
-    "matches": 3,
-    "wins": 0,
-    "losses": 3,
-    "points": -63.103434663291786,
-    "confidence": 14.2625
-  },
-  {
-    "name": "LookMaNoSens",
-    "matches": 3,
-    "wins": 0,
-    "losses": 3,
-    "points": -63.103434663291786,
-    "confidence": 14.2625
-  },
-  {
-    "name": "Tiger",
-    "matches": 10,
-    "wins": 3,
-    "losses": 7,
-    "points": -63.108764159825164,
-    "confidence": 33.29959957441406
-  },
-  {
-    "name": "Arrogfire",
-    "matches": 1,
-    "wins": 0,
-    "losses": 1,
-    "points": -63.84347510627323,
-    "confidence": 5
-  },
-  {
-    "name": "Replicant",
-    "matches": 6,
-    "wins": 2,
-    "losses": 4,
-    "points": -64.21628904924694,
-    "confidence": 13.82253125
-  },
-  {
-    "name": "UltraMarine",
-    "matches": 4,
-    "wins": 1,
-    "losses": 3,
-    "points": -64.49638324074915,
-    "confidence": 18.549374999999998
-  },
-  {
-    "name": "GuMiho",
-    "matches": 1,
-    "wins": 0,
-    "losses": 1,
-    "points": -68.68995506886947,
-    "confidence": 5
-  },
-  {
-    "name": "Ryung",
-    "matches": 1,
-    "wins": 0,
-    "losses": 1,
-    "points": -68.68995506886947,
-    "confidence": 5
-  },
-  {
-    "name": "Has",
-    "matches": 1,
-    "wins": 0,
-    "losses": 1,
-    "points": -70.22166354526627,
-    "confidence": 5
-  },
-  {
-    "name": "Rex",
-    "matches": 1,
-    "wins": 0,
-    "losses": 1,
-    "points": -70.22166354526627,
-    "confidence": 5
-  },
-  {
-    "name": "UedSoldier",
-    "matches": 1,
-    "wins": 0,
-    "losses": 1,
-    "points": -72.81274563815748,
-    "confidence": 5
-  },
-  {
-    "name": "DarkSatas",
-    "matches": 1,
-    "wins": 0,
-    "losses": 1,
-    "points": -74.74777692360149,
-    "confidence": 5
-  },
-  {
-    "name": "HateCheese",
-    "matches": 1,
-    "wins": 0,
-    "losses": 1,
-    "points": -74.74777692360149,
-    "confidence": 5
-  },
-  {
-    "name": "Krystianer",
-    "matches": 8,
-    "wins": 3,
-    "losses": 5,
-    "points": -76.05073443507007,
-    "confidence": 15.966520933593749
-  },
-  {
-    "name": "Bombilla",
-    "matches": 1,
-    "wins": 0,
-    "losses": 1,
-    "points": -76.54881160129571,
-    "confidence": 5
-  },
-  {
-    "name": "Dmega",
-    "matches": 1,
-    "wins": 0,
-    "losses": 1,
-    "points": -76.54881160129571,
-    "confidence": 5
-  },
-  {
-    "name": "Indy",
-    "matches": 1,
-    "wins": 0,
-    "losses": 1,
-    "points": -77.50774153001146,
-    "confidence": 5
-  },
-  {
-    "name": "Melu",
-    "matches": 1,
-    "wins": 0,
-    "losses": 1,
-    "points": -80.01018396450952,
-    "confidence": 5
-  },
-  {
-    "name": "deer",
-    "matches": 3,
-    "wins": 0,
-    "losses": 3,
-    "points": -82.81946550795186,
-    "confidence": 14.2625
-  },
-  {
-    "name": "armonox",
-    "matches": 1,
-    "wins": 0,
-    "losses": 1,
-    "points": -83.94689049269354,
-    "confidence": 5
-  },
-  {
-    "name": "Sivean",
-    "matches": 1,
-    "wins": 0,
-    "losses": 1,
-    "points": -83.94689049269354,
-    "confidence": 5
-  },
-  {
-    "name": "Vanya",
-    "matches": 1,
-    "wins": 0,
-    "losses": 1,
-    "points": -84.82550967172672,
-    "confidence": 5
-  },
-  {
-    "name": "Lemon",
-    "matches": 4,
-    "wins": 0,
-    "losses": 4,
-    "points": -85.94954396686944,
-    "confidence": 18.549374999999998
-  },
-  {
-    "name": "Hardwell",
-    "matches": 2,
-    "wins": 0,
-    "losses": 2,
-    "points": -87.73149290650494,
-    "confidence": 9.75
-  },
-  {
-    "name": "Dolan",
-    "matches": 1,
-    "wins": 0,
-    "losses": 1,
-    "points": -88.4437850595707,
-    "confidence": 5
-  },
-  {
-    "name": "Anticore",
-    "matches": 4,
-    "wins": 0,
-    "losses": 4,
-    "points": -88.73288247749292,
-    "confidence": 18.549374999999998
-  },
-  {
-    "name": "Azura",
-    "matches": 4,
-    "wins": 0,
-    "losses": 4,
-    "points": -88.73288247749292,
-    "confidence": 18.549374999999998
-  },
-  {
-    "name": "boanaan",
-    "matches": 1,
-    "wins": 0,
-    "losses": 1,
-    "points": -89.81928968810902,
-    "confidence": 5
-  },
-  {
-    "name": "Iba",
-    "matches": 1,
-    "wins": 0,
-    "losses": 1,
-    "points": -89.81928968810902,
-    "confidence": 5
-  },
-  {
-    "name": "Antarct",
-    "matches": 3,
-    "wins": 0,
-    "losses": 3,
-    "points": -94.33628212251942,
-    "confidence": 14.2625
-  },
-  {
-    "name": "FightingFrog",
-    "matches": 1,
-    "wins": 0,
-    "losses": 1,
-    "points": -97.34148695881454,
-    "confidence": 5
-  },
-  {
-    "name": "HolyHit",
-    "matches": 1,
-    "wins": 0,
-    "losses": 1,
-    "points": -97.34148695881454,
-    "confidence": 5
   },
   {
     "name": "MaxGio",
     "matches": 1,
     "wins": 0,
     "losses": 1,
-    "points": -97.36490394552294,
+    "points": -48.17931126693266,
     "confidence": 5
   },
   {
@@ -828,23 +516,311 @@
     "matches": 1,
     "wins": 0,
     "losses": 1,
-    "points": -97.36490394552294,
+    "points": -48.17931126693266,
     "confidence": 5
   },
   {
-    "name": "Ninja",
+    "name": "Urono",
+    "matches": 2,
+    "wins": 0,
+    "losses": 2,
+    "points": -48.81896827025022,
+    "confidence": 9.75
+  },
+  {
+    "name": "threepoint",
+    "matches": 3,
+    "wins": 1,
+    "losses": 2,
+    "points": -53.01068454115335,
+    "confidence": 5
+  },
+  {
+    "name": "Tikky",
+    "matches": 3,
+    "wins": 1,
+    "losses": 2,
+    "points": -53.01068454115335,
+    "confidence": 5
+  },
+  {
+    "name": "ShaDoWn",
     "matches": 1,
     "wins": 0,
     "losses": 1,
-    "points": -111.71575312329132,
+    "points": -53.68556191686516,
     "confidence": 5
+  },
+  {
+    "name": "EruptioN",
+    "matches": 2,
+    "wins": 0,
+    "losses": 2,
+    "points": -55.077860496406586,
+    "confidence": 9.75
+  },
+  {
+    "name": "HeroMarine",
+    "matches": 1,
+    "wins": 0,
+    "losses": 1,
+    "points": -57.16125803380133,
+    "confidence": 5
+  },
+  {
+    "name": "Krystianer",
+    "matches": 8,
+    "wins": 3,
+    "losses": 5,
+    "points": -57.39791134866482,
+    "confidence": 15.966520933593749
+  },
+  {
+    "name": "UltraMarine",
+    "matches": 4,
+    "wins": 1,
+    "losses": 3,
+    "points": -64.9353186883034,
+    "confidence": 18.549374999999998
+  },
+  {
+    "name": "deer",
+    "matches": 3,
+    "wins": 0,
+    "losses": 3,
+    "points": -66.0333120464122,
+    "confidence": 14.2625
+  },
+  {
+    "name": "Calftowin",
+    "matches": 3,
+    "wins": 0,
+    "losses": 3,
+    "points": -66.182446831479,
+    "confidence": 14.2625
+  },
+  {
+    "name": "LookMaNoSens",
+    "matches": 3,
+    "wins": 0,
+    "losses": 3,
+    "points": -66.182446831479,
+    "confidence": 14.2625
+  },
+  {
+    "name": "GuMiho",
+    "matches": 1,
+    "wins": 0,
+    "losses": 1,
+    "points": -66.87005872062021,
+    "confidence": 5
+  },
+  {
+    "name": "Ryung",
+    "matches": 1,
+    "wins": 0,
+    "losses": 1,
+    "points": -66.87005872062021,
+    "confidence": 5
+  },
+  {
+    "name": "UedSoldier",
+    "matches": 1,
+    "wins": 0,
+    "losses": 1,
+    "points": -67.07445882438836,
+    "confidence": 5
+  },
+  {
+    "name": "Tiger",
+    "matches": 10,
+    "wins": 3,
+    "losses": 7,
+    "points": -67.81771668027211,
+    "confidence": 29.22706832441406
+  },
+  {
+    "name": "Lemon",
+    "matches": 4,
+    "wins": 0,
+    "losses": 4,
+    "points": -69.35383082337154,
+    "confidence": 18.549374999999998
+  },
+  {
+    "name": "Melu",
+    "matches": 1,
+    "wins": 0,
+    "losses": 1,
+    "points": -70.2278439944631,
+    "confidence": 5
+  },
+  {
+    "name": "Rate",
+    "matches": 1,
+    "wins": 0,
+    "losses": 1,
+    "points": -70.55458243094839,
+    "confidence": 5
+  },
+  {
+    "name": "DarkSatas",
+    "matches": 1,
+    "wins": 0,
+    "losses": 1,
+    "points": -73.03846220145081,
+    "confidence": 5
+  },
+  {
+    "name": "HateCheese",
+    "matches": 1,
+    "wins": 0,
+    "losses": 1,
+    "points": -73.03846220145081,
+    "confidence": 5
+  },
+  {
+    "name": "Replicant",
+    "matches": 6,
+    "wins": 2,
+    "losses": 4,
+    "points": -73.9607918499552,
+    "confidence": 13.10940625
+  },
+  {
+    "name": "Bombilla",
+    "matches": 1,
+    "wins": 0,
+    "losses": 1,
+    "points": -74.80654100033269,
+    "confidence": 5
+  },
+  {
+    "name": "Dmega",
+    "matches": 1,
+    "wins": 0,
+    "losses": 1,
+    "points": -74.80654100033269,
+    "confidence": 5
+  },
+  {
+    "name": "Has",
+    "matches": 1,
+    "wins": 0,
+    "losses": 1,
+    "points": -77.64627327263739,
+    "confidence": 5
+  },
+  {
+    "name": "Rex",
+    "matches": 1,
+    "wins": 0,
+    "losses": 1,
+    "points": -77.64627327263739,
+    "confidence": 5
+  },
+  {
+    "name": "FightingFrog",
+    "matches": 1,
+    "wins": 0,
+    "losses": 1,
+    "points": -78.98383768564784,
+    "confidence": 5
+  },
+  {
+    "name": "HolyHit",
+    "matches": 1,
+    "wins": 0,
+    "losses": 1,
+    "points": -78.98383768564784,
+    "confidence": 5
+  },
+  {
+    "name": "Antarct",
+    "matches": 3,
+    "wins": 0,
+    "losses": 3,
+    "points": -82.31812679982686,
+    "confidence": 14.2625
+  },
+  {
+    "name": "Indy",
+    "matches": 1,
+    "wins": 0,
+    "losses": 1,
+    "points": -84.01549438529825,
+    "confidence": 5
+  },
+  {
+    "name": "Arrogfire",
+    "matches": 1,
+    "wins": 0,
+    "losses": 1,
+    "points": -84.60498818064043,
+    "confidence": 5
+  },
+  {
+    "name": "Vanya",
+    "matches": 1,
+    "wins": 0,
+    "losses": 1,
+    "points": -84.6223791855284,
+    "confidence": 5
+  },
+  {
+    "name": "boanaan",
+    "matches": 1,
+    "wins": 0,
+    "losses": 1,
+    "points": -85.71448664834418,
+    "confidence": 5
+  },
+  {
+    "name": "Iba",
+    "matches": 1,
+    "wins": 0,
+    "losses": 1,
+    "points": -85.71448664834418,
+    "confidence": 5
+  },
+  {
+    "name": "Dolan",
+    "matches": 1,
+    "wins": 0,
+    "losses": 1,
+    "points": -90.68638122664343,
+    "confidence": 5
+  },
+  {
+    "name": "Hardwell",
+    "matches": 2,
+    "wins": 0,
+    "losses": 2,
+    "points": -90.82488775375444,
+    "confidence": 9.75
+  },
+  {
+    "name": "Anticore",
+    "matches": 4,
+    "wins": 0,
+    "losses": 4,
+    "points": -95.11113677966597,
+    "confidence": 18.549374999999998
+  },
+  {
+    "name": "Azura",
+    "matches": 4,
+    "wins": 0,
+    "losses": 4,
+    "points": -95.11113677966597,
+    "confidence": 18.549374999999998
   },
   {
     "name": "Aelith",
     "matches": 1,
     "wins": 0,
     "losses": 1,
-    "points": -113.94443369100011,
+    "points": -104.92547623625508,
     "confidence": 5
   },
   {
@@ -852,7 +828,15 @@
     "matches": 1,
     "wins": 0,
     "losses": 1,
-    "points": -113.94443369100011,
+    "points": -104.92547623625508,
+    "confidence": 5
+  },
+  {
+    "name": "Ninja",
+    "matches": 1,
+    "wins": 0,
+    "losses": 1,
+    "points": -114.61514340340692,
     "confidence": 5
   },
   {
@@ -860,7 +844,7 @@
     "matches": 2,
     "wins": 0,
     "losses": 2,
-    "points": -126.30547563879685,
+    "points": -126.64207190829622,
     "confidence": 9.75
   },
   {
@@ -868,7 +852,7 @@
     "matches": 2,
     "wins": 0,
     "losses": 2,
-    "points": -126.30547563879685,
+    "points": -126.64207190829622,
     "confidence": 9.75
   },
   {
@@ -876,7 +860,7 @@
     "matches": 1,
     "wins": 0,
     "losses": 1,
-    "points": -129.51075958601356,
+    "points": -129.87738494054867,
     "confidence": 5
   },
   {
@@ -884,7 +868,7 @@
     "matches": 1,
     "wins": 0,
     "losses": 1,
-    "points": -129.51075958601356,
+    "points": -129.87738494054867,
     "confidence": 5
   },
   {
@@ -892,7 +876,7 @@
     "matches": 1,
     "wins": 0,
     "losses": 1,
-    "points": -137.64013753213825,
+    "points": -137.7859370476776,
     "confidence": 5
   },
   {
@@ -900,7 +884,23 @@
     "matches": 1,
     "wins": 0,
     "losses": 1,
-    "points": -137.64013753213825,
+    "points": -137.7859370476776,
     "confidence": 5
+  },
+  {
+    "name": "armonox",
+    "matches": 1,
+    "wins": 0,
+    "losses": 1,
+    "points": -140.54016655276894,
+    "confidence": 0
+  },
+  {
+    "name": "Sivean",
+    "matches": 1,
+    "wins": 0,
+    "losses": 1,
+    "points": -140.54016655276894,
+    "confidence": 0
   }
 ]
