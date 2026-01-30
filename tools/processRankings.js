@@ -36,15 +36,15 @@ const ROUND_ORDER = {
 async function loadTournamentFiles() {
   const files = await readdir(outputDir);
   const jsonFiles = files.filter(f => f.endsWith('.json') && f !== 'player_defaults.json');
-  
+
   const tournaments = [];
-  
+
   for (const file of jsonFiles) {
     try {
       const filePath = join(outputDir, file);
       const content = await readFile(filePath, 'utf-8');
       const data = JSON.parse(content);
-      
+
       if (data.matches && Array.isArray(data.matches)) {
         tournaments.push(data);
       }
@@ -52,7 +52,7 @@ async function loadTournamentFiles() {
       console.error(`Error processing ${file}:`, err);
     }
   }
-  
+
   return tournaments;
 }
 
@@ -65,11 +65,11 @@ async function loadTournamentFiles() {
  */
 function collectMatchesFromTournaments(tournaments) {
   const allMatches = [];
-  
+
   for (const tournament of tournaments) {
     const tournamentDate = tournament.tournament?.date || null;
     const tournamentSlug = tournament.tournament?.liquipedia_slug || null;
-    
+
     for (const match of tournament.matches) {
       if (hasValidScores(match)) {
         allMatches.push({
@@ -80,7 +80,7 @@ function collectMatchesFromTournaments(tournaments) {
       }
     }
   }
-  
+
   return allMatches;
 }
 
@@ -101,7 +101,7 @@ function sortAllMatches(matches) {
         return dateA.getTime() - dateB.getTime();
       }
     }
-    
+
     // Then by match date within tournament
     if (a.date && b.date) {
       const dateA = new Date(a.date);
@@ -109,19 +109,15 @@ function sortAllMatches(matches) {
       if (dateA.getTime() !== dateB.getTime()) {
         return dateA.getTime() - dateB.getTime();
       }
-    } else if (a.date && !b.date) {
-      return -1;
-    } else if (!a.date && b.date) {
-      return 1;
     }
-    
+
     // Then by round order
     const roundA = ROUND_ORDER[a.round] || 999;
     const roundB = ROUND_ORDER[b.round] || 999;
     if (roundA !== roundB) {
       return roundA - roundB;
     }
-    
+
     // Finally by match_id
     return (a.match_id || '').localeCompare(b.match_id || '');
   });
@@ -136,16 +132,16 @@ function sortAllMatches(matches) {
  */
 function getAverageOpponentRating(opponentNames, playerStats) {
   if (opponentNames.length === 0) return 0;
-  
+
   const ratings = opponentNames
     .map(name => {
       const stats = playerStats.get(name);
       return stats ? stats.points : 0;
     })
     .filter(rating => rating !== undefined);
-  
+
   if (ratings.length === 0) return 0;
-  
+
   return ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length;
 }
 
@@ -160,7 +156,7 @@ function getAverageOpponentRating(opponentNames, playerStats) {
 function calculateRankingsFromMatches(sortedMatches) {
   const playerStats = new Map();
   const matchHistory = [];
-    
+
   for (const match of sortedMatches) {
     // Determine winner
     const { team1Won, team2Won } = determineMatchOutcome(
@@ -270,13 +266,13 @@ export async function calculateRankings() {
   try {
     // Load tournament files
     const tournaments = await loadTournamentFiles();
-    
+
     // Collect matches from tournaments
     const allMatches = collectMatchesFromTournaments(tournaments);
-    
+
     // Sort matches chronologically
     const sortedMatches = sortAllMatches(allMatches);
-    
+
     // Calculate rankings from sorted matches
     return calculateRankingsFromMatches(sortedMatches);
   } catch (error) {
