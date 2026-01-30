@@ -173,9 +173,6 @@ export function PlayerDetails({ playerName, onBack }: PlayerDetailsProps) {
     return [player1, player2].filter(Boolean).sort().join('+');
   };
 
-  const getPlayerRank = (name: string) => {
-    return playerRankings[name]?.rank || null;
-  };
 
   const getTeamRank = (player1: string, player2: string) => {
     const teamKey = normalizeTeamKey(player1, player2);
