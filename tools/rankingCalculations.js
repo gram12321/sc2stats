@@ -20,13 +20,23 @@
  * @returns {number} K-factor for rating calculations
  */
 export function getProvisionalKFactor(matchCount) {
-  if (matchCount <= 5) return 64;
-  if (matchCount <= 10) return 40;
-  if (matchCount <= 20) return 32;
+  // Zig-Zag approach for tournament realism
+  // Matches 1-2: High impact for initial placement (e.g. Ro16)
+  if (matchCount <= 2) return 80;
 
-  // Adaptive K-factor after provisional period
-  const adaptiveK = 24 * (1 + 3 / matchCount);
-  return Math.min(32, adaptiveK);
+  // Matches 3-4: Dampened impact for deep tournament run
+  // Prevents double bonus of "High K" + "Beating Top Seed"
+  if (matchCount <= 4) return 40;
+
+  // Matches 5-8: Confirmation tournament (2nd event)
+  // Higher again to allow movement now that they've settled slightly
+  if (matchCount <= 8) return 50;
+
+  // Adaptive Decay for long term
+  // Starts around 43 (at match 9) and decays towards 32
+  // Formula: Base 32 + (Bonus / Matches)
+  const adaptiveK = 32 + (100 / matchCount);
+  return Math.min(50, adaptiveK);
 }
 
 /**
@@ -87,10 +97,11 @@ export function updateConfidence(stats, expectedWin, actualWin) {
  */
 export function applyConfidenceAdjustment(baseK, confidence) {
   // Lower confidence = higher K-factor adjustment
-  // Confidence 0%: K multiplied by 1.5 (50% increase)
-  // Confidence 50%: K multiplied by 1.25 (25% increase)
+  // Reduced volatility: Max multiplier lowered from 1.5x to 1.2x
+  // Confidence 0%: K multiplied by 1.2 (20% increase)
+  // Confidence 50%: K multiplied by 1.1 (10% increase)
   // Confidence 100%: K unchanged
-  const confidenceMultiplier = 1 + ((100 - confidence) / 100) * 0.5;
+  const confidenceMultiplier = 1 + ((100 - confidence) / 100) * 0.2;
   return baseK * confidenceMultiplier;
 }
 
@@ -155,12 +166,11 @@ export function calculatePopulationStats(playerStats) {
 export function predictWinProbability(rating1, rating2, populationStdDev = 350) {
   const ratingDiff = rating2 - rating1;
   // Using population std dev as the scale factor
-  // This adapts to the actual skill distribution:
+  // Changed base from 10 to 3 to flatten the curve
   // - 0 std dev apart (equal ratings) = 50% win chance
-  // - 1 std dev apart (higher player) = ~91% win chance
-  // - 2 std dev apart (higher player) = ~99% win chance
-  // - The function approaches but never reaches 0% or 100%
-  return 1 / (1 + Math.pow(10, ratingDiff / populationStdDev));
+  // - 1 std dev apart (higher player) = 75% win chance (1/(1+3^-1) = 1/1.33 = 0.75)
+  // - 2 std dev apart (higher player) = 90% win chance (1/(1+3^-2) = 1/1.11 = 0.90)
+  return 1 / (1 + Math.pow(3, ratingDiff / populationStdDev));
 }
 
 /**
