@@ -401,6 +401,8 @@ export async function calculateTeamRaceRankings() {
       // Store match history entry
       matchHistory.push({
         ...match, // Spread existing match properties
+        tournament_date: match.tournamentDate,
+        tournament_slug: match.tournamentSlug,
         team1_combo: team1Combo,
         team2_combo: team2Combo,
         combo1_won: combo1Won,

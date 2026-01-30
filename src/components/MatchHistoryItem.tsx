@@ -659,20 +659,70 @@ export function MatchHistoryItem({
                     } else {
                       // Find race impact for combined stats
                       const raceImpacts = match.race_impacts || {};
-                      const raceImpact = Object.values(raceImpacts).find(imp =>
-                        (imp.race1 === raceInfo.race1 || imp.race2 === raceInfo.race1)
+                      const relevantImpacts = Object.values(raceImpacts).filter(imp =>
+                        imp.race1 === raceInfo.race1 || imp.race2 === raceInfo.race1
                       );
 
-                      const tooltipContent = raceImpact ? getRaceChangeTooltip(
-                        raceImpact,
-                        raceInfo.race1,
-                        raceImpact.race1 === raceInfo.race1 ? raceImpact.race2 : raceImpact.race1
-                      ) : (
-                        <div className="text-left text-xs">
-                          <div className="font-semibold mb-1">Race Rating Change</div>
-                          <div>{raceInfo.race1}: {raceInfo.ratingChange >= 0 ? '+' : ''}{formatRankingPoints(raceInfo.ratingChange)}</div>
-                        </div>
-                      );
+                      let tooltipContent;
+
+                      if (relevantImpacts.length === 1) {
+                        const raceImpact = relevantImpacts[0];
+                        tooltipContent = getRaceChangeTooltip(
+                          raceImpact,
+                          raceInfo.race1,
+                          raceImpact.race1 === raceInfo.race1 ? raceImpact.race2 : raceImpact.race1
+                        );
+                      } else if (relevantImpacts.length > 1) {
+                        tooltipContent = (
+                          <div className="text-left text-xs space-y-3">
+                            <div>
+                              <div className="font-semibold mb-1 border-b border-gray-700 pb-1">Net Rating Change</div>
+                              <div className="flex justify-between items-center font-medium">
+                                <span className="text-gray-200">Total Change:</span>
+                                <span className={raceInfo.ratingChange >= 0 ? "text-green-400" : "text-red-400"}>
+                                  {raceInfo.ratingChange >= 0 ? '+' : ''}{formatRankingPoints(raceInfo.ratingChange)}
+                                </span>
+                              </div>
+                            </div>
+
+                            <div className="space-y-3 pt-1 border-t border-gray-700">
+                              {relevantImpacts.map((imp, idx) => {
+                                const isRace1 = imp.race1 === raceInfo.race1;
+                                const opponent = isRace1 ? imp.race2 : imp.race1;
+
+                                // Construct normalized impact object from perspective of raceInfo.race1
+                                const normalizedImpact = {
+                                  ratingBefore: isRace1 ? imp.ratingBefore : imp.opponentRating,
+                                  ratingChange: isRace1 ? imp.ratingChange : -imp.ratingChange,
+                                  won: isRace1 ? imp.won : !imp.won,
+                                  opponentRating: isRace1 ? imp.opponentRating : imp.ratingBefore,
+                                  expectedWin: imp.expectedWin !== undefined ? (isRace1 ? imp.expectedWin : (1 - imp.expectedWin)) : undefined,
+                                  baseK: imp.baseK,
+                                  adjustedK: imp.adjustedK,
+                                  confidence: imp.confidence,
+                                  matchCount: imp.matchCount
+                                };
+
+                                return (
+                                  <div key={idx}>
+                                    <div className="text-gray-400 text-[10px] mb-1 uppercase tracking-wider font-bold">
+                                      vs {opponent}
+                                    </div>
+                                    {getRatingChangeTooltip(normalizedImpact, raceInfo.race1, opponent, 'race')}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      } else {
+                        tooltipContent = (
+                          <div className="text-left text-xs">
+                            <div className="font-semibold mb-1">Race Rating Change</div>
+                            <div>{raceInfo.race1}: {raceInfo.ratingChange >= 0 ? '+' : ''}{formatRankingPoints(raceInfo.ratingChange)}</div>
+                          </div>
+                        );
+                      }
 
                       return (
                         <>

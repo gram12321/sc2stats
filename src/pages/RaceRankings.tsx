@@ -837,7 +837,17 @@ export function RaceRankings({ onBack }: RaceRankingsProps) {
                         return roundB - roundA;
                       }
 
-                      return 0;
+                      // Finally by match_id (reverse - newest first)
+                      // Assuming higher match_id means later match
+                      const idA = a.match_id || '';
+                      const idB = b.match_id || '';
+                      // Try numeric comparison if possible, otherwise string
+                      const numA = parseInt(idA);
+                      const numB = parseInt(idB);
+                      if (!isNaN(numA) && !isNaN(numB)) {
+                        return numB - numA;
+                      }
+                      return idB.localeCompare(idA);
                     })
                     .map((match) => {
                       // Determine win/loss and rating change based on matchup type
@@ -849,17 +859,31 @@ export function RaceRankings({ onBack }: RaceRankingsProps) {
                       if (isCombinedStats) {
                         // For combined stats, check if the race appears in winning team
                         const race1InTeam1 = match.team1_races.includes(selectedMatchup.race1);
-                        won = race1InTeam1
-                          ? match.team1_score > match.team2_score
-                          : match.team2_score > match.team1_score;
+                        const race1InTeam2 = match.team2_races.includes(selectedMatchup.race1);
 
-                        // Find the first race_impact involving this race
+                        // Default win calculation
+                        if (race1InTeam1 && !race1InTeam2) {
+                          won = match.team1_score > match.team2_score;
+                        } else if (!race1InTeam1 && race1InTeam2) {
+                          won = match.team2_score > match.team1_score;
+                        } else if (race1InTeam1 && race1InTeam2) {
+                          // Mixed match (race on both sides), rely on net rating change
+                          // We calculated ratingChange below, so we'll set won later
+                        }
+
+                        // Sum all race_impacts involving this race
                         const raceImpacts = match.race_impacts || {};
                         for (const [, impact] of Object.entries(raceImpacts)) {
-                          if (impact.race1 === selectedMatchup.race1 || impact.race2 === selectedMatchup.race1) {
-                            ratingChange = impact.race1 === selectedMatchup.race1 ? impact.ratingChange : -impact.ratingChange;
-                            break;
+                          if (impact.race1 === selectedMatchup.race1) {
+                            ratingChange += impact.ratingChange;
+                          } else if (impact.race2 === selectedMatchup.race1) {
+                            ratingChange -= impact.ratingChange;
                           }
+                        }
+
+                        // For mixed matches, set won based on net rating change
+                        if (race1InTeam1 && race1InTeam2) {
+                          won = ratingChange > 0;
                         }
                       } else {
                         // For individual matchups, find the specific matchup impact

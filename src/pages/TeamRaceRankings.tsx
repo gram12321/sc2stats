@@ -4,6 +4,15 @@ import { Race } from '../types/tournament';
 import { getPlayerDefaults } from '../lib/playerDefaults';
 import { MatchHistoryItem } from '../components/MatchHistoryItem';
 
+const ROUND_ORDER: Record<string, number> = {
+  'Round of 16': 1,
+  'Round of 8': 2,
+  'Quarterfinals': 3,
+  'Semifinals': 4,
+  'Final': 5,
+  'Grand Final': 5
+};
+
 
 interface TeamRaceRanking {
   name: string; // e.g., "PT vs ZZ"
@@ -842,7 +851,36 @@ export function TeamRaceRankings({ onBack }: TeamRaceRankingsProps) {
                 <div className="space-y-3">
                   {matchHistory
                     .slice() // Create a copy
-                    .reverse() // Reverse to show newest first (assuming server sends oldest first)
+                    .sort((a, b) => {
+                      // Sort by date (newest first)
+                      const dateA = a.match_date || a.tournament_date || '';
+                      const dateB = b.match_date || b.tournament_date || '';
+                      if (dateA && dateB) {
+                        const timeA = new Date(dateA).getTime();
+                        const timeB = new Date(dateB).getTime();
+                        if (timeA !== timeB) {
+                          return timeB - timeA;
+                        }
+                      }
+
+                      // Fallback to round order (higher round first = newest first)
+                      const roundA = ROUND_ORDER[a.round] || 0;
+                      const roundB = ROUND_ORDER[b.round] || 0;
+                      if (roundA !== roundB) {
+                        return roundB - roundA;
+                      }
+
+                      // Finally by match_id (reverse - newest first)
+                      const idA = a.match_id || '';
+                      const idB = b.match_id || '';
+                      // Try numeric comparison if possible, otherwise string
+                      const numA = parseInt(idA);
+                      const numB = parseInt(idB);
+                      if (!isNaN(numA) && !isNaN(numB)) {
+                        return numB - numA;
+                      }
+                      return idB.localeCompare(idA);
+                    })
                     .map((match) => {
                       // For combined stats, determine if the clicked combo won
                       // For individual matchups, use the existing logic
