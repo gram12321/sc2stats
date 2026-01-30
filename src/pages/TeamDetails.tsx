@@ -92,19 +92,22 @@ export function TeamDetails({ player1, player2, onBack }: TeamDetailsProps) {
   const [playerRankings, setPlayerRankings] = useState<Record<string, { rank: number; points: number; confidence: number }>>({});
   const [teamRankings, setTeamRankings] = useState<Record<string, { rank: number; points: number; confidence: number }>>({});
   const [playerRaces, setPlayerRaces] = useState<Record<string, Race>>({});
+  const [useSeededRankings, setUseSeededRankings] = useState(false);
 
   useEffect(() => {
     loadTeamDetails();
     loadPlayerRankings();
     loadTeamRankings();
+    loadTeamRankings();
     loadAllPlayerRaces();
-  }, [player1, player2]);
+  }, [player1, player2, useSeededRankings]);
 
   const loadTeamDetails = async () => {
     try {
       setIsLoading(true);
       setError(null);
-      const response = await fetch(`/api/team/${encodeURIComponent(player1)}/${encodeURIComponent(player2)}`);
+      const seedParam = useSeededRankings ? '?useSeeds=true' : '';
+      const response = await fetch(`/api/team/${encodeURIComponent(player1)}/${encodeURIComponent(player2)}${seedParam}`);
       if (!response.ok) {
         if (response.status === 404) {
           throw new Error('Team not found');
@@ -295,14 +298,33 @@ export function TeamDetails({ player1, player2, onBack }: TeamDetailsProps) {
             <div>
               <h1 className="text-2xl font-bold text-gray-900">{teamName}</h1>
             </div>
-            {onBack && (
-              <button
-                onClick={onBack}
-                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500"
-              >
-                ← Back
-              </button>
-            )}
+            <div className="flex items-center gap-4">
+              <div className="flex items-center">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={useSeededRankings}
+                    onChange={(e) => setUseSeededRankings(e.target.checked)}
+                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <span className="text-sm text-gray-700">Use Initial Seeds (Average of Pass 1 & 2)</span>
+                </label>
+                <div className="ml-2 group relative">
+                  <span className="cursor-help text-gray-400 text-xs border border-gray-400 rounded-full w-4 h-4 inline-flex items-center justify-center">?</span>
+                  <div className="invisible group-hover:visible absolute top-full right-0 mt-2 w-64 p-2 bg-gray-800 text-white text-xs rounded shadow-lg z-10">
+                    When checked, rankings start from a seed value derived from a preliminary analysis of all matches. Without this, everyone starts at 0.
+                  </div>
+                </div>
+              </div>
+              {onBack && (
+                <button
+                  onClick={onBack}
+                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500"
+                >
+                  ← Back
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>

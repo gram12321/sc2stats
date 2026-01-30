@@ -68,7 +68,7 @@ interface PlayerDetails {
   matchHistory: PlayerMatch[];
 }
 
-interface PlayerDetailsData extends PlayerDetails {}
+interface PlayerDetailsData extends PlayerDetails { }
 
 interface PlayerDetailsProps {
   playerName: string;
@@ -83,6 +83,7 @@ export function PlayerDetails({ playerName, onBack }: PlayerDetailsProps) {
   const [playerRankings, setPlayerRankings] = useState<Record<string, { rank: number; points: number; confidence: number }>>({});
   const [teamRankings, setTeamRankings] = useState<Record<string, { rank: number; points: number; confidence: number }>>({});
   const [playerRaces, setPlayerRaces] = useState<Record<string, Race>>({});
+  const [useSeededRankings, setUseSeededRankings] = useState(false);
 
   useEffect(() => {
     loadPlayerDetails();
@@ -90,13 +91,16 @@ export function PlayerDetails({ playerName, onBack }: PlayerDetailsProps) {
     loadPlayerRankings();
     loadTeamRankings();
     loadAllPlayerRaces();
-  }, [playerName]);
+    loadTeamRankings();
+    loadAllPlayerRaces();
+  }, [playerName, useSeededRankings]);
 
   const loadPlayerDetails = async () => {
     try {
       setIsLoading(true);
       setError(null);
-      const response = await fetch(`/api/player/${encodeURIComponent(playerName)}`);
+      const seedParam = useSeededRankings ? '?useSeeds=true' : '';
+      const response = await fetch(`/api/player/${encodeURIComponent(playerName)}${seedParam}`);
       if (!response.ok) {
         if (response.status === 404) {
           throw new Error('Player not found');
@@ -202,16 +206,16 @@ export function PlayerDetails({ playerName, onBack }: PlayerDetailsProps) {
     if (!match.race_impacts) return null;
     const raceChanges: Array<{ race: string; change: number }> = [];
     const seenRaces = new Set<string>();
-    
+
     Object.values(match.race_impacts).forEach((impact: any) => {
       const getRaceAbbrev = (race: string) => {
         if (race === 'Random') return 'R';
         return race[0];
       };
-      
+
       const race1Abbr = getRaceAbbrev(impact.race1);
       const race2Abbr = getRaceAbbrev(impact.race2);
-      
+
       if (!seenRaces.has(race1Abbr)) {
         raceChanges.push({ race: race1Abbr, change: impact.ratingChange });
         seenRaces.add(race1Abbr);
@@ -221,7 +225,7 @@ export function PlayerDetails({ playerName, onBack }: PlayerDetailsProps) {
         seenRaces.add(race2Abbr);
       }
     });
-    
+
     return raceChanges.length > 0 ? raceChanges : null;
   };
 
@@ -302,14 +306,33 @@ export function PlayerDetails({ playerName, onBack }: PlayerDetailsProps) {
                 </span>
               )}
             </div>
-            {onBack && (
-              <button
-                onClick={onBack}
-                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500"
-              >
-                ← Back
-              </button>
-            )}
+            <div className="flex items-center gap-4">
+              <div className="flex items-center">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={useSeededRankings}
+                    onChange={(e) => setUseSeededRankings(e.target.checked)}
+                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <span className="text-sm text-gray-700">Use Initial Seeds (Average of Pass 1 & 2)</span>
+                </label>
+                <div className="ml-2 group relative">
+                  <span className="cursor-help text-gray-400 text-xs border border-gray-400 rounded-full w-4 h-4 inline-flex items-center justify-center">?</span>
+                  <div className="invisible group-hover:visible absolute top-full right-0 mt-2 w-64 p-2 bg-gray-800 text-white text-xs rounded shadow-lg z-10">
+                    When checked, rankings start from a seed value derived from a preliminary analysis of all matches. Without this, everyone starts at 0.
+                  </div>
+                </div>
+              </div>
+              {onBack && (
+                <button
+                  onClick={onBack}
+                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500"
+                >
+                  ← Back
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -357,7 +380,7 @@ export function PlayerDetails({ playerName, onBack }: PlayerDetailsProps) {
               sortedMatchHistory.map((match) => {
                 const team1Rank = getTeamRank(match.team1.player1, match.team1.player2);
                 const team2Rank = getTeamRank(match.team2.player1, match.team2.player2);
-                
+
                 // Convert player rankings to the format expected by component
                 const playerRankingsMap: Record<string, { rank: number; points: number; confidence: number }> = {};
                 Object.keys(playerRankings).forEach(name => {
@@ -370,7 +393,7 @@ export function PlayerDetails({ playerName, onBack }: PlayerDetailsProps) {
                     };
                   }
                 });
-                
+
                 return (
                   <MatchHistoryItem
                     key={`${match.tournament_slug}-${match.match_id}`}

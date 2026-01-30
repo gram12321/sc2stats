@@ -1,0 +1,438 @@
+{
+  "tournament": {
+    "name": "uThermal 2v2 Circuit: Bonus Cup #1",
+    "liquipedia_slug": "UThermal_2v2_Circuit/2026/Bonus_Cup/1",
+    "date": "2026-01-17",
+    "prize_pool": 400,
+    "format": "2v2 Playoffs",
+    "maps": [
+      "Fields of Death CE",
+      "Gemgarden",
+      "New Bed of Chaos",
+      "Reclamation LE",
+      "Rhoskallian",
+      "Rohana",
+      "Rust Bucket",
+      "Undercurrent",
+      "Yellowjacket"
+    ]
+  },
+  "matches": [
+    {
+      "match_id": "R1M1",
+      "round": "Round of 16",
+      "team1": {
+        "player1": {
+          "name": "MaxPax"
+        },
+        "player2": {
+          "name": "Spirit"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "MilkiCow"
+        },
+        "player2": {
+          "name": "Wayne"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 0,
+      "best_of": 3,
+      "date": null,
+      "games": [],
+      "tournament_slug": "UThermal_2v2_Circuit/2026/Bonus_Cup/1"
+    },
+    {
+      "match_id": "R1M2",
+      "round": "Round of 16",
+      "team1": {
+        "player1": {
+          "name": "Brat_OK"
+        },
+        "player2": {
+          "name": "MindelVK"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "GgMaChine"
+        },
+        "player2": {
+          "name": "Shameless"
+        }
+      },
+      "team1_score": 0,
+      "team2_score": 2,
+      "best_of": 3,
+      "date": null,
+      "games": [],
+      "tournament_slug": "UThermal_2v2_Circuit/2026/Bonus_Cup/1"
+    },
+    {
+      "match_id": "R1M3",
+      "round": "Round of 16",
+      "team1": {
+        "player1": {
+          "name": "ByuN"
+        },
+        "player2": {
+          "name": "Lambo"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "SickNess"
+        },
+        "player2": {
+          "name": "ZaRDieNT"
+        }
+      },
+      "team1_score": 1,
+      "team2_score": 2,
+      "best_of": 3,
+      "date": null,
+      "games": [],
+      "tournament_slug": "UThermal_2v2_Circuit/2026/Bonus_Cup/1"
+    },
+    {
+      "match_id": "R1M4",
+      "round": "Round of 16",
+      "team1": {
+        "player1": {
+          "name": "DefMars"
+        },
+        "player2": {
+          "name": "MiniZergUA"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "goblin"
+        },
+        "player2": {
+          "name": "uThermal"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 0,
+      "best_of": 3,
+      "date": null,
+      "games": [],
+      "tournament_slug": "UThermal_2v2_Circuit/2026/Bonus_Cup/1"
+    },
+    {
+      "match_id": "R1M5",
+      "round": "Round of 16",
+      "team1": {
+        "player1": {
+          "name": "Elazer"
+        },
+        "player2": {
+          "name": "SKillous"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Jumy"
+        },
+        "player2": {
+          "name": "Shino"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 1,
+      "best_of": 3,
+      "date": null,
+      "games": [],
+      "tournament_slug": "UThermal_2v2_Circuit/2026/Bonus_Cup/1"
+    },
+    {
+      "match_id": "R1M6",
+      "round": "Round of 16",
+      "team1": {
+        "player1": {
+          "name": "Creed"
+        },
+        "player2": {
+          "name": "MasterVasya"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "AnDreJOO"
+        },
+        "player2": {
+          "name": "Jemiol"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 0,
+      "best_of": 3,
+      "date": null,
+      "games": [],
+      "tournament_slug": "UThermal_2v2_Circuit/2026/Bonus_Cup/1"
+    },
+    {
+      "match_id": "R1M7",
+      "round": "Round of 16",
+      "team1": {
+        "player1": {
+          "name": "Ryung"
+        },
+        "player2": {
+          "name": "SHIN"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Gerald"
+        },
+        "player2": {
+          "name": "Nicoract"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 0,
+      "best_of": 3,
+      "date": null,
+      "games": [],
+      "tournament_slug": "UThermal_2v2_Circuit/2026/Bonus_Cup/1"
+    },
+    {
+      "match_id": "R1M8",
+      "round": "Round of 16",
+      "team1": {
+        "player1": {
+          "name": "CatZ"
+        },
+        "player2": {
+          "name": "Reaper"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Percival"
+        },
+        "player2": {
+          "name": "YoungYakov"
+        }
+      },
+      "team1_score": 0,
+      "team2_score": 2,
+      "best_of": 3,
+      "date": null,
+      "games": [],
+      "tournament_slug": "UThermal_2v2_Circuit/2026/Bonus_Cup/1"
+    },
+    {
+      "match_id": "R2M1",
+      "round": "Quarterfinals",
+      "team1": {
+        "player1": {
+          "name": "MaxPax"
+        },
+        "player2": {
+          "name": "Spirit"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "GgMaChine"
+        },
+        "player2": {
+          "name": "Shameless"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 0,
+      "best_of": 3,
+      "date": null,
+      "games": [],
+      "tournament_slug": "UThermal_2v2_Circuit/2026/Bonus_Cup/1"
+    },
+    {
+      "match_id": "R2M2",
+      "round": "Quarterfinals",
+      "team1": {
+        "player1": {
+          "name": "SickNess"
+        },
+        "player2": {
+          "name": "ZaRDieNT"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "DefMars"
+        },
+        "player2": {
+          "name": "MiniZergUA"
+        }
+      },
+      "team1_score": 0,
+      "team2_score": 2,
+      "best_of": 3,
+      "date": null,
+      "games": [],
+      "tournament_slug": "UThermal_2v2_Circuit/2026/Bonus_Cup/1"
+    },
+    {
+      "match_id": "R2M3",
+      "round": "Quarterfinals",
+      "team1": {
+        "player1": {
+          "name": "Elazer"
+        },
+        "player2": {
+          "name": "SKillous"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Creed"
+        },
+        "player2": {
+          "name": "MasterVasya"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 0,
+      "best_of": 3,
+      "date": null,
+      "games": [],
+      "tournament_slug": "UThermal_2v2_Circuit/2026/Bonus_Cup/1"
+    },
+    {
+      "match_id": "R2M4",
+      "round": "Quarterfinals",
+      "team1": {
+        "player1": {
+          "name": "Ryung"
+        },
+        "player2": {
+          "name": "SHIN"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Percival"
+        },
+        "player2": {
+          "name": "YoungYakov"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 0,
+      "best_of": 3,
+      "date": null,
+      "games": [],
+      "tournament_slug": "UThermal_2v2_Circuit/2026/Bonus_Cup/1"
+    },
+    {
+      "match_id": "R3M1",
+      "round": "Semifinals",
+      "team1": {
+        "player1": {
+          "name": "MaxPax"
+        },
+        "player2": {
+          "name": "Spirit"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "DefMars"
+        },
+        "player2": {
+          "name": "MiniZergUA"
+        }
+      },
+      "team1_score": null,
+      "team2_score": null,
+      "best_of": 3,
+      "date": "2026-01-17 15:00",
+      "games": [],
+      "tournament_slug": "UThermal_2v2_Circuit/2026/Bonus_Cup/1"
+    },
+    {
+      "match_id": "R3M2",
+      "round": "Semifinals",
+      "team1": {
+        "player1": {
+          "name": "Elazer"
+        },
+        "player2": {
+          "name": "SKillous"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Ryung"
+        },
+        "player2": {
+          "name": "SHIN"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 0,
+      "best_of": 3,
+      "date": "2026-01-17 15:10",
+      "games": [
+        {
+          "map": "Reclamation LE",
+          "winner": 1
+        },
+        {
+          "map": "Rohana",
+          "winner": 1
+        }
+      ],
+      "tournament_slug": "UThermal_2v2_Circuit/2026/Bonus_Cup/1"
+    },
+    {
+      "match_id": "R4M1",
+      "round": "Grand Final",
+      "team1": {
+        "player1": {
+          "name": "MaxPax"
+        },
+        "player2": {
+          "name": "Spirit"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Elazer"
+        },
+        "player2": {
+          "name": "SKillous"
+        }
+      },
+      "team1_score": 3,
+      "team2_score": 1,
+      "best_of": 5,
+      "date": "2026-01-17 15:50",
+      "games": [
+        {
+          "map": "Yellowjacket",
+          "winner": 1
+        },
+        {
+          "map": "Reclamation LE",
+          "winner": 2
+        },
+        {
+          "map": "New Bed of Chaos",
+          "winner": 1
+        },
+        {
+          "map": "Gemgarden",
+          "winner": 1
+        }
+      ],
+      "tournament_slug": "UThermal_2v2_Circuit/2026/Bonus_Cup/1"
+    }
+  ]
+}

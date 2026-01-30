@@ -641,8 +641,19 @@ app.get('/api/match-history', async (req, res) => {
 app.get('/api/player/:playerName', async (req, res) => {
   try {
     const playerName = decodeURIComponent(req.params.playerName);
-    const { rankings, matchHistory } = await calculateRankings();
-    const { matchHistory: teamMatchHistory } = await calculateTeamRankings();
+    const { useSeeds } = req.query;
+
+    let playerSeeds = null;
+    let teamSeeds = null;
+
+    if (useSeeds === 'true') {
+      const seeds = await loadSeeds();
+      playerSeeds = seeds.playerSeeds;
+      teamSeeds = seeds.teamSeeds;
+    }
+
+    const { rankings, matchHistory } = await calculateRankings(playerSeeds);
+    const { matchHistory: teamMatchHistory } = await calculateTeamRankings(teamSeeds);
 
     const player = rankings.find(p => p.name === playerName);
     if (!player) {
@@ -695,9 +706,19 @@ app.get('/api/team/:player1/:player2', async (req, res) => {
   try {
     const player1 = decodeURIComponent(req.params.player1);
     const player2 = decodeURIComponent(req.params.player2);
+    const { useSeeds } = req.query;
     const teamKey = [player1, player2].sort().join('+');
 
-    const { rankings, matchHistory } = await calculateTeamRankings();
+    let playerSeeds = null;
+    let teamSeeds = null;
+
+    if (useSeeds === 'true') {
+      const seeds = await loadSeeds();
+      playerSeeds = seeds.playerSeeds;
+      teamSeeds = seeds.teamSeeds;
+    }
+
+    const { rankings, matchHistory } = await calculateTeamRankings(teamSeeds);
 
     const team = rankings.find(t =>
       (t.player1 === player1 && t.player2 === player2) ||
@@ -709,7 +730,7 @@ app.get('/api/team/:player1/:player2', async (req, res) => {
     }
 
     // Get team's match history
-    const { matchHistory: playerMatchHistory } = await calculateRankings();
+    const { matchHistory: playerMatchHistory } = await calculateRankings(playerSeeds);
     const playerMatchMap = new Map();
     if (playerMatchHistory) {
       playerMatchHistory.forEach(match => {

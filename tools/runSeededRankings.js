@@ -337,10 +337,14 @@ function calculateTeamRankingsFromMatches(sortedMatches, seedRatings = null, pas
 /**
  * Extract ratings from stats map
  */
-function extractRatings(statsMap) {
+function extractRatings(statsMap, minMatches = 0) {
   const ratings = new Map();
   for (const [key, stats] of statsMap.entries()) {
-    ratings.set(key, stats.points);
+    // Only extract ratings for entities that have played enough matches
+    // This prevents "one-match wonders" from being seeded with their own future result
+    if (stats.matches >= minMatches) {
+      ratings.set(key, stats.points);
+    }
   }
   return ratings;
 }
@@ -377,12 +381,12 @@ async function runSeededPlayerRankings(matches) {
   // Pass 1: Forward chronological
   console.log('\n>>> PASS 1: Forward Chronological <<<');
   const pass1Stats = calculateRankingsFromMatches(sortedMatches, null, 'Pass 1');
-  const pass1Ratings = extractRatings(pass1Stats);
+  const pass1Ratings = extractRatings(pass1Stats, 2); // Require 2 matches to generate a seed
 
   // Pass 2: Reverse chronological (not used for seeding, just for analysis)
   console.log('\n>>> PASS 2: Reverse Chronological <<<');
   const pass2Stats = calculateRankingsFromMatches(reverseSortedMatches, null, 'Pass 2');
-  const pass2Ratings = extractRatings(pass2Stats);
+  const pass2Ratings = extractRatings(pass2Stats, 2); // Require 2 matches
 
   // Pass 3: Forward chronological with Pass 1 seeds
   // Pass 3: Forward chronological with Averaged seeds
@@ -427,12 +431,12 @@ async function runSeededTeamRankings(matches) {
   // Pass 1: Forward chronological
   console.log('\n>>> PASS 1: Forward Chronological <<<');
   const pass1Stats = calculateTeamRankingsFromMatches(sortedMatches, null, 'Pass 1');
-  const pass1Ratings = extractRatings(pass1Stats);
+  const pass1Ratings = extractRatings(pass1Stats, 2); // Require 2 matches to generate a seed
 
   // Pass 2: Reverse chronological (not used for seeding, just for analysis)
   console.log('\n>>> PASS 2: Reverse Chronological <<<');
   const pass2Stats = calculateTeamRankingsFromMatches(reverseSortedMatches, null, 'Pass 2');
-  const pass2Ratings = extractRatings(pass2Stats);
+  const pass2Ratings = extractRatings(pass2Stats, 2); // Require 2 matches
 
   // Pass 3: Forward chronological with Pass 1 seeds
   // Pass 3: Forward chronological with Averaged seeds

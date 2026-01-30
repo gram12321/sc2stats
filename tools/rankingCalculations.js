@@ -20,13 +20,13 @@
  * @returns {number} K-factor for rating calculations
  */
 export function getProvisionalKFactor(matchCount) {
-  if (matchCount <= 5) return 80;
-  if (matchCount <= 10) return 48;
-  if (matchCount <= 20) return 40;
+  if (matchCount <= 5) return 64;
+  if (matchCount <= 10) return 40;
+  if (matchCount <= 20) return 32;
 
   // Adaptive K-factor after provisional period
-  const adaptiveK = 32 * (1 + 3 / matchCount);
-  return Math.min(40, adaptiveK);
+  const adaptiveK = 24 * (1 + 3 / matchCount);
+  return Math.min(32, adaptiveK);
 }
 
 /**
@@ -245,9 +245,10 @@ export function updateStatsForMatch(stats, won, lost, opponentRating, population
   let ratingToUse;
   if (currentRating !== null) {
     ratingToUse = currentRating;
-  } else if (isFirstMatch && populationMean !== null && !stats.isSeeded) {
-    // First match AND NOT SEEDED: use population mean
-    ratingToUse = populationMean;
+  } else if (isFirstMatch && !stats.isSeeded) {
+    // First match AND NOT SEEDED: use 0 (fixed anchor)
+    // This prevents first-time players from inheriting negative population means
+    ratingToUse = 0;
   } else {
     ratingToUse = stats.points;
   }

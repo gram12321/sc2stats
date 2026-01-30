@@ -23,10 +23,10 @@ export function determineMatchOutcome(team1Score, team2Score) {
  * @returns {boolean} True if match has valid scores
  */
 export function hasValidScores(match) {
-  return match.team1_score !== null && 
-         match.team1_score !== undefined &&
-         match.team2_score !== null && 
-         match.team2_score !== undefined;
+  return match.team1_score !== null &&
+    match.team1_score !== undefined &&
+    match.team2_score !== null &&
+    match.team2_score !== undefined;
 }
 
 /**
@@ -42,7 +42,7 @@ export function initializeStats(name, additionalFields = {}, populationMean = 0)
     matches: 0,
     wins: 0,
     losses: 0,
-    points: populationMean, // Start at population mean instead of 0
+    points: 0, // Start at 0 for a fixed anchor point
     confidence: 0, // Confidence starts at 0% for new entities
     ...additionalFields
   };

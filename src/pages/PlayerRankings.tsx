@@ -80,7 +80,7 @@ export function PlayerRankings({ onBack, onNavigateToPlayer }: PlayerRankingsPro
   const averageConfidence = rankings.length > 0
     ? rankings.reduce((sum, p) => sum + (p.confidence || 0), 0) / rankings.length
     : 0;
-  const confidenceThreshold = (averageConfidence * 2) / 3;
+  const confidenceThreshold = (averageConfidence * 4) / 4;
 
   // Apply confidence filter: if filter is ON, hide items below threshold completely
   const confidenceFilteredRankings = filterLowConfidence
@@ -89,10 +89,10 @@ export function PlayerRankings({ onBack, onNavigateToPlayer }: PlayerRankingsPro
 
   const sortedRankings = [...confidenceFilteredRankings].sort((a, b) => {
     if (!sortColumn) return 0;
-    
+
     let aValue: any;
     let bValue: any;
-    
+
     if (sortColumn === 'rank') {
       aValue = rankings.findIndex(p => p.name === a.name) + 1;
       bValue = rankings.findIndex(p => p.name === b.name) + 1;
@@ -100,18 +100,18 @@ export function PlayerRankings({ onBack, onNavigateToPlayer }: PlayerRankingsPro
       aValue = a[sortColumn];
       bValue = b[sortColumn];
     }
-    
+
     // Handle undefined/null values
     if (aValue === undefined || aValue === null) aValue = sortColumn === 'name' ? '' : 0;
     if (bValue === undefined || bValue === null) bValue = sortColumn === 'name' ? '' : 0;
-    
+
     // String comparison for name
     if (sortColumn === 'name') {
-      return sortDirection === 'asc' 
+      return sortDirection === 'asc'
         ? aValue.localeCompare(bValue)
         : bValue.localeCompare(aValue);
     }
-    
+
     // Numeric comparison
     const comparison = (aValue as number) - (bValue as number);
     return sortDirection === 'asc' ? comparison : -comparison;
@@ -128,7 +128,7 @@ export function PlayerRankings({ onBack, onNavigateToPlayer }: PlayerRankingsPro
   const rankedRankings = sortedRankings.map((player) => {
     const playerConfidence = player.confidence || 0;
     const meetsThreshold = playerConfidence >= confidenceThreshold;
-    
+
     if (!filterLowConfidence) {
       // When not filtering, show all players but only rank those above threshold
       if (meetsThreshold) {
@@ -147,7 +147,7 @@ export function PlayerRankings({ onBack, onNavigateToPlayer }: PlayerRankingsPro
         return { ...player, displayRank: null };
       }
     }
-    
+
     // When filtering is ON, all shown players meet threshold, so rank them normally
     // Find position in points-sorted list and count how many players above also meet threshold
     const pointsIndex = pointsSortedRankings.findIndex(p => p.name === player.name);
@@ -180,22 +180,30 @@ export function PlayerRankings({ onBack, onNavigateToPlayer }: PlayerRankingsPro
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Player Rankings</h1>
               <p className="text-gray-600 mt-1">
-                {useSeededRankings 
-                  ? 'Seeded rankings (three-pass seeding system)' 
+                {useSeededRankings
+                  ? 'Seeded rankings (three-pass seeding system)'
                   : 'Enhanced ranking system with provisional ratings and confidence tracking'}
               </p>
             </div>
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-4">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={useSeededRankings}
-                    onChange={(e) => setUseSeededRankings(e.target.checked)}
-                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                  />
-                  <span className="text-sm text-gray-700">Use Seeded Rankings</span>
-                </label>
+                <div className="flex items-center">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={useSeededRankings}
+                      onChange={(e) => setUseSeededRankings(e.target.checked)}
+                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    />
+                    <span className="text-sm text-gray-700">Use Initial Seeds (Average of Pass 1 & 2)</span>
+                  </label>
+                  <div className="ml-2 group relative">
+                    <span className="cursor-help text-gray-400 text-xs border border-gray-400 rounded-full w-4 h-4 inline-flex items-center justify-center">?</span>
+                    <div className="invisible group-hover:visible absolute top-full left-1/2 transform -translate-x-1/2 mt-2 w-64 p-2 bg-gray-800 text-white text-xs rounded shadow-lg z-10">
+                      When checked, rankings start from a seed value derived from a preliminary analysis of all matches. Without this, everyone starts at 0.
+                    </div>
+                  </div>
+                </div>
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
@@ -259,7 +267,7 @@ export function PlayerRankings({ onBack, onNavigateToPlayer }: PlayerRankingsPro
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th 
+                      <th
                         className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
                         onClick={() => handleSort('rank')}
                       >
@@ -270,7 +278,7 @@ export function PlayerRankings({ onBack, onNavigateToPlayer }: PlayerRankingsPro
                           )}
                         </div>
                       </th>
-                      <th 
+                      <th
                         className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
                         onClick={() => handleSort('name')}
                       >
@@ -284,7 +292,7 @@ export function PlayerRankings({ onBack, onNavigateToPlayer }: PlayerRankingsPro
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Race
                       </th>
-                      <th 
+                      <th
                         className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
                         onClick={() => handleSort('matches')}
                       >
@@ -295,7 +303,7 @@ export function PlayerRankings({ onBack, onNavigateToPlayer }: PlayerRankingsPro
                           )}
                         </div>
                       </th>
-                      <th 
+                      <th
                         className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
                         onClick={() => handleSort('wins')}
                       >
@@ -306,7 +314,7 @@ export function PlayerRankings({ onBack, onNavigateToPlayer }: PlayerRankingsPro
                           )}
                         </div>
                       </th>
-                      <th 
+                      <th
                         className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
                         onClick={() => handleSort('losses')}
                       >
@@ -317,7 +325,7 @@ export function PlayerRankings({ onBack, onNavigateToPlayer }: PlayerRankingsPro
                           )}
                         </div>
                       </th>
-                      <th 
+                      <th
                         className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
                         onClick={() => handleSort('points')}
                       >
@@ -328,7 +336,7 @@ export function PlayerRankings({ onBack, onNavigateToPlayer }: PlayerRankingsPro
                           )}
                         </div>
                       </th>
-                      <th 
+                      <th
                         className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
                         onClick={() => handleSort('confidence')}
                       >
@@ -345,10 +353,10 @@ export function PlayerRankings({ onBack, onNavigateToPlayer }: PlayerRankingsPro
                     {rankedRankings.length === 0 ? (
                       <tr>
                         <td colSpan={8} className="px-6 py-8 text-center text-gray-500">
-                          {searchTerm 
-                            ? 'No players found matching your search' 
-                            : filterLowConfidence 
-                              ? 'No players meet the confidence threshold' 
+                          {searchTerm
+                            ? 'No players found matching your search'
+                            : filterLowConfidence
+                              ? 'No players meet the confidence threshold'
                               : 'No rankings available'}
                         </td>
                       </tr>
@@ -417,20 +425,19 @@ export function PlayerRankings({ onBack, onNavigateToPlayer }: PlayerRankingsPro
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-center">
                               <span
-                                className={`text-sm font-bold ${
-                                  player.points > 0
-                                    ? 'text-green-600'
-                                    : player.points < 0
+                                className={`text-sm font-bold ${player.points > 0
+                                  ? 'text-green-600'
+                                  : player.points < 0
                                     ? 'text-red-600'
                                     : 'text-gray-600'
-                                }`}
+                                  }`}
                               >
                                 {player.points > 0 ? '+' : ''}{formatRankingPoints(player.points)}
                               </span>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-center">
                               <span className="text-sm text-gray-700">
-                                {typeof player.confidence === 'number' 
+                                {typeof player.confidence === 'number'
                                   ? `${Math.round(player.confidence)}%`
                                   : '—'}
                               </span>
