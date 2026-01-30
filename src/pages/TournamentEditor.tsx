@@ -17,9 +17,10 @@ interface TournamentEditorProps {
   onNavigateToRaceRankings?: () => void;
   onNavigateToTeamRaceRankings?: () => void;
   onNavigateToMatches?: () => void;
+  onNavigateToInfo?: () => void;
 }
 
-export function TournamentEditor({ onNavigateToPlayers, onNavigateToPlayerRankings, onNavigateToTeamRankings, onNavigateToRaceRankings, onNavigateToTeamRaceRankings, onNavigateToMatches }: TournamentEditorProps) {
+export function TournamentEditor({ onNavigateToPlayers, onNavigateToPlayerRankings, onNavigateToTeamRankings, onNavigateToRaceRankings, onNavigateToTeamRaceRankings, onNavigateToMatches, onNavigateToInfo }: TournamentEditorProps) {
   const [tournaments, setTournaments] = useState<TournamentInfo[]>([]);
   const [selectedTournament, setSelectedTournament] = useState<TournamentData | null>(null);
   const [selectedFilename, setSelectedFilename] = useState<string | null>(null);
@@ -61,12 +62,12 @@ export function TournamentEditor({ onNavigateToPlayers, onNavigateToPlayerRankin
       const response = await fetch(`/api/tournaments/${filename}`);
       if (!response.ok) throw new Error('Failed to load tournament');
       const data = await response.json() as TournamentData;
-      
+
       // Validate data structure
       if (!data.tournament || !data.matches) {
         throw new Error('Invalid tournament data format');
       }
-      
+
       setSelectedTournament(data);
       setSelectedFilename(filename);
     } catch (err) {
@@ -167,6 +168,14 @@ export function TournamentEditor({ onNavigateToPlayers, onNavigateToPlayerRankin
                   Match History
                 </button>
               )}
+              {onNavigateToInfo && (
+                <button
+                  onClick={onNavigateToInfo}
+                  className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500"
+                >
+                  Info
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -235,7 +244,7 @@ export function TournamentEditor({ onNavigateToPlayers, onNavigateToPlayerRankin
                 Refresh
               </button>
             </div>
-            
+
             {tournaments.map((tournament) => (
               <div
                 key={tournament.filename}

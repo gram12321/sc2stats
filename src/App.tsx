@@ -8,17 +8,19 @@ import { TeamRaceRankings } from './pages/TeamRaceRankings';
 import { MatchesList } from './pages/MatchesList';
 import { PlayerDetails } from './pages/PlayerDetails';
 import { TeamDetails } from './pages/TeamDetails';
+import { Info } from './pages/Info';
 
-type View = 
-  | 'tournaments' 
-  | 'players' 
-  | 'player-rankings' 
+type View =
+  | 'tournaments'
+  | 'players'
+  | 'player-rankings'
   | 'team-rankings'
   | 'race-rankings'
   | 'team-race-rankings'
   | 'matches'
   | 'player-details'
-  | 'team-details';
+  | 'team-details'
+  | 'info';
 
 interface NavigationState {
   view: View;
@@ -66,6 +68,10 @@ export function App() {
     return <TeamDetails player1={navState.teamPlayer1} player2={navState.teamPlayer2} onBack={() => navigate('team-rankings')} />;
   }
 
+  if (navState.view === 'info') {
+    return <Info onBack={() => navigate('tournaments')} />;
+  }
+
   return (
     <TournamentEditor
       onNavigateToPlayers={() => navigate('players')}
@@ -74,6 +80,7 @@ export function App() {
       onNavigateToRaceRankings={() => navigate('race-rankings')}
       onNavigateToTeamRaceRankings={() => navigate('team-race-rankings')}
       onNavigateToMatches={() => navigate('matches')}
+      onNavigateToInfo={() => navigate('info')}
     />
   );
 }
