@@ -244,7 +244,7 @@ export async function calculateRaceRankings(mainCircuitOnly = false, seasons = n
       }
 
       // Determine winner
-      const { team1Won, team2Won } = determineMatchOutcome(
+      const { team1Won, team2Won, isDraw } = determineMatchOutcome(
         match.team1_score,
         match.team2_score
       );
@@ -368,7 +368,8 @@ export async function calculateRaceRankings(mainCircuitOnly = false, seasons = n
               populationStdDev, // Population std dev for adaptive scaling
               0, // opponentConfidence
               matchupRatingBefore, // Use PvT's rating BEFORE update (explicit)
-              populationMean // Population mean (for first-match logic, though explicit rating takes precedence)
+              populationMean, // Population mean (for first-match logic, though explicit rating takes precedence)
+              isDraw
             );
 
             // Update TvP: compare its BEFORE rating against PvT's BEFORE rating
@@ -381,7 +382,8 @@ export async function calculateRaceRankings(mainCircuitOnly = false, seasons = n
               populationStdDev, // Population std dev for adaptive scaling
               0, // opponentConfidence
               inverseRatingBefore, // Use TvP's rating BEFORE update (explicit)
-              populationMean // Population mean (for first-match logic, though explicit rating takes precedence)
+              populationMean, // Population mean (for first-match logic, though explicit rating takes precedence)
+              isDraw
             );
 
             // Track impact
@@ -389,6 +391,7 @@ export async function calculateRaceRankings(mainCircuitOnly = false, seasons = n
               ratingBefore: matchupRatingBefore,
               ratingChange: matchupResult.ratingChange,
               won: matchupWon,
+              isDraw: isDraw,
               opponentRating: inverseRatingBefore,
               race1: race1,
               race2: race2,
@@ -469,6 +472,7 @@ export async function calculateRaceRankings(mainCircuitOnly = false, seasons = n
       combined.matches += matchup.matches;
       combined.wins += matchup.wins;
       combined.losses += matchup.losses;
+      combined.draws = (combined.draws || 0) + (matchup.draws || 0);
       combined.points += matchup.points;
     }
 

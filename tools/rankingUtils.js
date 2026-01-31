@@ -11,9 +11,11 @@
  * @returns {Object} Object with team1Won and team2Won boolean flags
  */
 export function determineMatchOutcome(team1Score, team2Score) {
+  const isDraw = team1Score === team2Score;
   return {
     team1Won: team1Score > team2Score,
-    team2Won: team2Score > team1Score
+    team2Won: team2Score > team1Score,
+    isDraw
   };
 }
 
@@ -42,6 +44,7 @@ export function initializeStats(name, additionalFields = {}, populationMean = 0)
     matches: 0,
     wins: 0,
     losses: 0,
+    draws: 0,
     points: 0, // Start at 0 for a fixed anchor point
     confidence: 0, // Confidence starts at 0% for new entities
     ...additionalFields

@@ -280,7 +280,7 @@ export async function calculateTeamRaceRankings(mainCircuitOnly = false, seasons
       if (!matchupKey) continue;
 
       // Determine winner
-      const { team1Won, team2Won } = determineMatchOutcome(
+      const { team1Won, team2Won, isDraw } = determineMatchOutcome(
         match.team1_score,
         match.team2_score
       );
@@ -314,6 +314,7 @@ export async function calculateTeamRaceRankings(mainCircuitOnly = false, seasons
           matches: 0,
           wins: 0, // wins for combo1
           losses: 0, // losses for combo1 (wins for combo2)
+          draws: 0,
           points: 0 // net points for combo1
         });
       }
@@ -327,7 +328,9 @@ export async function calculateTeamRaceRankings(mainCircuitOnly = false, seasons
 
       // Update overall matchup stats
       matchupStats.matches++;
-      if (combo1Won) {
+      if (isDraw) {
+        matchupStats.draws++;
+      } else if (combo1Won) {
         matchupStats.wins++;
       } else {
         matchupStats.losses++;
@@ -379,7 +382,8 @@ export async function calculateTeamRaceRankings(mainCircuitOnly = false, seasons
         populationStdDev,
         0,
         null,
-        populationMean
+        populationMean,
+        isDraw
       );
 
       // Update combo2 stats comparing against combo1 (before combo1 update)
@@ -391,7 +395,8 @@ export async function calculateTeamRaceRankings(mainCircuitOnly = false, seasons
         populationStdDev,
         0,
         null,
-        populationMean
+        populationMean,
+        isDraw
       );
 
       // Apply changes back to matchup stats
@@ -406,12 +411,12 @@ export async function calculateTeamRaceRankings(mainCircuitOnly = false, seasons
       const team2Key = normalizeTeamKey(match.team2?.player1?.name, match.team2?.player2?.name);
 
       const team1Stats = (team1Combo === combo1)
-        ? { ratingBefore: combo1RatingBefore, result: combo1Result, won: combo1Won, opponentRating: combo2RatingBefore }
-        : { ratingBefore: combo2RatingBefore, result: combo2Result, won: !combo1Won, opponentRating: combo1RatingBefore };
+        ? { ratingBefore: combo1RatingBefore, result: combo1Result, won: combo1Won, isDraw: isDraw, opponentRating: combo2RatingBefore }
+        : { ratingBefore: combo2RatingBefore, result: combo2Result, won: !combo1Won, isDraw: isDraw, opponentRating: combo1RatingBefore };
 
       const team2Stats = (team2Combo === combo1)
-        ? { ratingBefore: combo1RatingBefore, result: combo1Result, won: combo1Won, opponentRating: combo2RatingBefore }
-        : { ratingBefore: combo2RatingBefore, result: combo2Result, won: !combo1Won, opponentRating: combo1RatingBefore };
+        ? { ratingBefore: combo1RatingBefore, result: combo1Result, won: combo1Won, isDraw: isDraw, opponentRating: combo2RatingBefore }
+        : { ratingBefore: combo2RatingBefore, result: combo2Result, won: !combo1Won, isDraw: isDraw, opponentRating: combo1RatingBefore };
 
       // Get player races for display
       const getRaceAbbr = (race) => {
@@ -439,14 +444,16 @@ export async function calculateTeamRaceRankings(mainCircuitOnly = false, seasons
           [team1Key]: {
             ratingBefore: team1Stats.ratingBefore,
             ratingChange: team1Stats.result.ratingChange,
-            won: team1Stats.result.calculationDetails.actualResult === 1,
+            won: team1Stats.won,
+            isDraw: team1Stats.isDraw,
             opponentRating: team1Stats.opponentRating,
             ...team1Stats.result.calculationDetails
           },
           [team2Key]: {
             ratingBefore: team2Stats.ratingBefore,
             ratingChange: team2Stats.result.ratingChange,
-            won: team2Stats.result.calculationDetails.actualResult === 1,
+            won: team2Stats.won,
+            isDraw: team2Stats.isDraw,
             opponentRating: team2Stats.opponentRating,
             ...team2Stats.result.calculationDetails
           }
@@ -481,6 +488,7 @@ export async function calculateTeamRaceRankings(mainCircuitOnly = false, seasons
             matches: stats.matches,
             wins: stats.losses, // Swap wins and losses
             losses: stats.wins,
+            draws: stats.draws,
             points: -stats.points // Flip the sign to make it positive
           };
         } else {
@@ -495,6 +503,7 @@ export async function calculateTeamRaceRankings(mainCircuitOnly = false, seasons
             matches: stats.matches,
             wins: stats.wins,
             losses: stats.losses,
+            draws: stats.draws,
             points: stats.points
           };
         }
@@ -505,7 +514,7 @@ export async function calculateTeamRaceRankings(mainCircuitOnly = false, seasons
     const combinedStats = new Map();
 
     // Helper function to add/update combined stats for a combo
-    const addToCombinedStats = (combo, matches, wins, losses, points) => {
+    const addToCombinedStats = (combo, matches, wins, losses, draws, points) => {
       const combinedKey = `${combo}vX`;
 
       if (!combinedStats.has(combinedKey)) {
@@ -521,6 +530,7 @@ export async function calculateTeamRaceRankings(mainCircuitOnly = false, seasons
           matches: 0,
           wins: 0,
           losses: 0,
+          draws: 0,
           points: 0
         });
       }
@@ -529,6 +539,7 @@ export async function calculateTeamRaceRankings(mainCircuitOnly = false, seasons
       combined.matches += matches;
       combined.wins += wins;
       combined.losses += losses;
+      combined.draws += draws;
       combined.points += points;
     };
 
@@ -544,6 +555,7 @@ export async function calculateTeamRaceRankings(mainCircuitOnly = false, seasons
         matchup.matches,
         matchup.wins,
         matchup.losses,
+        matchup.draws,
         matchup.points
       );
 
@@ -554,6 +566,7 @@ export async function calculateTeamRaceRankings(mainCircuitOnly = false, seasons
         matchup.matches,
         matchup.losses, // combo2's wins = combo1's losses
         matchup.wins,   // combo2's losses = combo1's wins
+        matchup.draws,
         -matchup.points // combo2's points are negative of combo1's points
       );
     }

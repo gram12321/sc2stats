@@ -1,0 +1,273 @@
+{
+  "tournament": {
+    "name": "WardiTV Team Liquid Map Contest 14: 2v2 #1",
+    "liquipedia_slug": "WardiTV_Team_Liquid_Map_Contest_Tournament/14/2v2_1",
+    "date": "2025-09-16",
+    "prize_pool": 500,
+    "format": "2v2 Playoffs",
+    "maps": [
+      "Gemgarden",
+      "New Bed of Chaos",
+      "Purple Reign",
+      "Rust Bucket",
+      "Toha Industries"
+    ]
+  },
+  "matches": [
+    {
+      "match_id": "R1M1",
+      "round": "Quarterfinals",
+      "team1": {
+        "player1": {
+          "name": "Harstem"
+        },
+        "player2": {
+          "name": "Lambo"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "DefMars"
+        },
+        "player2": {
+          "name": "ZaRDieNT"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 0,
+      "best_of": 3,
+      "date": null,
+      "games": [],
+      "tournament_slug": "WardiTV_Team_Liquid_Map_Contest_Tournament/14/2v2_1"
+    },
+    {
+      "match_id": "R1M2",
+      "round": "Quarterfinals",
+      "team1": {
+        "player1": {
+          "name": "Rex"
+        },
+        "player2": {
+          "name": "SHIN"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "ByuN"
+        },
+        "player2": {
+          "name": "Ryung"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 1,
+      "best_of": 3,
+      "date": "2025-09-16 14:00",
+      "games": [
+        {
+          "map": "Rust Bucket",
+          "winner": 2
+        },
+        {
+          "map": "Gemgarden",
+          "winner": 1
+        },
+        {
+          "map": "Toha Industries",
+          "winner": 1
+        }
+      ],
+      "tournament_slug": "WardiTV_Team_Liquid_Map_Contest_Tournament/14/2v2_1"
+    },
+    {
+      "match_id": "R1M3",
+      "round": "Quarterfinals",
+      "team1": {
+        "player1": {
+          "name": "HonMonO"
+        },
+        "player2": {
+          "name": "prome"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "ShoWTimE"
+        },
+        "player2": {
+          "name": "Spirit"
+        }
+      },
+      "team1_score": 0,
+      "team2_score": 2,
+      "best_of": 3,
+      "date": null,
+      "games": [],
+      "tournament_slug": "WardiTV_Team_Liquid_Map_Contest_Tournament/14/2v2_1"
+    },
+    {
+      "match_id": "R1M4",
+      "round": "Quarterfinals",
+      "team1": {
+        "player1": {
+          "name": "GgMaChine"
+        },
+        "player2": {
+          "name": "Shameless"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "goblin"
+        },
+        "player2": {
+          "name": "uThermal"
+        }
+      },
+      "team1_score": 1,
+      "team2_score": 2,
+      "best_of": 3,
+      "date": "2025-09-16 14:00",
+      "games": [
+        {
+          "map": "Rust Bucket",
+          "winner": 2
+        },
+        {
+          "map": "New Bed of Chaos",
+          "winner": 1
+        },
+        {
+          "map": "Toha Industries",
+          "winner": 2
+        }
+      ],
+      "tournament_slug": "WardiTV_Team_Liquid_Map_Contest_Tournament/14/2v2_1"
+    },
+    {
+      "match_id": "R2M1",
+      "round": "Semifinals",
+      "team1": {
+        "player1": {
+          "name": "Harstem"
+        },
+        "player2": {
+          "name": "Lambo"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Rex"
+        },
+        "player2": {
+          "name": "SHIN"
+        }
+      },
+      "team1_score": 3,
+      "team2_score": 0,
+      "best_of": 5,
+      "date": "2025-09-16 15:05",
+      "games": [
+        {
+          "map": "New Bed of Chaos",
+          "winner": 1
+        },
+        {
+          "map": "Rust Bucket",
+          "winner": 1
+        },
+        {
+          "map": "Toha Industries",
+          "winner": 1
+        }
+      ],
+      "tournament_slug": "WardiTV_Team_Liquid_Map_Contest_Tournament/14/2v2_1"
+    },
+    {
+      "match_id": "R2M2",
+      "round": "Semifinals",
+      "team1": {
+        "player1": {
+          "name": "ShoWTimE"
+        },
+        "player2": {
+          "name": "Spirit"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "goblin"
+        },
+        "player2": {
+          "name": "uThermal"
+        }
+      },
+      "team1_score": 3,
+      "team2_score": 0,
+      "best_of": 3,
+      "date": "2025-09-16 14:15",
+      "games": [
+        {
+          "map": "Purple Reign",
+          "winner": 1
+        },
+        {
+          "map": "Rust Bucket",
+          "winner": 1
+        },
+        {
+          "map": "Toha Industries",
+          "winner": 1
+        }
+      ],
+      "tournament_slug": "WardiTV_Team_Liquid_Map_Contest_Tournament/14/2v2_1"
+    },
+    {
+      "match_id": "R3M1",
+      "round": "Grand Final",
+      "team1": {
+        "player1": {
+          "name": "Harstem"
+        },
+        "player2": {
+          "name": "Lambo"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "ShoWTimE"
+        },
+        "player2": {
+          "name": "Spirit"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 3,
+      "best_of": 3,
+      "date": "2025-09-16 15:35",
+      "games": [
+        {
+          "map": "New Bed of Chaos",
+          "winner": 2
+        },
+        {
+          "map": "Gemgarden",
+          "winner": 2
+        },
+        {
+          "map": "Rust Bucket",
+          "winner": 1
+        },
+        {
+          "map": "Toha Industries",
+          "winner": 1
+        },
+        {
+          "map": "Purple Reign",
+          "winner": 2
+        }
+      ],
+      "tournament_slug": "WardiTV_Team_Liquid_Map_Contest_Tournament/14/2v2_1"
+    }
+  ]
+}

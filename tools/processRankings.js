@@ -196,7 +196,7 @@ function calculateRankingsFromMatches(sortedMatches, seeds = null) {
 
   for (const match of sortedMatches) {
     // Determine winner
-    const { team1Won, team2Won } = determineMatchOutcome(
+    const { team1Won, team2Won, isDraw } = determineMatchOutcome(
       match.team1_score,
       match.team2_score
     );
@@ -262,6 +262,7 @@ function calculateRankingsFromMatches(sortedMatches, seeds = null) {
         rankBeforeConfidence,
         ratingChange: result.ratingChange,
         won: team1Won,
+        isDraw: isDraw,
         opponentRating: team1AvgOpponentRating,
         ...result.calculationDetails
       });
@@ -280,6 +281,7 @@ function calculateRankingsFromMatches(sortedMatches, seeds = null) {
         rankBeforeConfidence,
         ratingChange: result.ratingChange,
         won: team2Won,
+        isDraw: isDraw,
         opponentRating: team2AvgOpponentRating,
         ...result.calculationDetails
       });

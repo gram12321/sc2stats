@@ -49,18 +49,26 @@ export function getProvisionalKFactor(matchCount) {
  * @param {Object} stats - Stats object with confidence field (will be mutated)
  * @param {number} expectedWin - Expected win probability (0 to 1)
  * @param {boolean} actualWin - Whether the entity actually won
+ * @param {boolean} isDraw - Whether the match was a draw
  */
-export function updateConfidence(stats, expectedWin, actualWin) {
+export function updateConfidence(stats, expectedWin, actualWin, isDraw = false) {
   // Ensure confidence is initialized and is a valid number
   if (typeof stats.confidence !== 'number' || isNaN(stats.confidence)) {
     stats.confidence = 0;
   }
 
   // Determine if prediction was correct based on expected outcome
-  // If expected win probability > 0.5, we predicted a win
-  // If expected win probability < 0.5, we predicted a loss
-  const predictedWin = expectedWin > 0.5;
-  const isCorrect = predictedWin === actualWin;
+  let isCorrect;
+  if (isDraw) {
+    // For a draw, we consider the prediction correct if it was a close match (near 0.5)
+    // We define "close" as within the 0.4 to 0.6 range
+    isCorrect = expectedWin >= 0.4 && expectedWin <= 0.6;
+  } else {
+    // If expected win probability > 0.5, we predicted a win
+    // If expected win probability < 0.5, we predicted a loss
+    const predictedWin = expectedWin > 0.5;
+    isCorrect = predictedWin === actualWin;
+  }
 
   const baseChange = 5; // 5% base change
   let change;
@@ -184,8 +192,8 @@ export function predictWinProbability(rating1, rating2, populationStdDev = 350) 
  * @param {number} kFactor - K-factor controlling rating volatility (default: 32)
  * @returns {number} Rating change (positive for gain, negative for loss)
  */
-export function calculateRatingChange(expectedWin, actualWin, kFactor = 32) {
-  const actualResult = actualWin ? 1 : 0;
+export function calculateRatingChange(expectedWin, actualWin, kFactor = 32, isDraw = false) {
+  const actualResult = isDraw ? 0.5 : (actualWin ? 1 : 0);
   return kFactor * (actualResult - expectedWin);
 }
 
@@ -205,6 +213,7 @@ export function initializeStatsWithSeed(name, seedRating, additionalFields = {})
     matches: 0,
     wins: 0,
     losses: 0,
+    draws: 0,
     points: seedRating,
     confidence: 0, // Confidence starts at 0% even with seed
     isSeeded: true,
@@ -263,19 +272,25 @@ export function updateStatsForMatch(stats, won, lost, opponentRating, population
     ratingToUse = stats.points;
   }
 
+  const isDraw = !won && !lost;
+
   const expectedWin = predictWinProbability(ratingToUse, opponentRating, populationStdDev);
 
   // Calculate rating change
-  const ratingChange = calculateRatingChange(expectedWin, won, adjustedK);
+  const ratingChange = calculateRatingChange(expectedWin, won, adjustedK, isDraw);
 
   // Update confidence based on prediction accuracy
-  updateConfidence(stats, expectedWin, won);
+  updateConfidence(stats, expectedWin, won, isDraw);
 
   // Update stats
   if (won) {
     stats.wins++;
   } else if (lost) {
     stats.losses++;
+  } else {
+    // It's a draw
+    if (typeof stats.draws === 'undefined') stats.draws = 0;
+    stats.draws++;
   }
 
   // Update points based on prediction performance

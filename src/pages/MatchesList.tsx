@@ -25,18 +25,21 @@ interface MatchHistory {
     ratingBefore: number;
     ratingChange: number;
     won: boolean;
+    isDraw?: boolean;
     opponentRating: number;
   }>;
   team_impacts?: Record<string, {
     ratingBefore: number;
     ratingChange: number;
     won: boolean;
+    isDraw?: boolean;
     opponentRating: number;
   }>;
   race_impacts?: Record<string, {
     ratingBefore: number;
     ratingChange: number;
     won: boolean;
+    isDraw?: boolean;
     opponentRating: number;
     race1: string;
     race2: string;
@@ -324,6 +327,10 @@ export function MatchesList({ }: MatchesListProps) {
                   playerRankings={playerRankingsMap}
                   playerRaces={playerRaces}
                   showRatingBreakdown={true}
+                  highlightPlayers={[]}
+                  showWinLoss={true}
+                  winLossValue={match.team1_score > match.team2_score}
+                  isDrawValue={match.team1_score === match.team2_score}
                   extractRaceChanges={extractRaceChanges}
                   normalizeTeamKey={normalizeTeamKey}
                   getTeamImpact={getTeamImpact}

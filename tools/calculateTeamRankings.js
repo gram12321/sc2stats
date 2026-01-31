@@ -116,7 +116,7 @@ export function calculateTeamRankingsFromMatches(sortedMatches, seeds = null) {
       const finalPopulationStdDev = finalPopulationStats.stdDev;
 
       // Determine winner
-      const { team1Won, team2Won } = determineMatchOutcome(
+      const { team1Won, team2Won, isDraw } = determineMatchOutcome(
         match.team1_score,
         match.team2_score
       );
@@ -149,6 +149,7 @@ export function calculateTeamRankingsFromMatches(sortedMatches, seeds = null) {
             rankBeforeConfidence: team1RankBeforeConfidence,
             ratingChange: team1Result.ratingChange,
             won: team1Won,
+            isDraw: isDraw,
             opponentRating: team2Rating,
             ...team1Result.calculationDetails
           },
@@ -158,6 +159,7 @@ export function calculateTeamRankingsFromMatches(sortedMatches, seeds = null) {
             rankBeforeConfidence: team2RankBeforeConfidence,
             ratingChange: team2Result.ratingChange,
             won: team2Won,
+            isDraw: isDraw,
             opponentRating: team1Rating,
             ...team2Result.calculationDetails
           }

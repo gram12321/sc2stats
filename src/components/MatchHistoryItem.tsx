@@ -8,6 +8,7 @@ interface PlayerImpact {
   rankBeforeConfidence?: number;
   ratingChange: number;
   won: boolean;
+  isDraw?: boolean;
   opponentRating: number;
   expectedWin?: number;
   baseK?: number;
@@ -22,6 +23,7 @@ interface TeamImpact {
   rankBeforeConfidence?: number;
   ratingChange: number;
   won: boolean;
+  isDraw?: boolean;
   opponentRating: number;
   expectedWin?: number;
   baseK?: number;
@@ -53,6 +55,7 @@ interface MatchData {
     ratingBefore: number;
     ratingChange: number;
     won: boolean;
+    isDraw?: boolean;
     opponentRating: number;
     race1: string;
     race2: string;
@@ -88,6 +91,7 @@ interface MatchHistoryItemProps {
   highlightCombo?: string; // Combo to highlight (e.g., "PT")
   showWinLoss?: boolean; // Show W/L badge
   winLossValue?: boolean; // Whether this entity won
+  isDrawValue?: boolean; // Whether this entity drew
   showRatingBreakdown?: boolean; // Show detailed rating breakdown at bottom
   showRaceInfo?: boolean; // Show race changes (for race rankings)
   raceInfo?: {
@@ -141,7 +145,8 @@ function getRatingChangeTooltip(
   }
 
   const expectedWinPercent = Math.round(expectedWin * 100);
-  const actualResult = won ? 1 : 0;
+  const isDraw = impact.isDraw === true;
+  const actualResult = isDraw ? 0.5 : (won ? 1 : 0);
   const typeLabel = type === 'team' ? 'Team' : type === 'race' ? 'Race' : 'Player';
 
   // Format the calculation breakdown using backend-provided values
@@ -162,9 +167,10 @@ function getRatingChangeTooltip(
 
         <div className="pt-1 border-t border-gray-700 mt-1">
           <div><span className="opacity-80">Expected Win:</span> {expectedWinPercent}% ({expectedWin.toFixed(3)})</div>
-          <div><span className="opacity-80">Actual Result:</span> {won ? 'Win' : 'Loss'} ({actualResult})</div>
+          <div><span className="opacity-80">Actual Result:</span> {isDraw ? 'Draw' : (won ? 'Win' : 'Loss')} ({actualResult})</div>
           <div className="text-gray-300 italic">
-            Performance: {won ? 'Outperformed' : 'Underperformed'} by {Math.abs(parseFloat(performanceDiff)).toFixed(3)}
+            Performance: {isDraw && expectedWin >= 0.4 && expectedWin <= 0.6 ? 'Met expectations' :
+              (actualResult > expectedWin ? 'Outperformed' : 'Underperformed')} by {Math.abs(actualResult - expectedWin).toFixed(3)}
           </div>
         </div>
         {baseK !== undefined && (
@@ -199,7 +205,7 @@ function getRatingChangeTooltip(
  * Generate tooltip for race impact (when we have race_impacts data)
  */
 function getRaceChangeTooltip(
-  impact: { ratingBefore: number; ratingChange: number; won: boolean; opponentRating: number; race1: string; race2: string; expectedWin?: number; baseK?: number; adjustedK?: number; confidence?: number; matchCount?: number },
+  impact: { ratingBefore: number; ratingChange: number; won: boolean; isDraw?: boolean; opponentRating: number; race1: string; race2: string; expectedWin?: number; baseK?: number; adjustedK?: number; confidence?: number; matchCount?: number },
   subjectRace: string,
   opponentRace: string
 ): React.ReactNode {
@@ -218,6 +224,7 @@ export function MatchHistoryItem({
   highlightCombo, // Combo to highlight/move to left (e.g. "PT")
   showWinLoss = false,
   winLossValue,
+  isDrawValue,
   showRatingBreakdown = true,
   showRaceInfo = false,
   raceInfo,
@@ -342,6 +349,7 @@ export function MatchHistoryItem({
 
   const team1Players = [team1Data.player1, team1Data.player2].filter(Boolean);
   const team2Players = [team2Data.player1, team2Data.player2].filter(Boolean);
+  const isDraw = team1Score === team2Score;
   const team1Won = team1Score > team2Score;
 
   // Helper to resolve player rank (Historical > Current)
@@ -368,7 +376,9 @@ export function MatchHistoryItem({
 
   return (
     <div
-      className={`px-2 py-1.5 border border-gray-200 rounded overflow-hidden ${(showWinLoss && winLossValue) || team1Won ? 'bg-green-50/30 border-green-300' : 'border-gray-200'
+      className={`px-2 py-1.5 border border-gray-200 rounded overflow-hidden ${((showWinLoss && winLossValue) || team1Won) && !isDraw ? 'bg-green-50/30 border-green-300' :
+        ((showWinLoss && isDrawValue) || isDraw) ? 'bg-gray-50/50 border-gray-300' :
+          'border-gray-200'
         } ${isTeam1Highlighted || isTeam2Highlighted ? 'bg-blue-50/50' : ''}`}
     >
       {/* Header row */}
@@ -380,9 +390,9 @@ export function MatchHistoryItem({
           <span>•</span>
           <span>{formatDate(match.match_date || match.tournament_date)}</span>
         </div>
-        {showWinLoss && winLossValue !== undefined && (
-          <span className={`px-2 py-0.5 rounded text-xs font-medium ${winLossValue ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-            {winLossValue ? 'W' : 'L'}
+        {showWinLoss && (
+          <span className={`px-2 py-0.5 rounded text-xs font-medium ${(isDrawValue ?? isDraw) ? 'bg-gray-200 text-gray-800' : ((winLossValue ?? team1Won) ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800')}`}>
+            {(isDrawValue ?? isDraw) ? 'D' : ((winLossValue ?? team1Won) ? 'W' : 'L')}
           </span>
         )}
         {!showWinLoss && (
@@ -454,11 +464,11 @@ export function MatchHistoryItem({
 
         {/* Score */}
         <div className="flex items-center gap-1 font-bold text-base shrink-0 px-1">
-          <span className={team1Won ? 'text-green-700' : 'text-gray-700'}>
+          <span className={team1Won ? 'text-green-700' : (isDraw ? 'text-gray-600' : 'text-gray-700')}>
             {team1Score}
           </span>
           <span className="text-gray-400">-</span>
-          <span className={!team1Won ? 'text-green-700' : 'text-gray-700'}>
+          <span className={(!team1Won && !isDraw) ? 'text-green-700' : (isDraw ? 'text-gray-600' : 'text-gray-700')}>
             {team2Score}
           </span>
         </div>

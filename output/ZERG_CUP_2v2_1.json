@@ -1,0 +1,170 @@
+{
+  "tournament": {
+    "name": "ZERG CUP 2v2",
+    "liquipedia_slug": "ZERG_CUP_2v2/1",
+    "date": "2025-06-13",
+    "prize_pool": 30000,
+    "format": "2v2 Group Stage Playoffs",
+    "maps": [],
+    "is_main_circuit": false,
+    "season": 2025
+  },
+  "matches": [
+    {
+      "match_id": "R1M1",
+      "round": "Quarterfinals",
+      "team1": {
+        "player1": {
+          "name": "Replicant"
+        },
+        "player2": {
+          "name": "Tiger"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Brat_OK"
+        },
+        "player2": {
+          "name": "MindelVK"
+        }
+      },
+      "team1_score": 0,
+      "team2_score": 2,
+      "best_of": 3,
+      "date": "2025-06-13",
+      "games": [],
+      "tournament_slug": "ZERG_CUP_2v2/1"
+    },
+    {
+      "match_id": "R1M2",
+      "round": "Quarterfinals",
+      "team1": {
+        "player1": {
+          "name": "ART"
+        },
+        "player2": {
+          "name": "LordGG"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "DefMars"
+        },
+        "player2": {
+          "name": "Gref"
+        }
+      },
+      "team1_score": 0,
+      "team2_score": 2,
+      "best_of": 3,
+      "date": null,
+      "games": [],
+      "tournament_slug": "ZERG_CUP_2v2/1"
+    },
+    {
+      "match_id": "R2M1",
+      "round": "Semifinals",
+      "team1": {
+        "player1": {
+          "name": "Brat_OK"
+        },
+        "player2": {
+          "name": "MindelVK"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "DefMars"
+        },
+        "player2": {
+          "name": "Gref"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 1,
+      "best_of": 3,
+      "date": null,
+      "games": [],
+      "tournament_slug": "ZERG_CUP_2v2/1"
+    },
+    {
+      "match_id": "R1M3",
+      "round": "Quarterfinals",
+      "team1": {
+        "player1": {
+          "name": "WannaBeByuN"
+        },
+        "player2": {
+          "name": "YoungYakov"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "GgMaChine"
+        },
+        "player2": {
+          "name": "Shameless"
+        }
+      },
+      "team1_score": 0,
+      "team2_score": 1,
+      "best_of": 1,
+      "date": null,
+      "games": [],
+      "tournament_slug": "ZERG_CUP_2v2/1"
+    },
+    {
+      "match_id": "R2M2",
+      "round": "Semifinals",
+      "team1": {
+        "player1": {
+          "name": "DefMars"
+        },
+        "player2": {
+          "name": "Gref"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "GgMaChine"
+        },
+        "player2": {
+          "name": "Shameless"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 0,
+      "best_of": 3,
+      "date": null,
+      "games": [],
+      "tournament_slug": "ZERG_CUP_2v2/1"
+    },
+    {
+      "match_id": "R3M1",
+      "round": "Grand Final",
+      "team1": {
+        "player1": {
+          "name": "Brat_OK"
+        },
+        "player2": {
+          "name": "MindelVK"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "DefMars"
+        },
+        "player2": {
+          "name": "Gref"
+        }
+      },
+      "team1_score": 3,
+      "team2_score": 2,
+      "best_of": 5,
+      "date": null,
+      "games": [],
+      "tournament_slug": "ZERG_CUP_2v2/1"
+    }
+  ]
+}

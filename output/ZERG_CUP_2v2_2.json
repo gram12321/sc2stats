@@ -1,0 +1,492 @@
+{
+  "tournament": {
+    "name": "ZERG CUP 2v2 #2",
+    "liquipedia_slug": "ZERG_CUP_2v2/2",
+    "date": "2025-07-26",
+    "prize_pool": 33000,
+    "format": "2v2 Qualifying Stage Playoffs",
+    "maps": [
+      "Flooded City",
+      "Iron Fortress",
+      "Magma Mines",
+      "Metalopolis",
+      "Overgrown Facility",
+      "Shakuras Plateau",
+      "Tal'Darim Altar",
+      "The Shattered Temple",
+      "Ulzaan"
+    ],
+    "is_main_circuit": false,
+    "season": 2025
+  },
+  "matches": [
+    {
+      "match_id": "R1M1",
+      "round": "Semifinals",
+      "team1": {
+        "player1": {
+          "name": "Brat_OK"
+        },
+        "player2": {
+          "name": "MindelVK"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "MasterVasya"
+        },
+        "player2": {
+          "name": "iosup"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 1,
+      "best_of": 3,
+      "date": null,
+      "games": [],
+      "tournament_slug": "ZERG_CUP_2v2/2"
+    },
+    {
+      "match_id": "R1M2",
+      "round": "Semifinals",
+      "team1": {
+        "player1": {
+          "name": "Replicant"
+        },
+        "player2": {
+          "name": "Tiger"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Rapuncel"
+        },
+        "player2": {
+          "name": "RomanDeMolde"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 0,
+      "best_of": 3,
+      "date": null,
+      "games": [],
+      "tournament_slug": "ZERG_CUP_2v2/2"
+    },
+    {
+      "match_id": "R1M3",
+      "round": "Semifinals",
+      "team1": {
+        "player1": {
+          "name": "GgMaChine"
+        },
+        "player2": {
+          "name": "Shameless"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Erbest"
+        },
+        "player2": {
+          "name": "SickNess"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 1,
+      "best_of": 3,
+      "date": null,
+      "games": [],
+      "tournament_slug": "ZERG_CUP_2v2/2"
+    },
+    {
+      "match_id": "R1M4",
+      "round": "Semifinals",
+      "team1": {
+        "player1": {
+          "name": "ART"
+        },
+        "player2": {
+          "name": "LordGG"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Country"
+        },
+        "player2": {
+          "name": "ZaRDieNT"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 1,
+      "best_of": 3,
+      "date": null,
+      "games": [],
+      "tournament_slug": "ZERG_CUP_2v2/2"
+    },
+    {
+      "match_id": "R2M1",
+      "round": "Grand Final",
+      "team1": {
+        "player1": {
+          "name": "Brat_OK"
+        },
+        "player2": {
+          "name": "MindelVK"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Replicant"
+        },
+        "player2": {
+          "name": "Tiger"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 1,
+      "best_of": 3,
+      "date": null,
+      "games": [],
+      "tournament_slug": "ZERG_CUP_2v2/2"
+    },
+    {
+      "match_id": "R2M2",
+      "round": "Grand Final",
+      "team1": {
+        "player1": {
+          "name": "GgMaChine"
+        },
+        "player2": {
+          "name": "Shameless"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "ART"
+        },
+        "player2": {
+          "name": "LordGG"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 1,
+      "best_of": 3,
+      "date": null,
+      "games": [],
+      "tournament_slug": "ZERG_CUP_2v2/2"
+    },
+    {
+      "match_id": "R1M5",
+      "round": "Semifinals",
+      "team1": {
+        "player1": {
+          "name": "Rapuncel"
+        },
+        "player2": {
+          "name": "RomanDeMolde"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "MasterVasya"
+        },
+        "player2": {
+          "name": "iosup"
+        }
+      },
+      "team1_score": 0,
+      "team2_score": 2,
+      "best_of": 3,
+      "date": null,
+      "games": [],
+      "tournament_slug": "ZERG_CUP_2v2/2"
+    },
+    {
+      "match_id": "R1M6",
+      "round": "Semifinals",
+      "team1": {
+        "player1": {
+          "name": "Country"
+        },
+        "player2": {
+          "name": "ZaRDieNT"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Erbest"
+        },
+        "player2": {
+          "name": "SickNess"
+        }
+      },
+      "team1_score": 0,
+      "team2_score": 2,
+      "best_of": 3,
+      "date": null,
+      "games": [],
+      "tournament_slug": "ZERG_CUP_2v2/2"
+    },
+    {
+      "match_id": "R2M3",
+      "round": "Grand Final",
+      "team1": {
+        "player1": {
+          "name": "ART"
+        },
+        "player2": {
+          "name": "LordGG"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "MasterVasya"
+        },
+        "player2": {
+          "name": "iosup"
+        }
+      },
+      "team1_score": 1,
+      "team2_score": 2,
+      "best_of": 3,
+      "date": null,
+      "games": [],
+      "tournament_slug": "ZERG_CUP_2v2/2"
+    },
+    {
+      "match_id": "R2M4",
+      "round": "Grand Final",
+      "team1": {
+        "player1": {
+          "name": "Replicant"
+        },
+        "player2": {
+          "name": "Tiger"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Erbest"
+        },
+        "player2": {
+          "name": "SickNess"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 1,
+      "best_of": 3,
+      "date": null,
+      "games": [],
+      "tournament_slug": "ZERG_CUP_2v2/2"
+    },
+    {
+      "match_id": "GS_M1_1",
+      "round": "Playoffs",
+      "team1": {
+        "player1": {
+          "name": "GgMaChine"
+        },
+        "player2": {
+          "name": "Shameless"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "MasterVasya"
+        },
+        "player2": {
+          "name": "iosup"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 0,
+      "best_of": 2,
+      "date": null,
+      "games": [],
+      "tournament_slug": "ZERG_CUP_2v2/2"
+    },
+    {
+      "match_id": "GS_M2_1",
+      "round": "Playoffs",
+      "team1": {
+        "player1": {
+          "name": "Replicant"
+        },
+        "player2": {
+          "name": "Tiger"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Brat_OK"
+        },
+        "player2": {
+          "name": "MindelVK"
+        }
+      },
+      "team1_score": 0,
+      "team2_score": 2,
+      "best_of": 3,
+      "date": null,
+      "games": [],
+      "tournament_slug": "ZERG_CUP_2v2/2"
+    },
+    {
+      "match_id": "GS_M3_1",
+      "round": "Playoffs",
+      "team1": {
+        "player1": {
+          "name": "Brat_OK"
+        },
+        "player2": {
+          "name": "MindelVK"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "GgMaChine"
+        },
+        "player2": {
+          "name": "Shameless"
+        }
+      },
+      "team1_score": 1,
+      "team2_score": 1,
+      "best_of": 3,
+      "date": null,
+      "games": [],
+      "tournament_slug": "ZERG_CUP_2v2/2"
+    },
+    {
+      "match_id": "GS_M4_1",
+      "round": "Playoffs",
+      "team1": {
+        "player1": {
+          "name": "MasterVasya"
+        },
+        "player2": {
+          "name": "iosup"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Replicant"
+        },
+        "player2": {
+          "name": "Tiger"
+        }
+      },
+      "team1_score": 1,
+      "team2_score": 1,
+      "best_of": 3,
+      "date": null,
+      "games": [],
+      "tournament_slug": "ZERG_CUP_2v2/2"
+    },
+    {
+      "match_id": "GS_M5_1",
+      "round": "Playoffs",
+      "team1": {
+        "player1": {
+          "name": "Replicant"
+        },
+        "player2": {
+          "name": "Tiger"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "GgMaChine"
+        },
+        "player2": {
+          "name": "Shameless"
+        }
+      },
+      "team1_score": 0,
+      "team2_score": 2,
+      "best_of": 3,
+      "date": null,
+      "games": [],
+      "tournament_slug": "ZERG_CUP_2v2/2"
+    },
+    {
+      "match_id": "GS_M6_1",
+      "round": "Playoffs",
+      "team1": {
+        "player1": {
+          "name": "MasterVasya"
+        },
+        "player2": {
+          "name": "iosup"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Brat_OK"
+        },
+        "player2": {
+          "name": "MindelVK"
+        }
+      },
+      "team1_score": 0,
+      "team2_score": 2,
+      "best_of": 3,
+      "date": null,
+      "games": [],
+      "tournament_slug": "ZERG_CUP_2v2/2"
+    },
+    {
+      "match_id": "GS_M7_1",
+      "round": "Playoffs",
+      "team1": {
+        "player1": {
+          "name": "MasterVasya"
+        },
+        "player2": {
+          "name": "iosup"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Replicant"
+        },
+        "player2": {
+          "name": "Tiger"
+        }
+      },
+      "team1_score": 1,
+      "team2_score": 0,
+      "best_of": 1,
+      "date": null,
+      "games": [],
+      "tournament_slug": "ZERG_CUP_2v2/2"
+    },
+    {
+      "match_id": "GS_M8_1",
+      "round": "Playoffs",
+      "team1": {
+        "player1": {
+          "name": "Brat_OK"
+        },
+        "player2": {
+          "name": "MindelVK"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "GgMaChine"
+        },
+        "player2": {
+          "name": "Shameless"
+        }
+      },
+      "team1_score": 0,
+      "team2_score": 1,
+      "best_of": 3,
+      "date": null,
+      "games": [],
+      "tournament_slug": "ZERG_CUP_2v2/2"
+    }
+  ]
+}

@@ -51,7 +51,7 @@ async function fetchWikitext(pageTitle) {
 
   const data = await response.json();
   const page = data.query?.pages?.[0];
-  
+
   if (!page || page.missing) {
     throw new Error(`Page not found: ${pageTitle}`);
   }
@@ -65,12 +65,12 @@ async function fetchWikitext(pageTitle) {
 function parseTournament(wikitext, pageTitle) {
   const infoboxStart = wikitext.indexOf('{{Infobox league');
   if (infoboxStart === -1) return null;
-  
+
   const infoboxText = extractNestedTemplate(wikitext, infoboxStart);
   if (!infoboxText) return null;
-  
+
   const infobox = infoboxText.replace(/^\{\{Infobox league\s*/i, '').replace(/\}\}$/, '');
-  
+
   const getValue = (key) => {
     const regex = new RegExp(`(?:^|\\n)\\|\\|?${key}\\s*=\\s*([^|\\n}]+)`, 'im');
     const match = infobox.match(regex);
@@ -107,12 +107,12 @@ function parseTeam(opponentText) {
 
   const p1 = getParam('p1');
   const p2 = getParam('p2');
-  
+
   if (!p1 || !p2) return null;
 
   // Normalize: alphabetical order
   const players = [p1, p2].sort();
-  
+
   return {
     player1: {
       name: players[0]
@@ -138,7 +138,7 @@ function extractNestedTemplate(text, startPos) {
   let braceCount = 0;
   let start = -1;
   let end = -1;
-  
+
   for (let i = startPos; i < text.length; i++) {
     const twoChars = text.substring(i, i + 2);
     if (twoChars === '{{') {
@@ -152,7 +152,7 @@ function extractNestedTemplate(text, startPos) {
       }
     }
   }
-  
+
   return start !== -1 && end !== -1 ? text.substring(start, end) : null;
 }
 
@@ -161,24 +161,24 @@ function extractNestedTemplate(text, startPos) {
  */
 function parseMatch(matchText, round, matchId) {
   // Extract bestof
-  const bestofMatch = matchText.match(/\{\{Match\s*\|\s*bestof\s*=\s*(\d+)/i) || 
-                     matchText.match(/\{\{Match\s*\|\s*bestof\s*=\s*{{abbr\/Bo(\d+)/i);
+  const bestofMatch = matchText.match(/\{\{Match\s*\|\s*bestof\s*=\s*(\d+)/i) ||
+    matchText.match(/\{\{Match\s*\|\s*bestof\s*=\s*{{abbr\/Bo(\d+)/i);
   const bestOf = bestofMatch ? parseInt(bestofMatch[1]) : 3;
 
   // Extract opponents
   const opponent1Pos = matchText.indexOf('|opponent1=');
   const opponent2Pos = matchText.indexOf('|opponent2=');
-  
+
   if (opponent1Pos === -1 || opponent2Pos === -1) return null;
-  
+
   const opponent1Text = extractNestedTemplate(matchText, opponent1Pos + '|opponent1='.length);
   const opponent2Text = extractNestedTemplate(matchText, opponent2Pos + '|opponent2='.length);
-  
+
   if (!opponent1Text || !opponent2Text) return null;
 
   const team1 = parseTeam(opponent1Text);
   const team2 = parseTeam(opponent2Text);
-  
+
   if (!team1 || !team2) return null;
 
   const team1Score = extractScore(opponent1Text);
@@ -186,8 +186,8 @@ function parseMatch(matchText, round, matchId) {
 
   // Extract date
   const dateMatch = matchText.match(/\|date\s*=\s*([^|\n]+)/i);
-  const date = dateMatch 
-    ? dateMatch[1].trim().replace(/\{\{[^}]+\}\}/g, '').replace(/\s+/g, ' ').trim() 
+  const date = dateMatch
+    ? dateMatch[1].trim().replace(/\{\{[^}]+\}\}/g, '').replace(/\s+/g, ' ').trim()
     : null;
 
   // Extract games/maps
@@ -208,7 +208,7 @@ function parseMatch(matchText, round, matchId) {
   // Calculate scores from games if not directly available
   let finalTeam1Score = team1Score;
   let finalTeam2Score = team2Score;
-  
+
   if ((team1Score === null || team2Score === null) && games.length > 0) {
     finalTeam1Score = games.filter(g => g.winner === 1).length;
     finalTeam2Score = games.filter(g => g.winner === 2).length;
@@ -232,22 +232,22 @@ function parseMatch(matchText, round, matchId) {
  */
 function parseGroupStage(wikitext, tournamentSlug) {
   const matches = [];
-  
+
   // Find all Matchlist templates
   let matchlistStart = -1;
   let matchlistIndex = 0;
-  
+
   while ((matchlistStart = wikitext.indexOf('{{Matchlist', matchlistStart + 1)) !== -1) {
     matchlistIndex++;
-    
+
     // Extract the Matchlist template content
     const matchlistContent = extractNestedTemplate(wikitext, matchlistStart);
     if (!matchlistContent) continue;
-    
+
     // Try to find group name from context (look backwards for "Group A", "Group B", etc.)
     let groupName = null;
     const beforeMatchlist = wikitext.substring(Math.max(0, matchlistStart - 1000), matchlistStart);
-    
+
     // Look for various group name patterns
     // Pattern 1: "Group A", "Group B", etc.
     let groupMatch = beforeMatchlist.match(/Group\s+([A-Z])\b/i);
@@ -274,18 +274,18 @@ function parseGroupStage(wikitext, tournamentSlug) {
         }
       }
     }
-    
+
     // Extract matches from Matchlist (M1, M2, M3, etc.)
     for (let i = 1; i <= 100; i++) {
       const matchPattern = new RegExp(`\\|M${i}\\s*=\\s*\\{\\{Match`, 'i');
       const matchPos = matchlistContent.search(matchPattern);
-      
+
       if (matchPos === -1) break;
-      
+
       // Find the start of the Match template
       const matchStartPos = matchlistContent.indexOf('{{Match', matchPos);
       if (matchStartPos === -1) break;
-      
+
       const matchText = extractNestedTemplate(matchlistContent, matchStartPos);
       if (matchText) {
         const matchId = `GS_M${i}_${matchlistIndex}`;
@@ -297,7 +297,7 @@ function parseGroupStage(wikitext, tournamentSlug) {
       }
     }
   }
-  
+
   return matches;
 }
 
@@ -306,19 +306,19 @@ function parseGroupStage(wikitext, tournamentSlug) {
  */
 function parseBracket(wikitext, tournamentSlug) {
   const matches = [];
-  
+
   // Find bracket section
   const bracketStart = wikitext.indexOf('{{Bracket');
   if (bracketStart === -1) return matches;
-  
+
   // Extract bracket content
   let bracketContent = '';
   let braceCount = 0;
   let inBracket = false;
-  
+
   for (let i = bracketStart; i < wikitext.length; i++) {
     const nextTwo = wikitext.substring(i, i + 2);
-    
+
     if (nextTwo === '{{') {
       braceCount++;
       inBracket = true;
@@ -330,37 +330,167 @@ function parseBracket(wikitext, tournamentSlug) {
       }
     }
   }
-  
-  if (!bracketContent) return matches;
-  
-  // Round definitions
-  const rounds = [
-    { name: 'Round of 16', prefix: 'R1M' },
-    { name: 'Quarterfinals', prefix: 'R2M' },
-    { name: 'Semifinals', prefix: 'R3M' },
-    { name: 'Grand Final', prefix: 'R4M' }
-  ];
 
-  // Extract matches by round
-  rounds.forEach(round => {
-    const regex = new RegExp(`\\|${round.prefix}(\\d+)\\s*=\\s*\\{\\{Match`, 'g');
-    let match;
-    
-    while ((match = regex.exec(bracketContent)) !== null) {
-      const matchNum = match[1];
-      const matchId = `${round.prefix}${matchNum}`;
-      const startPos = match.index + match[0].length - '{{Match'.length;
-      
-      const matchText = extractNestedTemplate(bracketContent, startPos);
-      if (matchText) {
-        const parsedMatch = parseMatch(matchText, round.name, matchId);
-        if (parsedMatch) {
-          parsedMatch.tournament_slug = tournamentSlug;
-          matches.push(parsedMatch);
-        }
+  if (!bracketContent) return matches;
+
+  // Round definitions
+  // First, scan for all matches to determine the structure (max round)
+  const allMatchRegex = /\|R(\d+)M(\d+)\s*=\s*\{\{Match/g;
+  let maxRound = 0;
+  let matchMatch;
+  const validMatches = [];
+
+  while ((matchMatch = allMatchRegex.exec(bracketContent)) !== null) {
+    const roundNum = parseInt(matchMatch[1]);
+    const matchNum = matchMatch[2];
+
+    if (roundNum > maxRound) maxRound = roundNum;
+
+    const startPos = matchMatch.index + matchMatch[0].length - '{{Match'.length;
+    validMatches.push({
+      roundNum,
+      matchNum,
+      startPos
+    });
+  }
+
+  // Round naming helper
+  const getRoundName = (rNum) => {
+    const depth = maxRound - rNum;
+    switch (depth) {
+      case 0: return 'Grand Final';
+      case 1: return 'Semifinals';
+      case 2: return 'Quarterfinals';
+      default: return `Round of ${Math.pow(2, depth + 1)}`;
+    }
+  };
+
+  // Process and parse matches
+  validMatches.forEach(({ roundNum, matchNum, startPos }) => {
+    const matchText = extractNestedTemplate(bracketContent, startPos);
+    if (matchText) {
+      const roundName = getRoundName(roundNum);
+      const matchId = `R${roundNum}M${matchNum}`;
+
+      const parsedMatch = parseMatch(matchText, roundName, matchId);
+      if (parsedMatch) {
+        parsedMatch.tournament_slug = tournamentSlug;
+        matches.push(parsedMatch);
       }
     }
   });
+
+  return matches;
+}
+
+/**
+ * Parse show matches (SingleMatch) with per-map player definitions
+ */
+function parseShowMatches(wikitext, tournamentSlug) {
+  const matches = [];
+
+  // Find all SingleMatch templates
+  const singleMatchRegex = /\{\{SingleMatch/g;
+  let match;
+  let index = 0;
+
+  while ((match = singleMatchRegex.exec(wikitext)) !== null) {
+    index++;
+    const startPos = match.index;
+    const content = extractNestedTemplate(wikitext, startPos);
+
+    if (!content) continue;
+
+    // Find the inner Match template
+    const matchStart = content.indexOf('{{Match');
+    if (matchStart === -1) continue;
+
+    const matchText = extractNestedTemplate(content, matchStart);
+    if (!matchText) continue;
+
+    // Extract Date
+    const dateMatch = matchText.match(/\|date\s*=\s*([^|\n]+)/i);
+    const date = dateMatch
+      ? dateMatch[1].trim().replace(/\{\{[^}]+\}\}/g, '').replace(/\s+/g, ' ').trim()
+      : null;
+
+    // Group maps by player configuration
+    const mapGroups = {};
+    let order = 0;
+
+    for (let i = 1; i <= 50; i++) {
+      const mapPattern = new RegExp(`\\|map${i}\\s*=\\s*\\{\\{Map`, 'i');
+      const mapPos = matchText.search(mapPattern);
+
+      if (mapPos === -1) continue;
+
+      const mapSubStart = matchText.indexOf('{{Map', mapPos);
+      const mapContent = extractNestedTemplate(matchText, mapSubStart);
+
+      if (!mapContent) continue;
+
+      // Extract players
+      const getVal = (k) => {
+        const m = mapContent.match(new RegExp(`\\|${k}\\s*=\\s*([^|\\}]+)`, 'i'));
+        return m ? m[1].trim() : null;
+      };
+
+      const t1p1 = getVal('t1p1');
+      const t1p2 = getVal('t1p2');
+      const t2p1 = getVal('t2p1');
+      const t2p2 = getVal('t2p2');
+      const mapName = getVal('map');
+      const winner = getVal('winner');
+      const subgroup = getVal('subgroup') || '1';
+
+      if (!t1p1 || !t1p2 || !t2p1 || !t2p2) continue;
+
+      // ID for this specific matchup
+      const team1Id = [t1p1, t1p2].sort().join('+');
+      const team2Id = [t2p1, t2p2].sort().join('+');
+
+      // We group primarily by Subgroup if available, otherwise just by player combo
+      // Using subgroup ensures unique sets stay together
+      const groupId = `${subgroup}_${team1Id}_vs_${team2Id}`;
+
+      if (!mapGroups[groupId]) {
+        order++;
+        mapGroups[groupId] = {
+          order,
+          subgroup,
+          team1: { player1: { name: t1p1 }, player2: { name: t1p2 } },
+          team2: { player1: { name: t2p1 }, player2: { name: t2p2 } },
+          games: []
+        };
+      }
+
+      if (mapName && winner) {
+        mapGroups[groupId].games.push({
+          map: mapName,
+          winner: parseInt(winner)
+        });
+      }
+    }
+
+    // Convert groups to match objects
+    Object.values(mapGroups).forEach(group => {
+      const team1Score = group.games.filter(g => g.winner === 1).length;
+      const team2Score = group.games.filter(g => g.winner === 2).length;
+
+      matches.push({
+        match_id: `SM${index}_SG${group.subgroup}`,
+        round: `Show Match (Set ${group.subgroup})`,
+        team1: group.team1,
+        team2: group.team2,
+        team1_score: team1Score,
+        team2_score: team2Score,
+        best_of: group.games.length + (group.games.length % 2 === 0 ? 1 : 0),
+        date: date,
+        games: group.games,
+        tournament_slug: tournamentSlug
+      });
+    });
+  }
 
   return matches;
 }
@@ -370,7 +500,7 @@ function parseBracket(wikitext, tournamentSlug) {
  */
 async function scrapeTournament(url) {
   console.log(`🔍 Scraping: ${url}`);
-  
+
   const pageTitle = extractPageTitle(url);
   console.log(`📄 Page title: ${pageTitle}`);
 
@@ -387,17 +517,23 @@ async function scrapeTournament(url) {
   if (tournament.prize_pool) console.log(`  Prize Pool: $${tournament.prize_pool}`);
 
   console.log('⏳ Parsing matches...');
-  
+
   // Parse both bracket matches and group stage matches
   const bracketMatches = parseBracket(wikitext, pageTitle);
   const groupStageMatches = parseGroupStage(wikitext, pageTitle);
-  
-  const matches = [...bracketMatches, ...groupStageMatches];
-  
+
   console.log(`✓ Found ${bracketMatches.length} bracket matches`);
   if (groupStageMatches.length > 0) {
     console.log(`✓ Found ${groupStageMatches.length} group stage matches`);
   }
+
+  const showMatches = parseShowMatches(wikitext, pageTitle);
+  if (showMatches.length > 0) {
+    console.log(`✓ Found ${showMatches.length} show matches`);
+  }
+
+  const matches = [...bracketMatches, ...groupStageMatches, ...showMatches];
+
   console.log(`✓ Total: ${matches.length} matches`);
 
   return {
@@ -411,7 +547,7 @@ async function scrapeTournament(url) {
  */
 async function main() {
   const url = process.argv[2];
-  
+
   if (!url) {
     console.error('Usage: node scraper.js <liquipedia-url>');
     console.error('Example: node scraper.js https://liquipedia.net/starcraft2/UThermal_2v2_Circuit/1');
@@ -425,15 +561,15 @@ async function main() {
 
     const filename = `${data.tournament.liquipedia_slug.replace(/\//g, '_')}.json`;
     const filepath = join(outputDir, filename);
-    
+
     writeFileSync(filepath, JSON.stringify(data, null, 2), 'utf-8');
-    
+
     console.log(`\n✅ Success!`);
     console.log(`📊 Tournament: ${data.tournament.name}`);
     console.log(`🎮 Matches: ${data.matches.length}`);
     console.log(`💾 Saved to: ${filepath}`);
     console.log(`\n⚠️  Note: Player races are not extracted. Add them manually in the UI.`);
-    
+
   } catch (error) {
     console.error('\n❌ Error:', error.message);
     process.exit(1);

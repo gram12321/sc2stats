@@ -23,6 +23,7 @@ interface PlayerMatch {
   team2_score: number;
   ratingChange: number;
   won: boolean;
+  isDraw?: boolean;
   opponentRating: number;
   team_impacts?: Record<string, {
     ratingBefore: number;
@@ -64,6 +65,7 @@ interface PlayerDetails {
   matches: number;
   wins: number;
   losses: number;
+  draws?: number;
   points: number;
   confidence: number;
   matchHistory: PlayerMatch[];
@@ -361,6 +363,12 @@ export function PlayerDetails({ playerName, onBack }: PlayerDetailsProps) {
             <div className="text-sm text-gray-600">Losses</div>
             <div className="text-2xl font-bold text-red-600">{player.losses}</div>
           </div>
+          {player.draws !== undefined && (
+            <div className="bg-white rounded-lg border border-gray-200 p-4">
+              <div className="text-sm text-gray-600">Draws</div>
+              <div className="text-2xl font-bold text-gray-600">{player.draws}</div>
+            </div>
+          )}
           <div className="bg-white rounded-lg border border-gray-200 p-4">
             <div className="text-sm text-gray-600">Ranking Points</div>
             <div className={`text-2xl font-bold ${player.points > 0 ? 'text-green-600' : player.points < 0 ? 'text-red-600' : 'text-gray-600'}`}>
@@ -414,6 +422,7 @@ export function PlayerDetails({ playerName, onBack }: PlayerDetailsProps) {
                     highlightPlayers={[playerName]}
                     showWinLoss={true}
                     winLossValue={match.won}
+                    isDrawValue={match.isDraw}
                     showRatingBreakdown={true}
                     extractRaceChanges={(match) => extractRaceChanges(match as PlayerMatch)}
                     normalizeTeamKey={normalizeTeamKey}

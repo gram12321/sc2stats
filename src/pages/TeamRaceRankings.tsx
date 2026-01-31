@@ -27,6 +27,7 @@ interface TeamRaceRanking {
   matches: number;
   wins: number; // wins for combo1
   losses: number; // losses for combo1 (wins for combo2)
+  draws?: number;
   points: number; // net points for combo1
 }
 
@@ -56,18 +57,21 @@ interface MatchHistoryEntry {
     ratingBefore: number;
     ratingChange: number;
     won: boolean;
+    isDraw?: boolean;
     opponentRating: number;
   }>;
   combo_impacts?: Record<string, {
     ratingBefore: number;
     ratingChange: number;
     won: boolean;
+    isDraw?: boolean;
     opponentRating: number;
   }>;
   player_impacts?: Record<string, {
     ratingBefore: number;
     ratingChange: number;
     won: boolean;
+    isDraw?: boolean;
     opponentRating: number;
   }>;
 }
@@ -166,6 +170,7 @@ export function TeamRaceRankings({ }: TeamRaceRankingsProps) {
   const handleMatchupClick = (matchup: TeamRaceRanking, isCombined: boolean = false) => {
     setSelectedMatchup(matchup);
     setIsCombinedStats(isCombined);
+    setMatchHistory([]); // Clear previous history
     loadMatchHistory(matchup, isCombined);
   };
 
@@ -533,6 +538,17 @@ export function TeamRaceRankings({ }: TeamRaceRankingsProps) {
                         </th>
                         <th
                           className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                          onClick={() => handleSort('draws', true)}
+                        >
+                          <div className="flex items-center justify-center gap-1">
+                            Draws
+                            {combinedSortColumn === 'draws' && (
+                              <span>{combinedSortDirection === 'asc' ? '↑' : '↓'}</span>
+                            )}
+                          </div>
+                        </th>
+                        <th
+                          className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
                           onClick={() => handleSort('points', true)}
                         >
                           <div className="flex items-center justify-center gap-1">
@@ -591,6 +607,11 @@ export function TeamRaceRankings({ }: TeamRaceRankingsProps) {
                           <td className="px-6 py-4 whitespace-nowrap text-center">
                             <span className="text-sm font-medium text-red-600">
                               {matchup.losses}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-center">
+                            <span className="text-sm font-medium text-gray-600">
+                              {matchup.draws || 0}
                             </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-center">
@@ -754,6 +775,11 @@ export function TeamRaceRankings({ }: TeamRaceRankingsProps) {
                             <td className="px-6 py-4 whitespace-nowrap text-center">
                               <span className="text-sm font-medium text-red-600">
                                 {matchup.losses}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-center">
+                              <span className="text-sm font-medium text-gray-600">
+                                {matchup.draws || 0}
                               </span>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-center">
@@ -962,27 +988,39 @@ export function TeamRaceRankings({ }: TeamRaceRankingsProps) {
                         }
                       });
 
+                      const isDraw = match.team1_score === match.team2_score;
+                      const won = displayedCombo1Won; // Renaming for clarity
+
+                      const isTeam1Combo = selectedMatchup.combo1 === match.team1_combo;
+
+                      const comboInfo = isCombinedStats ? {
+                        combo1: selectedMatchup.combo1,
+                        combo2: 'All',
+                        ratingChange: isTeam1Combo ? match.rating_change : -(match.rating_change || 0)
+                      } : {
+                        combo1: selectedMatchup.combo1,
+                        combo2: selectedMatchup.combo2,
+                        ratingChange: isTeam1Combo ? match.rating_change : -(match.rating_change || 0)
+                      };
+
                       return (
                         <MatchHistoryItem
                           key={`${match.tournament_slug}-${match.match_id}`}
-                          match={convertedMatch}
+                          match={convertMatchForComponent(match)}
                           team1Rank={team1RankData ? { rank: team1RankData.rank, points: team1RankData.points, confidence: team1RankData.confidence } : null}
                           team2Rank={team2RankData ? { rank: team2RankData.rank, points: team2RankData.points, confidence: team2RankData.confidence } : null}
                           playerRankings={playerRankingsMap}
                           playerRaces={playerRaces}
                           highlightCombo={selectedMatchup.combo1}
                           showWinLoss={true}
-                          winLossValue={displayedCombo1Won}
+                          winLossValue={won}
+                          isDrawValue={isDraw}
                           showRatingBreakdown={true}
                           showComboInfo={true}
-                          comboInfo={{
-                            combo1: team1Combo,
-                            combo2: team2Combo,
-                            ratingChange
-                          }}
+                          comboInfo={comboInfo}
                           normalizeTeamKey={normalizeTeamKey}
-                          getTeamImpact={(match, player1, player2) => getTeamImpact(match as unknown as MatchHistoryEntry, player1, player2)}
-                          getPlayerImpact={(match, playerName) => getPlayerImpact(match as unknown as MatchHistoryEntry, playerName)}
+                          getTeamImpact={(match, player1, player2) => getTeamImpact(match as any, player1, player2)}
+                          getPlayerImpact={(match, playerName) => getPlayerImpact(match as any, playerName)}
                           formatDate={formatDate}
                         />
                       );

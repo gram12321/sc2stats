@@ -22,6 +22,7 @@ interface RaceRanking {
   matches: number;
   wins: number;
   losses: number;
+  draws?: number;
   points: number;
 }
 
@@ -41,6 +42,7 @@ interface MatchHistoryEntry {
     ratingBefore: number;
     ratingChange: number;
     won: boolean;
+    isDraw?: boolean;
     opponentRating: number;
     race1: string;
     race2: string;
@@ -57,12 +59,14 @@ interface MatchHistoryEntry {
     ratingBefore: number;
     ratingChange: number;
     won: boolean;
+    isDraw?: boolean;
     opponentRating: number;
   }>;
   player_impacts?: Record<string, {
     ratingBefore: number;
     ratingChange: number;
     won: boolean;
+    isDraw?: boolean;
     opponentRating: number;
   }>;
 }
@@ -278,6 +282,7 @@ export function RaceRankings({ }: RaceRankingsProps) {
   const handleMatchupClick = (matchup: RaceRanking, isCombined: boolean = false) => {
     setSelectedMatchup(matchup);
     setIsCombinedStats(isCombined);
+    setMatchHistory([]); // Clear previous history
     loadMatchHistory(matchup, isCombined);
   };
 
@@ -514,6 +519,17 @@ export function RaceRankings({ }: RaceRankingsProps) {
                         </th>
                         <th
                           className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                          onClick={() => handleSort('draws', true)}
+                        >
+                          <div className="flex items-center justify-center gap-1">
+                            Draws
+                            {combinedSortColumn === 'draws' && (
+                              <span>{combinedSortDirection === 'asc' ? '↑' : '↓'}</span>
+                            )}
+                          </div>
+                        </th>
+                        <th
+                          className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
                           onClick={() => handleSort('points', true)}
                         >
                           <div className="flex items-center justify-center gap-1">
@@ -567,6 +583,11 @@ export function RaceRankings({ }: RaceRankingsProps) {
                           <td className="px-6 py-4 whitespace-nowrap text-center">
                             <span className="text-sm font-medium text-red-600">
                               {matchup.losses}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-center">
+                            <span className="text-sm font-medium text-gray-600">
+                              {matchup.draws || 0}
                             </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-center">
@@ -656,6 +677,17 @@ export function RaceRankings({ }: RaceRankingsProps) {
                       </th>
                       <th
                         className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                        onClick={() => handleSort('draws', false)}
+                      >
+                        <div className="flex items-center justify-center gap-1">
+                          Draws
+                          {sortColumn === 'draws' && (
+                            <span>{sortDirection === 'asc' ? '↑' : '↓'}</span>
+                          )}
+                        </div>
+                      </th>
+                      <th
+                        className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
                         onClick={() => handleSort('points', false)}
                       >
                         <div className="flex items-center justify-center gap-1">
@@ -720,6 +752,11 @@ export function RaceRankings({ }: RaceRankingsProps) {
                             <td className="px-6 py-4 whitespace-nowrap text-center">
                               <span className="text-sm font-medium text-red-600">
                                 {matchup.losses}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-center">
+                              <span className="text-sm font-medium text-gray-600">
+                                {matchup.draws || 0}
                               </span>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-center">
@@ -900,7 +937,10 @@ export function RaceRankings({ }: RaceRankingsProps) {
                         }
                       }
 
-                      const convertedMatch = convertMatchForComponent(match);
+                      // For race match history, the "subject" is race1 from the selected matchup
+                      const race1 = selectedMatchup?.race1;
+                      const isDraw = match.team1_score === match.team2_score;
+
                       const team1Rank = getTeamRank(match.team1_player1, match.team1_player2);
                       const team2Rank = getTeamRank(match.team2_player1, match.team2_player2);
 
@@ -934,17 +974,17 @@ export function RaceRankings({ }: RaceRankingsProps) {
                       return (
                         <MatchHistoryItem
                           key={`${match.tournament_slug}-${match.match_id}`}
-                          match={convertedMatch}
+                          match={convertMatchForComponent(match)}
                           team1Rank={team1Rank ? { rank: team1Rank.rank, points: team1Rank.points, confidence: team1Rank.confidence } : null}
                           team2Rank={team2Rank ? { rank: team2Rank.rank, points: team2Rank.points, confidence: team2Rank.confidence } : null}
                           playerRankings={playerRankingsMap}
                           playerRaces={playerRaces}
                           showWinLoss={true}
                           winLossValue={won}
+                          isDrawValue={isDraw}
                           showRatingBreakdown={true}
                           showRaceInfo={true}
                           raceInfo={raceInfo}
-                          highlightRace={selectedMatchup.race1}
                           normalizeTeamKey={normalizeTeamKey}
                           getTeamImpact={(match, player1, player2) => getTeamImpact(match as any, player1, player2)}
                           getPlayerImpact={(match, playerName) => getPlayerImpact(match as any, playerName)}

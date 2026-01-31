@@ -728,6 +728,7 @@ app.get('/api/player/:playerName', async (req, res) => {
         ...match,
         ratingChange: impact?.ratingChange || 0,
         won: impact?.won || false,
+        isDraw: impact?.isDraw || false,
         opponentRating: impact?.opponentRating || 0,
         team_impacts: teamMatch?.team_impacts || match.team_impacts
       };
@@ -794,6 +795,7 @@ app.get('/api/team/:player1/:player2', async (req, res) => {
         ...match,
         ratingChange: impact?.ratingChange || 0,
         won: impact?.won || false,
+        isDraw: impact?.isDraw || false,
         opponentRating: impact?.opponentRating || 0,
         player_impacts: playerMatch?.player_impacts || match.player_impacts
       };
