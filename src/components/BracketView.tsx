@@ -402,7 +402,7 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
                       const filteredRounds = upperBracketRounds.filter(r => r !== 'Grand Final');
 
                       return (
-                        <div key={round} className="flex flex-col">
+                        <div key={round} className="flex flex-col min-w-[200px]">
                           {/* Round Header */}
                           <div className="mb-4 text-center">
                             <h3 className="text-sm font-semibold text-gray-700 bg-gray-100 px-3 py-1 rounded">
@@ -411,7 +411,7 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
                           </div>
 
                           {/* Matches */}
-                          <div className="flex flex-col gap-4 justify-center min-h-[400px]">
+                          <div className="flex flex-col justify-around flex-grow py-4 min-h-[400px]">
                             {matches.map((match) => (
                               <div key={match.match_id} className="relative">
                                 <MatchBox
@@ -449,7 +449,7 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
                     if (matches.length === 0) return null;
 
                     return (
-                      <div key={round} className="flex flex-col">
+                      <div key={round} className="flex flex-col min-w-[200px]">
                         {/* Round Header */}
                         <div className="mb-4 text-center">
                           <h3 className="text-sm font-semibold text-gray-700 bg-gray-100 px-3 py-1 rounded">
@@ -458,7 +458,7 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
                         </div>
 
                         {/* Matches */}
-                        <div className="flex flex-col gap-4 justify-center min-h-[400px]">
+                        <div className="flex flex-col justify-around flex-grow py-4 min-h-[400px]">
                           {matches.map((match) => (
                             <div key={match.match_id} className="relative">
                               <MatchBox
@@ -516,7 +516,7 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
                 if (matches.length === 0) return null;
 
                 return (
-                  <div key={round} className="flex flex-col">
+                  <div key={round} className="flex flex-col min-w-[200px]">
                     {/* Round Header */}
                     <div className="mb-4 text-center">
                       <h2 className="text-sm font-semibold text-gray-700 bg-gray-100 px-3 py-1 rounded">
@@ -525,7 +525,7 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
                     </div>
 
                     {/* Matches */}
-                    <div className="flex flex-col gap-4 justify-center min-h-[400px]">
+                    <div className="flex flex-col justify-around flex-grow py-4 min-h-[400px]">
                       {matches.map((match) => (
                         <div key={match.match_id} className="relative">
                           <MatchBox

@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRankingSettings } from '../context/RankingSettingsContext';
 import { formatRankingPoints } from '../lib/utils';
 import { Race } from '../types/tournament';
 import { getPlayerDefaults } from '../lib/playerDefaults';
 import { MatchHistoryItem } from '../components/MatchHistoryItem';
+import { RatingChart } from '../components/RatingChart';
 
 const ROUND_ORDER: Record<string, number> = {
   'Round of 16': 1,
@@ -39,6 +40,9 @@ interface TeamMatch {
     ratingChange: number;
     won: boolean;
     opponentRating: number;
+    rankBefore?: number | string;
+    confidence?: number;
+    populationStdDev?: number;
   }>;
   player_impacts?: Record<string, {
     ratingBefore: number;
@@ -96,6 +100,7 @@ export function TeamDetails({ player1, player2, onBack }: TeamDetailsProps) {
   const [teamRankings, setTeamRankings] = useState<Record<string, { rank: number; points: number; confidence: number }>>({});
   const [playerRaces, setPlayerRaces] = useState<Record<string, Race>>({});
   const [useSeededRankings, setUseSeededRankings] = useState(false);
+  const [chartMode, setChartMode] = useState<'rating' | 'rank'>('rating');
   const { seasons } = useRankingSettings();
 
   useEffect(() => {
@@ -270,6 +275,59 @@ export function TeamDetails({ player1, player2, onBack }: TeamDetailsProps) {
     return (b.match_id || '').localeCompare(a.match_id || '');
   }) : [];
 
+  const chartData = useMemo(() => {
+    if (!sortedMatchHistory.length) return [];
+
+    const chronoMatches = [...sortedMatchHistory].reverse();
+    const myTeamKey = normalizeTeamKey(player1, player2);
+
+    return chronoMatches.map(match => {
+      const impact = getTeamImpact(match, player1, player2);
+
+      // Determine rank
+      let rank: number | undefined;
+      const rVal = impact?.rankBefore;
+      if (rVal && rVal !== '-') {
+        rank = Number(rVal);
+      }
+
+      const rating = impact ? impact.ratingBefore + impact.ratingChange : 0;
+
+      let confidenceRange: [number, number] | undefined;
+      if (impact && typeof impact.confidence === 'number') {
+        const conf = impact.confidence;
+        const stdDev = impact.populationStdDev || 350;
+        const margin = stdDev * (1 - conf / 100);
+        confidenceRange = [rating - margin, rating + margin];
+      }
+
+      // Determine opponent team name
+      let opponentName = 'Unknown';
+      const team1Key = normalizeTeamKey(match.team1.player1, match.team1.player2);
+
+      if (team1Key === myTeamKey) {
+        opponentName = match.team2.player1;
+        if (match.team2.player2) opponentName += ` & ${match.team2.player2}`;
+      } else {
+        opponentName = match.team1.player1;
+        if (match.team1.player2) opponentName += ` & ${match.team1.player2}`;
+      }
+
+      return {
+        date: match.match_date || match.tournament_date || '',
+        dateLabel: formatDate(match.match_date || match.tournament_date),
+        rating: rating,
+        rank: rank,
+        confidenceRange,
+        confidence: impact?.confidence,
+        matchId: match.match_id,
+        matchNum: 0,
+        tournamentName: match.tournament_slug.replace(/-/g, ' '),
+        opponent: opponentName
+      };
+    }).filter(d => d.rating !== 0);
+  }, [sortedMatchHistory, player1, player2]);
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -375,6 +433,27 @@ export function TeamDetails({ player1, player2, onBack }: TeamDetailsProps) {
               {Math.round(team.confidence || 0)}%
             </div>
           </div>
+        </div>
+
+        {/* Rating Chart */}
+        <div className="mb-6 relative">
+          <div className="absolute top-4 right-4 z-10 flex bg-gray-100 rounded-lg p-1 border border-gray-200">
+            <button
+              onClick={() => setChartMode('rating')}
+              className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${chartMode === 'rating' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                }`}
+            >
+              Rating
+            </button>
+            <button
+              onClick={() => setChartMode('rank')}
+              className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${chartMode === 'rank' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                }`}
+            >
+              Rank
+            </button>
+          </div>
+          <RatingChart data={chartData} showRank={chartMode === 'rank'} />
         </div>
 
         {/* Match History */}

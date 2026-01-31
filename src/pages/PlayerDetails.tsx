@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRankingSettings } from '../context/RankingSettingsContext';
 import { Race } from '../types/tournament';
 import { getPlayerDefaults } from '../lib/playerDefaults';
 import { formatRankingPoints } from '../lib/utils';
 import { MatchHistoryItem } from '../components/MatchHistoryItem';
+import { RatingChart } from '../components/RatingChart';
 
 interface PlayerMatch {
   match_id: string;
@@ -33,9 +34,12 @@ interface PlayerMatch {
   }>;
   player_impacts?: Record<string, {
     ratingBefore: number;
+    rankBefore?: number | string;
     ratingChange: number;
     won: boolean;
     opponentRating: number;
+    confidence?: number;
+    populationStdDev?: number;
   }>;
   race_impacts?: Record<string, {
     ratingBefore: number;
@@ -87,6 +91,7 @@ export function PlayerDetails({ playerName, onBack }: PlayerDetailsProps) {
   const [teamRankings, setTeamRankings] = useState<Record<string, { rank: number; points: number; confidence: number }>>({});
   const [playerRaces, setPlayerRaces] = useState<Record<string, Race>>({});
   const [useSeededRankings, setUseSeededRankings] = useState(false);
+  const [chartMode, setChartMode] = useState<'rating' | 'rank'>('rating');
   const { seasons } = useRankingSettings();
 
   useEffect(() => {
@@ -273,6 +278,67 @@ export function PlayerDetails({ playerName, onBack }: PlayerDetailsProps) {
     }
   };
 
+  const chartData = useMemo(() => {
+    if (!sortedMatchHistory.length) return [];
+
+    // Create a copy and reverse to get oldest -> newest
+    const chronoMatches = [...sortedMatchHistory].reverse();
+
+    return chronoMatches.map(match => {
+      const impact = getPlayerImpact(match, player?.name || '');
+
+      // Determine rank
+      let rank: number | undefined;
+      // rankBefore comes as string ('-' or number) or number.
+      // processRankings.js: rankBefore = rankMap.get(playerName) || '-'; (rankMap uses 1-based index)
+      const rVal = impact?.rankBefore;
+      if (rVal && rVal !== '-') {
+        rank = Number(rVal);
+      }
+
+      const rating = impact ? impact.ratingBefore + impact.ratingChange : 0;
+
+      // Calculate confidence interval if data exists
+      let confidenceRange: [number, number] | undefined;
+      // impact.confidence is the confidence AFTER the match (0-100)
+      // impact.populationStdDev is the std dev used (default 350)
+      if (impact && typeof impact.confidence === 'number') {
+        const conf = impact.confidence;
+        const stdDev = impact.populationStdDev || 350; // Fallback
+        // Heuristic: Margin = stdDev * (1 - confidence/100)
+        // 0% confidence -> +/- 1 std dev
+        // 100% confidence -> +/- 0
+        const margin = stdDev * (1 - conf / 100);
+        confidenceRange = [rating - margin, rating + margin];
+      }
+
+      // Determine opponent name
+      let opponentName = 'Unknown';
+      if (player && (match.team1.player1 === player.name || match.team1.player2 === player.name)) {
+        // Player is in Team 1
+        opponentName = match.team2.player1;
+        if (match.team2.player2) opponentName += ` & ${match.team2.player2}`;
+      } else {
+        // Player is in Team 2
+        opponentName = match.team1.player1;
+        if (match.team1.player2) opponentName += ` & ${match.team1.player2}`;
+      }
+
+      return {
+        date: match.match_date || match.tournament_date || '',
+        dateLabel: formatDate(match.match_date || match.tournament_date),
+        rating: rating,
+        rank: rank,
+        confidenceRange,
+        confidence: impact?.confidence,
+        matchId: match.match_id,
+        matchNum: 0,
+        tournamentName: match.tournament_slug.replace(/-/g, ' '),
+        opponent: opponentName
+      };
+    }).filter(point => point.rating !== 0); // Basic filter to ensure valid points
+  }, [sortedMatchHistory, player]);
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -381,6 +447,27 @@ export function PlayerDetails({ playerName, onBack }: PlayerDetailsProps) {
               {Math.round(player.confidence || 0)}%
             </div>
           </div>
+        </div>
+
+        {/* Rating Chart */}
+        <div className="mb-6 relative">
+          <div className="absolute top-4 right-4 z-10 flex bg-gray-100 rounded-lg p-1 border border-gray-200">
+            <button
+              onClick={() => setChartMode('rating')}
+              className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${chartMode === 'rating' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                }`}
+            >
+              Rating
+            </button>
+            <button
+              onClick={() => setChartMode('rank')}
+              className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${chartMode === 'rank' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                }`}
+            >
+              Rank
+            </button>
+          </div>
+          <RatingChart data={chartData} showRank={chartMode === 'rank'} />
         </div>
 
         {/* Match History */}
