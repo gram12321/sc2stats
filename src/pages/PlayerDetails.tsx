@@ -371,12 +371,12 @@ export function PlayerDetails({ playerName, onBack }: PlayerDetailsProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-white border-b border-gray-200 shadow-sm">
+    <div className="min-h-screen bg-background">
+      <div className="bg-card border-b border-border shadow-sm">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">{player.name}</h1>
+              <h1 className="text-2xl font-bold text-foreground">{player.name}</h1>
               {playerRace && (
                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium mt-2 ${getRaceBadgeColor(playerRace)}`}>
                   {playerRace}
@@ -392,7 +392,7 @@ export function PlayerDetails({ playerName, onBack }: PlayerDetailsProps) {
                     onChange={(e) => setUseSeededRankings(e.target.checked)}
                     className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                   />
-                  <span className="text-sm text-gray-700">Use Initial Seeds (Average of Pass 1 & 2)</span>
+                  <span className="text-sm text-muted-foreground">Use Initial Seeds (Average of Pass 1 & 2)</span>
                 </label>
                 <div className="ml-2 group relative">
                   <span className="cursor-help text-gray-400 text-xs border border-gray-400 rounded-full w-4 h-4 inline-flex items-center justify-center">?</span>
@@ -404,7 +404,7 @@ export function PlayerDetails({ playerName, onBack }: PlayerDetailsProps) {
               {onBack && (
                 <button
                   onClick={onBack}
-                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500"
+                  className="px-4 py-2 text-muted-foreground bg-muted rounded-md hover:bg-muted/80 focus:outline-none focus:ring-2 focus:ring-muted-foreground"
                 >
                   ← Back
                 </button>
@@ -417,33 +417,33 @@ export function PlayerDetails({ playerName, onBack }: PlayerDetailsProps) {
       <div className="max-w-7xl mx-auto p-6">
         {/* Stats Summary */}
         <div className="grid grid-cols-5 gap-4 mb-6">
-          <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <div className="text-sm text-gray-600">Total Matches</div>
-            <div className="text-2xl font-bold text-gray-900">{player.matches}</div>
+          <div className="bg-card rounded-lg border border-border p-4">
+            <div className="text-sm text-muted-foreground">Total Matches</div>
+            <div className="text-2xl font-bold text-foreground">{player.matches}</div>
           </div>
-          <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <div className="text-sm text-gray-600">Wins</div>
+          <div className="bg-card rounded-lg border border-border p-4">
+            <div className="text-sm text-muted-foreground">Wins</div>
             <div className="text-2xl font-bold text-green-600">{player.wins}</div>
           </div>
-          <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <div className="text-sm text-gray-600">Losses</div>
+          <div className="bg-card rounded-lg border border-border p-4">
+            <div className="text-sm text-muted-foreground">Losses</div>
             <div className="text-2xl font-bold text-red-600">{player.losses}</div>
           </div>
           {player.draws !== undefined && (
-            <div className="bg-white rounded-lg border border-gray-200 p-4">
-              <div className="text-sm text-gray-600">Draws</div>
-              <div className="text-2xl font-bold text-gray-600">{player.draws}</div>
+            <div className="bg-card rounded-lg border border-border p-4">
+              <div className="text-sm text-muted-foreground">Draws</div>
+              <div className="text-2xl font-bold text-muted-foreground">{player.draws}</div>
             </div>
           )}
-          <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <div className="text-sm text-gray-600">Ranking Points</div>
-            <div className={`text-2xl font-bold ${player.points > 0 ? 'text-green-600' : player.points < 0 ? 'text-red-600' : 'text-gray-600'}`}>
+          <div className="bg-card rounded-lg border border-border p-4">
+            <div className="text-sm text-muted-foreground">Ranking Points</div>
+            <div className={`text-2xl font-bold ${player.points > 0 ? 'text-green-600' : player.points < 0 ? 'text-red-600' : 'text-muted-foreground'}`}>
               {player.points > 0 ? '+' : ''}{formatRankingPoints(player.points)}
             </div>
           </div>
-          <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <div className="text-sm text-gray-600">Confidence</div>
-            <div className={`text-2xl font-bold ${(player.confidence || 0) >= 70 ? 'text-blue-600' : (player.confidence || 0) >= 40 ? 'text-yellow-600' : 'text-gray-500'}`}>
+          <div className="bg-card rounded-lg border border-border p-4">
+            <div className="text-sm text-muted-foreground">Confidence</div>
+            <div className={`text-2xl font-bold ${(player.confidence || 0) >= 70 ? 'text-blue-600' : (player.confidence || 0) >= 40 ? 'text-yellow-600' : 'text-muted-foreground'}`}>
               {Math.round(player.confidence || 0)}%
             </div>
           </div>
@@ -471,13 +471,13 @@ export function PlayerDetails({ playerName, onBack }: PlayerDetailsProps) {
         </div>
 
         {/* Match History */}
-        <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">Match History</h2>
+        <div className="bg-card rounded-lg border border-border shadow-sm">
+          <div className="px-6 py-4 border-b border-border">
+            <h2 className="text-lg font-semibold text-foreground">Match History</h2>
           </div>
-          <div className="divide-y divide-gray-200">
+          <div className="divide-y divide-border">
             {sortedMatchHistory.length === 0 ? (
-              <div className="p-8 text-center text-gray-500">
+              <div className="p-8 text-center text-muted-foreground">
                 No matches found
               </div>
             ) : (

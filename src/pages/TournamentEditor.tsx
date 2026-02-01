@@ -107,18 +107,18 @@ export function TournamentEditor({ }: TournamentEditorProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <div className="max-w-4xl mx-auto p-6">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Tournaments</h1>
-          <p className="text-gray-600 mt-1">
+          <h1 className="text-2xl font-bold text-foreground">Tournaments</h1>
+          <p className="text-muted-foreground mt-1">
             Select a tournament to view details and edit player races
           </p>
         </div>
         {isLoading ? (
           <div className="text-center py-12">
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            <p className="mt-4 text-gray-600">Loading tournaments...</p>
+            <p className="mt-4 text-muted-foreground">Loading tournaments...</p>
           </div>
         ) : error ? (
           <div className="bg-red-50 border border-red-200 rounded-lg p-4">
@@ -131,7 +131,7 @@ export function TournamentEditor({ }: TournamentEditorProps) {
             </button>
           </div>
         ) : tournaments.length === 0 ? (
-          <div className="bg-white rounded-lg border border-gray-200 p-8 shadow-sm text-center">
+          <div className="bg-card rounded-lg border border-border p-8 shadow-sm text-center">
             <div className="mb-4">
               <svg
                 className="mx-auto h-12 w-12 text-gray-400"
@@ -147,10 +147,10 @@ export function TournamentEditor({ }: TournamentEditorProps) {
                 />
               </svg>
             </div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">
+            <h2 className="text-xl font-semibold text-foreground mb-2">
               No Tournaments Found
             </h2>
-            <p className="text-gray-600 mb-6">
+            <p className="text-muted-foreground mb-6">
               Run the scraper to generate tournament JSON files
             </p>
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-left">
@@ -167,7 +167,7 @@ export function TournamentEditor({ }: TournamentEditorProps) {
         ) : (
           <div className="space-y-3">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-900">
+              <h2 className="text-lg font-semibold text-foreground">
                 Available Tournaments ({tournaments.length})
               </h2>
               <button
@@ -182,7 +182,7 @@ export function TournamentEditor({ }: TournamentEditorProps) {
               <div
                 key={tournament.filename}
                 onClick={() => loadTournament(tournament.filename)}
-                className="bg-white rounded-lg border border-gray-200 p-4 hover:border-blue-500 hover:shadow-md cursor-pointer transition-all"
+                className="bg-card rounded-lg border border-border p-4 hover:border-primary hover:shadow-md cursor-pointer transition-all"
               >
                 <div className="flex items-center justify-between">
                   <div className="flex-1">

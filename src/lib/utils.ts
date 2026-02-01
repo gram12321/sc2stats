@@ -2,7 +2,13 @@
  * Utility functions for tournament data
  */
 
+import { type ClassValue, clsx } from "clsx"
+import { twMerge } from "tailwind-merge"
 import { TournamentData } from '../types/tournament';
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs))
+}
 
 /**
  * Download tournament data as JSON file

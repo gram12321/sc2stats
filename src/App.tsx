@@ -79,10 +79,10 @@ export function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background text-foreground font-sans antialiased selection:bg-primary/20 selection:text-primary">
       <RankingSettingsProvider>
         <Header onNavigate={(view) => navigate(view as View)} currentView={navState.view} />
-        <main>
+        <main className="container max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
           {renderContent()}
         </main>
       </RankingSettingsProvider>

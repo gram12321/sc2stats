@@ -23,7 +23,7 @@ export function Tooltip({ children, content, side = 'top', delayDuration = 200 }
     const tooltipRect = tooltipRef.current.getBoundingClientRect();
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
-    
+
     let top = 0;
     let left = 0;
     let currentSide = side;
@@ -110,10 +110,10 @@ export function Tooltip({ children, content, side = 'top', delayDuration = 200 }
       updatePosition();
       const handleResize = () => updatePosition();
       const handleScroll = () => updatePosition();
-      
+
       window.addEventListener('resize', handleResize);
       window.addEventListener('scroll', handleScroll, true);
-      
+
       return () => {
         window.removeEventListener('resize', handleResize);
         window.removeEventListener('scroll', handleScroll, true);
@@ -130,10 +130,10 @@ export function Tooltip({ children, content, side = 'top', delayDuration = 200 }
   }, []);
 
   const arrowClasses = {
-    top: 'top-full left-1/2 -translate-x-1/2 border-t-gray-900 border-l-transparent border-r-transparent border-b-transparent',
-    bottom: 'bottom-full left-1/2 -translate-x-1/2 border-b-gray-900 border-l-transparent border-r-transparent border-t-transparent',
-    left: 'left-full top-1/2 -translate-y-1/2 border-l-gray-900 border-t-transparent border-b-transparent border-r-transparent',
-    right: 'right-full top-1/2 -translate-y-1/2 border-r-gray-900 border-t-transparent border-b-transparent border-l-transparent'
+    top: 'top-full left-1/2 -translate-x-1/2 border-t-primary border-l-transparent border-r-transparent border-b-transparent',
+    bottom: 'bottom-full left-1/2 -translate-x-1/2 border-b-primary border-l-transparent border-r-transparent border-t-transparent',
+    left: 'left-full top-1/2 -translate-y-1/2 border-l-primary border-t-transparent border-b-transparent border-r-transparent',
+    right: 'right-full top-1/2 -translate-y-1/2 border-r-primary border-t-transparent border-b-transparent border-l-transparent'
   };
 
   return (
@@ -149,7 +149,7 @@ export function Tooltip({ children, content, side = 'top', delayDuration = 200 }
       {isOpen && createPortal(
         <div
           ref={tooltipRef}
-          className={`fixed z-[99999] px-3 py-2 text-sm text-white bg-gray-900 rounded-md shadow-xl max-w-xs pointer-events-none`}
+          className={`fixed z-[99999] px-3 py-2 text-sm text-primary-foreground bg-primary rounded-md shadow-md max-w-xs pointer-events-none animate-in fade-in zoom-in-95 duration-200`}
           style={{
             top: `${position.top}px`,
             left: `${position.left}px`
@@ -157,6 +157,7 @@ export function Tooltip({ children, content, side = 'top', delayDuration = 200 }
           role="tooltip"
         >
           {content}
+          {/* Arrow matching the primary background */}
           <div
             className={`absolute w-0 h-0 border-4 ${arrowClasses[tooltipSide]}`}
           />

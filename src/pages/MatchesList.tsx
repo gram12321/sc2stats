@@ -245,22 +245,22 @@ export function MatchesList({ }: MatchesListProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-transparent">
       <div className="max-w-7xl mx-auto p-4">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Match History</h1>
-            <p className="text-gray-600 mt-1">
+            <h1 className="text-2xl font-bold text-foreground">Match History</h1>
+            <p className="text-muted-foreground mt-1">
               Displaying {matches.length} matches{selectedTournament ? ` from selected tournament` : ''}
             </p>
           </div>
           <div className="flex flex-col md:flex-row items-end md:items-center gap-4">
             <div className="flex items-center gap-2">
-              <label className="text-sm font-medium text-gray-700">Tournament:</label>
+              <label className="text-sm font-medium text-muted-foreground">Tournament:</label>
               <select
                 value={selectedTournament}
                 onChange={(e) => setSelectedTournament(e.target.value)}
-                className="px-3 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="px-3 py-1.5 text-sm border border-border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 <option value="">All Tournaments</option>
                 {tournaments.map(tournament => (
@@ -296,8 +296,8 @@ export function MatchesList({ }: MatchesListProps) {
             </button>
           </div>
         ) : matches.length === 0 ? (
-          <div className="bg-white rounded-lg border border-gray-200 p-6 text-center">
-            <p className="text-sm text-gray-500">No matches found</p>
+          <div className="bg-card rounded-lg border border-border p-6 text-center">
+            <p className="text-sm text-muted-foreground">No matches found</p>
           </div>
         ) : (
           <div className="space-y-1">
