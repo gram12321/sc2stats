@@ -260,7 +260,7 @@ export function PlayerRankings({ onNavigateToPlayer }: PlayerRankingsProps) {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {Math.floor(rankedRankings.reduce((sum, p) => sum + p.matches, 0) / 2)}
+                  {Math.floor(rankedRankings.reduce((sum, p) => sum + p.matches, 0) / 4)}
                 </div>
               </CardContent>
             </Card>

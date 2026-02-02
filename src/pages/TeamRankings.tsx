@@ -299,7 +299,7 @@ export function TeamRankings({ onNavigateToTeam }: TeamRankingsProps) {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {rankedRankings.reduce((sum, t) => sum + t.matches, 0)}
+                  {Math.floor(rankedRankings.reduce((sum, t) => sum + t.matches, 0) / 2)}
                 </div>
               </CardContent>
             </Card>
