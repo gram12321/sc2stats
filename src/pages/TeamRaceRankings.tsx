@@ -941,30 +941,6 @@ export function TeamRaceRankings({ }: TeamRaceRankingsProps) {
                           (selectedMatchup.combo1 === matchCombo1) ? matchCombo1Won : !matchCombo1Won;
                       }
 
-                      // For combined stats, show clicked combo first; for individual matchups, keep original order
-                      let ratingChange;
-
-                      if (isCombinedStats) {
-                        const clickedCombo = selectedMatchup.combo1;
-                        const clickedComboIsTeam1 = match.team1_combo === clickedCombo;
-
-                        if (clickedComboIsTeam1) {
-                          // Clicked combo is team1, keep original order
-                          // Rating change is from combo1's perspective, which matches clicked combo
-                          ratingChange = match.rating_change || 0;
-                        } else {
-                          // Clicked combo is team2, swap to show it first
-                          // Rating change is from combo1's perspective, but clicked combo is combo2, so negate
-                          ratingChange = -(match.rating_change || 0);
-                        }
-                      } else {
-                        // For individual matchups, keep original order
-                        // For individual matchups, rating change is already from combo1's perspective
-                        ratingChange = match.rating_change || 0;
-                      }
-
-
-
                       const team1RankData = getTeamRank(match.team1_player1, match.team1_player2);
                       const team2RankData = getTeamRank(match.team2_player1, match.team2_player2);
 
