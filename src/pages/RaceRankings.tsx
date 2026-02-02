@@ -24,23 +24,11 @@ import {
   ArrowDown,
   Loader2,
   Trophy,
-  Target,
-  TrendingUp,
-  TrendingDown,
   Swords,
   Crown,
   Minus
 } from 'lucide-react';
 import { cn } from '../lib/utils';
-
-const ROUND_ORDER: Record<string, number> = {
-  'Round of 16': 1,
-  'Round of 8': 2,
-  'Quarterfinals': 3,
-  'Semifinals': 4,
-  'Final': 5,
-  'Grand Final': 5
-};
 
 interface RaceRanking {
   name: string; // e.g., "PvZ", "TvP"
@@ -334,6 +322,29 @@ export function RaceRankings({ }: RaceRankingsProps) {
   const getTeamImpact = (match: any, p1: string | null, p2: string | null) => { if (!match.team_impacts || !p1 || !p2) return null; return match.team_impacts[normalizeTeamKey(p1, p2)] || null; };
   const getPlayerImpact = (match: any, name: string | null) => { if (!match.player_impacts || !name) return null; return match.player_impacts[name] || null; };
 
+  // Convert MatchHistoryEntry to format expected by MatchHistoryItem
+  const convertMatchForComponent = (match: MatchHistoryEntry) => {
+    return {
+      match_id: match.match_id,
+      tournament_slug: match.tournament_slug,
+      tournament_date: match.tournament_date,
+      match_date: match.match_date,
+      round: match.round,
+      team1: {
+        player1: match.team1_player1 || '',
+        player2: match.team1_player2 || ''
+      },
+      team2: {
+        player1: match.team2_player1 || '',
+        player2: match.team2_player2 || ''
+      },
+      team1_score: match.team1_score,
+      team2_score: match.team2_score,
+      player_impacts: match.player_impacts,
+      team_impacts: match.team_impacts
+    };
+  };
+
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) return '—';
     try { return new Date(dateStr).toLocaleDateString(); } catch { return dateStr; }
@@ -553,21 +564,20 @@ export function RaceRankings({ }: RaceRankingsProps) {
                       {matchHistory.map((match) => (
                         <MatchHistoryItem
                           key={`${match.tournament_slug}-${match.match_id}`}
-                          match={match} // Pass the raw match object, MatchHistoryItem handles formatting if needed, or we adapt it
-                          // The MatchHistoryItem expects specific types. Let's adapt if needed or suppress TS if compatible.
-                          // Ideally we should map it.
+                          match={convertMatchForComponent(match)}
                           team1Rank={getTeamRank(match.team1_player1, match.team1_player2) || undefined}
                           team2Rank={getTeamRank(match.team2_player1, match.team2_player2) || undefined}
-                          playerRankings={playerRankings} // Expects specific format
+                          playerRankings={playerRankings}
                           playerRaces={playerRaces}
                           showRatingBreakdown={true}
                           highlightPlayers={[]}
                           showWinLoss={true}
                           winLossValue={match.team1_score > match.team2_score}
                           isDrawValue={match.team1_score === match.team2_score}
-                          getTeamImpact={getTeamImpact} // Pass function
-                          getPlayerImpact={getPlayerImpact} // Pass function
-                        // ... other props
+                          getTeamImpact={getTeamImpact}
+                          getPlayerImpact={getPlayerImpact}
+                          normalizeTeamKey={normalizeTeamKey}
+                          formatDate={formatDate}
                         />
                       ))}
                     </div>

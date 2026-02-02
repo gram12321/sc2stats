@@ -942,7 +942,7 @@ export function TeamRaceRankings({ }: TeamRaceRankingsProps) {
                       }
 
                       // For combined stats, show clicked combo first; for individual matchups, keep original order
-                      let team1Combo, team2Combo, ratingChange;
+                      let ratingChange;
 
                       if (isCombinedStats) {
                         const clickedCombo = selectedMatchup.combo1;
@@ -950,28 +950,21 @@ export function TeamRaceRankings({ }: TeamRaceRankingsProps) {
 
                         if (clickedComboIsTeam1) {
                           // Clicked combo is team1, keep original order
-                          team1Combo = match.team1_combo;
-                          team2Combo = match.team2_combo;
                           // Rating change is from combo1's perspective, which matches clicked combo
                           ratingChange = match.rating_change || 0;
                         } else {
                           // Clicked combo is team2, swap to show it first
-                          team1Combo = match.team2_combo;
-                          team2Combo = match.team1_combo;
                           // Rating change is from combo1's perspective, but clicked combo is combo2, so negate
                           ratingChange = -(match.rating_change || 0);
                         }
                       } else {
                         // For individual matchups, keep original order
-                        team1Combo = match.team1_combo;
-                        team2Combo = match.team2_combo;
                         // For individual matchups, rating change is already from combo1's perspective
                         ratingChange = match.rating_change || 0;
                       }
 
 
 
-                      const convertedMatch = convertMatchForComponent(match);
                       const team1RankData = getTeamRank(match.team1_player1, match.team1_player2);
                       const team2RankData = getTeamRank(match.team2_player1, match.team2_player2);
 

@@ -184,11 +184,6 @@ export function PlayerRankings({ onNavigateToPlayer }: PlayerRankingsProps) {
     }
   };
 
-  const getRaceAbbr = (race: Race | null | undefined) => {
-    if (!race) return '';
-    return race.charAt(0);
-  };
-
   const SortIcon = ({ column }: { column: keyof PlayerRanking | 'rank' }) => {
     if (sortColumn !== column) return <ArrowUpDown className="ml-1 h-3 w-3 text-muted-foreground" />;
     return sortDirection === 'asc'

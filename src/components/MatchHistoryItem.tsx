@@ -143,7 +143,6 @@ function getRatingChangeTooltip(
   const isDraw = impact.isDraw === true;
   const actualResult = isDraw ? 0.5 : (won ? 1 : 0);
   const typeLabel = type === 'team' ? 'Team' : type === 'race' ? 'Race' : 'Player';
-  const performanceDiff = (actualResult - expectedWin).toFixed(3);
   const calculation = `${adjustedK.toFixed(1)} × (${actualResult} - ${expectedWin.toFixed(3)}) = ${formatRankingPoints(ratingChange)}`;
 
   return (
@@ -194,14 +193,6 @@ function getRatingChangeTooltip(
   );
 }
 
-function getRaceChangeTooltip(
-  impact: { ratingBefore: number; ratingChange: number; won: boolean; isDraw?: boolean; opponentRating: number; race1: string; race2: string; expectedWin?: number; baseK?: number; adjustedK?: number; confidence?: number; matchCount?: number },
-  subjectRace: string,
-  opponentRace: string
-): React.ReactNode {
-  return getRatingChangeTooltip(impact, subjectRace, opponentRace, 'race');
-}
-
 export function MatchHistoryItem({
   match,
   team1Rank,
@@ -218,8 +209,6 @@ export function MatchHistoryItem({
   showRatingBreakdown = true,
   showRaceInfo = false,
   raceInfo,
-  showComboInfo = false,
-  comboInfo,
   extractRaceChanges,
   normalizeTeamKey,
   getTeamImpact,
