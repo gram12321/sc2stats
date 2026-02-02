@@ -111,9 +111,12 @@ function getTeamRaces(team, playerDefaults = {}) {
  * - TvZ +1 (Terran vs Zerg, Terran wins)
  * - TvP +1 (Terran vs Protoss, Terran wins)
  * 
+ * @param {boolean} mainCircuitOnly - Whether to only include main circuit tournaments
+ * @param {Array<string>|null} seasons - Array of season strings to filter by
+ * @param {boolean} hideRandom - Whether to exclude Random race matchups from calculations
  * @returns {Promise<Object>} Object with rankings and matchHistory
  */
-export async function calculateRaceRankings(mainCircuitOnly = false, seasons = null) {
+export async function calculateRaceRankings(mainCircuitOnly = false, seasons = null, hideRandom = false) {
   const raceStats = new Map(); // Key: race matchup (e.g., "PvZ"), Value: stats object
   const allMatches = [];
 
@@ -223,6 +226,7 @@ export async function calculateRaceRankings(mainCircuitOnly = false, seasons = n
     console.log(`Processing ${allMatches.length} matches`);
     let matchesWithRaces = 0;
     let matchesWithoutRaces = 0;
+    let matchesSkippedRandom = 0;
 
     for (const match of allMatches) {
       // Get races from each team, applying player defaults if needed
@@ -235,10 +239,17 @@ export async function calculateRaceRankings(mainCircuitOnly = false, seasons = n
         matchesWithoutRaces++;
         continue;
       }
+
+      // Skip matches with Random races if hideRandom is enabled
+      const allRaces = [...team1Races, ...team2Races];
+      if (hideRandom && allRaces.includes('Random')) {
+        matchesSkippedRandom++;
+        continue;
+      }
+
       matchesWithRaces++;
 
       // Debug: log if we see Random race
-      const allRaces = [...team1Races, ...team2Races];
       if (allRaces.includes('Random')) {
         console.log(`Found Random race in match ${match.match_id}: team1=${team1Races}, team2=${team2Races}`);
       }
@@ -480,6 +491,9 @@ export async function calculateRaceRankings(mainCircuitOnly = false, seasons = n
     const combinedRankings = sortRankings(Array.from(combinedStats.values()));
 
     console.log(`Matches with races: ${matchesWithRaces}, without races: ${matchesWithoutRaces}`);
+    if (hideRandom && matchesSkippedRandom > 0) {
+      console.log(`Matches skipped (Random races): ${matchesSkippedRandom}`);
+    }
     console.log(`Found ${rankings.length} race matchups`);
     console.log(`Found ${combinedRankings.length} combined race statistics`);
 

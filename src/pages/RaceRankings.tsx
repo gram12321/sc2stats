@@ -105,7 +105,6 @@ export function RaceRankings({ }: RaceRankingsProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [hideRandom, setHideRandom] = useState(false);
   const [selectedMatchup, setSelectedMatchup] = useState<RaceRanking | null>(null);
   const [isCombinedStats, setIsCombinedStats] = useState(false);
   const [sortColumn, setSortColumn] = useState<keyof RaceRanking | 'rank' | null>(null);
@@ -117,14 +116,14 @@ export function RaceRankings({ }: RaceRankingsProps) {
   const [playerRankings, setPlayerRankings] = useState<Record<string, { rank: number; points: number; confidence: number }>>({});
   const [teamRankings, setTeamRankings] = useState<Record<string, { rank: number; points: number; confidence: number }>>({});
   const [playerRaces, setPlayerRaces] = useState<Record<string, Race>>({});
-  const { mainCircuitOnly, seasons } = useRankingSettings();
+  const { mainCircuitOnly, seasons, hideRandom, setHideRandom } = useRankingSettings();
 
   useEffect(() => {
     loadRankings();
     loadPlayerRankings();
     loadTeamRankings();
     loadAllPlayerRaces();
-  }, [mainCircuitOnly, seasons]);
+  }, [mainCircuitOnly, seasons, hideRandom]);
 
   const loadRankings = async () => {
     try {
@@ -133,6 +132,7 @@ export function RaceRankings({ }: RaceRankingsProps) {
       const queryParams = new URLSearchParams();
       if (mainCircuitOnly) queryParams.append('mainCircuitOnly', 'true');
       if (seasons.length > 0) queryParams.append('seasons', seasons.join(','));
+      if (hideRandom) queryParams.append('hideRandom', 'true');
       const response = await fetch(`/api/race-rankings?${queryParams.toString()}`);
       if (!response.ok) throw new Error('Failed to load race rankings');
       const data = await response.json();
@@ -151,9 +151,6 @@ export function RaceRankings({ }: RaceRankingsProps) {
   };
 
   const filteredRankings = rankings.filter(matchup => {
-    if (hideRandom && (matchup.race1 === 'Random' || matchup.race2 === 'Random')) {
-      return false;
-    }
     const searchLower = searchTerm.toLowerCase();
     return (
       matchup.name.toLowerCase().includes(searchLower) ||
@@ -223,10 +220,12 @@ export function RaceRankings({ }: RaceRankingsProps) {
   const sortedRankings = sortData(filteredRankings, sortColumn, sortDirection);
 
   const filteredCombinedRankings = combinedRankings.filter(matchup => {
-    if (hideRandom && matchup.race1 === 'Random') {
-      return false;
-    }
-    return true;
+    const searchLower = searchTerm.toLowerCase();
+    return (
+      matchup.name.toLowerCase().includes(searchLower) ||
+      matchup.race1.toLowerCase().includes(searchLower) ||
+      matchup.race2.toLowerCase().includes(searchLower)
+    );
   });
 
   const sortedCombinedRankings = sortData(filteredCombinedRankings, combinedSortColumn, combinedSortDirection);
@@ -248,6 +247,7 @@ export function RaceRankings({ }: RaceRankingsProps) {
       let response;
       const queryParams = new URLSearchParams();
       if (mainCircuitOnly) queryParams.append('mainCircuitOnly', 'true');
+      if (hideRandom) queryParams.append('hideRandom', 'true');
       if (seasons.length > 0) queryParams.append('seasons', seasons.join(','));
 
       if (isCombined) {
@@ -425,18 +425,14 @@ export function RaceRankings({ }: RaceRankingsProps) {
         </Card>
       ) : (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Card className="bg-card/50 backdrop-blur-sm">
               <CardHeader className="pb-2"><CardTitle className="text-xs uppercase text-muted-foreground">Total Matchups</CardTitle></CardHeader>
               <CardContent><div className="text-2xl font-bold">{rankings.length}</div></CardContent>
             </Card>
             <Card className="bg-card/50 backdrop-blur-sm">
-              <CardHeader className="pb-2"><CardTitle className="text-xs uppercase text-muted-foreground">Total Matches</CardTitle></CardHeader>
+              <CardHeader className="pb-2"><CardTitle className="text-xs uppercase text-muted-foreground">Race Comparisons</CardTitle></CardHeader>
               <CardContent><div className="text-2xl font-bold">{rankings.reduce((sum, m) => sum + m.matches, 0)}</div></CardContent>
-            </Card>
-            <Card className="bg-card/50 backdrop-blur-sm">
-              <CardHeader className="pb-2"><CardTitle className="text-xs uppercase text-muted-foreground">Positive Spread</CardTitle></CardHeader>
-              <CardContent><div className="text-2xl font-bold text-emerald-500">{rankings.filter(m => m.points > 0).length}</div></CardContent>
             </Card>
           </div>
 

@@ -317,8 +317,9 @@ app.get('/api/seeded-team-rankings', async (req, res) => {
 app.get('/api/race-rankings', async (req, res) => {
   try {
     const isMainCircuitOnly = req.query.mainCircuitOnly === 'true';
+    const hideRandom = req.query.hideRandom === 'true';
     const seasons = req.query.seasons ? req.query.seasons.split(',') : null;
-    const { rankings, combinedRankings, matchHistory } = await calculateRaceRankings(isMainCircuitOnly, seasons);
+    const { rankings, combinedRankings, matchHistory } = await calculateRaceRankings(isMainCircuitOnly, seasons, hideRandom);
     res.json({ rankings, combinedRankings, matchHistory });
   } catch (error) {
     console.error('Error calculating race rankings:', error);
@@ -331,8 +332,9 @@ app.get('/api/race-matchup/:race1/:race2', async (req, res) => {
   try {
     const { race1, race2 } = req.params;
     const isMainCircuitOnly = req.query.mainCircuitOnly === 'true';
+    const hideRandom = req.query.hideRandom === 'true';
     const seasons = req.query.seasons ? req.query.seasons.split(',') : null;
-    const { matchHistory } = await calculateRaceRankings(isMainCircuitOnly, seasons);
+    const { matchHistory } = await calculateRaceRankings(isMainCircuitOnly, seasons, hideRandom);
     const { matchHistory: teamMatchHistory } = await calculateTeamRankings(null, isMainCircuitOnly, seasons);
     const { matchHistory: playerMatchHistory } = await calculateRankings(null, isMainCircuitOnly, seasons);
 
@@ -390,8 +392,9 @@ app.get('/api/race-combo/:race', async (req, res) => {
   try {
     const { race } = req.params;
     const isMainCircuitOnly = req.query.mainCircuitOnly === 'true';
+    const hideRandom = req.query.hideRandom === 'true';
     const seasons = req.query.seasons ? req.query.seasons.split(',') : null;
-    const { matchHistory } = await calculateRaceRankings(isMainCircuitOnly, seasons);
+    const { matchHistory } = await calculateRaceRankings(isMainCircuitOnly, seasons, hideRandom);
     const { matchHistory: teamMatchHistory } = await calculateTeamRankings(null, isMainCircuitOnly, seasons);
     const { matchHistory: playerMatchHistory } = await calculateRankings(null, isMainCircuitOnly, seasons);
 
@@ -438,8 +441,9 @@ app.get('/api/race-combo/:race', async (req, res) => {
 app.get('/api/team-race-rankings', async (req, res) => {
   try {
     const isMainCircuitOnly = req.query.mainCircuitOnly === 'true';
+    const hideRandom = req.query.hideRandom === 'true';
     const seasons = req.query.seasons ? req.query.seasons.split(',') : null;
-    const { rankings, combinedRankings, matchHistory } = await calculateTeamRaceRankings(isMainCircuitOnly, seasons);
+    const { rankings, combinedRankings, matchHistory } = await calculateTeamRaceRankings(isMainCircuitOnly, seasons, hideRandom);
     const { matchHistory: teamMatchHistory } = await calculateTeamRankings(null, isMainCircuitOnly, seasons);
 
     // Create map of team match history for quick lookup
@@ -473,8 +477,9 @@ app.get('/api/team-race-matchup/:combo1/:combo2', async (req, res) => {
   try {
     const { combo1, combo2 } = req.params;
     const isMainCircuitOnly = req.query.mainCircuitOnly === 'true';
+    const hideRandom = req.query.hideRandom === 'true';
     const seasons = req.query.seasons ? req.query.seasons.split(',') : null;
-    const { matchHistory } = await calculateTeamRaceRankings(isMainCircuitOnly, seasons);
+    const { matchHistory } = await calculateTeamRaceRankings(isMainCircuitOnly, seasons, hideRandom);
     const { matchHistory: teamMatchHistory } = await calculateTeamRankings(null, isMainCircuitOnly, seasons);
     const { matchHistory: playerMatchHistory } = await calculateRankings(null, isMainCircuitOnly, seasons);
 
@@ -529,8 +534,9 @@ app.get('/api/team-race-combo/:combo', async (req, res) => {
   try {
     const { combo } = req.params;
     const isMainCircuitOnly = req.query.mainCircuitOnly === 'true';
+    const hideRandom = req.query.hideRandom === 'true';
     const seasons = req.query.seasons ? req.query.seasons.split(',') : null;
-    const { matchHistory } = await calculateTeamRaceRankings(isMainCircuitOnly, seasons);
+    const { matchHistory } = await calculateTeamRaceRankings(isMainCircuitOnly, seasons, hideRandom);
     const { matchHistory: teamMatchHistory } = await calculateTeamRankings(null, isMainCircuitOnly, seasons);
     const { matchHistory: playerMatchHistory } = await calculateRankings(null, isMainCircuitOnly, seasons);
 

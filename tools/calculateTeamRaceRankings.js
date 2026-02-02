@@ -136,9 +136,12 @@ function getFullRaceNames(combo) {
  * Tracks team race combinations (PT, ZZ, etc.) and their matchups
  * Uses symmetric matchups: PT vs ZZ = ZZ vs PT
  * 
+ * @param {boolean} mainCircuitOnly - Whether to only include main circuit tournaments
+ * @param {Array<string>|null} seasons - Array of season strings to filter by
+ * @param {boolean} hideRandom - Whether to exclude Random race matchups from calculations
  * @returns {Promise<Object>} Object with rankings and matchHistory
  */
-export async function calculateTeamRaceRankings(mainCircuitOnly = false, seasons = null) {
+export async function calculateTeamRaceRankings(mainCircuitOnly = false, seasons = null, hideRandom = false) {
   const teamRaceStats = new Map(); // Key: matchup (e.g., "PT vs ZZ"), Value: stats object
   const allMatches = [];
 
@@ -248,6 +251,7 @@ export async function calculateTeamRaceRankings(mainCircuitOnly = false, seasons
     console.log(`Processing ${allMatches.length} matches`);
     let matchesWithRaces = 0;
     let matchesWithoutRaces = 0;
+    let matchesSkippedRandom = 0;
 
     for (const match of allMatches) {
       // Get races from each team
@@ -257,6 +261,13 @@ export async function calculateTeamRaceRankings(mainCircuitOnly = false, seasons
       // Skip if we don't have exactly 2 races for both teams
       if (team1Races.length !== 2 || team2Races.length !== 2) {
         matchesWithoutRaces++;
+        continue;
+      }
+
+      // Skip matches with Random races if hideRandom is enabled
+      const allRaces = [...team1Races, ...team2Races];
+      if (hideRandom && allRaces.includes('Random')) {
+        matchesSkippedRandom++;
         continue;
       }
       matchesWithRaces++;
@@ -575,6 +586,9 @@ export async function calculateTeamRaceRankings(mainCircuitOnly = false, seasons
     const combinedRankings = sortRankings(Array.from(combinedStats.values()));
 
     console.log(`Matches with races: ${matchesWithRaces}, without races: ${matchesWithoutRaces}`);
+    if (hideRandom && matchesSkippedRandom > 0) {
+      console.log(`Matches skipped (Random races): ${matchesSkippedRandom}`);
+    }
     console.log(`Found ${rankings.length} team race matchup combinations`);
     console.log(`Found ${combinedRankings.length} combined team race statistics`);
 

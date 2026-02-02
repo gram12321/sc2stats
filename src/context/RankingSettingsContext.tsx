@@ -7,6 +7,8 @@ interface RankingSettingsContextType {
       setFilterLowConfidence: (value: boolean) => void;
       mainCircuitOnly: boolean;
       setMainCircuitOnly: (value: boolean) => void;
+      hideRandom: boolean;
+      setHideRandom: (value: boolean) => void;
       seasons: string[];
       setSeasons: (value: string[]) => void;
 }
@@ -17,13 +19,15 @@ const STORAGE_KEYS = {
       USE_SEEDED_RANKINGS: 'sc2stats_use_seeded_rankings',
       FILTER_LOW_CONFIDENCE: 'sc2stats_filter_low_confidence',
       MAIN_CIRCUIT_ONLY: 'sc2stats_main_circuit_only',
+      HIDE_RANDOM: 'sc2stats_hide_random',
       SEASONS: 'sc2stats_seasons',
 };
 
 export function RankingSettingsProvider({ children }: { children: ReactNode }) {
-      const [useSeededRankings, setUseSeededRankingsState] = useState(false);
-      const [filterLowConfidence, setFilterLowConfidenceState] = useState(false);
-      const [mainCircuitOnly, setMainCircuitOnlyState] = useState(false);
+      const [useSeededRankings, setUseSeededRankingsState] = useState(true);
+      const [filterLowConfidence, setFilterLowConfidenceState] = useState(true);
+      const [mainCircuitOnly, setMainCircuitOnlyState] = useState(true);
+      const [hideRandom, setHideRandomState] = useState(true);
       const [seasons, setSeasonsState] = useState<string[]>(['2025', '2026']);
 
       // Load settings from localStorage on mount
@@ -36,6 +40,9 @@ export function RankingSettingsProvider({ children }: { children: ReactNode }) {
 
             const savedMainCircuit = localStorage.getItem(STORAGE_KEYS.MAIN_CIRCUIT_ONLY);
             if (savedMainCircuit !== null) setMainCircuitOnlyState(savedMainCircuit === 'true');
+
+            const savedHideRandom = localStorage.getItem(STORAGE_KEYS.HIDE_RANDOM);
+            if (savedHideRandom !== null) setHideRandomState(savedHideRandom === 'true');
 
             const savedSeasons = localStorage.getItem(STORAGE_KEYS.SEASONS);
             if (savedSeasons !== null) {
@@ -62,6 +69,11 @@ export function RankingSettingsProvider({ children }: { children: ReactNode }) {
             localStorage.setItem(STORAGE_KEYS.MAIN_CIRCUIT_ONLY, String(value));
       };
 
+      const setHideRandom = (value: boolean) => {
+            setHideRandomState(value);
+            localStorage.setItem(STORAGE_KEYS.HIDE_RANDOM, String(value));
+      };
+
       const setSeasons = (value: string[]) => {
             setSeasonsState(value);
             localStorage.setItem(STORAGE_KEYS.SEASONS, JSON.stringify(value));
@@ -76,6 +88,8 @@ export function RankingSettingsProvider({ children }: { children: ReactNode }) {
                         setFilterLowConfidence,
                         mainCircuitOnly,
                         setMainCircuitOnly,
+                        hideRandom,
+                        setHideRandom,
                         seasons,
                         setSeasons,
                   }}

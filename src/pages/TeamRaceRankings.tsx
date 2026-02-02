@@ -95,8 +95,7 @@ export function TeamRaceRankings({ }: TeamRaceRankingsProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [hideRandom, setHideRandom] = useState(false);
-  const { mainCircuitOnly, seasons } = useRankingSettings();
+  const { mainCircuitOnly, seasons, hideRandom, setHideRandom } = useRankingSettings();
   const [selectedMatchup, setSelectedMatchup] = useState<TeamRaceRanking | null>(null);
   const [isCombinedStats, setIsCombinedStats] = useState(false);
   const [sortColumn, setSortColumn] = useState<keyof TeamRaceRanking | 'rank' | null>(null);
@@ -114,7 +113,7 @@ export function TeamRaceRankings({ }: TeamRaceRankingsProps) {
     loadPlayerRankings();
     loadTeamRankings();
     loadAllPlayerRaces();
-  }, [mainCircuitOnly, seasons]);
+  }, [mainCircuitOnly, seasons, hideRandom]);
 
   const loadRankings = async () => {
     try {
@@ -123,6 +122,7 @@ export function TeamRaceRankings({ }: TeamRaceRankingsProps) {
       const queryParams = new URLSearchParams();
       if (mainCircuitOnly) queryParams.append('mainCircuitOnly', 'true');
       if (seasons.length > 0) queryParams.append('seasons', seasons.join(','));
+      if (hideRandom) queryParams.append('hideRandom', 'true');
       const response = await fetch(`/api/team-race-rankings?${queryParams.toString()}`);
       if (!response.ok) throw new Error('Failed to load team race rankings');
       const data = await response.json();
@@ -148,6 +148,7 @@ export function TeamRaceRankings({ }: TeamRaceRankingsProps) {
       const queryParams = new URLSearchParams();
       if (mainCircuitOnly) queryParams.append('mainCircuitOnly', 'true');
       if (seasons.length > 0) queryParams.append('seasons', seasons.join(','));
+      if (hideRandom) queryParams.append('hideRandom', 'true');
 
       if (isCombined) {
         // For combined stats, fetch all matches involving this combo
@@ -175,17 +176,7 @@ export function TeamRaceRankings({ }: TeamRaceRankingsProps) {
   };
 
   const filteredRankings = rankings.filter(matchup => {
-    // Filter out Random matchups if hideRandom is enabled
-    if (hideRandom && (
-      matchup.combo1Race1 === 'Random' ||
-      matchup.combo1Race2 === 'Random' ||
-      matchup.combo2Race1 === 'Random' ||
-      matchup.combo2Race2 === 'Random'
-    )) {
-      return false;
-    }
-
-    // Apply search filter
+    // Apply search filter only (Random filtering now done in backend)
     const searchLower = searchTerm.toLowerCase();
     return (
       matchup.name.toLowerCase().includes(searchLower) ||
@@ -197,14 +188,13 @@ export function TeamRaceRankings({ }: TeamRaceRankingsProps) {
   });
 
   const filteredCombinedRankings = combinedRankings.filter(matchup => {
-    // Filter out Random matchups if hideRandom is enabled
-    if (hideRandom && (
-      matchup.combo1Race1 === 'Random' ||
-      matchup.combo1Race2 === 'Random'
-    )) {
-      return false;
-    }
-    return true;
+    // Apply search filter only (Random filtering now done in backend)
+    const searchLower = searchTerm.toLowerCase();
+    return (
+      matchup.name.toLowerCase().includes(searchLower) ||
+      matchup.combo1.toLowerCase().includes(searchLower) ||
+      `${matchup.combo1Race1} ${matchup.combo1Race2}`.toLowerCase().includes(searchLower)
+    );
   });
 
   const handleSort = (column: keyof TeamRaceRanking | 'rank', isCombined: boolean = false) => {

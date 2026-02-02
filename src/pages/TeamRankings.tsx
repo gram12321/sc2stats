@@ -276,7 +276,7 @@ export function TeamRankings({ onNavigateToTeam }: TeamRankingsProps) {
       ) : (
         <>
           {/* Stats Summary */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Card className="bg-card/50 backdrop-blur-sm hover:bg-card/80 transition-colors">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
@@ -300,30 +300,6 @@ export function TeamRankings({ onNavigateToTeam }: TeamRankingsProps) {
               <CardContent>
                 <div className="text-2xl font-bold">
                   {rankedRankings.reduce((sum, t) => sum + t.matches, 0)}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-card/50 backdrop-blur-sm hover:bg-card/80 transition-colors">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Net Positive</CardTitle>
-                <TrendingUp className="h-4 w-4 text-emerald-500" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-emerald-500">
-                  {rankedRankings.filter(t => t.points > 0).length}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-card/50 backdrop-blur-sm hover:bg-card/80 transition-colors">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Net Negative</CardTitle>
-                <TrendingDown className="h-4 w-4 text-rose-500" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-rose-500">
-                  {rankedRankings.filter(t => t.points < 0).length}
                 </div>
               </CardContent>
             </Card>
