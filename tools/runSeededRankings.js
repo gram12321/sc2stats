@@ -374,25 +374,36 @@ async function runSeededPlayerRankings(matches) {
   console.log('PLAYER RANKINGS - THREE-PASS SEEDING');
   console.log('='.repeat(80));
 
-  // Sort matches chronologically
-  const sortedMatches = sortAllMatches(matches, false);
-  const reverseSortedMatches = sortAllMatches(matches, true);
+  // Filter matches for Pass 1 & 2: Only use 2025 season for seeding
+  const seedingMatches = matches.filter(match => {
+    const matchDate = match.tournamentDate || match.date;
+    if (!matchDate) return false;
+    const year = matchDate.split('-')[0];
+    return year === '2025';
+  });
 
-  // Pass 1: Forward chronological
-  console.log('\n>>> PASS 1: Forward Chronological <<<');
-  const pass1Stats = calculateRankingsFromMatches(sortedMatches, null, 'Pass 1');
+  console.log(`\nSeeding with ${seedingMatches.length} matches from 2025 season`);
+  console.log(`Final ranking will use all ${matches.length} matches`);
+
+  // Sort matches chronologically
+  const seedingSortedMatches = sortAllMatches(seedingMatches, false);
+  const seedingReverseSortedMatches = sortAllMatches(seedingMatches, true);
+  const allSortedMatches = sortAllMatches(matches, false);
+
+  // Pass 1: Forward chronological (2025 only)
+  console.log('\n>>> PASS 1: Forward Chronological (2025 Season) <<<');
+  const pass1Stats = calculateRankingsFromMatches(seedingSortedMatches, null, 'Pass 1');
   const pass1Ratings = extractRatings(pass1Stats, 2); // Require 2 matches to generate a seed
 
-  // Pass 2: Reverse chronological (not used for seeding, just for analysis)
-  console.log('\n>>> PASS 2: Reverse Chronological <<<');
-  const pass2Stats = calculateRankingsFromMatches(reverseSortedMatches, null, 'Pass 2');
+  // Pass 2: Reverse chronological (2025 only)
+  console.log('\n>>> PASS 2: Reverse Chronological (2025 Season) <<<');
+  const pass2Stats = calculateRankingsFromMatches(seedingReverseSortedMatches, null, 'Pass 2');
   const pass2Ratings = extractRatings(pass2Stats, 2); // Require 2 matches
 
-  // Pass 3: Forward chronological with Pass 1 seeds
-  // Pass 3: Forward chronological with Averaged seeds
-  console.log('\n>>> PASS 3: Forward Chronological with Averaged Seeding <<<');
+  // Pass 3: Forward chronological with Averaged seeds (ALL matches)
+  console.log('\n>>> PASS 3: Forward Chronological with Averaged Seeding (All Seasons) <<<');
   const averageRatings = calculateAverageRatings(pass1Ratings, pass2Ratings);
-  const pass3Stats = calculateRankingsFromMatches(sortedMatches, averageRatings, 'Pass 3');
+  const pass3Stats = calculateRankingsFromMatches(allSortedMatches, averageRatings, 'Pass 3');
 
   // Sort and display results
   const finalRankings = sortRankings(Array.from(pass3Stats.values()));
@@ -424,25 +435,36 @@ async function runSeededTeamRankings(matches) {
   console.log('TEAM RANKINGS - THREE-PASS SEEDING');
   console.log('='.repeat(80));
 
-  // Sort matches chronologically
-  const sortedMatches = sortAllMatches(matches, false);
-  const reverseSortedMatches = sortAllMatches(matches, true);
+  // Filter matches for Pass 1 & 2: Only use 2025 season for seeding
+  const seedingMatches = matches.filter(match => {
+    const matchDate = match.tournamentDate || match.date;
+    if (!matchDate) return false;
+    const year = matchDate.split('-')[0];
+    return year === '2025';
+  });
 
-  // Pass 1: Forward chronological
-  console.log('\n>>> PASS 1: Forward Chronological <<<');
-  const pass1Stats = calculateTeamRankingsFromMatches(sortedMatches, null, 'Pass 1');
+  console.log(`\nSeeding with ${seedingMatches.length} matches from 2025 season`);
+  console.log(`Final ranking will use all ${matches.length} matches`);
+
+  // Sort matches chronologically
+  const seedingSortedMatches = sortAllMatches(seedingMatches, false);
+  const seedingReverseSortedMatches = sortAllMatches(seedingMatches, true);
+  const allSortedMatches = sortAllMatches(matches, false);
+
+  // Pass 1: Forward chronological (2025 only)
+  console.log('\n>>> PASS 1: Forward Chronological (2025 Season) <<<');
+  const pass1Stats = calculateTeamRankingsFromMatches(seedingSortedMatches, null, 'Pass 1');
   const pass1Ratings = extractRatings(pass1Stats, 2); // Require 2 matches to generate a seed
 
-  // Pass 2: Reverse chronological (not used for seeding, just for analysis)
-  console.log('\n>>> PASS 2: Reverse Chronological <<<');
-  const pass2Stats = calculateTeamRankingsFromMatches(reverseSortedMatches, null, 'Pass 2');
+  // Pass 2: Reverse chronological (2025 only)
+  console.log('\n>>> PASS 2: Reverse Chronological (2025 Season) <<<');
+  const pass2Stats = calculateTeamRankingsFromMatches(seedingReverseSortedMatches, null, 'Pass 2');
   const pass2Ratings = extractRatings(pass2Stats, 2); // Require 2 matches
 
-  // Pass 3: Forward chronological with Pass 1 seeds
-  // Pass 3: Forward chronological with Averaged seeds
-  console.log('\n>>> PASS 3: Forward Chronological with Averaged Seeding <<<');
+  // Pass 3: Forward chronological with Averaged seeds (ALL matches)
+  console.log('\n>>> PASS 3: Forward Chronological with Averaged Seeding (All Seasons) <<<');
   const averageRatings = calculateAverageRatings(pass1Ratings, pass2Ratings);
-  const pass3Stats = calculateTeamRankingsFromMatches(sortedMatches, averageRatings, 'Pass 3');
+  const pass3Stats = calculateTeamRankingsFromMatches(allSortedMatches, averageRatings, 'Pass 3');
 
   // Sort and display results
   const finalRankings = sortRankings(

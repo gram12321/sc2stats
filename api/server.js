@@ -274,11 +274,24 @@ app.get('/api/team-rankings', async (req, res) => {
 // Get seeded player rankings (from three-pass seeding process)
 app.get('/api/seeded-player-rankings', async (req, res) => {
   try {
+    const isMainCircuitOnly = req.query.mainCircuitOnly === 'true';
+    const seasons = req.query.seasons ? req.query.seasons.split(',') : null;
+    
     const seededRankingsFile = join(outputDir, 'seeded_player_rankings.json');
     try {
-      const content = await readFile(seededRankingsFile, 'utf-8');
-      const rankings = JSON.parse(content);
-      res.json(rankings);
+      // Load seeds for recalculation
+      const { playerSeeds } = await loadSeeds();
+      
+      // If filtering is needed, recalculate with filters and seeds
+      if (isMainCircuitOnly || (seasons && seasons.length > 0)) {
+        const { rankings } = await calculateRankings(playerSeeds, isMainCircuitOnly, seasons);
+        res.json(rankings);
+      } else {
+        // No filtering, return pre-calculated results
+        const content = await readFile(seededRankingsFile, 'utf-8');
+        const rankings = JSON.parse(content);
+        res.json(rankings);
+      }
     } catch (fileError) {
       if (fileError.code === 'ENOENT') {
         res.status(404).json({ error: 'Seeded rankings not found. Please run the seeding script first: node tools/runSeededRankings.js' });
@@ -295,11 +308,24 @@ app.get('/api/seeded-player-rankings', async (req, res) => {
 // Get seeded team rankings (from three-pass seeding process)
 app.get('/api/seeded-team-rankings', async (req, res) => {
   try {
+    const isMainCircuitOnly = req.query.mainCircuitOnly === 'true';
+    const seasons = req.query.seasons ? req.query.seasons.split(',') : null;
+    
     const seededRankingsFile = join(outputDir, 'seeded_team_rankings.json');
     try {
-      const content = await readFile(seededRankingsFile, 'utf-8');
-      const rankings = JSON.parse(content);
-      res.json(rankings);
+      // Load seeds for recalculation
+      const { teamSeeds } = await loadSeeds();
+      
+      // If filtering is needed, recalculate with filters and seeds
+      if (isMainCircuitOnly || (seasons && seasons.length > 0)) {
+        const { rankings } = await calculateTeamRankings(teamSeeds, isMainCircuitOnly, seasons);
+        res.json(rankings);
+      } else {
+        // No filtering, return pre-calculated results
+        const content = await readFile(seededRankingsFile, 'utf-8');
+        const rankings = JSON.parse(content);
+        res.json(rankings);
+      }
     } catch (fileError) {
       if (fileError.code === 'ENOENT') {
         res.status(404).json({ error: 'Seeded rankings not found. Please run the seeding script first: node tools/runSeededRankings.js' });
