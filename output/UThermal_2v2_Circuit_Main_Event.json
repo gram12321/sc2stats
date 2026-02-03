@@ -15,7 +15,9 @@
       "Rohana",
       "Undercurrent",
       "Yellowjacket"
-    ]
+    ],
+    "is_main_circuit": true,
+    "season": 2025
   },
   "matches": [
     {
@@ -114,7 +116,7 @@
         },
         "player2": {
           "name": "trigger",
-          "race": "Protoss"
+          "race": "Random"
         }
       },
       "team2": {
@@ -124,7 +126,7 @@
         },
         "player2": {
           "name": "Lambo",
-          "race": "Zerg"
+          "race": "Random"
         }
       },
       "team1_score": 3,
@@ -441,7 +443,7 @@
         },
         "player2": {
           "name": "uThermal",
-          "race": "Terran"
+          "race": "Random"
         }
       },
       "team2": {
