@@ -129,11 +129,25 @@ export function Tooltip({ children, content, side = 'top', delayDuration = 200 }
     };
   }, []);
 
-  const arrowClasses = {
-    top: 'top-full left-1/2 -translate-x-1/2 border-t-primary border-l-transparent border-r-transparent border-b-transparent',
-    bottom: 'bottom-full left-1/2 -translate-x-1/2 border-b-primary border-l-transparent border-r-transparent border-t-transparent',
-    left: 'left-full top-1/2 -translate-y-1/2 border-l-primary border-t-transparent border-b-transparent border-r-transparent',
-    right: 'right-full top-1/2 -translate-y-1/2 border-r-primary border-t-transparent border-b-transparent border-l-transparent'
+  const getArrowStyles = (side: string) => {
+    const baseStyles = {
+      borderWidth: '6px',
+      borderStyle: 'solid',
+      borderColor: 'transparent'
+    };
+    
+    switch (side) {
+      case 'top':
+        return { ...baseStyles, top: '100%', left: '50%', transform: 'translateX(-50%)', borderTopColor: '#ffffff' };
+      case 'bottom':
+        return { ...baseStyles, bottom: '100%', left: '50%', transform: 'translateX(-50%)', borderBottomColor: '#ffffff' };
+      case 'left':
+        return { ...baseStyles, left: '100%', top: '50%', transform: 'translateY(-50%)', borderLeftColor: '#ffffff' };
+      case 'right':
+        return { ...baseStyles, right: '100%', top: '50%', transform: 'translateY(-50%)', borderRightColor: '#ffffff' };
+      default:
+        return baseStyles;
+    }
   };
 
   return (
@@ -149,17 +163,21 @@ export function Tooltip({ children, content, side = 'top', delayDuration = 200 }
       {isOpen && createPortal(
         <div
           ref={tooltipRef}
-          className={`fixed z-[99999] px-3 py-2 text-sm text-primary-foreground bg-primary rounded-md shadow-md max-w-xs pointer-events-none animate-in fade-in zoom-in-95 duration-200`}
+          className="bg-white p-3 border border-gray-200 shadow-lg rounded-md text-sm z-[99999] max-w-xs pointer-events-none"
           style={{
+            position: 'fixed',
             top: `${position.top}px`,
             left: `${position.left}px`
           }}
           role="tooltip"
         >
           {content}
-          {/* Arrow matching the primary background */}
+          {/* Arrow matching the tooltip background */}
           <div
-            className={`absolute w-0 h-0 border-4 ${arrowClasses[tooltipSide]}`}
+            className="absolute w-0 h-0"
+            style={{
+              ...getArrowStyles(tooltipSide)
+            }}
           />
         </div>,
         document.body
