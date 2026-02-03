@@ -25,10 +25,14 @@ interface TeamMatch {
   team1: {
     player1: string;
     player2: string;
+    player1_race?: string; // Race abbreviation (P, T, Z, R)
+    player2_race?: string; // Race abbreviation (P, T, Z, R)
   };
   team2: {
     player1: string;
     player2: string;
+    player1_race?: string; // Race abbreviation (P, T, Z, R)
+    player2_race?: string; // Race abbreviation (P, T, Z, R)
   };
   team1_score: number;
   team2_score: number;

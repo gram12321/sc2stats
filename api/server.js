@@ -825,6 +825,9 @@ app.get('/api/team/:player1/:player2', async (req, res) => {
       const playerMatch = playerMatchMap.get(key);
       return {
         ...match,
+        // Merge race data from playerMatch if available
+        team1: playerMatch?.team1 || match.team1,
+        team2: playerMatch?.team2 || match.team2,
         ratingChange: impact?.ratingChange || 0,
         won: impact?.won || false,
         isDraw: impact?.isDraw || false,

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Race } from '../types/tournament';
 import { MatchHistoryItem } from './MatchHistoryItem';
-import { getRaceAbbr } from '../lib/utils';
+import { getRaceAbbr, formatRankingPoints } from '../lib/utils';
 
 interface RaceMatchupData {
   matchup: string;
@@ -10,6 +10,8 @@ interface RaceMatchupData {
   draws: number;
   total: number;
   winRate: number;
+  rating: number;
+  ratingChange: number;
 }
 
 interface RaceMatchupStatsProps {
@@ -84,11 +86,44 @@ export function RaceMatchupStats({
     
     return { race1, race2 };
   };
-  // Calculate matchup statistics
-  const calculateMatchups = (): RaceMatchupData[] => {
-    const matchupMap = new Map<string, { wins: number; losses: number; draws: number }>();
+  
+  // Helper functions for rating calculations (similar to other parts of codebase)
+  const predictWinProbability = (rating1: number, rating2: number, populationStdDev: number = 350): number => {
+    const ratingDiff = rating2 - rating1;
+    return 1 / (1 + Math.pow(3, ratingDiff / populationStdDev));
+  };
 
-    matchHistory.forEach(match => {
+  const getKFactor = (matchCount: number): number => {
+    if (matchCount <= 2) return 80;
+    if (matchCount <= 4) return 40;
+    if (matchCount <= 8) return 50;
+    const adaptiveK = 32 + (100 / matchCount);
+    return Math.min(50, adaptiveK);
+  };
+
+  const calculateRatingChange = (expectedWin: number, actualWin: boolean, kFactor: number, isDraw: boolean = false): number => {
+    const actualResult = isDraw ? 0.5 : (actualWin ? 1 : 0);
+    return kFactor * (actualResult - expectedWin);
+  };
+
+  // Calculate matchup statistics with ratings
+  const calculateMatchups = (): RaceMatchupData[] => {
+    const matchupMap = new Map<string, { 
+      wins: number; 
+      losses: number; 
+      draws: number;
+      rating: number;
+      matchCount: number;
+    }>();
+
+    // Sort matches chronologically to process ratings in order
+    const sortedMatches = [...matchHistory].sort((a, b) => {
+      const dateA = new Date(a.tournament_date || a.match_date || 0).getTime();
+      const dateB = new Date(b.tournament_date || b.match_date || 0).getTime();
+      return dateA - dateB;
+    });
+
+    sortedMatches.forEach(match => {
       // Determine if our player/team is team1 or team2
       let opponentTeam: { player1: string; player2: string };
 
@@ -135,10 +170,37 @@ export function RaceMatchupStats({
       }
 
       if (!matchupMap.has(matchupKey)) {
-        matchupMap.set(matchupKey, { wins: 0, losses: 0, draws: 0 });
+        matchupMap.set(matchupKey, { 
+          wins: 0, 
+          losses: 0, 
+          draws: 0,
+          rating: 0,
+          matchCount: 0
+        });
       }
 
       const stats = matchupMap.get(matchupKey)!;
+      
+      // Calculate rating change for this matchup
+      const allMatchups = Array.from(matchupMap.values());
+      const populationMean = allMatchups.length > 0 
+        ? allMatchups.reduce((sum, s) => sum + s.rating, 0) / allMatchups.length 
+        : 0;
+      const populationVariance = allMatchups.length > 0
+        ? allMatchups.reduce((sum, s) => sum + Math.pow(s.rating - populationMean, 2), 0) / allMatchups.length
+        : 0;
+      const populationStdDev = Math.max(Math.sqrt(populationVariance), 50);
+      
+      // Compare against neutral baseline (0) - absolute matchup strength
+      const opponentRating = 0;
+      const expectedWin = predictWinProbability(stats.rating, opponentRating, populationStdDev);
+      const kFactor = getKFactor(stats.matchCount + 1);
+      const ratingChange = calculateRatingChange(expectedWin, match.won, kFactor, match.isDraw);
+      
+      // Update stats
+      stats.rating += ratingChange;
+      stats.matchCount++;
+      
       if (match.isDraw) {
         stats.draws++;
       } else if (match.won) {
@@ -153,18 +215,24 @@ export function RaceMatchupStats({
     matchupMap.forEach((stats, matchup) => {
       const total = stats.wins + stats.losses + stats.draws;
       const winRate = total > 0 ? (stats.wins / total) * 100 : 0;
+      
+      // Calculate overall rating change (final rating from initial 0)
+      const ratingChange = stats.rating;
+      
       matchups.push({
         matchup,
         wins: stats.wins,
         losses: stats.losses,
         draws: stats.draws,
         total,
-        winRate
+        winRate,
+        rating: stats.rating,
+        ratingChange
       });
     });
 
-    // Sort by total games (most common matchups first)
-    return matchups.sort((a, b) => b.winRate - a.winRate || b.total - a.total);
+    // Sort by rating (highest first), then by win rate
+    return matchups.sort((a, b) => b.rating - a.rating || b.winRate - a.winRate);
   };
 
   const matchups = calculateMatchups();
@@ -248,7 +316,7 @@ export function RaceMatchupStats({
     <div className="bg-card rounded-lg border border-border shadow-sm">
       <div className="px-6 py-4 border-b border-border">
         <h2 className="text-lg font-semibold text-foreground">Race Matchup Statistics</h2>
-        <p className="text-sm text-muted-foreground mt-1">Performance against different race combinations</p>
+        <p className="text-sm text-muted-foreground mt-1">Performance and rating against different race combinations</p>
       </div>
       <div className="p-6">
         <div className="space-y-3">
@@ -296,6 +364,16 @@ export function RaceMatchupStats({
                 }`}>
                   {matchup.winRate.toFixed(0)}%
                 </span>
+              </div>
+              
+              {/* Rating */}
+              <div className="w-24 flex-shrink-0 text-right">
+                <div className="text-sm font-semibold text-foreground">
+                  {formatRankingPoints(matchup.rating)}
+                </div>
+                <div className={`text-xs ${matchup.ratingChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  {matchup.ratingChange >= 0 ? '+' : ''}{formatRankingPoints(matchup.ratingChange)}
+                </div>
               </div>
             </div>
           ))}
