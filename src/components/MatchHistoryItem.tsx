@@ -1,5 +1,5 @@
 import { Race } from '../types/tournament';
-import { formatRankingPoints } from '../lib/utils';
+import { formatRankingPoints, getRaceAbbr } from '../lib/utils';
 import { Tooltip } from './ui/tooltip';
 import { cn } from '../lib/utils'; // Import cn utility
 
@@ -42,10 +42,14 @@ interface MatchData {
   team1: {
     player1: string;
     player2: string;
+    player1_race?: string; // Race abbreviation (P, T, Z, R)
+    player2_race?: string; // Race abbreviation (P, T, Z, R)
   };
   team2: {
     player1: string;
     player2: string;
+    player1_race?: string; // Race abbreviation (P, T, Z, R)
+    player2_race?: string; // Race abbreviation (P, T, Z, R)
   };
   team1_score: number;
   team2_score: number;
@@ -115,10 +119,26 @@ interface MatchHistoryItemProps {
   formatDate: (dateStr: string | null) => string;
 }
 
-const getRaceAbbrev = (race: Race | null | undefined): string => {
-  if (!race) return '';
-  return race === 'Random' ? 'R' : race[0];
-};
+/**
+ * Get the actual race used by a player in this specific match
+ * Checks match data first, then falls back to playerRaces defaults
+ */
+function getPlayerRaceInMatch(
+  playerName: string,
+  team: { player1: string; player2: string; player1_race?: string; player2_race?: string },
+  playerRaces: Record<string, Race>
+): string {
+  // Check if this player is player1 or player2 in the team
+  if (team.player1 === playerName && team.player1_race) {
+    return team.player1_race;
+  }
+  if (team.player2 === playerName && team.player2_race) {
+    return team.player2_race;
+  }
+  // Fallback to default race
+  const defaultRace = playerRaces[playerName];
+  return defaultRace ? getRaceAbbr(defaultRace) : '';
+}
 
 function getRatingChangeTooltip(
   impact: PlayerImpact | TeamImpact,
@@ -387,13 +407,13 @@ export function MatchHistoryItem({
             {team1Players.map((playerName, idx) => {
               const impact = getPlayerImpact(match, playerName);
               const rank = resolvePlayerRank(playerName, impact);
-              const race = playerRaces[playerName];
+              const raceAbbr = getPlayerRaceInMatch(playerName, team1Data, playerRaces);
               const isHighlighted = highlightPlayers.includes(playerName);
               return (
                 <div key={playerName} className="flex items-center gap-1 shrink-0">
                   {idx > 0 && <span className="text-muted-foreground">+</span>}
                   <span className={isHighlighted ? "text-primary font-bold" : "text-foreground"}>{playerName}</span>
-                  {race && <span className="text-xs text-muted-foreground">({getRaceAbbrev(race)})</span>}
+                  {raceAbbr && <span className="text-xs text-muted-foreground">({raceAbbr})</span>}
                   {rank && <span className="text-[10px] text-muted-foreground/70">#{rank}</span>}
                   {impact && (
                     <Tooltip content={getRatingChangeTooltip(impact, playerName, team2Players.join('+'), 'player')}>
@@ -421,12 +441,12 @@ export function MatchHistoryItem({
             {team2Players.map((playerName, idx) => {
               const impact = getPlayerImpact(match, playerName);
               const rank = resolvePlayerRank(playerName, impact);
-              const race = playerRaces[playerName];
+              const raceAbbr = getPlayerRaceInMatch(playerName, team2Data, playerRaces);
               const isHighlighted = highlightPlayers.includes(playerName);
               return (
                 <div key={playerName} className="flex items-center gap-1 shrink-0 flex-row-reverse">
                   <span className={isHighlighted ? "text-primary font-bold" : "text-foreground"}>{playerName}</span>
-                  {race && <span className="text-xs text-muted-foreground">({getRaceAbbrev(race)})</span>}
+                  {raceAbbr && <span className="text-xs text-muted-foreground">({raceAbbr})</span>}
                   {rank && <span className="text-[10px] text-muted-foreground/70">#{rank}</span>}
                   {impact && (
                     <Tooltip content={getRatingChangeTooltip(impact, playerName, team1Players.join('+'), 'player')}>

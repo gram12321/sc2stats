@@ -38,3 +38,14 @@ export function formatRankingPoints(value: number): string {
   const rounded = Math.round(value * 100) / 100;
   return rounded.toString();
 }
+
+/**
+ * Get race abbreviation from full race name
+ * @param {string | null | undefined} race - Full race name (Protoss, Terran, Zerg, Random)
+ * @returns {string} Single letter abbreviation (P, T, Z, R) or empty string
+ */
+export function getRaceAbbr(race: string | null | undefined): string {
+  if (!race) return '';
+  if (race === 'Random') return 'R';
+  return race[0];
+}

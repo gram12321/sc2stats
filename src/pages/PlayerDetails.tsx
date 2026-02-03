@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useRankingSettings } from '../context/RankingSettingsContext';
 import { Race } from '../types/tournament';
 import { getPlayerDefaults } from '../lib/playerDefaults';
-import { formatRankingPoints } from '../lib/utils';
+import { formatRankingPoints, getRaceAbbr } from '../lib/utils';
 import { MatchHistoryItem } from '../components/MatchHistoryItem';
 import { RatingChart } from '../components/RatingChart';
 import { RaceMatchupStats } from '../components/RaceMatchupStats';
@@ -225,13 +225,8 @@ export function PlayerDetails({ playerName, onBack }: PlayerDetailsProps) {
     const seenRaces = new Set<string>();
 
     Object.values(match.race_impacts).forEach((impact: any) => {
-      const getRaceAbbrev = (race: string) => {
-        if (race === 'Random') return 'R';
-        return race[0];
-      };
-
-      const race1Abbr = getRaceAbbrev(impact.race1);
-      const race2Abbr = getRaceAbbrev(impact.race2);
+      const race1Abbr = getRaceAbbr(impact.race1);
+      const race2Abbr = getRaceAbbr(impact.race2);
 
       if (!seenRaces.has(race1Abbr)) {
         raceChanges.push({ race: race1Abbr, change: impact.ratingChange });
@@ -478,6 +473,12 @@ export function PlayerDetails({ playerName, onBack }: PlayerDetailsProps) {
             playerNames={[playerName]}
             playerRaces={playerRaces}
             isTeam={false}
+            playerRankings={playerRankings}
+            teamRankings={teamRankings}
+            normalizeTeamKey={normalizeTeamKey}
+            getTeamImpact={(match, player1, player2) => getTeamImpact(match as PlayerMatch, player1, player2)}
+            getPlayerImpact={(match, playerName) => getPlayerImpact(match as PlayerMatch, playerName)}
+            formatDate={formatDate}
           />
 
           {/* Match History */}

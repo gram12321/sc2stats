@@ -4,6 +4,7 @@ import { RankingFilters } from '../components/RankingFilters';
 import { Race } from '../types/tournament';
 import { getPlayerDefaults } from '../lib/playerDefaults';
 import { MatchHistoryItem } from '../components/MatchHistoryItem';
+import { getRaceAbbr } from '../lib/utils';
 
 interface MatchHistory {
   match_id: string;
@@ -207,14 +208,8 @@ export function MatchesList({ }: MatchesListProps) {
     const seenRaces = new Set<string>();
 
     Object.values(match.race_impacts).forEach((impact: any) => {
-      // Get race abbreviations
-      const getRaceAbbrev = (race: string) => {
-        if (race === 'Random') return 'R';
-        return race[0];
-      };
-
-      const race1Abbr = getRaceAbbrev(impact.race1);
-      const race2Abbr = getRaceAbbrev(impact.race2);
+      const race1Abbr = getRaceAbbr(impact.race1);
+      const race2Abbr = getRaceAbbr(impact.race2);
 
       if (!seenRaces.has(race1Abbr)) {
         raceChanges.push({ race: race1Abbr, change: impact.ratingChange });

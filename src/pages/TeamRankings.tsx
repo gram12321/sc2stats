@@ -3,7 +3,7 @@ import { useRankingSettings } from '../context/RankingSettingsContext';
 import { RankingFilters } from '../components/RankingFilters';
 import { Race } from '../types/tournament';
 import { getPlayerDefaults } from '../lib/playerDefaults';
-import { formatRankingPoints } from '../lib/utils';
+import { formatRankingPoints, getRaceAbbr } from '../lib/utils';
 import {
   Table,
   TableBody,
@@ -221,11 +221,6 @@ export function TeamRankings({ onNavigateToTeam }: TeamRankingsProps) {
       case 'Random': return 'bg-gray-500/10 text-gray-400 hover:bg-gray-500/20';
       default: return 'bg-gray-500/10 text-gray-400';
     }
-  };
-
-  const getRaceAbbr = (race: Race | null | undefined): string => {
-    if (!race) return '';
-    return race.charAt(0);
   };
 
   const SortIcon = ({ column }: { column: keyof TeamRanking | 'rank' | 'player1' }) => {

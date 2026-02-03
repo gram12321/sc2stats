@@ -16,6 +16,42 @@ import {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const outputDir = join(__dirname, '..', 'output');
+const playerDefaultsFile = join(outputDir, 'player_defaults.json');
+
+/**
+ * Load player defaults from JSON file
+ * @returns {Promise<Object>} Object mapping player names to races
+ */
+async function loadPlayerDefaults() {
+  try {
+    const content = await readFile(playerDefaultsFile, 'utf-8');
+    return JSON.parse(content);
+  } catch (err) {
+    if (err.code === 'ENOENT') {
+      return {};
+    }
+    console.error('Error loading player defaults:', err);
+    return {};
+  }
+}
+
+/**
+ * Get race from player, using defaults if race is not set in match data
+ * @param {Object} player - Player object with optional race property
+ * @param {Object} playerDefaults - Object mapping player names to default races
+ * @returns {string|null} Race name or null
+ */
+function getPlayerRace(player, playerDefaults = {}) {
+  // First check if race is set in match data (this takes precedence - user can override defaults)
+  if (player?.race) {
+    return player.race;
+  }
+  // Otherwise, use default race if available
+  if (player?.name && playerDefaults[player.name]) {
+    return playerDefaults[player.name];
+  }
+  return null;
+}
 
 /**
  * Round order mapping for sorting matches chronologically
@@ -190,9 +226,20 @@ function getAverageOpponentRating(opponentNames, playerStats) {
  * @returns {Object} Object with rankings
  */
 // Main function to process rankings
-function calculateRankingsFromMatches(sortedMatches, seeds = null) {
+function calculateRankingsFromMatches(sortedMatches, seeds = null, playerDefaults = {}) {
   const playerStats = new Map();
   const matchHistory = [];
+
+  const getRaceAbbr = (race) => {
+    if (!race) return null;
+    const raceAbbr = {
+      'Protoss': 'P',
+      'Terran': 'T',
+      'Zerg': 'Z',
+      'Random': 'R'
+    };
+    return raceAbbr[race] || race[0];
+  };
 
   for (const match of sortedMatches) {
     // Determine winner
@@ -296,11 +343,15 @@ function calculateRankingsFromMatches(sortedMatches, seeds = null) {
       round: match.round,
       team1: {
         player1: match.team1?.player1?.name,
-        player2: match.team1?.player2?.name
+        player2: match.team1?.player2?.name,
+        player1_race: getRaceAbbr(getPlayerRace(match.team1?.player1, playerDefaults)),
+        player2_race: getRaceAbbr(getPlayerRace(match.team1?.player2, playerDefaults))
       },
       team2: {
         player1: match.team2?.player1?.name,
-        player2: match.team2?.player2?.name
+        player2: match.team2?.player2?.name,
+        player1_race: getRaceAbbr(getPlayerRace(match.team2?.player1, playerDefaults)),
+        player2_race: getRaceAbbr(getPlayerRace(match.team2?.player2, playerDefaults))
       },
       team1_score: match.team1_score,
       team2_score: match.team2_score,
@@ -322,6 +373,9 @@ function calculateRankingsFromMatches(sortedMatches, seeds = null) {
  */
 export async function calculateRankings(seeds = null, mainCircuitOnly = false, seasons = null) {
   try {
+    // Load player defaults first
+    const playerDefaults = await loadPlayerDefaults();
+    
     // Load tournament files
     const tournaments = await loadTournamentFiles();
 
@@ -332,7 +386,7 @@ export async function calculateRankings(seeds = null, mainCircuitOnly = false, s
     const sortedMatches = sortAllMatches(allMatches);
 
     // Calculate rankings from sorted matches
-    return calculateRankingsFromMatches(sortedMatches, seeds);
+    return calculateRankingsFromMatches(sortedMatches, seeds, playerDefaults);
   } catch (error) {
     console.error('Error calculating rankings:', error);
     throw error;
