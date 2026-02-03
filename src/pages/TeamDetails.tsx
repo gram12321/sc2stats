@@ -5,6 +5,7 @@ import { Race } from '../types/tournament';
 import { getPlayerDefaults } from '../lib/playerDefaults';
 import { MatchHistoryItem } from '../components/MatchHistoryItem';
 import { RatingChart } from '../components/RatingChart';
+import { RaceMatchupStats } from '../components/RaceMatchupStats';
 
 const ROUND_ORDER: Record<string, number> = {
   'Round of 16': 1,
@@ -435,8 +436,9 @@ export function TeamDetails({ player1, player2, onBack }: TeamDetailsProps) {
           </div>
         </div>
 
-        {/* Rating Chart */}
-        <div className="mb-6 relative">
+        <div className="space-y-6">
+          {/* Rating Chart */}
+          <div className="relative">
           <div className="absolute top-4 right-4 z-10 flex bg-gray-100 rounded-lg p-1 border border-gray-200">
             <button
               onClick={() => setChartMode('rating')}
@@ -454,10 +456,18 @@ export function TeamDetails({ player1, player2, onBack }: TeamDetailsProps) {
             </button>
           </div>
           <RatingChart data={chartData} showRank={chartMode === 'rank'} />
-        </div>
+          </div>
 
-        {/* Match History */}
-        <div className="bg-card rounded-lg border border-border shadow-sm">
+          {/* Race Matchup Statistics */}
+          <RaceMatchupStats
+            matchHistory={sortedMatchHistory}
+            playerNames={[player1, player2]}
+            playerRaces={playerRaces}
+            isTeam={true}
+          />
+
+          {/* Match History */}
+          <div className="bg-card rounded-lg border border-border shadow-sm">
           <div className="px-6 py-4 border-b border-border">
             <h2 className="text-lg font-semibold text-foreground">Match History</h2>
           </div>
@@ -509,6 +519,7 @@ export function TeamDetails({ player1, player2, onBack }: TeamDetailsProps) {
               })
             )}
           </div>
+        </div>
         </div>
       </div>
     </div>

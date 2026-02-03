@@ -5,6 +5,7 @@ import { getPlayerDefaults } from '../lib/playerDefaults';
 import { formatRankingPoints } from '../lib/utils';
 import { MatchHistoryItem } from '../components/MatchHistoryItem';
 import { RatingChart } from '../components/RatingChart';
+import { RaceMatchupStats } from '../components/RaceMatchupStats';
 
 interface PlayerMatch {
   match_id: string;
@@ -449,8 +450,9 @@ export function PlayerDetails({ playerName, onBack }: PlayerDetailsProps) {
           </div>
         </div>
 
-        {/* Rating Chart */}
-        <div className="mb-6 relative">
+        <div className="space-y-6">
+          {/* Rating Chart */}
+          <div className="relative">
           <div className="absolute top-4 right-4 z-10 flex bg-gray-100 rounded-lg p-1 border border-gray-200">
             <button
               onClick={() => setChartMode('rating')}
@@ -468,10 +470,18 @@ export function PlayerDetails({ playerName, onBack }: PlayerDetailsProps) {
             </button>
           </div>
           <RatingChart data={chartData} showRank={chartMode === 'rank'} />
-        </div>
+          </div>
 
-        {/* Match History */}
-        <div className="bg-card rounded-lg border border-border shadow-sm">
+          {/* Race Matchup Statistics */}
+          <RaceMatchupStats
+            matchHistory={sortedMatchHistory}
+            playerNames={[playerName]}
+            playerRaces={playerRaces}
+            isTeam={false}
+          />
+
+          {/* Match History */}
+          <div className="bg-card rounded-lg border border-border shadow-sm">
           <div className="px-6 py-4 border-b border-border">
             <h2 className="text-lg font-semibold text-foreground">Match History</h2>
           </div>
@@ -521,6 +531,7 @@ export function PlayerDetails({ playerName, onBack }: PlayerDetailsProps) {
               })
             )}
           </div>
+        </div>
         </div>
       </div>
     </div>
