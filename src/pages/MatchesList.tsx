@@ -83,6 +83,7 @@ export function MatchesList({ }: MatchesListProps) {
   const [playerRankings, setPlayerRankings] = useState<Record<string, { rank: number; points: number; confidence: number }>>({});
   const [teamRankings, setTeamRankings] = useState<Record<string, { rank: number; points: number; confidence: number }>>({});
   const [playerRaces, setPlayerRaces] = useState<Record<string, Race>>({});
+  const [comboRankings, setComboRankings] = useState<Record<string, { points: number }>>({});
   const { seasons, useSeededRankings, mainCircuitOnly } = useRankingSettings();
 
   useEffect(() => {
@@ -93,6 +94,7 @@ export function MatchesList({ }: MatchesListProps) {
     loadTournaments();
     loadPlayerRankings();
     loadTeamRankings();
+    loadComboRankings();
   }, [seasons, mainCircuitOnly]);
 
   useEffect(() => {
@@ -167,6 +169,28 @@ export function MatchesList({ }: MatchesListProps) {
       setPlayerRaces(defaults);
     } catch (err) {
       console.error('Error loading player races:', err);
+    }
+  };
+
+  const loadComboRankings = async () => {
+    try {
+      const params = new URLSearchParams();
+      if (mainCircuitOnly) params.append('mainCircuitOnly', 'true');
+      if (seasons && seasons.length > 0) params.append('seasons', seasons.join(','));
+
+      const response = await fetch(`/api/team-race-rankings?${params.toString()}`);
+      if (!response.ok) throw new Error('Failed to load combo rankings');
+      const data = await response.json();
+
+      // Extract combinedRankings
+      const combinedRankings = data.combinedRankings || [];
+      const comboMap: Record<string, { points: number }> = {};
+      combinedRankings.forEach((ranking: any) => {
+        comboMap[ranking.combo1] = { points: ranking.points };
+      });
+      setComboRankings(comboMap);
+    } catch (err) {
+      console.error('Error loading combo rankings:', err);
     }
   };
 
@@ -331,6 +355,7 @@ export function MatchesList({ }: MatchesListProps) {
                   showWinLoss={true}
                   winLossValue={match.team1_score > match.team2_score}
                   isDrawValue={match.team1_score === match.team2_score}
+                  comboRankings={comboRankings}
                   extractRaceChanges={extractRaceChanges}
                   normalizeTeamKey={normalizeTeamKey}
                   getTeamImpact={getTeamImpact}

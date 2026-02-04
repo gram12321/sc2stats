@@ -112,6 +112,7 @@ interface MatchHistoryItemProps {
     combo2: string;
     ratingChange: number;
   };
+  comboRankings?: Record<string, { points: number }>; // Combined rankings for combos (e.g., "PZ" -> { points: 324.26 })
   extractRaceChanges?: (match: MatchData) => Array<{ race: string; change: number }> | null;
   normalizeTeamKey: (player1: string, player2: string) => string;
   getTeamImpact: (match: MatchData, player1: string, player2: string) => TeamImpact | null;
@@ -145,7 +146,8 @@ function getRatingChangeTooltip(
   subjectName: string,
   opponentName: string,
   type: 'player' | 'team' | 'race' = 'player',
-  isCombo: boolean = false
+  isCombo: boolean = false,
+  comboCombinedRatings?: { subjectRating: number; opponentRating: number } // Combined "vsX" ratings
 ): React.ReactNode {
   const { ratingBefore, ratingChange, won, opponentRating, expectedWin, baseK, adjustedK, confidence, matchCount } = impact;
 
@@ -172,8 +174,24 @@ function getRatingChangeTooltip(
       <div className="text-xs space-y-1">
         {isCombo ? (
           <div className="grid grid-cols-[auto_1fr] gap-x-2 gap-y-0.5">
-            <div className="text-blue-400 font-medium">{subjectName}vs{opponentName}:</div>
-            <div className="text-right">{formatRankingPoints(ratingBefore)}</div>
+            {comboCombinedRatings ? (
+              <>
+                <div className="text-blue-400 font-medium">{subjectName}vsX:</div>
+                <div className="text-right">{formatRankingPoints(comboCombinedRatings.subjectRating)}</div>
+
+                <div className="text-red-400 font-medium">{opponentName}vsX:</div>
+                <div className="text-right">{formatRankingPoints(comboCombinedRatings.opponentRating)}</div>
+
+                <div className="text-primary font-medium border-t border-border pt-1 col-span-2">Matchup</div>
+                <div className="text-purple-400 font-medium">{subjectName}vs{opponentName}:</div>
+                <div className="text-right">{formatRankingPoints(ratingBefore)}</div>
+              </>
+            ) : (
+              <>
+                <div className="text-blue-400 font-medium">{subjectName}vs{opponentName}:</div>
+                <div className="text-right">{formatRankingPoints(ratingBefore)}</div>
+              </>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-[auto_1fr] gap-x-2 gap-y-0.5">
@@ -237,6 +255,7 @@ export function MatchHistoryItem({
   showRatingBreakdown = true,
   showRaceInfo = false,
   raceInfo,
+  comboRankings = {},
   extractRaceChanges,
   normalizeTeamKey,
   getTeamImpact,
@@ -565,11 +584,17 @@ export function MatchHistoryItem({
 
             const matchupLabel = `${primaryCombo}vs${secondaryCombo}`;
 
+            // Get combined ratings for both combos
+            const comboCombinedRatings = comboRankings[primaryCombo] && comboRankings[secondaryCombo] ? {
+              subjectRating: comboRankings[primaryCombo].points,
+              opponentRating: comboRankings[secondaryCombo].points
+            } : undefined;
+
             return (
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground/60 mr-2">Team Combo Impact:</span>
                 <div className="flex items-center gap-3 flex-wrap">
-                  <Tooltip content={getRatingChangeTooltip(impact, primaryCombo, secondaryCombo, 'team', true)}>
+                  <Tooltip content={getRatingChangeTooltip(impact, primaryCombo, secondaryCombo, 'team', true, comboCombinedRatings)}>
                     <span className={cn("font-mono font-medium cursor-help hover:underline", impact.ratingChange >= 0 ? "text-emerald-500" : "text-rose-500")}>
                       {matchupLabel}: {impact.ratingChange >= 0 ? '+' : ''}{formatRankingPoints(impact.ratingChange)}
                     </span>

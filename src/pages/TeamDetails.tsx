@@ -104,6 +104,7 @@ export function TeamDetails({ player1, player2, onBack }: TeamDetailsProps) {
   const [playerRankings, setPlayerRankings] = useState<Record<string, { rank: number; points: number; confidence: number }>>({});
   const [teamRankings, setTeamRankings] = useState<Record<string, { rank: number; points: number; confidence: number }>>({});
   const [playerRaces, setPlayerRaces] = useState<Record<string, Race>>({});
+  const [comboRankings, setComboRankings] = useState<Record<string, { points: number }>>({});
   const [useSeededRankings, setUseSeededRankings] = useState(false);
   const [chartMode, setChartMode] = useState<'rating' | 'rank'>('rating');
   const { seasons } = useRankingSettings();
@@ -114,6 +115,7 @@ export function TeamDetails({ player1, player2, onBack }: TeamDetailsProps) {
     loadTeamRankings();
     loadTeamRankings();
     loadAllPlayerRaces();
+    loadComboRankings();
   }, [player1, player2, useSeededRankings, seasons]);
 
   const loadTeamDetails = async () => {
@@ -191,6 +193,27 @@ export function TeamDetails({ player1, player2, onBack }: TeamDetailsProps) {
       setPlayerRaces(defaults);
     } catch (err) {
       console.error('Error loading player races:', err);
+    }
+  };
+
+  const loadComboRankings = async () => {
+    try {
+      const params = new URLSearchParams();
+      if (seasons && seasons.length > 0) params.append('seasons', seasons.join(','));
+
+      const response = await fetch(`/api/team-race-rankings?${params.toString()}`);
+      if (!response.ok) throw new Error('Failed to load combo rankings');
+      const data = await response.json();
+
+      // Extract combinedRankings
+      const combinedRankings = data.combinedRankings || [];
+      const comboMap: Record<string, { points: number }> = {};
+      combinedRankings.forEach((ranking: any) => {
+        comboMap[ranking.combo1] = { points: ranking.points };
+      });
+      setComboRankings(comboMap);
+    } catch (err) {
+      console.error('Error loading combo rankings:', err);
     }
   };
 
@@ -438,23 +461,23 @@ export function TeamDetails({ player1, player2, onBack }: TeamDetailsProps) {
         <div className="space-y-6">
           {/* Rating Chart */}
           <div className="relative">
-          <div className="absolute top-4 right-4 z-10 flex bg-gray-100 rounded-lg p-1 border border-gray-200">
-            <button
-              onClick={() => setChartMode('rating')}
-              className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${chartMode === 'rating' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
-                }`}
-            >
-              Rating
-            </button>
-            <button
-              onClick={() => setChartMode('rank')}
-              className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${chartMode === 'rank' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
-                }`}
-            >
-              Rank
-            </button>
-          </div>
-          <RatingChart data={chartData} showRank={chartMode === 'rank'} />
+            <div className="absolute top-4 right-4 z-10 flex bg-gray-100 rounded-lg p-1 border border-gray-200">
+              <button
+                onClick={() => setChartMode('rating')}
+                className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${chartMode === 'rating' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                  }`}
+              >
+                Rating
+              </button>
+              <button
+                onClick={() => setChartMode('rank')}
+                className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${chartMode === 'rank' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                  }`}
+              >
+                Rank
+              </button>
+            </div>
+            <RatingChart data={chartData} showRank={chartMode === 'rank'} />
           </div>
 
           {/* Race Matchup Statistics */}
@@ -473,69 +496,70 @@ export function TeamDetails({ player1, player2, onBack }: TeamDetailsProps) {
 
           {/* Match History */}
           <div className="bg-card rounded-lg border border-border shadow-sm">
-          <div className="px-6 py-4 border-b border-border">
-            <h2 className="text-lg font-semibold text-foreground">Match History</h2>
+            <div className="px-6 py-4 border-b border-border">
+              <h2 className="text-lg font-semibold text-foreground">Match History</h2>
+            </div>
+            <div className="divide-y divide-border">
+              {sortedMatchHistory.length === 0 ? (
+                <div className="p-8 text-center text-muted-foreground">
+                  No matches found
+                </div>
+              ) : (
+                sortedMatchHistory.map((match) => {
+                  const teamKey = normalizeTeamKey(team.player1, team.player2);
+                  const team1Rank = getTeamRank(match.team1.player1, match.team1.player2);
+                  const team2Rank = getTeamRank(match.team2.player1, match.team2.player2);
+
+                  // Calculate the combo for the highlighted team
+                  const highlightedCombo = [team.player1, team.player2]
+                    .map(p => {
+                      const r = playerRaces[p];
+                      return r === 'Random' ? 'R' : (r ? r[0] : '');
+                    })
+                    .filter(Boolean)
+                    .sort()
+                    .join('');
+
+                  // Convert player rankings to the format expected by component
+                  const playerRankingsMap: Record<string, { rank: number; points: number; confidence: number }> = {};
+                  Object.keys(playerRankings).forEach(name => {
+                    const ranking = playerRankings[name];
+                    if (ranking) {
+                      playerRankingsMap[name] = {
+                        rank: ranking.rank,
+                        points: ranking.points,
+                        confidence: ranking.confidence
+                      };
+                    }
+                  });
+
+                  return (
+                    <MatchHistoryItem
+                      key={`${match.tournament_slug}-${match.match_id}`}
+                      match={match}
+                      team1Rank={team1Rank ? { rank: team1Rank.rank, points: team1Rank.points, confidence: team1Rank.confidence } : null}
+                      team2Rank={team2Rank ? { rank: team2Rank.rank, points: team2Rank.points, confidence: team2Rank.confidence } : null}
+                      playerRankings={playerRankingsMap}
+                      playerRaces={playerRaces}
+                      highlightPlayers={[team.player1, team.player2]}
+                      highlightTeamKey={teamKey}
+                      highlightCombo={highlightedCombo}
+                      showWinLoss={true}
+                      winLossValue={match.won}
+                      isDrawValue={match.isDraw}
+                      showRatingBreakdown={true}
+                      comboRankings={comboRankings}
+                      extractRaceChanges={(match) => extractRaceChanges(match as TeamMatch)}
+                      normalizeTeamKey={normalizeTeamKey}
+                      getTeamImpact={(match, player1, player2) => getTeamImpact(match as TeamMatch, player1, player2)}
+                      getPlayerImpact={(match, playerName) => getPlayerImpact(match as TeamMatch, playerName)}
+                      formatDate={formatDate}
+                    />
+                  );
+                })
+              )}
+            </div>
           </div>
-          <div className="divide-y divide-border">
-            {sortedMatchHistory.length === 0 ? (
-              <div className="p-8 text-center text-muted-foreground">
-                No matches found
-              </div>
-            ) : (
-              sortedMatchHistory.map((match) => {
-                const teamKey = normalizeTeamKey(team.player1, team.player2);
-                const team1Rank = getTeamRank(match.team1.player1, match.team1.player2);
-                const team2Rank = getTeamRank(match.team2.player1, match.team2.player2);
-
-                // Calculate the combo for the highlighted team
-                const highlightedCombo = [team.player1, team.player2]
-                  .map(p => {
-                    const r = playerRaces[p];
-                    return r === 'Random' ? 'R' : (r ? r[0] : '');
-                  })
-                  .filter(Boolean)
-                  .sort()
-                  .join('');
-
-                // Convert player rankings to the format expected by component
-                const playerRankingsMap: Record<string, { rank: number; points: number; confidence: number }> = {};
-                Object.keys(playerRankings).forEach(name => {
-                  const ranking = playerRankings[name];
-                  if (ranking) {
-                    playerRankingsMap[name] = {
-                      rank: ranking.rank,
-                      points: ranking.points,
-                      confidence: ranking.confidence
-                    };
-                  }
-                });
-
-                return (
-                  <MatchHistoryItem
-                    key={`${match.tournament_slug}-${match.match_id}`}
-                    match={match}
-                    team1Rank={team1Rank ? { rank: team1Rank.rank, points: team1Rank.points, confidence: team1Rank.confidence } : null}
-                    team2Rank={team2Rank ? { rank: team2Rank.rank, points: team2Rank.points, confidence: team2Rank.confidence } : null}
-                    playerRankings={playerRankingsMap}
-                    playerRaces={playerRaces}
-                    highlightPlayers={[team.player1, team.player2]}
-                    highlightTeamKey={teamKey}
-                    highlightCombo={highlightedCombo}
-                    showWinLoss={true}
-                    winLossValue={match.won}
-                    isDrawValue={match.isDraw}
-                    showRatingBreakdown={true}
-                    extractRaceChanges={(match) => extractRaceChanges(match as TeamMatch)}
-                    normalizeTeamKey={normalizeTeamKey}
-                    getTeamImpact={(match, player1, player2) => getTeamImpact(match as TeamMatch, player1, player2)}
-                    getPlayerImpact={(match, playerName) => getPlayerImpact(match as TeamMatch, playerName)}
-                    formatDate={formatDate}
-                  />
-                );
-              })
-            )}
-          </div>
-        </div>
         </div>
       </div>
     </div>

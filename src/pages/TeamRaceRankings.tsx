@@ -880,120 +880,129 @@ export function TeamRaceRankings({ }: TeamRaceRankingsProps) {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {matchHistory
-                    .slice() // Create a copy
-                    .sort((a, b) => {
-                      // Sort by date (newest first)
-                      const dateA = a.match_date || a.tournament_date || '';
-                      const dateB = b.match_date || b.tournament_date || '';
-                      if (dateA && dateB) {
-                        const timeA = new Date(dateA).getTime();
-                        const timeB = new Date(dateB).getTime();
-                        if (timeA !== timeB) {
-                          return timeB - timeA;
+                  {(() => {
+                    // Create combo rankings map once, outside the loop
+                    const comboRankingsMap: Record<string, { points: number }> = {};
+                    combinedRankings.forEach(ranking => {
+                      comboRankingsMap[ranking.combo1] = { points: ranking.points };
+                    });
+
+                    return matchHistory
+                      .slice() // Create a copy
+                      .sort((a, b) => {
+                        // Sort by date (newest first)
+                        const dateA = a.match_date || a.tournament_date || '';
+                        const dateB = b.match_date || b.tournament_date || '';
+                        if (dateA && dateB) {
+                          const timeA = new Date(dateA).getTime();
+                          const timeB = new Date(dateB).getTime();
+                          if (timeA !== timeB) {
+                            return timeB - timeA;
+                          }
                         }
-                      }
 
-                      // Fallback to round order (higher round first = newest first)
-                      const roundA = ROUND_ORDER[a.round] || 0;
-                      const roundB = ROUND_ORDER[b.round] || 0;
-                      if (roundA !== roundB) {
-                        return roundB - roundA;
-                      }
-
-                      // Finally by match_id (reverse - newest first)
-                      const idA = a.match_id || '';
-                      const idB = b.match_id || '';
-                      // Try numeric comparison if possible, otherwise string
-                      const numA = parseInt(idA);
-                      const numB = parseInt(idB);
-                      if (!isNaN(numA) && !isNaN(numB)) {
-                        return numB - numA;
-                      }
-                      return idB.localeCompare(idA);
-                    })
-                    .map((match) => {
-                      // For combined stats, determine if the clicked combo won
-                      // For individual matchups, use the existing logic
-                      let displayedCombo1Won: boolean;
-
-                      if (isCombinedStats) {
-                        // For combined stats, check if the clicked combo (selectedMatchup.combo1) won
-                        const clickedCombo = selectedMatchup.combo1;
-                        const clickedComboIsTeam1 = match.team1_combo === clickedCombo;
-                        displayedCombo1Won = clickedComboIsTeam1
-                          ? match.team1_score > match.team2_score
-                          : match.team2_score > match.team1_score;
-                      } else {
-                        // Normalize match combos to match the selected matchup format
-                        const matchCombosSorted = [match.team1_combo, match.team2_combo].sort();
-                        const matchCombo1 = matchCombosSorted[0];
-
-                        // Determine which combo won in the match
-                        // If team1_combo comes first alphabetically, team1 winning means combo1 won
-                        const matchCombo1Won =
-                          (match.team1_combo === matchCombo1 && match.team1_score > match.team2_score) ||
-                          (match.team2_combo === matchCombo1 && match.team2_score > match.team1_score);
-
-                        // Check if the displayed combo1 (from selectedMatchup) matches matchCombo1
-                        // If they match, use matchCombo1Won; otherwise flip it
-                        displayedCombo1Won =
-                          (selectedMatchup.combo1 === matchCombo1) ? matchCombo1Won : !matchCombo1Won;
-                      }
-
-                      const team1RankData = getTeamRank(match.team1_player1, match.team1_player2);
-                      const team2RankData = getTeamRank(match.team2_player1, match.team2_player2);
-
-                      // Convert player rankings to the format expected by component
-                      const playerRankingsMap: Record<string, { rank: number; points: number; confidence: number }> = {};
-                      Object.keys(playerRankings).forEach(name => {
-                        const ranking = playerRankings[name];
-                        if (ranking) {
-                          playerRankingsMap[name] = {
-                            rank: ranking.rank,
-                            points: ranking.points,
-                            confidence: ranking.confidence
-                          };
+                        // Fallback to round order (higher round first = newest first)
+                        const roundA = ROUND_ORDER[a.round] || 0;
+                        const roundB = ROUND_ORDER[b.round] || 0;
+                        if (roundA !== roundB) {
+                          return roundB - roundA;
                         }
+
+                        // Finally by match_id (reverse - newest first)
+                        const idA = a.match_id || '';
+                        const idB = b.match_id || '';
+                        // Try numeric comparison if possible, otherwise string
+                        const numA = parseInt(idA);
+                        const numB = parseInt(idB);
+                        if (!isNaN(numA) && !isNaN(numB)) {
+                          return numB - numA;
+                        }
+                        return idB.localeCompare(idA);
+                      })
+                      .map((match) => {
+                        // For combined stats, determine if the clicked combo won
+                        // For individual matchups, use the existing logic
+                        let displayedCombo1Won: boolean;
+
+                        if (isCombinedStats) {
+                          // For combined stats, check if the clicked combo (selectedMatchup.combo1) won
+                          const clickedCombo = selectedMatchup.combo1;
+                          const clickedComboIsTeam1 = match.team1_combo === clickedCombo;
+                          displayedCombo1Won = clickedComboIsTeam1
+                            ? match.team1_score > match.team2_score
+                            : match.team2_score > match.team1_score;
+                        } else {
+                          // Normalize match combos to match the selected matchup format
+                          const matchCombosSorted = [match.team1_combo, match.team2_combo].sort();
+                          const matchCombo1 = matchCombosSorted[0];
+
+                          // Determine which combo won in the match
+                          // If team1_combo comes first alphabetically, team1 winning means combo1 won
+                          const matchCombo1Won =
+                            (match.team1_combo === matchCombo1 && match.team1_score > match.team2_score) ||
+                            (match.team2_combo === matchCombo1 && match.team2_score > match.team1_score);
+
+                          // Check if the displayed combo1 (from selectedMatchup) matches matchCombo1
+                          // If they match, use matchCombo1Won; otherwise flip it
+                          displayedCombo1Won =
+                            (selectedMatchup.combo1 === matchCombo1) ? matchCombo1Won : !matchCombo1Won;
+                        }
+
+                        const team1RankData = getTeamRank(match.team1_player1, match.team1_player2);
+                        const team2RankData = getTeamRank(match.team2_player1, match.team2_player2);
+
+                        // Convert player rankings to the format expected by component
+                        const playerRankingsMap: Record<string, { rank: number; points: number; confidence: number }> = {};
+                        Object.keys(playerRankings).forEach(name => {
+                          const ranking = playerRankings[name];
+                          if (ranking) {
+                            playerRankingsMap[name] = {
+                              rank: ranking.rank,
+                              points: ranking.points,
+                              confidence: ranking.confidence
+                            };
+                          }
+                        });
+
+                        const isDraw = match.team1_score === match.team2_score;
+                        const won = displayedCombo1Won; // Renaming for clarity
+
+                        const isTeam1Combo = selectedMatchup.combo1 === match.team1_combo;
+
+                        const comboInfo = isCombinedStats ? {
+                          combo1: selectedMatchup.combo1,
+                          combo2: 'All',
+                          ratingChange: isTeam1Combo ? match.rating_change : -(match.rating_change || 0)
+                        } : {
+                          combo1: selectedMatchup.combo1,
+                          combo2: selectedMatchup.combo2,
+                          ratingChange: isTeam1Combo ? match.rating_change : -(match.rating_change || 0)
+                        };
+
+                        return (
+                          <MatchHistoryItem
+                            key={`${match.tournament_slug}-${match.match_id}`}
+                            match={convertMatchForComponent(match)}
+                            team1Rank={team1RankData ? { rank: team1RankData.rank, points: team1RankData.points, confidence: team1RankData.confidence } : null}
+                            team2Rank={team2RankData ? { rank: team2RankData.rank, points: team2RankData.points, confidence: team2RankData.confidence } : null}
+                            playerRankings={playerRankingsMap}
+                            playerRaces={playerRaces}
+                            highlightCombo={selectedMatchup.combo1}
+                            showWinLoss={true}
+                            winLossValue={won}
+                            isDrawValue={isDraw}
+                            showRatingBreakdown={true}
+                            showComboInfo={true}
+                            comboInfo={comboInfo}
+                            comboRankings={comboRankingsMap}
+                            normalizeTeamKey={normalizeTeamKey}
+                            getTeamImpact={(match, player1, player2) => getTeamImpact(match as any, player1, player2)}
+                            getPlayerImpact={(match, playerName) => getPlayerImpact(match as any, playerName)}
+                            formatDate={formatDate}
+                          />
+                        );
                       });
-
-                      const isDraw = match.team1_score === match.team2_score;
-                      const won = displayedCombo1Won; // Renaming for clarity
-
-                      const isTeam1Combo = selectedMatchup.combo1 === match.team1_combo;
-
-                      const comboInfo = isCombinedStats ? {
-                        combo1: selectedMatchup.combo1,
-                        combo2: 'All',
-                        ratingChange: isTeam1Combo ? match.rating_change : -(match.rating_change || 0)
-                      } : {
-                        combo1: selectedMatchup.combo1,
-                        combo2: selectedMatchup.combo2,
-                        ratingChange: isTeam1Combo ? match.rating_change : -(match.rating_change || 0)
-                      };
-
-                      return (
-                        <MatchHistoryItem
-                          key={`${match.tournament_slug}-${match.match_id}`}
-                          match={convertMatchForComponent(match)}
-                          team1Rank={team1RankData ? { rank: team1RankData.rank, points: team1RankData.points, confidence: team1RankData.confidence } : null}
-                          team2Rank={team2RankData ? { rank: team2RankData.rank, points: team2RankData.points, confidence: team2RankData.confidence } : null}
-                          playerRankings={playerRankingsMap}
-                          playerRaces={playerRaces}
-                          highlightCombo={selectedMatchup.combo1}
-                          showWinLoss={true}
-                          winLossValue={won}
-                          isDrawValue={isDraw}
-                          showRatingBreakdown={true}
-                          showComboInfo={true}
-                          comboInfo={comboInfo}
-                          normalizeTeamKey={normalizeTeamKey}
-                          getTeamImpact={(match, player1, player2) => getTeamImpact(match as any, player1, player2)}
-                          getPlayerImpact={(match, playerName) => getPlayerImpact(match as any, playerName)}
-                          formatDate={formatDate}
-                        />
-                      );
-                    })}
+                  })()}
                 </div>
               )}
             </div>
