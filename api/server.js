@@ -276,12 +276,12 @@ app.get('/api/seeded-player-rankings', async (req, res) => {
   try {
     const isMainCircuitOnly = req.query.mainCircuitOnly === 'true';
     const seasons = req.query.seasons ? req.query.seasons.split(',') : null;
-    
+
     const seededRankingsFile = join(outputDir, 'seeded_player_rankings.json');
     try {
       // Load seeds for recalculation
       const { playerSeeds } = await loadSeeds();
-      
+
       // If filtering is needed, recalculate with filters and seeds
       if (isMainCircuitOnly || (seasons && seasons.length > 0)) {
         const { rankings } = await calculateRankings(playerSeeds, isMainCircuitOnly, seasons);
@@ -310,12 +310,12 @@ app.get('/api/seeded-team-rankings', async (req, res) => {
   try {
     const isMainCircuitOnly = req.query.mainCircuitOnly === 'true';
     const seasons = req.query.seasons ? req.query.seasons.split(',') : null;
-    
+
     const seededRankingsFile = join(outputDir, 'seeded_team_rankings.json');
     try {
       // Load seeds for recalculation
       const { teamSeeds } = await loadSeeds();
-      
+
       // If filtering is needed, recalculate with filters and seeds
       if (isMainCircuitOnly || (seasons && seasons.length > 0)) {
         const { rankings } = await calculateTeamRankings(teamSeeds, isMainCircuitOnly, seasons);
@@ -539,13 +539,7 @@ app.get('/api/team-race-matchup/:combo1/:combo2', async (req, res) => {
         raceMatchMap.set(key, match);
       });
     }
-    const comboMatchMap = new Map();
-    if (comboMatchHistory) {
-      comboMatchHistory.forEach(match => {
-        const key = `${match.tournament_slug}-${match.match_id}`;
-        comboMatchMap.set(key, match);
-      });
-    }
+    // Note: matchHistory from calculateTeamRaceRankings already contains combo_impacts
     // Filter matches for this matchup and merge team_impacts and player_impacts
     const matches = matchHistory.filter(match => {
       const matchTeam1Combo = match.team1_combo;
@@ -557,13 +551,12 @@ app.get('/api/team-race-matchup/:combo1/:combo2', async (req, res) => {
       const teamMatch = teamMatchMap.get(key);
       const playerMatch = playerMatchMap.get(key);
       const raceMatch = raceMatchMap.get(key);
-      const comboMatch = comboMatchMap.get(key);
       return {
         ...match,
         team_impacts: teamMatch?.team_impacts,
         player_impacts: playerMatch?.player_impacts || match.player_impacts,
         race_impacts: raceMatch?.race_impacts || null,
-        combo_impacts: match.combo_impacts || comboMatch?.combo_impacts || null
+        combo_impacts: match.combo_impacts || null
       };
     });
 
@@ -611,13 +604,7 @@ app.get('/api/team-race-combo/:combo', async (req, res) => {
       });
     }
 
-    const comboMatchMap = new Map();
-    if (comboMatchHistory) {
-      comboMatchHistory.forEach(match => {
-        const key = `${match.tournament_slug}-${match.match_id}`;
-        comboMatchMap.set(key, match);
-      });
-    }
+    // Note: matchHistory from calculateTeamRaceRankings already contains combo_impacts
 
     // Filter matches where either team1_combo or team2_combo matches the combo and merge team_impacts and player_impacts
     const matches = matchHistory.filter(match => {
@@ -627,13 +614,12 @@ app.get('/api/team-race-combo/:combo', async (req, res) => {
       const teamMatch = teamMatchMap.get(key);
       const playerMatch = playerMatchMap.get(key);
       const raceMatch = raceMatchMap.get(key);
-      const comboMatch = comboMatchMap.get(key);
       return {
         ...match,
         team_impacts: teamMatch?.team_impacts,
         player_impacts: playerMatch?.player_impacts || match.player_impacts,
         race_impacts: raceMatch?.race_impacts || null,
-        combo_impacts: match.combo_impacts || comboMatch?.combo_impacts || null
+        combo_impacts: match.combo_impacts || null
       };
     });
 
@@ -678,6 +664,7 @@ app.get('/api/match-history', async (req, res) => {
     const { rankings, matchHistory } = await calculateRankings(playerSeeds, req.query.mainCircuitOnly === 'true', seasons);
     const { matchHistory: teamMatchHistory } = await calculateTeamRankings(teamSeeds, req.query.mainCircuitOnly === 'true', seasons);
     const { matchHistory: raceMatchHistory } = await calculateRaceRankings(req.query.mainCircuitOnly === 'true', seasons, hideRandom);
+    const { matchHistory: comboMatchHistory } = await calculateTeamRaceRankings(req.query.mainCircuitOnly === 'true', seasons, hideRandom);
 
     // Create a map of team match history by match_id for quick lookup
     const teamMatchMap = new Map();

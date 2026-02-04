@@ -144,7 +144,8 @@ function getRatingChangeTooltip(
   impact: PlayerImpact | TeamImpact,
   subjectName: string,
   opponentName: string,
-  type: 'player' | 'team' | 'race' = 'player'
+  type: 'player' | 'team' | 'race' = 'player',
+  isCombo: boolean = false
 ): React.ReactNode {
   const { ratingBefore, ratingChange, won, opponentRating, expectedWin, baseK, adjustedK, confidence, matchCount } = impact;
 
@@ -169,13 +170,20 @@ function getRatingChangeTooltip(
     <div className="text-left space-y-1 max-w-xs text-foreground">
       <div className="font-semibold mb-1 border-b border-border pb-1">{typeLabel} Rating Change Calculation</div>
       <div className="text-xs space-y-1">
-        <div className="grid grid-cols-[auto_1fr] gap-x-2 gap-y-0.5">
-          <div className="text-blue-400 font-medium">{subjectName}:</div>
-          <div className="text-right">{formatRankingPoints(ratingBefore)}</div>
+        {isCombo ? (
+          <div className="grid grid-cols-[auto_1fr] gap-x-2 gap-y-0.5">
+            <div className="text-blue-400 font-medium">{subjectName}vs{opponentName}:</div>
+            <div className="text-right">{formatRankingPoints(ratingBefore)}</div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-[auto_1fr] gap-x-2 gap-y-0.5">
+            <div className="text-blue-400 font-medium">{subjectName}:</div>
+            <div className="text-right">{formatRankingPoints(ratingBefore)}</div>
 
-          <div className="text-red-400 font-medium">{opponentName}:</div>
-          <div className="text-right">{formatRankingPoints(opponentRating)}</div>
-        </div>
+            <div className="text-red-400 font-medium">{opponentName}:</div>
+            <div className="text-right">{formatRankingPoints(opponentRating)}</div>
+          </div>
+        )}
 
         <div className="pt-1 border-t border-border mt-1">
           <div><span className="text-muted-foreground">Expected Win:</span> {expectedWinPercent}% ({expectedWin.toFixed(3)})</div>
@@ -537,24 +545,39 @@ export function MatchHistoryItem({
             </div>
           )}
           {/* Team Race Combo Impact Logic */}
-          {match.combo_impacts && Object.keys(match.combo_impacts).length > 0 && (
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground/60 mr-2">Team Combo Impact:</span>
-              <div className="flex items-center gap-3 flex-wrap">
-                {Object.entries(match.combo_impacts).map(([comboKey, impact]) => {
-                  // Get the opponent combo - it's the other key in combo_impacts
-                  const opponentCombo = Object.keys(match.combo_impacts).find(k => k !== comboKey) || 'opponent';
-                  return (
-                    <Tooltip key={comboKey} content={getRatingChangeTooltip(impact, comboKey, opponentCombo, 'team')}>
-                      <span className={cn("font-mono font-medium cursor-help hover:underline", impact.ratingChange >= 0 ? "text-emerald-500" : "text-rose-500")}>
-                        {comboKey}: {impact.ratingChange >= 0 ? '+' : ''}{formatRankingPoints(impact.ratingChange)}
-                      </span>
-                    </Tooltip>
-                  );
-                })}
+          {match.combo_impacts && Object.keys(match.combo_impacts).length > 0 && (() => {
+            // Get both combos
+            const combos = Object.keys(match.combo_impacts);
+            if (combos.length === 0) return null;
+
+            // Determine which combo to display from (prefer highlighted combo, otherwise team1)
+            let primaryCombo = combos[0];
+            let secondaryCombo = combos[1] || 'opponent';
+
+            // Check if there's a highlighted combo and swap if needed
+            if (highlightCombo && combos.includes(highlightCombo)) {
+              primaryCombo = highlightCombo;
+              secondaryCombo = combos.find(c => c !== highlightCombo) || 'opponent';
+            }
+
+            const impact = match.combo_impacts[primaryCombo];
+            if (!impact) return null;
+
+            const matchupLabel = `${primaryCombo}vs${secondaryCombo}`;
+
+            return (
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground/60 mr-2">Team Combo Impact:</span>
+                <div className="flex items-center gap-3 flex-wrap">
+                  <Tooltip content={getRatingChangeTooltip(impact, primaryCombo, secondaryCombo, 'team', true)}>
+                    <span className={cn("font-mono font-medium cursor-help hover:underline", impact.ratingChange >= 0 ? "text-emerald-500" : "text-rose-500")}>
+                      {matchupLabel}: {impact.ratingChange >= 0 ? '+' : ''}{formatRankingPoints(impact.ratingChange)}
+                    </span>
+                  </Tooltip>
+                </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
         </div>
       )}
     </div>
