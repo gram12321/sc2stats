@@ -24,8 +24,6 @@ import {
   Trophy,
   Users,
   Target,
-  TrendingUp,
-  TrendingDown,
   Minus,
   Swords,
   Crown

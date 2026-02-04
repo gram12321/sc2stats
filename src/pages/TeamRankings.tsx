@@ -24,8 +24,6 @@ import {
   Users,
   Swords,
   Target,
-  TrendingUp,
-  TrendingDown,
   Minus,
   Crown
 } from 'lucide-react';
