@@ -487,6 +487,16 @@ export function TeamDetails({ player1, player2, onBack }: TeamDetailsProps) {
                 const team1Rank = getTeamRank(match.team1.player1, match.team1.player2);
                 const team2Rank = getTeamRank(match.team2.player1, match.team2.player2);
 
+                // Calculate the combo for the highlighted team
+                const highlightedCombo = [team.player1, team.player2]
+                  .map(p => {
+                    const r = playerRaces[p];
+                    return r === 'Random' ? 'R' : (r ? r[0] : '');
+                  })
+                  .filter(Boolean)
+                  .sort()
+                  .join('');
+
                 // Convert player rankings to the format expected by component
                 const playerRankingsMap: Record<string, { rank: number; points: number; confidence: number }> = {};
                 Object.keys(playerRankings).forEach(name => {
@@ -510,6 +520,7 @@ export function TeamDetails({ player1, player2, onBack }: TeamDetailsProps) {
                     playerRaces={playerRaces}
                     highlightPlayers={[team.player1, team.player2]}
                     highlightTeamKey={teamKey}
+                    highlightCombo={highlightedCombo}
                     showWinLoss={true}
                     winLossValue={match.won}
                     isDrawValue={match.isDraw}

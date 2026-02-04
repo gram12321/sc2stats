@@ -74,6 +74,15 @@ interface MatchHistoryEntry {
     isDraw?: boolean;
     opponentRating: number;
   }>;
+  race_impacts?: Record<string, {
+    ratingBefore: number;
+    ratingChange: number;
+    won: boolean;
+    isDraw?: boolean;
+    opponentRating: number;
+    race1: string;
+    race2: string;
+  }>;
 }
 
 interface PlayerRanking {
@@ -389,7 +398,8 @@ export function TeamRaceRankings({ }: TeamRaceRankingsProps) {
 
       player_impacts: match.player_impacts,
       team_impacts: match.team_impacts,
-      combo_impacts: match.combo_impacts
+      combo_impacts: match.combo_impacts,
+      race_impacts: match.race_impacts
     };
   };
 

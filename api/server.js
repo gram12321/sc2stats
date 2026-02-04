@@ -508,6 +508,7 @@ app.get('/api/team-race-matchup/:combo1/:combo2', async (req, res) => {
     const { matchHistory } = await calculateTeamRaceRankings(isMainCircuitOnly, seasons, hideRandom);
     const { matchHistory: teamMatchHistory } = await calculateTeamRankings(null, isMainCircuitOnly, seasons);
     const { matchHistory: playerMatchHistory } = await calculateRankings(null, isMainCircuitOnly, seasons);
+    const { matchHistory: raceMatchHistory } = await calculateRaceRankings(isMainCircuitOnly, seasons, hideRandom);
 
     // Normalize combos (sort alphabetically to match internal key format)
     const sorted = [combo1, combo2].sort();
@@ -531,6 +532,20 @@ app.get('/api/team-race-matchup/:combo1/:combo2', async (req, res) => {
       });
     }
 
+    const raceMatchMap = new Map();
+    if (raceMatchHistory) {
+      raceMatchHistory.forEach(match => {
+        const key = `${match.tournament_slug}-${match.match_id}`;
+        raceMatchMap.set(key, match);
+      });
+    }
+    const comboMatchMap = new Map();
+    if (comboMatchHistory) {
+      comboMatchHistory.forEach(match => {
+        const key = `${match.tournament_slug}-${match.match_id}`;
+        comboMatchMap.set(key, match);
+      });
+    }
     // Filter matches for this matchup and merge team_impacts and player_impacts
     const matches = matchHistory.filter(match => {
       const matchTeam1Combo = match.team1_combo;
@@ -541,10 +556,14 @@ app.get('/api/team-race-matchup/:combo1/:combo2', async (req, res) => {
       const key = `${match.tournament_slug}-${match.match_id}`;
       const teamMatch = teamMatchMap.get(key);
       const playerMatch = playerMatchMap.get(key);
+      const raceMatch = raceMatchMap.get(key);
+      const comboMatch = comboMatchMap.get(key);
       return {
         ...match,
         team_impacts: teamMatch?.team_impacts,
-        player_impacts: playerMatch?.player_impacts || match.player_impacts
+        player_impacts: playerMatch?.player_impacts || match.player_impacts,
+        race_impacts: raceMatch?.race_impacts || null,
+        combo_impacts: match.combo_impacts || comboMatch?.combo_impacts || null
       };
     });
 
@@ -565,6 +584,7 @@ app.get('/api/team-race-combo/:combo', async (req, res) => {
     const { matchHistory } = await calculateTeamRaceRankings(isMainCircuitOnly, seasons, hideRandom);
     const { matchHistory: teamMatchHistory } = await calculateTeamRankings(null, isMainCircuitOnly, seasons);
     const { matchHistory: playerMatchHistory } = await calculateRankings(null, isMainCircuitOnly, seasons);
+    const { matchHistory: raceMatchHistory } = await calculateRaceRankings(isMainCircuitOnly, seasons, hideRandom);
 
     // Create maps for quick lookup
     const teamMatchMap = new Map();
@@ -583,6 +603,22 @@ app.get('/api/team-race-combo/:combo', async (req, res) => {
       });
     }
 
+    const raceMatchMap = new Map();
+    if (raceMatchHistory) {
+      raceMatchHistory.forEach(match => {
+        const key = `${match.tournament_slug}-${match.match_id}`;
+        raceMatchMap.set(key, match);
+      });
+    }
+
+    const comboMatchMap = new Map();
+    if (comboMatchHistory) {
+      comboMatchHistory.forEach(match => {
+        const key = `${match.tournament_slug}-${match.match_id}`;
+        comboMatchMap.set(key, match);
+      });
+    }
+
     // Filter matches where either team1_combo or team2_combo matches the combo and merge team_impacts and player_impacts
     const matches = matchHistory.filter(match => {
       return match.team1_combo === combo || match.team2_combo === combo;
@@ -590,10 +626,14 @@ app.get('/api/team-race-combo/:combo', async (req, res) => {
       const key = `${match.tournament_slug}-${match.match_id}`;
       const teamMatch = teamMatchMap.get(key);
       const playerMatch = playerMatchMap.get(key);
+      const raceMatch = raceMatchMap.get(key);
+      const comboMatch = comboMatchMap.get(key);
       return {
         ...match,
         team_impacts: teamMatch?.team_impacts,
-        player_impacts: playerMatch?.player_impacts || match.player_impacts
+        player_impacts: playerMatch?.player_impacts || match.player_impacts,
+        race_impacts: raceMatch?.race_impacts || null,
+        combo_impacts: match.combo_impacts || comboMatch?.combo_impacts || null
       };
     });
 
@@ -634,8 +674,10 @@ app.get('/api/match-history', async (req, res) => {
     }
 
     const seasons = req.query.seasons ? req.query.seasons.split(',') : null;
+    const hideRandom = req.query.hideRandom === 'true';
     const { rankings, matchHistory } = await calculateRankings(playerSeeds, req.query.mainCircuitOnly === 'true', seasons);
     const { matchHistory: teamMatchHistory } = await calculateTeamRankings(teamSeeds, req.query.mainCircuitOnly === 'true', seasons);
+    const { matchHistory: raceMatchHistory } = await calculateRaceRankings(req.query.mainCircuitOnly === 'true', seasons, hideRandom);
 
     // Create a map of team match history by match_id for quick lookup
     const teamMatchMap = new Map();
@@ -646,17 +688,33 @@ app.get('/api/match-history', async (req, res) => {
       });
     }
 
-    // Merge team_impacts into match history
+    // Create a map of race match history by match_id for quick lookup
+    const raceMatchMap = new Map();
+    if (raceMatchHistory) {
+      raceMatchHistory.forEach(match => {
+        const key = `${match.tournament_slug}-${match.match_id}`;
+        raceMatchMap.set(key, match);
+      });
+    }
+    const comboMatchMap = new Map();
+    if (comboMatchHistory) {
+      comboMatchHistory.forEach(match => {
+        const key = `${match.tournament_slug}-${match.match_id}`;
+        comboMatchMap.set(key, match);
+      });
+    }
+    // Merge team_impacts and race_impacts into match history
     let filteredHistory = (matchHistory || []).map(match => {
       const key = `${match.tournament_slug}-${match.match_id}`;
       const teamMatch = teamMatchMap.get(key);
-      if (teamMatch && teamMatch.team_impacts) {
-        return {
-          ...match,
-          team_impacts: teamMatch.team_impacts
-        };
-      }
-      return match;
+      const raceMatch = raceMatchMap.get(key);
+      const comboMatch = comboMatchMap.get(key);
+      return {
+        ...match,
+        team_impacts: teamMatch?.team_impacts || match.team_impacts,
+        race_impacts: raceMatch?.race_impacts || null,
+        combo_impacts: comboMatch?.combo_impacts || null
+      };
     });
 
     // Filter by player if specified
@@ -726,8 +784,11 @@ app.get('/api/player/:playerName', async (req, res) => {
     }
 
     const seasons = req.query.seasons ? req.query.seasons.split(',') : null;
+    const hideRandom = req.query.hideRandom === 'true';
     const { rankings, matchHistory } = await calculateRankings(playerSeeds, req.query.mainCircuitOnly === 'true', seasons);
     const { matchHistory: teamMatchHistory } = await calculateTeamRankings(teamSeeds, req.query.mainCircuitOnly === 'true', seasons);
+    const { matchHistory: raceMatchHistory } = await calculateRaceRankings(req.query.mainCircuitOnly === 'true', seasons, hideRandom);
+    const { matchHistory: comboMatchHistory } = await calculateTeamRaceRankings(req.query.mainCircuitOnly === 'true', seasons, hideRandom);
 
     const player = rankings.find(p => p.name === playerName);
     if (!player) {
@@ -740,6 +801,24 @@ app.get('/api/player/:playerName', async (req, res) => {
       teamMatchHistory.forEach(match => {
         const key = `${match.tournament_slug}-${match.match_id}`;
         teamMatchMap.set(key, match);
+      });
+    }
+
+    // Create a map of race match history by match_id for quick lookup
+    const raceMatchMap = new Map();
+    if (raceMatchHistory) {
+      raceMatchHistory.forEach(match => {
+        const key = `${match.tournament_slug}-${match.match_id}`;
+        raceMatchMap.set(key, match);
+      });
+    }
+
+    // Create a map of combo match history by match_id for quick lookup
+    const comboMatchMap = new Map();
+    if (comboMatchHistory) {
+      comboMatchHistory.forEach(match => {
+        const key = `${match.tournament_slug}-${match.match_id}`;
+        comboMatchMap.set(key, match);
       });
     }
 
@@ -756,13 +835,17 @@ app.get('/api/player/:playerName', async (req, res) => {
       const impact = match.player_impacts?.[playerName];
       const key = `${match.tournament_slug}-${match.match_id}`;
       const teamMatch = teamMatchMap.get(key);
+      const raceMatch = raceMatchMap.get(key);
+      const comboMatch = comboMatchMap.get(key);
       return {
         ...match,
         ratingChange: impact?.ratingChange || 0,
         won: impact?.won || false,
         isDraw: impact?.isDraw || false,
         opponentRating: impact?.opponentRating || 0,
-        team_impacts: teamMatch?.team_impacts || match.team_impacts
+        team_impacts: teamMatch?.team_impacts || match.team_impacts,
+        race_impacts: raceMatch?.race_impacts || null,
+        combo_impacts: comboMatch?.combo_impacts || null
       };
     });
 
@@ -794,6 +877,7 @@ app.get('/api/team/:player1/:player2', async (req, res) => {
     }
 
     const seasons = req.query.seasons ? req.query.seasons.split(',') : null;
+    const hideRandom = req.query.hideRandom === 'true';
     const { rankings, matchHistory } = await calculateTeamRankings(teamSeeds, req.query.mainCircuitOnly === 'true', seasons);
 
     const team = rankings.find(t =>
@@ -807,11 +891,31 @@ app.get('/api/team/:player1/:player2', async (req, res) => {
 
     // Get team's match history
     const { matchHistory: playerMatchHistory } = await calculateRankings(playerSeeds, req.query.mainCircuitOnly === 'true', seasons);
+    const { matchHistory: raceMatchHistory } = await calculateRaceRankings(req.query.mainCircuitOnly === 'true', seasons, hideRandom);
+    const { matchHistory: comboMatchHistory } = await calculateTeamRaceRankings(req.query.mainCircuitOnly === 'true', seasons, hideRandom);
     const playerMatchMap = new Map();
     if (playerMatchHistory) {
       playerMatchHistory.forEach(match => {
         const key = `${match.tournament_slug}-${match.match_id}`;
         playerMatchMap.set(key, match);
+      });
+    }
+
+    // Create a map of race match history by match_id for quick lookup
+    const raceMatchMap = new Map();
+    if (raceMatchHistory) {
+      raceMatchHistory.forEach(match => {
+        const key = `${match.tournament_slug}-${match.match_id}`;
+        raceMatchMap.set(key, match);
+      });
+    }
+
+    // Create a map of combo match history by match_id for quick lookup
+    const comboMatchMap = new Map();
+    if (comboMatchHistory) {
+      comboMatchHistory.forEach(match => {
+        const key = `${match.tournament_slug}-${match.match_id}`;
+        comboMatchMap.set(key, match);
       });
     }
 
@@ -823,6 +927,8 @@ app.get('/api/team/:player1/:player2', async (req, res) => {
       const impact = match.team_impacts?.[teamKey];
       const key = `${match.tournament_slug}-${match.match_id}`;
       const playerMatch = playerMatchMap.get(key);
+      const raceMatch = raceMatchMap.get(key);
+      const comboMatch = comboMatchMap.get(key);
       return {
         ...match,
         // Merge race data from playerMatch if available
@@ -832,7 +938,9 @@ app.get('/api/team/:player1/:player2', async (req, res) => {
         won: impact?.won || false,
         isDraw: impact?.isDraw || false,
         opponentRating: impact?.opponentRating || 0,
-        player_impacts: playerMatch?.player_impacts || match.player_impacts
+        player_impacts: playerMatch?.player_impacts || match.player_impacts,
+        race_impacts: raceMatch?.race_impacts || null,
+        combo_impacts: comboMatch?.combo_impacts || null
       };
     });
 

@@ -452,7 +452,7 @@ export async function calculateTeamRaceRankings(mainCircuitOnly = false, seasons
         rating_change: team1Stats.result.ratingChange,
         // Detailed impacts for tooltips (explains why rating change is what it is)
         combo_impacts: {
-          [team1Key]: {
+          [team1Combo]: {
             ratingBefore: team1Stats.ratingBefore,
             ratingChange: team1Stats.result.ratingChange,
             won: team1Stats.won,
@@ -460,7 +460,7 @@ export async function calculateTeamRaceRankings(mainCircuitOnly = false, seasons
             opponentRating: team1Stats.opponentRating,
             ...team1Stats.result.calculationDetails
           },
-          [team2Key]: {
+          [team2Combo]: {
             ratingBefore: team2Stats.ratingBefore,
             ratingChange: team2Stats.result.ratingChange,
             won: team2Stats.won,

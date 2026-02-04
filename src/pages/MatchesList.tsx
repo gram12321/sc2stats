@@ -303,6 +303,7 @@ export function MatchesList({ }: MatchesListProps) {
             {matches.map((match) => {
               const team1Rank = getTeamRank(match.team1.player1, match.team1.player2);
               const team2Rank = getTeamRank(match.team2.player1, match.team2.player2);
+              // Ensure race_impacts is passed through
 
               // Convert player rankings to the format expected by component
               const playerRankingsMap: Record<string, { rank: number; points: number; confidence: number }> = {};

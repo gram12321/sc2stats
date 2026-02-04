@@ -341,7 +341,8 @@ export function RaceRankings({ }: RaceRankingsProps) {
       team1_score: match.team1_score,
       team2_score: match.team2_score,
       player_impacts: match.player_impacts,
-      team_impacts: match.team_impacts
+      team_impacts: match.team_impacts,
+      race_impacts: match.race_impacts
     };
   };
 
@@ -557,7 +558,7 @@ export function RaceRankings({ }: RaceRankingsProps) {
                     <div className="py-12 flex justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
                   ) : matchHistory.length > 0 ? (
                     <div className="divide-y divide-border/50">
-                      {matchHistory.map((match) => (
+                      {[...matchHistory].reverse().map((match) => (
                         <MatchHistoryItem
                           key={`${match.tournament_slug}-${match.match_id}`}
                           match={convertMatchForComponent(match)}

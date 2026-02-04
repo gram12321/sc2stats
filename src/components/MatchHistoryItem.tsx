@@ -511,21 +511,47 @@ export function MatchHistoryItem({
               </div>
             </div>
           )}
-          {/* Race Impact Logic (Simplified adaptation from original) */}
-          {((showRaceInfo && raceInfo) || (extractRaceChanges && extractRaceChanges(match)?.length)) && (
+          {/* Race Impact Logic */}
+          {(match.race_impacts || (showRaceInfo && raceInfo) || (extractRaceChanges && extractRaceChanges(match)?.length)) && (
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground/60 mr-2">Race Impact:</span>
-              <div className="flex items-center gap-3">
-                {extractRaceChanges && extractRaceChanges(match)?.map(rc => (
+              <div className="flex items-center gap-3 flex-wrap">
+                {match.race_impacts && Object.entries(match.race_impacts).map(([key, impact]) => (
+                  <Tooltip key={key} content={getRatingChangeTooltip(impact, impact.race1, impact.race2, 'race')}>
+                    <span className={cn("font-mono font-medium cursor-help hover:underline", impact.ratingChange >= 0 ? "text-emerald-500" : "text-rose-500")}>
+                      {impact.race1}v{impact.race2}: {impact.ratingChange >= 0 ? '+' : ''}{formatRankingPoints(impact.ratingChange)}
+                    </span>
+                  </Tooltip>
+                ))}
+                {!match.race_impacts && extractRaceChanges && extractRaceChanges(match)?.map(rc => (
                   <span key={rc.race} className={cn("font-mono font-medium", rc.change >= 0 ? "text-emerald-500" : "text-rose-500")}>
                     {rc.race}: {rc.change >= 0 ? '+' : ''}{formatRankingPoints(rc.change)}
                   </span>
                 ))}
-                {!extractRaceChanges && showRaceInfo && raceInfo && (
+                {!match.race_impacts && !extractRaceChanges && showRaceInfo && raceInfo && (
                   <span className={cn("font-mono font-medium", raceInfo.ratingChange >= 0 ? "text-emerald-500" : "text-rose-500")}>
                     {raceInfo.race1}: {raceInfo.ratingChange >= 0 ? '+' : ''}{formatRankingPoints(raceInfo.ratingChange)}
                   </span>
                 )}
+              </div>
+            </div>
+          )}
+          {/* Team Race Combo Impact Logic */}
+          {match.combo_impacts && Object.keys(match.combo_impacts).length > 0 && (
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground/60 mr-2">Team Combo Impact:</span>
+              <div className="flex items-center gap-3 flex-wrap">
+                {Object.entries(match.combo_impacts).map(([comboKey, impact]) => {
+                  // Get the opponent combo - it's the other key in combo_impacts
+                  const opponentCombo = Object.keys(match.combo_impacts).find(k => k !== comboKey) || 'opponent';
+                  return (
+                    <Tooltip key={comboKey} content={getRatingChangeTooltip(impact, comboKey, opponentCombo, 'team')}>
+                      <span className={cn("font-mono font-medium cursor-help hover:underline", impact.ratingChange >= 0 ? "text-emerald-500" : "text-rose-500")}>
+                        {comboKey}: {impact.ratingChange >= 0 ? '+' : ''}{formatRankingPoints(impact.ratingChange)}
+                      </span>
+                    </Tooltip>
+                  );
+                })}
               </div>
             </div>
           )}
