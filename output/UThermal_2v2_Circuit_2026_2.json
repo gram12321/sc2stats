@@ -1,0 +1,486 @@
+{
+  "tournament": {
+    "name": "uThermal 2v2 Circuit: February 2026",
+    "liquipedia_slug": "UThermal_2v2_Circuit/2026/2",
+    "date": "2026-02-08",
+    "prize_pool": 1300,
+    "format": "2v2 Playoffs",
+    "maps": [
+      "Fields of Death CE",
+      "Gemgarden",
+      "New Bed of Chaos",
+      "Reclamation LE",
+      "Rhoskallian",
+      "Rohana",
+      "Rust Bucket",
+      "Undercurrent",
+      "Yellowjacket"
+    ]
+  },
+  "matches": [
+    {
+      "match_id": "R1M1",
+      "round": "Upper Bracket Quarterfinals",
+      "team1": {
+        "player1": {
+          "name": "Maru"
+        },
+        "player2": {
+          "name": "herO"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Lambo"
+        },
+        "player2": {
+          "name": "MaxPax"
+        }
+      },
+      "team1_score": 0,
+      "team2_score": 2,
+      "best_of": 3,
+      "date": "2026-02-08 14:20",
+      "games": [
+        {
+          "map": "Rohana",
+          "winner": 2
+        },
+        {
+          "map": "Yellowjacket",
+          "winner": 2
+        }
+      ],
+      "tournament_slug": "UThermal_2v2_Circuit/2026/2"
+    },
+    {
+      "match_id": "R1M2",
+      "round": "Upper Bracket Quarterfinals",
+      "team1": {
+        "player1": {
+          "name": "ShoWTimE"
+        },
+        "player2": {
+          "name": "uThermal"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "MilkiCow"
+        },
+        "player2": {
+          "name": "Wayne"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 1,
+      "best_of": 3,
+      "date": "2026-02-08 15:05",
+      "games": [
+        {
+          "map": "Rhoskallian",
+          "winner": 1
+        },
+        {
+          "map": "Undercurrent",
+          "winner": 2
+        },
+        {
+          "map": "Reclamation",
+          "winner": 1
+        }
+      ],
+      "tournament_slug": "UThermal_2v2_Circuit/2026/2"
+    },
+    {
+      "match_id": "R1M3",
+      "round": "Upper Bracket Quarterfinals",
+      "team1": {
+        "player1": {
+          "name": "Clem"
+        },
+        "player2": {
+          "name": "trigger"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "GgMaChine"
+        },
+        "player2": {
+          "name": "Shameless"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 0,
+      "best_of": 3,
+      "date": "2026-02-08 14:50",
+      "games": [
+        {
+          "map": "Rohana",
+          "winner": 1
+        },
+        {
+          "map": "New Bed of Chaos",
+          "winner": 1
+        }
+      ],
+      "tournament_slug": "UThermal_2v2_Circuit/2026/2"
+    },
+    {
+      "match_id": "R1M4",
+      "round": "Upper Bracket Quarterfinals",
+      "team1": {
+        "player1": {
+          "name": "Ryung"
+        },
+        "player2": {
+          "name": "SHIN"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Kelazhur"
+        },
+        "player2": {
+          "name": "Krystianer"
+        }
+      },
+      "team1_score": 0,
+      "team2_score": 2,
+      "best_of": 3,
+      "date": null,
+      "games": [],
+      "tournament_slug": "UThermal_2v2_Circuit/2026/2"
+    },
+    {
+      "match_id": "R2M1",
+      "round": "Upper Bracket Semifinals",
+      "team1": {
+        "player1": {
+          "name": "Lambo"
+        },
+        "player2": {
+          "name": "MaxPax"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "ShoWTimE"
+        },
+        "player2": {
+          "name": "uThermal"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 0,
+      "best_of": 3,
+      "date": "2026-02-08 16:00",
+      "games": [
+        {
+          "map": "Reclamation",
+          "winner": 1
+        },
+        {
+          "map": "Undercurrent",
+          "winner": 1
+        }
+      ],
+      "tournament_slug": "UThermal_2v2_Circuit/2026/2"
+    },
+    {
+      "match_id": "R2M2",
+      "round": "Upper Bracket Semifinals",
+      "team1": {
+        "player1": {
+          "name": "Clem"
+        },
+        "player2": {
+          "name": "trigger"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Kelazhur"
+        },
+        "player2": {
+          "name": "Krystianer"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 0,
+      "best_of": 3,
+      "date": "2026-02-08 15:20",
+      "games": [
+        {
+          "map": "New Bed of Chaos",
+          "winner": 1
+        },
+        {
+          "map": "Rohana",
+          "winner": 1
+        }
+      ],
+      "tournament_slug": "UThermal_2v2_Circuit/2026/2"
+    },
+    {
+      "match_id": "R4M1",
+      "round": "Upper Bracket Final",
+      "team1": {
+        "player1": {
+          "name": "Lambo"
+        },
+        "player2": {
+          "name": "MaxPax"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Clem"
+        },
+        "player2": {
+          "name": "trigger"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 1,
+      "best_of": 3,
+      "date": "2026-02-08 16:35",
+      "games": [
+        {
+          "map": "Rohana",
+          "winner": 1
+        },
+        {
+          "map": "Undercurrent",
+          "winner": 2
+        },
+        {
+          "map": "New Bed of Chaos",
+          "winner": 1
+        }
+      ],
+      "tournament_slug": "UThermal_2v2_Circuit/2026/2"
+    },
+    {
+      "match_id": "R1M5",
+      "round": "Lower Bracket Round 1",
+      "team1": {
+        "player1": {
+          "name": "DefMars"
+        },
+        "player2": {
+          "name": "ZaRDieNT"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Maru"
+        },
+        "player2": {
+          "name": "herO"
+        }
+      },
+      "team1_score": 0,
+      "team2_score": 1,
+      "best_of": 1,
+      "date": null,
+      "games": [],
+      "tournament_slug": "UThermal_2v2_Circuit/2026/2"
+    },
+    {
+      "match_id": "R1M6",
+      "round": "Lower Bracket Round 1",
+      "team1": {
+        "player1": {
+          "name": "Serral"
+        },
+        "player2": {
+          "name": "ZhuGeLiang"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "GgMaChine"
+        },
+        "player2": {
+          "name": "Shameless"
+        }
+      },
+      "team1_score": 1,
+      "team2_score": 0,
+      "best_of": 3,
+      "date": "2026-02-08 16:20",
+      "games": [
+        {
+          "map": "Reclamation",
+          "winner": 1
+        }
+      ],
+      "tournament_slug": "UThermal_2v2_Circuit/2026/2"
+    },
+    {
+      "match_id": "R2M3",
+      "round": "Lower Bracket Round 2",
+      "team1": {
+        "player1": {
+          "name": "Kelazhur"
+        },
+        "player2": {
+          "name": "Krystianer"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Maru"
+        },
+        "player2": {
+          "name": "herO"
+        }
+      },
+      "team1_score": 1,
+      "team2_score": 0,
+      "best_of": 1,
+      "date": "2026-02-08 16:20",
+      "games": [
+        {
+          "map": "Yellowjacket",
+          "winner": 1
+        }
+      ],
+      "tournament_slug": "UThermal_2v2_Circuit/2026/2"
+    },
+    {
+      "match_id": "R2M4",
+      "round": "Lower Bracket Round 2",
+      "team1": {
+        "player1": {
+          "name": "ShoWTimE"
+        },
+        "player2": {
+          "name": "uThermal"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Serral"
+        },
+        "player2": {
+          "name": "ZhuGeLiang"
+        }
+      },
+      "team1_score": 1,
+      "team2_score": 0,
+      "best_of": 3,
+      "date": "2026-02-08 16:50",
+      "games": [
+        {
+          "map": "Rust Bucket",
+          "winner": 1
+        }
+      ],
+      "tournament_slug": "UThermal_2v2_Circuit/2026/2"
+    },
+    {
+      "match_id": "R3M1",
+      "round": "Lower Bracket Semifinals",
+      "team1": {
+        "player1": {
+          "name": "Kelazhur"
+        },
+        "player2": {
+          "name": "Krystianer"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "ShoWTimE"
+        },
+        "player2": {
+          "name": "uThermal"
+        }
+      },
+      "team1_score": 0,
+      "team2_score": 1,
+      "best_of": 1,
+      "date": "2026-02-08 17:20",
+      "games": [
+        {
+          "map": "Reclamation",
+          "winner": 2
+        }
+      ],
+      "tournament_slug": "UThermal_2v2_Circuit/2026/2"
+    },
+    {
+      "match_id": "R4M2",
+      "round": "Lower Bracket Final",
+      "team1": {
+        "player1": {
+          "name": "Clem"
+        },
+        "player2": {
+          "name": "trigger"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "ShoWTimE"
+        },
+        "player2": {
+          "name": "uThermal"
+        }
+      },
+      "team1_score": 1,
+      "team2_score": 0,
+      "best_of": 1,
+      "date": "2026-02-08 17:45",
+      "games": [
+        {
+          "map": "Rust Bucket",
+          "winner": 1
+        }
+      ],
+      "tournament_slug": "UThermal_2v2_Circuit/2026/2"
+    },
+    {
+      "match_id": "R5M1",
+      "round": "Grand Final",
+      "team1": {
+        "player1": {
+          "name": "Lambo"
+        },
+        "player2": {
+          "name": "MaxPax"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Clem"
+        },
+        "player2": {
+          "name": "trigger"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 1,
+      "best_of": 3,
+      "date": "2026-02-08 18:10",
+      "games": [
+        {
+          "map": "New Bed of Chaos",
+          "winner": 1
+        },
+        {
+          "map": "Undercurrent",
+          "winner": 2
+        },
+        {
+          "map": "Rohana",
+          "winner": 1
+        }
+      ],
+      "tournament_slug": "UThermal_2v2_Circuit/2026/2"
+    }
+  ]
+}

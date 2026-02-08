@@ -133,15 +133,18 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
     // Define round order for upper bracket (single-elimination or upper bracket of double-elimination)
     const upperBracketOrder = [
       'Round of 16',
-      'Upper Bracket Semifinals',
+      'Upper Bracket Quarterfinals',
       'Quarterfinals',
-      'Upper Bracket Final',
+      'Upper Bracket Semifinals',
       'Semifinals',
+      'Upper Bracket Final',
       'Grand Final'
     ];
 
     // Define round order for lower bracket
     const lowerBracketOrder = [
+      'Lower Bracket Round 1',
+      'Lower Bracket Round 2',
       'Lower Bracket Quarterfinals',
       'Lower Bracket Semifinals',
       'Lower Bracket Final'

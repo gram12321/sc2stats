@@ -1,5 +1,48 @@
 # Version Log - SC2 2v2 Stats Scraper
 
+# Guideline for versionlog update for AI-Agents
+
+## 🎯 **Core Principles**
+- **ALWAYS use MCP GitHub tools** (`mcp_github2_get_commit`, `mcp_github2_list_commits`) - NEVER use terminal git commands
+- **ALWAYS retrieve actual commit data** - Don't guess or assume what changed
+- **Verify existing entries** against actual commits before adding new ones
+
+## 📋 **Entry Requirements**
+1. **Use `mcp_github2_get_commit` with `include_diff: true`** to get exact file changes and stats
+2. **Include specific details:**
+   - Mark **NEW FILE:** with exact line counts (e.g., "NEW FILE: component.tsx (372 lines)")
+   - Mark **REMOVED:** files that were deleted
+   - Include file change stats (e.g., "42 additions, 15 deletions")
+   - Note database schema changes explicitly
+   
+3. **Grouping commits:**
+   - Related commits (same feature) can be grouped into one version entry
+   - Each entry should cover 1-4 related commits if similiar
+   - Large refactors or feature sets may need separate entries
+
+## 📂 **Repository Info**
+- **Owner:** gram12321
+- **Repository:** sc2stats
+- **Full URL:** https://github.com/gram12321/sc2stats.git
+
+## Example of a good versionlog entry
+
+## Version 0.015 - Staff System Foundation & Wage Integration
+**Date:** 2025-10-09 | **Commit:** 137b0397 | **Stats:** 2155 additions, 26 deletions
+- **NEW FILE:** `src/lib/database/core/staffDB.ts` (184 lines) - Complete staff CRUD operations with Supabase
+- **NEW FILE:** `src/components/pages/Staff.tsx` (195 lines) - Main staff management interface
+- **NEW FILE:** `src/components/ui/modals/UImodals/HireStaffModal.tsx` (265 lines) - Interactive hiring with skill slider
+- **NEW FILE:** `src/components/ui/modals/activitymodals/StaffAssignmentModal.tsx` (234 lines) - Assign staff to activities with work preview
+- **NEW FILE:** `src/components/ui/components/StaffSkillBar.tsx` (99 lines) - Visual skill bars with color-coding
+- **NEW FILE:** `src/components/finance/StaffWageSummary.tsx` (89 lines) - Wage breakdown display
+- **NEW FILE:** `src/lib/constants/staffConstants.ts` (99 lines) - Nationalities, skill levels, specializations, wages
+- **NEW FILE:** `src/components/ui/shadCN/slider.tsx` (26 lines) - ShadCN slider component, added `@radix-ui/react-slider`
+- **NEW FILE:** `docs/wage_system_integration.md` (175 lines) - Wage system documentation
+- `src/lib/services/activity/WorkCalculators/workCalculator.ts` - Staff-based work calculation with multi-tasking penalty, specialization bonus (94 additions, 1 deletion)
+- Replaced hardcoded 50 work/tick with dynamic staff contribution based on assigned staff skills
+- Added Staff navigation (👥 icon) to header, integrated into app routing
+
+
 ## Version 1.0005a - 2026-01-16 (f8451990)
 
 ### 🎯 **Group Stage/Round Robin Support**
