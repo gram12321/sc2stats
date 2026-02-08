@@ -15,7 +15,9 @@
       "Rohana",
       "Undercurrent",
       "Yellowjacket"
-    ]
+    ],
+    "is_main_circuit": true,
+    "season": 2025
   },
   "matches": [
     {
@@ -445,6 +447,36 @@
           "winner": 1
         }
       ],
+      "tournament_slug": "UThermal_2v2_Circuit/WUC/2"
+    },
+    {
+      "match_id": "early_1770591249737",
+      "round": "Early Round 1",
+      "team1": {
+        "player1": {
+          "name": "Purce",
+          "race": null
+        },
+        "player2": {
+          "name": "Loviuf",
+          "race": null
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Calftowin",
+          "race": null
+        },
+        "player2": {
+          "name": "LookMaNoSens",
+          "race": null
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 0,
+      "best_of": 3,
+      "date": "2025-07-09",
+      "games": [],
       "tournament_slug": "UThermal_2v2_Circuit/WUC/2"
     }
   ]

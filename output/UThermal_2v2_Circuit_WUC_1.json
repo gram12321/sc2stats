@@ -15,7 +15,9 @@
       "Rohana",
       "Undercurrent",
       "Yellowjacket"
-    ]
+    ],
+    "is_main_circuit": true,
+    "season": 2025
   },
   "matches": [
     {
@@ -237,6 +239,216 @@
           "winner": 1
         }
       ],
+      "tournament_slug": "UThermal_2v2_Circuit/WUC/1"
+    },
+    {
+      "match_id": "early_1770591305350",
+      "round": "Early Round 1",
+      "team1": {
+        "player1": {
+          "name": "DefMars",
+          "race": null
+        },
+        "player2": {
+          "name": "ZaRDieNT",
+          "race": null
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Moja",
+          "race": null
+        },
+        "player2": {
+          "name": "OpTiMiStC",
+          "race": null
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 1,
+      "best_of": 3,
+      "date": "2025-07-02",
+      "games": [],
+      "tournament_slug": "UThermal_2v2_Circuit/WUC/1"
+    },
+    {
+      "match_id": "early_1770591335900",
+      "round": "Early Round 1",
+      "team1": {
+        "player1": {
+          "name": "GgMaChine",
+          "race": null
+        },
+        "player2": {
+          "name": "Shameless",
+          "race": null
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "ART",
+          "race": null
+        },
+        "player2": {
+          "name": "Kinpach",
+          "race": null
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 0,
+      "best_of": 3,
+      "date": "2025-07-02",
+      "games": [],
+      "tournament_slug": "UThermal_2v2_Circuit/WUC/1"
+    },
+    {
+      "match_id": "early_1770591355747",
+      "round": "Early Round 1",
+      "team1": {
+        "player1": {
+          "name": "Lambo",
+          "race": null
+        },
+        "player2": {
+          "name": "Harstem",
+          "race": null
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Rob",
+          "race": null
+        },
+        "player2": {
+          "name": "Dolan",
+          "race": null
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 0,
+      "best_of": 3,
+      "date": "2025-07-02",
+      "games": [],
+      "tournament_slug": "UThermal_2v2_Circuit/WUC/1"
+    },
+    {
+      "match_id": "early_1770591393218",
+      "round": "Early Round 1",
+      "team1": {
+        "player1": {
+          "name": "uThermal",
+          "race": null
+        },
+        "player2": {
+          "name": "goblin",
+          "race": null
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Droptimus",
+          "race": null
+        },
+        "player2": {
+          "name": "Matt",
+          "race": null
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 0,
+      "best_of": 3,
+      "date": "2025-07-02",
+      "games": [],
+      "tournament_slug": "UThermal_2v2_Circuit/WUC/1"
+    },
+    {
+      "match_id": "early_1770591426264",
+      "round": "Early Round 1",
+      "team1": {
+        "player1": {
+          "name": "NightPhoenix",
+          "race": null
+        },
+        "player2": {
+          "name": "Wayne",
+          "race": null
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Brat_OK",
+          "race": null
+        },
+        "player2": {
+          "name": "MindelVK",
+          "race": null
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 0,
+      "best_of": 3,
+      "date": "2025-07-02",
+      "games": [],
+      "tournament_slug": "UThermal_2v2_Circuit/WUC/1"
+    },
+    {
+      "match_id": "early_1770591444844",
+      "round": "Early Round 1",
+      "team1": {
+        "player1": {
+          "name": "Clem",
+          "race": null
+        },
+        "player2": {
+          "name": "trigger",
+          "race": null
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "ErebusBlack",
+          "race": null
+        },
+        "player2": {
+          "name": "Goswser",
+          "race": null
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 0,
+      "best_of": 3,
+      "date": "2025-07-02",
+      "games": [],
+      "tournament_slug": "UThermal_2v2_Circuit/WUC/1"
+    },
+    {
+      "match_id": "early_1770591466618",
+      "round": "Early Round 1",
+      "team1": {
+        "player1": {
+          "name": "Jumy",
+          "race": null
+        },
+        "player2": {
+          "name": "YoungYakov",
+          "race": null
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "DIMAGA",
+          "race": null
+        },
+        "player2": {
+          "name": "Starfish",
+          "race": null
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 0,
+      "best_of": 3,
+      "date": "2025-07-02",
+      "games": [],
       "tournament_slug": "UThermal_2v2_Circuit/WUC/1"
     }
   ]

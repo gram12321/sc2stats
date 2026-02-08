@@ -15,7 +15,9 @@
       "Rohana",
       "Undercurrent",
       "Yellowjacket"
-    ]
+    ],
+    "is_main_circuit": true,
+    "season": 2025
   },
   "matches": [
     {
@@ -397,6 +399,36 @@
           "winner": 2
         }
       ],
+      "tournament_slug": "UThermal_2v2_Circuit/Last_Chance_Qualifiers"
+    },
+    {
+      "match_id": "early_1770591547431",
+      "round": "Early Round 1",
+      "team1": {
+        "player1": {
+          "name": "RandomHero",
+          "race": null
+        },
+        "player2": {
+          "name": "Polo64",
+          "race": null
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "MaxGio",
+          "race": null
+        },
+        "player2": {
+          "name": "Ryoku",
+          "race": null
+        }
+      },
+      "team1_score": 0,
+      "team2_score": 2,
+      "best_of": 3,
+      "date": "2025-06-20",
+      "games": [],
       "tournament_slug": "UThermal_2v2_Circuit/Last_Chance_Qualifiers"
     }
   ]
