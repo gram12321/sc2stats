@@ -9,7 +9,8 @@ import {
   determineMatchOutcome,
   hasValidScores,
   initializeStats,
-  sortRankings
+  sortRankings,
+  getRoundSortOrder
 } from './rankingUtils.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -231,12 +232,8 @@ export async function calculateTeamRaceRankings(mainCircuitOnly = false, seasons
       }
 
       // Then by round order
-      const roundOrder = {
-        'Round of 16': 1, 'Round of 8': 2, 'Quarterfinals': 3,
-        'Semifinals': 4, 'Grand Final': 5, 'Final': 5
-      };
-      const roundA = roundOrder[a.round] || 999;
-      const roundB = roundOrder[b.round] || 999;
+      const roundA = getRoundSortOrder(a.round);
+      const roundB = getRoundSortOrder(b.round);
       if (roundA !== roundB) {
         return roundA - roundB;
       }
@@ -404,7 +401,8 @@ export async function calculateTeamRaceRankings(mainCircuitOnly = false, seasons
         populationStdDev,
         combo2ConfidenceBefore,
         null,
-        populationMean
+        populationMean,
+        combo2TempStats.matches
       );
 
       // Update combo2 stats comparing against combo1 (before combo1 update)
@@ -416,7 +414,8 @@ export async function calculateTeamRaceRankings(mainCircuitOnly = false, seasons
         populationStdDev,
         combo1ConfidenceBefore,
         null,
-        populationMean
+        populationMean,
+        combo1TempStats.matches
       );
 
       // Apply changes back to matchup stats

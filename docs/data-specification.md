@@ -196,3 +196,23 @@ Scores can be manually edited through the Match Editor UI if the scraper missed 
 ## Export Format
 
 JSON structure as shown above. Data is saved to `output/<tournament_slug>.json`.
+
+## Ranking/K-Factor Notes (Current Implementation)
+
+The ranking engine uses:
+
+1. **Newness K-factor (base K)**:
+   - Matches 1-2: `K = 80`
+   - Matches 3-4: `K = 40`
+   - Matches 5-8: `K = 50`
+   - Matches 9+: `K = min(50, 32 + 100/matches)`
+
+2. **Confidence multiplier (combined confidence of both opponents)**:
+   - 0% combined confidence -> `0.90x`
+   - 50% combined confidence -> `1.00x`
+   - 100% combined confidence -> `1.10x`
+
+3. **Protection vs new opponent**:
+   - Uses opponent match count only (applies on both wins and losses).
+   - Strongest for opponent matches 0-4, then tapers.
+   - **Exception**: if both sides are very new (`<=4` matches), protection is moderated so both sides can still calibrate.

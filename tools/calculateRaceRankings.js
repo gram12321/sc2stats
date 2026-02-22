@@ -9,7 +9,8 @@ import {
   determineMatchOutcome,
   hasValidScores,
   initializeStats,
-  sortRankings
+  sortRankings,
+  getRoundSortOrder
 } from './rankingUtils.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -206,12 +207,8 @@ export async function calculateRaceRankings(mainCircuitOnly = false, seasons = n
       }
 
       // Then by round order
-      const roundOrder = {
-        'Round of 16': 1, 'Round of 8': 2, 'Quarterfinals': 3,
-        'Semifinals': 4, 'Grand Final': 5, 'Final': 5
-      };
-      const roundA = roundOrder[a.round] || 999;
-      const roundB = roundOrder[b.round] || 999;
+      const roundA = getRoundSortOrder(a.round);
+      const roundB = getRoundSortOrder(b.round);
       if (roundA !== roundB) {
         return roundA - roundB;
       }
@@ -359,6 +356,8 @@ export async function calculateRaceRankings(mainCircuitOnly = false, seasons = n
             const inverseRatingBefore = matchupRatingsBefore.get(inverseKey);
             const matchupConfidenceBefore = matchupStats.confidence || 0;
             const inverseConfidenceBefore = inverseStats.confidence || 0;
+            const matchupMatchesBefore = matchupStats.matches || 0;
+            const inverseMatchesBefore = inverseStats.matches || 0;
 
             // Calculate population statistics for race matchups (adapts to actual skill distribution)
             const populationStats = calculatePopulationStats(raceStats);
@@ -384,7 +383,8 @@ export async function calculateRaceRankings(mainCircuitOnly = false, seasons = n
               populationStdDev, // Population std dev for adaptive scaling
               inverseConfidenceBefore, // opponentConfidence
               matchupRatingBefore, // Use PvT's rating BEFORE update (explicit)
-              populationMean // Population mean (for first-match logic, though explicit rating takes precedence)
+              populationMean, // Population mean (for first-match logic, though explicit rating takes precedence)
+              inverseMatchesBefore
             );
 
             // Update TvP: compare its BEFORE rating against PvT's BEFORE rating
@@ -397,7 +397,8 @@ export async function calculateRaceRankings(mainCircuitOnly = false, seasons = n
               populationStdDev, // Population std dev for adaptive scaling
               matchupConfidenceBefore, // opponentConfidence
               inverseRatingBefore, // Use TvP's rating BEFORE update (explicit)
-              populationMean // Population mean (for first-match logic, though explicit rating takes precedence)
+              populationMean, // Population mean (for first-match logic, though explicit rating takes precedence)
+              matchupMatchesBefore
             );
 
             // Track impact

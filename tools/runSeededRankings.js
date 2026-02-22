@@ -27,24 +27,13 @@ import {
   determineMatchOutcome,
   hasValidScores,
   initializeStats,
-  sortRankings
+  sortRankings,
+  getRoundSortOrder
 } from './rankingUtils.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const outputDir = join(__dirname, '..', 'output');
-
-/**
- * Round order mapping for sorting matches chronologically
- */
-const ROUND_ORDER = {
-  'Round of 16': 1,
-  'Round of 8': 2,
-  'Quarterfinals': 3,
-  'Semifinals': 4,
-  'Grand Final': 5,
-  'Final': 5
-};
 
 /**
  * Load and parse all tournament JSON files from the output directory
@@ -120,8 +109,8 @@ function sortAllMatches(matches, reverse = false) {
     }
 
     // Then by round order
-    const roundA = ROUND_ORDER[a.round] || 999;
-    const roundB = ROUND_ORDER[b.round] || 999;
+    const roundA = getRoundSortOrder(a.round);
+    const roundB = getRoundSortOrder(b.round);
     if (roundA !== roundB) {
       return roundA - roundB;
     }
@@ -167,6 +156,21 @@ function getAverageOpponentConfidence(opponentNames, playerStats) {
   if (confidences.length === 0) return 0;
 
   return confidences.reduce((sum, conf) => sum + conf, 0) / confidences.length;
+}
+
+function getAverageOpponentMatches(opponentNames, playerStats) {
+  if (opponentNames.length === 0) return 0;
+
+  const matches = opponentNames
+    .map(name => {
+      const stats = playerStats.get(name);
+      return stats ? (stats.matches || 0) : 0;
+    })
+    .filter(count => count !== undefined);
+
+  if (matches.length === 0) return 0;
+
+  return matches.reduce((sum, count) => sum + count, 0) / matches.length;
 }
 
 /**
@@ -223,6 +227,8 @@ function calculateRankingsFromMatches(sortedMatches, seedRatings = null, passNam
     const team2AvgOpponentRating = getAverageOpponentRating(team1Players, playerStats);
     const team1AvgOpponentConfidence = getAverageOpponentConfidence(team2Players, playerStats);
     const team2AvgOpponentConfidence = getAverageOpponentConfidence(team1Players, playerStats);
+    const team1AvgOpponentMatches = getAverageOpponentMatches(team2Players, playerStats);
+    const team2AvgOpponentMatches = getAverageOpponentMatches(team1Players, playerStats);
 
     // Update stats for team1 players
     for (const playerName of team1Players) {
@@ -235,7 +241,8 @@ function calculateRankingsFromMatches(sortedMatches, seedRatings = null, passNam
         finalPopulationStdDev,
         team1AvgOpponentConfidence,
         null,
-        finalPopulationMean
+        finalPopulationMean,
+        team1AvgOpponentMatches
       );
     }
 
@@ -250,7 +257,8 @@ function calculateRankingsFromMatches(sortedMatches, seedRatings = null, passNam
         finalPopulationStdDev,
         team2AvgOpponentConfidence,
         null,
-        finalPopulationMean
+        finalPopulationMean,
+        team2AvgOpponentMatches
       );
     }
   }
@@ -363,7 +371,8 @@ function calculateTeamRankingsFromMatches(sortedMatches, seedRatings = null, pas
       finalPopulationStdDev,
       team2Confidence,
       null,
-      finalPopulationMean
+      finalPopulationMean,
+      team2Stats.matches
     );
     updateStatsForMatch(
       team2Stats,
@@ -373,7 +382,8 @@ function calculateTeamRankingsFromMatches(sortedMatches, seedRatings = null, pas
       finalPopulationStdDev,
       team1Confidence,
       null,
-      finalPopulationMean
+      finalPopulationMean,
+      team1Stats.matches
     );
   }
 

@@ -103,16 +103,19 @@ export function Info({ }: InfoProps) {
                                                 <div className="bg-blue-50 p-4 rounded-md">
                                                       <h4 className="font-semibold text-blue-900 text-sm mb-1">Provisional Period</h4>
                                                       <p className="text-xs text-blue-800">
-                                                            New entities start with a high K-factor (64), allowing them to maintain rapid placement adjustments.
-                                                            This decreases over their first 20 matches (down to ~32) as their rating stabilizes.
+                                                            New entities use an explicit "newness" K-factor schedule:
+                                                            matches 1-2 are very high, 3-4 are damped, 5-8 are elevated again, then K decays toward a stable long-term level.
+                                                            This helps new players/teams calibrate quickly without keeping extreme volatility forever.
                                                       </p>
                                                 </div>
                                                 <div className="bg-green-50 p-4 rounded-md">
                                                       <h4 className="font-semibold text-green-900 text-sm mb-1">Confidence Score</h4>
                                                       <p className="text-xs text-green-800">
                                                             A separate "Confidence" score (0-100%) tracks prediction accuracy.
-                                                            High confidence reduces the K-factor (rating becomes harder to shift).
-                                                            Unexpected results lower confidence, making the rating more volatile again to correct itself.
+                                                            Low combined confidence dampens K-factor adjustments (more conservative updates),
+                                                            while high combined confidence amplifies K-factor adjustments (faster correction when strong expectations are violated).
+                                                            The system also applies opponent-newness protection: facing very new opponents reduces rating impact on both wins and losses.
+                                                            When both sides are very new, this protection is moderated so early calibration can still happen.
                                                             The confidence score is used as a treshold for aquiring a ranking. Both Players and Teams require a confidence score above average confidence to be ranked.
                                                             The system tracks Players/Teams below average confidence and they can be shown in the rankings. But they do not receive a rank.
                                                       </p>
@@ -135,7 +138,7 @@ export function Info({ }: InfoProps) {
                                     <div className="border-t pt-4">
                                           <h3 className="font-bold text-gray-900 mb-2">Advanced: "Seeded" Rankings</h3>
                                           <p className="text-sm mb-3">
-                                                Standard rankings start everyone at the population average (or 0). This creates a "Cold Start" problem where
+                                                Standard rankings start everyone at 0. This creates a "Cold Start" problem where
                                                 early history is inaccurate until ratings settle. IE. Team maxpax+spirit are by default rated just the same as every other team in the beginning of season one, but we all know they are not equal strength to every other team.
                                                 We solve this with an optional <strong>3-Pass Seeding System</strong>:
                                           </p>
@@ -202,8 +205,8 @@ export function Info({ }: InfoProps) {
                                           <p className="text-gray-700 text-sm leading-relaxed">
                                                 Very quickly due to the <strong>Provisional "K-Factor"</strong>.
                                                 <br /><br />
-                                                For the first 20 matches of a new Player or Team, the system allows for much larger rating swings (up to twice the normal amount).
-                                                This ensures that if a pro team forms and dominates, they don't have to grind hundreds of games to reach the top.
+                                                New entities get higher early-match K values via a newness schedule, so if a strong team forms and dominates,
+                                                they can climb rapidly without needing hundreds of games.
                                                 <br /><br />
                                                 It is common for a newly formed super-team to achieve a #1 <i>rating</i> immediately after winning their first tournament. However, they might not appear on the official leaderboard immediately because they haven't met the <strong>Confidence Threshold</strong> (see above). They need to play enough games to prove their consistency before being awarded an official rank.
                                           </p>
@@ -212,7 +215,7 @@ export function Info({ }: InfoProps) {
                                     <div className="border-b border-gray-100 pb-4 last:border-0 last:pb-0">
                                           <h3 className="font-bold text-gray-900 mb-2">What does the "Use Initial Seeds" toggle do?</h3>
                                           <p className="text-gray-700 text-sm leading-relaxed">
-                                                By default, everyone starts at the same baseline. This represents "clean slate" performance.
+                                                By default, everyone starts at the same fixed baseline (0). This represents "clean slate" performance.
                                                 Checking "Use Initial Seeds" activates a 3-pass algorithm where we simulate history forward, backward, and forward again.
                                                 This gives established players a starting rating based on their estimated skill, providing a more predictive ranking list from Day 1 of the season.
                                           </p>

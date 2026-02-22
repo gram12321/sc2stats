@@ -14,6 +14,8 @@ interface PlayerImpact {
   expectedWin?: number;
   baseK?: number;
   adjustedK?: number;
+  confidenceMultiplier?: number;
+  opponentMatchCount?: number;
   confidence?: number;
   matchCount?: number;
 }
@@ -29,6 +31,8 @@ interface TeamImpact {
   expectedWin?: number;
   baseK?: number;
   adjustedK?: number;
+  confidenceMultiplier?: number;
+  opponentMatchCount?: number;
   confidence?: number;
   matchCount?: number;
 }
@@ -67,6 +71,8 @@ interface MatchData {
     expectedWin?: number;
     baseK?: number;
     adjustedK?: number;
+    confidenceMultiplier?: number;
+    opponentMatchCount?: number;
     confidence?: number;
     matchCount?: number;
   }>;
@@ -149,7 +155,19 @@ function getRatingChangeTooltip(
   isCombo: boolean = false,
   comboCombinedRatings?: { subjectRating: number; opponentRating: number } // Combined "vsX" ratings
 ): React.ReactNode {
-  const { ratingBefore, ratingChange, won, opponentRating, expectedWin, baseK, adjustedK, confidence, matchCount } = impact;
+  const {
+    ratingBefore,
+    ratingChange,
+    won,
+    opponentRating,
+    expectedWin,
+    baseK,
+    adjustedK,
+    confidenceMultiplier,
+    opponentMatchCount,
+    confidence,
+    matchCount
+  } = impact;
 
   if (expectedWin === undefined || adjustedK === undefined) {
     return (
@@ -166,6 +184,27 @@ function getRatingChangeTooltip(
   const isDraw = impact.isDraw === true;
   const actualResult = isDraw ? 0.5 : (won ? 1 : 0);
   const typeLabel = type === 'team' ? 'Team' : type === 'race' ? 'Race' : 'Player';
+  const kAfterConfidence = (baseK !== undefined && confidenceMultiplier !== undefined)
+    ? baseK * confidenceMultiplier
+    : undefined;
+  const protectionMultiplier = (kAfterConfidence !== undefined && kAfterConfidence !== 0)
+    ? adjustedK / kAfterConfidence
+    : undefined;
+  const hasProtectionInfo = opponentMatchCount !== undefined && protectionMultiplier !== undefined;
+  const isNewVsNewModerated = hasProtectionInfo &&
+    matchCount !== undefined &&
+    matchCount <= 4 &&
+    opponentMatchCount !== undefined &&
+    opponentMatchCount <= 4;
+  const kExpression = (() => {
+    if (baseK !== undefined && confidenceMultiplier !== undefined && protectionMultiplier !== undefined) {
+      return `${baseK.toFixed(1)} × ${confidenceMultiplier.toFixed(3)} × ${protectionMultiplier.toFixed(3)}`;
+    }
+    if (baseK !== undefined && confidenceMultiplier !== undefined) {
+      return `${baseK.toFixed(1)} × ${confidenceMultiplier.toFixed(3)}`;
+    }
+    return `${adjustedK.toFixed(1)}`;
+  })();
   const calculation = `${adjustedK.toFixed(1)} × (${actualResult} - ${expectedWin.toFixed(3)}) = ${formatRankingPoints(ratingChange)}`;
 
   return (
@@ -217,16 +256,33 @@ function getRatingChangeTooltip(
             {adjustedK !== undefined && adjustedK !== baseK && (
               <div><span className="text-muted-foreground">Adj K:</span> {adjustedK.toFixed(1)}</div>
             )}
+            {confidenceMultiplier !== undefined && (
+              <div className="text-muted-foreground">Conf Mult: {confidenceMultiplier.toFixed(3)}x</div>
+            )}
+            {hasProtectionInfo && (
+              <div className="text-muted-foreground">Protect vs New: {protectionMultiplier!.toFixed(3)}x</div>
+            )}
+            {isNewVsNewModerated && (
+              <div className="text-muted-foreground col-span-2">
+                New vs New: protection is moderated so both ratings can calibrate early.
+              </div>
+            )}
             {confidence !== undefined && (
               <div className="text-muted-foreground">Conf: {Math.round(confidence)}%</div>
             )}
             {matchCount !== undefined && (
               <div className="text-muted-foreground">Matches: {matchCount}</div>
             )}
+            {opponentMatchCount !== undefined && (
+              <div className="text-muted-foreground">Opp Matches: {Math.round(opponentMatchCount)}</div>
+            )}
           </div>
         )}
         <div className="pt-1 border-t border-border mt-1">
           <div className="text-muted-foreground mb-0.5">Final Calculation:</div>
+          <div className="font-mono text-[10px] text-muted-foreground bg-muted/50 px-1.5 py-0.5 rounded border border-border text-center mb-1">
+            K = {kExpression} = {adjustedK.toFixed(1)}
+          </div>
           <div className="font-mono text-xs bg-muted px-1.5 py-1 rounded border border-border text-center">
             {calculation}
           </div>

@@ -115,6 +115,17 @@ The scraper extracts the following data reliably:
 
 - [Data Specification](docs/data-specification.md) - Data structure and requirements
 
+## Rating System Notes
+
+Current K-factor logic combines three layers:
+
+1. **Base Newness K** from match count (fast early calibration).
+2. **Confidence Multiplier** from combined confidence of both sides:
+   - low confidence dampens updates,
+   - high confidence amplifies updates.
+3. **Protection vs New Opponent** (applies to both wins/losses against new opponents).
+   - If both sides are very new, this protection is moderated so both can still move early.
+
 
 ## Future ideas:
 

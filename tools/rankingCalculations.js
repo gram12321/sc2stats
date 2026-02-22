@@ -10,23 +10,23 @@
 // These functions implement the prediction-based ranking algorithm
 
 /**
- * Get K-factor based on match count (provisional rating system)
- * - Matches 1-5: K = 80 (provisional - learning rapidly)
- * - Matches 6-10: K = 48 (transition period)
- * - Matches 11-20: K = 40 (stabilizing)
- * - Matches 21+: Adaptive K = 32 * (1 + 3/matches), capped at 40
+ * Get K-factor based on match count (newness/provisional system)
+ * - Matches 1-2: K = 80 (initial placement)
+ * - Matches 3-4: K = 60 (early damping)
+ * - Matches 5-8: K = 50 (confirmation period)
+ * - Matches 9+: Adaptive K = 32 + (100 / matches), capped at 50
  * 
  * @param {number} matchCount - Number of matches played
  * @returns {number} K-factor for rating calculations
  */
-export function getProvisionalKFactor(matchCount) {
+export function getNewnessKFactor(matchCount) {
   // Zig-Zag approach for tournament realism
   // Matches 1-2: High impact for initial placement (e.g. Ro16)
   if (matchCount <= 2) return 80;
 
   // Matches 3-4: Dampened impact for deep tournament run
   // Prevents double bonus of "High K" + "Beating Top Seed"
-  if (matchCount <= 4) return 40;
+  if (matchCount <= 4) return 60;
 
   // Matches 5-8: Confirmation tournament (2nd event)
   // Higher again to allow movement now that they've settled slightly
@@ -96,21 +96,84 @@ export function updateConfidence(stats, expectedWin, actualWin, isDraw = false) 
 
 /**
  * Apply confidence-based adjustment to K-factor
- * Lower confidence = higher K-factor (still learning)
- * Higher confidence = lower K-factor (more stable)
+ * Low confidence = damp K
+ * High confidence = amplify K
  * 
  * @param {number} baseK - Base K-factor from provisional system
  * @param {number} confidence - Confidence percentage (0-100)
  * @returns {number} Adjusted K-factor
  */
-export function applyConfidenceAdjustment(baseK, confidence, opponentConfidence = 0) {
-  // Use combined confidence from both entities to set volatility.
-  // Lower combined confidence => higher K-factor adjustment.
+export function getConfidenceMultiplier(confidence, opponentConfidence = 0) {
   const selfConfidence = Number.isFinite(confidence) ? Math.max(0, Math.min(100, confidence)) : 0;
   const oppConfidence = Number.isFinite(opponentConfidence) ? Math.max(0, Math.min(100, opponentConfidence)) : 0;
   const combinedConfidence = (selfConfidence + oppConfidence) / 2;
-  const confidenceMultiplier = 1 + ((100 - combinedConfidence) / 100) * 0.2;
+  // Intended policy:
+  // 0% combined confidence: 0.90x
+  // 50% combined confidence: 1.00x
+  // 100% combined confidence: 1.10x
+  const confidenceMultiplier = 0.9 + (combinedConfidence / 100) * 0.2;
+  return confidenceMultiplier;
+}
+
+export function applyConfidenceAdjustment(baseK, confidence, opponentConfidence = 0) {
+  const confidenceMultiplier = getConfidenceMultiplier(confidence, opponentConfidence);
   return baseK * confidenceMultiplier;
+}
+
+/**
+ * Apply explicit opponent newness asymmetry on top of base/newness K:
+ * - Protection depends on opponent newness only.
+ * - Newer opponents reduce K more (both on wins and losses).
+ * - If both sides are very new, protection is moderated so ratings can still move.
+ */
+export function applyOpponentNewnessAsymmetry(kFactor, selfMatchCount, opponentMatchCount = null) {
+  if (!Number.isFinite(opponentMatchCount) || opponentMatchCount === null) {
+    return kFactor;
+  }
+
+  // Strong early protection curve against very new opponents.
+  // This is intentionally aggressive for matches 1-4, then tapers quickly.
+  let protection;
+  if (opponentMatchCount <= 1) {
+    protection = 0.90; // 90% protection
+  } else if (opponentMatchCount <= 2) {
+    protection = 0.70; // 70% protection
+  } else if (opponentMatchCount <= 4) {
+    protection = 0.50; // 50% protection
+  } else if (opponentMatchCount <= 8) {
+    protection = 0.30; // 30% protection
+  } else if (opponentMatchCount <= 16) {
+    protection = 0.15; // 15% protection
+  } else {
+    protection = 0.00; // No protection for established opponents
+  }
+
+  // If both entities are very new, reduce protection so early calibration still happens.
+  if (selfMatchCount <= 4 && opponentMatchCount <= 4) {
+    protection *= 0.5;
+  }
+
+  // Multiplier after protection (e.g. 90% protection => 0.10x)
+  const asymmetryMultiplier = Math.max(0.1, 1 - protection);
+  return kFactor * asymmetryMultiplier;
+}
+
+// Backward-compatible alias
+export const getProvisionalKFactor = getNewnessKFactor;
+
+/**
+ * Get normalized newness score (1 = very new, 0 = established)
+ * Used for explicit opponent asymmetry handling.
+ *
+ * @param {number} matchCount - Number of matches played
+ * @returns {number} Newness score in [0, 1]
+ */
+export function getNewnessScore(matchCount) {
+  if (matchCount <= 2) return 1.0;
+  if (matchCount <= 4) return 0.8;
+  if (matchCount <= 8) return 0.6;
+  if (matchCount <= 16) return 0.3;
+  return 0.0;
 }
 
 /**
@@ -236,9 +299,20 @@ export function initializeStatsWithSeed(name, seedRating, additionalFields = {})
  * @param {number} populationStdDev - Standard deviation of the player population
  * @param {number} opponentConfidence - Opponent's confidence (0-100, optional for future use)
  * @param {number} currentRating - Optional: explicit current rating to use (for zero-sum calculations)
+ * @param {number|null} opponentMatchCount - Opponent match count for explicit newness asymmetry
  * @returns {Object} Object with ratingChange and calculation details
  */
-export function updateStatsForMatch(stats, won, lost, opponentRating, populationStdDev = 350, opponentConfidence = 0, currentRating = null, populationMean = null) {
+export function updateStatsForMatch(
+  stats,
+  won,
+  lost,
+  opponentRating,
+  populationStdDev = 350,
+  opponentConfidence = 0,
+  currentRating = null,
+  populationMean = null,
+  opponentMatchCount = null
+) {
   // Check if this is the first match (before incrementing)
   const isFirstMatch = stats.matches === 0;
 
@@ -250,11 +324,15 @@ export function updateStatsForMatch(stats, won, lost, opponentRating, population
     stats.confidence = 0;
   }
 
-  // Get base K-factor from provisional system
-  const baseK = getProvisionalKFactor(stats.matches);
+  // Layer 1: base K-factor from explicit newness/provisional system
+  const baseK = getNewnessKFactor(stats.matches);
 
-  // Apply confidence adjustment individually
-  const adjustedK = applyConfidenceAdjustment(baseK, stats.confidence, opponentConfidence);
+  // Layer 2: confidence multiplier (low conf damp, high conf amplify)
+  const confidenceMultiplier = getConfidenceMultiplier(stats.confidence, opponentConfidence);
+  const confidenceAdjustedK = baseK * confidenceMultiplier;
+
+  // Layer 3: explicit opponent-newness asymmetry
+  const adjustedK = applyOpponentNewnessAsymmetry(confidenceAdjustedK, stats.matches, opponentMatchCount);
 
   // Calculate expected win probability using population-based scale
   // For first match: use population mean instead of current rating (which might be 0 or mean)
@@ -303,6 +381,8 @@ export function updateStatsForMatch(stats, won, lost, opponentRating, population
       expectedWin,
       baseK,
       adjustedK,
+      confidenceMultiplier,
+      opponentMatchCount,
       confidence: stats.confidence,
       opponentConfidence,
       matchCount: stats.matches,
