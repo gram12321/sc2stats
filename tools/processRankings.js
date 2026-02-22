@@ -1,17 +1,8 @@
 import { readdir, readFile } from 'fs/promises';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
-import {
-  updateStatsForMatch,
-  calculatePopulationStats,
-  initializeStatsWithSeed
-} from './rankingCalculations.js';
-import {
-  determineMatchOutcome,
-  hasValidScores,
-  initializeStats,
-  sortRankings
-} from './rankingUtils.js';
+import { updateStatsForMatch, calculatePopulationStats, initializeStatsWithSeed } from './rankingCalculations.js';
+import { determineMatchOutcome, hasValidScores, initializeStats, sortRankings } from './rankingUtils.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -218,6 +209,28 @@ function getAverageOpponentRating(opponentNames, playerStats) {
 }
 
 /**
+ * Calculate average confidence of opponent players
+ *
+ * @param {Array} opponentNames - Array of opponent player names
+ * @param {Map} playerStats - Map of player stats
+ * @returns {number} Average confidence of opponents
+ */
+function getAverageOpponentConfidence(opponentNames, playerStats) {
+  if (opponentNames.length === 0) return 0;
+
+  const confidences = opponentNames
+    .map(name => {
+      const stats = playerStats.get(name);
+      return stats ? (stats.confidence || 0) : 0;
+    })
+    .filter(conf => conf !== undefined);
+
+  if (confidences.length === 0) return 0;
+
+  return confidences.reduce((sum, conf) => sum + conf, 0) / confidences.length;
+}
+
+/**
  * Calculate player rankings from sorted matches
  * Uses prediction-based scoring: points change based on outperforming/underperforming expectations
  * Predictions are based on previous ranking points vs opponent's previous ranking points
@@ -259,25 +272,18 @@ function calculateRankingsFromMatches(sortedMatches, seeds = null, playerDefault
       match.team2?.player2?.name
     ].filter(Boolean);
 
-    // Calculate population statistics BEFORE initializing new players
-    // This allows us to start new players at the population mean
-    const existingPopulationStats = calculatePopulationStats(playerStats);
-    const populationMean = existingPopulationStats.mean;
-    const populationStdDev = existingPopulationStats.stdDev;
-
-    // Initialize players if they don't exist yet, starting them at population mean
+    // Initialize players if they don't exist yet (fixed anchor at 0 unless seeded)
     for (const playerName of [...team1Players, ...team2Players]) {
       if (!playerStats.has(playerName)) {
         if (seeds && seeds[playerName] !== undefined) {
           playerStats.set(playerName, initializeStatsWithSeed(playerName, seeds[playerName]));
         } else {
-          playerStats.set(playerName, initializeStats(playerName, {}, populationMean));
+          playerStats.set(playerName, initializeStats(playerName, {}));
         }
       }
     }
 
     // Recalculate population statistics after adding new players
-    // (new players start at mean, so this shouldn't change much, but ensures accuracy)
     const populationStats = calculatePopulationStats(playerStats);
     const finalPopulationMean = populationStats.mean;
     const finalPopulationStdDev = populationStats.stdDev;
@@ -285,6 +291,8 @@ function calculateRankingsFromMatches(sortedMatches, seeds = null, playerDefault
     // Calculate average opponent ratings for each team
     const team1AvgOpponentRating = getAverageOpponentRating(team2Players, playerStats);
     const team2AvgOpponentRating = getAverageOpponentRating(team1Players, playerStats);
+    const team1AvgOpponentConfidence = getAverageOpponentConfidence(team2Players, playerStats);
+    const team2AvgOpponentConfidence = getAverageOpponentConfidence(team1Players, playerStats);
 
     // Calculate current rankings to determine rank before match
     // This is O(N log N) where N is number of players, done for every match
@@ -302,7 +310,16 @@ function calculateRankingsFromMatches(sortedMatches, seeds = null, playerDefault
       const ratingBefore = stats.points;
       const rankBefore = rankMap.get(playerName) || '-';
       const rankBeforeConfidence = stats.confidence || 0;
-      const result = updateStatsForMatch(stats, team1Won, team2Won, team1AvgOpponentRating, finalPopulationStdDev, 0, null, finalPopulationMean);
+      const result = updateStatsForMatch(
+        stats,
+        team1Won,
+        team2Won,
+        team1AvgOpponentRating,
+        finalPopulationStdDev,
+        team1AvgOpponentConfidence,
+        null,
+        finalPopulationMean
+      );
       playerImpacts.set(playerName, {
         ratingBefore,
         rankBefore,
@@ -321,7 +338,16 @@ function calculateRankingsFromMatches(sortedMatches, seeds = null, playerDefault
       const ratingBefore = stats.points;
       const rankBefore = rankMap.get(playerName) || '-';
       const rankBeforeConfidence = stats.confidence || 0;
-      const result = updateStatsForMatch(stats, team2Won, team1Won, team2AvgOpponentRating, finalPopulationStdDev, 0, null, finalPopulationMean);
+      const result = updateStatsForMatch(
+        stats,
+        team2Won,
+        team1Won,
+        team2AvgOpponentRating,
+        finalPopulationStdDev,
+        team2AvgOpponentConfidence,
+        null,
+        finalPopulationMean
+      );
       playerImpacts.set(playerName, {
         ratingBefore,
         rankBefore,

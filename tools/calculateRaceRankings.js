@@ -357,11 +357,16 @@ export async function calculateRaceRankings(mainCircuitOnly = false, seasons = n
             // Use the BEFORE ratings captured at the start (ensures zero-sum even for duplicates)
             const matchupRatingBefore = matchupRatingsBefore.get(matchupKey);
             const inverseRatingBefore = matchupRatingsBefore.get(inverseKey);
+            const matchupConfidenceBefore = matchupStats.confidence || 0;
+            const inverseConfidenceBefore = inverseStats.confidence || 0;
 
             // Calculate population statistics for race matchups (adapts to actual skill distribution)
             const populationStats = calculatePopulationStats(raceStats);
             const populationStdDev = populationStats.stdDev;
             const populationMean = populationStats.mean;
+            const matchupLost = team2Won;
+            const inverseWon = team2Won;
+            const inverseLost = team1Won;
 
             // Compare against the inverse matchup, not average!
             // PvT rating vs TvP rating - this makes it zero-sum
@@ -374,27 +379,25 @@ export async function calculateRaceRankings(mainCircuitOnly = false, seasons = n
             const matchupResult = updateStatsForMatch(
               matchupStats,
               matchupWon,
-              !matchupWon,
+              matchupLost,
               inverseRatingBefore, // Use TvP's rating BEFORE update
               populationStdDev, // Population std dev for adaptive scaling
-              0, // opponentConfidence
+              inverseConfidenceBefore, // opponentConfidence
               matchupRatingBefore, // Use PvT's rating BEFORE update (explicit)
-              populationMean, // Population mean (for first-match logic, though explicit rating takes precedence)
-              isDraw
+              populationMean // Population mean (for first-match logic, though explicit rating takes precedence)
             );
 
             // Update TvP: compare its BEFORE rating against PvT's BEFORE rating
             // This ensures zero-sum: what PvT gains, TvP loses
             const inverseResult = updateStatsForMatch(
               inverseStats,
-              !matchupWon,
-              matchupWon,
+              inverseWon,
+              inverseLost,
               matchupRatingBefore, // Use PvT's rating BEFORE update
               populationStdDev, // Population std dev for adaptive scaling
-              0, // opponentConfidence
+              matchupConfidenceBefore, // opponentConfidence
               inverseRatingBefore, // Use TvP's rating BEFORE update (explicit)
-              populationMean, // Population mean (for first-match logic, though explicit rating takes precedence)
-              isDraw
+              populationMean // Population mean (for first-match logic, though explicit rating takes precedence)
             );
 
             // Track impact

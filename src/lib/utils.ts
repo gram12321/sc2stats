@@ -40,6 +40,18 @@ export function formatRankingPoints(value: number): string {
 }
 
 /**
+ * Round order mapping for sorting matches chronologically.
+ */
+export const ROUND_ORDER: Record<string, number> = {
+  'Round of 16': 1,
+  'Round of 8': 2,
+  'Quarterfinals': 3,
+  'Semifinals': 4,
+  'Final': 5,
+  'Grand Final': 5
+};
+
+/**
  * Get race abbreviation from full race name
  * @param {string | null | undefined} race - Full race name (Protoss, Terran, Zerg, Random)
  * @returns {string} Single letter abbreviation (P, T, Z, R) or empty string

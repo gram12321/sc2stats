@@ -1,19 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useRankingSettings } from '../context/RankingSettingsContext';
 import { RankingFilters } from '../components/RankingFilters';
-import { formatRankingPoints } from '../lib/utils';
+import { formatRankingPoints, ROUND_ORDER } from '../lib/utils';
 import { Race } from '../types/tournament';
 import { getPlayerDefaults } from '../lib/playerDefaults';
 import { MatchHistoryItem } from '../components/MatchHistoryItem';
-
-const ROUND_ORDER: Record<string, number> = {
-  'Round of 16': 1,
-  'Round of 8': 2,
-  'Quarterfinals': 3,
-  'Semifinals': 4,
-  'Final': 5,
-  'Grand Final': 5
-};
 
 
 interface TeamRaceRanking {

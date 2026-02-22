@@ -54,11 +54,6 @@ export function calculateTeamRankingsFromMatches(sortedMatches, seeds = null) {
       const team1PlayersSorted = [team1Player1, team1Player2].sort();
       const team2PlayersSorted = [team2Player1, team2Player2].sort();
 
-      // Calculate population statistics BEFORE initializing new teams
-      const existingPopulationStats = calculatePopulationStats(teamStats);
-      const populationMean = existingPopulationStats.mean;
-      const populationStdDev = existingPopulationStats.stdDev;
-
       // Initialize teams if they don't exist yet
       if (!teamStats.has(team1Key)) {
         if (seeds && seeds[team1Key] !== undefined) {
@@ -71,7 +66,7 @@ export function calculateTeamRankingsFromMatches(sortedMatches, seeds = null) {
           teamStats.set(team1Key, initializeStats(team1Key, {
             player1: team1PlayersSorted[0],
             player2: team1PlayersSorted[1]
-          }, populationMean));
+          }));
         }
       }
 
@@ -85,7 +80,7 @@ export function calculateTeamRankingsFromMatches(sortedMatches, seeds = null) {
           teamStats.set(team2Key, initializeStats(team2Key, {
             player1: team2PlayersSorted[0],
             player2: team2PlayersSorted[1]
-          }, populationMean));
+          }));
         }
       }
 
@@ -96,6 +91,8 @@ export function calculateTeamRankingsFromMatches(sortedMatches, seeds = null) {
       // Store opponent ratings before any updates
       const team1Rating = team1Stats.points;
       const team2Rating = team2Stats.points;
+      const team1Confidence = team1Stats.confidence || 0;
+      const team2Confidence = team2Stats.confidence || 0;
 
       // Calculate current rankings to determine rank before match
       const currentRankings = sortRankings(
@@ -122,8 +119,26 @@ export function calculateTeamRankingsFromMatches(sortedMatches, seeds = null) {
       );
 
       // Update stats using prediction-based scoring
-      const team1Result = updateStatsForMatch(team1Stats, team1Won, team2Won, team2Rating, finalPopulationStdDev, 0, null, finalPopulationMean);
-      const team2Result = updateStatsForMatch(team2Stats, team2Won, team1Won, team1Rating, finalPopulationStdDev, 0, null, finalPopulationMean);
+      const team1Result = updateStatsForMatch(
+        team1Stats,
+        team1Won,
+        team2Won,
+        team2Rating,
+        finalPopulationStdDev,
+        team2Confidence,
+        null,
+        finalPopulationMean
+      );
+      const team2Result = updateStatsForMatch(
+        team2Stats,
+        team2Won,
+        team1Won,
+        team1Rating,
+        finalPopulationStdDev,
+        team1Confidence,
+        null,
+        finalPopulationMean
+      );
 
       // Store match history entry
       matchHistory.push({

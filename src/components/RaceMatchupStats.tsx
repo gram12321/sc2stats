@@ -41,69 +41,90 @@ export function RaceMatchupStats({
   const [selectedMatchup, setSelectedMatchup] = useState<string | null>(null);
   const [filteredMatches, setFilteredMatches] = useState<any[]>([]);
 
-  // Helper function to get actual races used in a match
-  const getMatchRaces = (match: any, teamPlayers: { player1: string; player2: string }) => {
-    // Determine which team in the match corresponds to our team
-    let matchTeam = null;
-    
-    // Check if our team is team1
-    const team1Players = [match.team1?.player1, match.team1?.player2].filter(Boolean).sort().join('+');
-    const ourPlayers = [teamPlayers.player1, teamPlayers.player2].filter(Boolean).sort().join('+');
-    
-    if (team1Players === ourPlayers) {
-      matchTeam = match.team1;
-    } else {
-      matchTeam = match.team2;
-    }
-    
-    if (!matchTeam) {
-      // Fallback: check individual player names
-      if (match.team1?.player1 === teamPlayers.player1 || match.team1?.player2 === teamPlayers.player1) {
-        matchTeam = match.team1;
-      } else {
-        matchTeam = match.team2;
-      }
-    }
-    
-    // Get races from the team object - check for race fields added by backend
-    let race1: Race | null = null;
-    let race2: Race | null = null;
-    
-    // Check if team has player1_race and player2_race fields (from backend)
-    if (matchTeam?.player1_race) {
-      const raceMap: Record<string, Race> = { 'P': 'Protoss', 'T': 'Terran', 'Z': 'Zerg', 'R': 'Random' };
-      race1 = raceMap[matchTeam.player1_race] || playerRaces[matchTeam.player1] || null;
-    } else {
-      race1 = playerRaces[teamPlayers.player1] || null;
-    }
-    
-    if (matchTeam?.player2_race) {
-      const raceMap: Record<string, Race> = { 'P': 'Protoss', 'T': 'Terran', 'Z': 'Zerg', 'R': 'Random' };
-      race2 = raceMap[matchTeam.player2_race] || playerRaces[matchTeam.player2] || null;
-    } else if (teamPlayers.player2) {
-      race2 = playerRaces[teamPlayers.player2] || null;
-    }
-    
+  const getTeamRaces = (team: any) => {
+    const raceMap: Record<string, Race> = { P: 'Protoss', T: 'Terran', Z: 'Zerg', R: 'Random' };
+    const race1 = team?.player1_race ? (raceMap[team.player1_race] || playerRaces[team.player1] || null) : (playerRaces[team?.player1] || null);
+    const race2 = team?.player2_race
+      ? (raceMap[team.player2_race] || playerRaces[team.player2] || null)
+      : (team?.player2 ? (playerRaces[team.player2] || null) : null);
     return { race1, race2 };
   };
-  
-  // Helper functions for rating calculations (similar to other parts of codebase)
-  const predictWinProbability = (rating1: number, rating2: number, populationStdDev: number = 350): number => {
-    const ratingDiff = rating2 - rating1;
-    return 1 / (1 + Math.pow(3, ratingDiff / populationStdDev));
+
+  const resolvePerspectiveTeams = (match: any): { ourTeam: any; opponentTeam: any } | null => {
+    if (playerNames.length === 1) {
+      const target = playerNames[0];
+      const team1HasPlayer = match.team1?.player1 === target || match.team1?.player2 === target;
+      const team2HasPlayer = match.team2?.player1 === target || match.team2?.player2 === target;
+      if (team1HasPlayer) return { ourTeam: match.team1, opponentTeam: match.team2 };
+      if (team2HasPlayer) return { ourTeam: match.team2, opponentTeam: match.team1 };
+      return null;
+    }
+
+    if (playerNames.length === 2) {
+      const ourPlayers = [...playerNames].filter(Boolean).sort().join('+');
+      const team1Players = [match.team1?.player1, match.team1?.player2].filter(Boolean).sort().join('+');
+      const team2Players = [match.team2?.player1, match.team2?.player2].filter(Boolean).sort().join('+');
+      if (team1Players === ourPlayers) return { ourTeam: match.team1, opponentTeam: match.team2 };
+      if (team2Players === ourPlayers) return { ourTeam: match.team2, opponentTeam: match.team1 };
+      return null;
+    }
+
+    return null;
   };
 
-  const getKFactor = (matchCount: number): number => {
-    if (matchCount <= 2) return 80;
-    if (matchCount <= 4) return 40;
-    if (matchCount <= 8) return 50;
-    const adaptiveK = 32 + (100 / matchCount);
-    return Math.min(50, adaptiveK);
+  const getOpponentMatchupKey = (opponentTeam: any): string | null => {
+    const { race1, race2 } = getTeamRaces(opponentTeam);
+    if (!race1) return null;
+    if (opponentTeam?.player2 && !race2) return null;
+    if (opponentTeam?.player2 && race2) {
+      const races = [getRaceAbbr(race1), getRaceAbbr(race2)].sort();
+      return races.join('');
+    }
+    return getRaceAbbr(race1);
   };
 
-  const calculateRatingChange = (expectedWin: number, actualWin: boolean, kFactor: number, isDraw: boolean = false): number => {
-    const actualResult = isDraw ? 0.5 : (actualWin ? 1 : 0);
-    return kFactor * (actualResult - expectedWin);
+  const getBackendRaceImpactDelta = (match: any, ourTeam: any, opponentTeam: any): number | null => {
+    const raceImpacts = match.race_impacts;
+    if (!raceImpacts) return null;
+
+    const ourRaces = Object.values(getTeamRaces(ourTeam)).filter(Boolean) as Race[];
+    const opponentRaces = Object.values(getTeamRaces(opponentTeam)).filter(Boolean) as Race[];
+    if (ourRaces.length === 0 || opponentRaces.length === 0) return null;
+
+    let totalDelta = 0;
+    let hasImpact = false;
+
+    for (const ourRace of ourRaces) {
+      for (const oppRace of opponentRaces) {
+        const ourAbbr = getRaceAbbr(ourRace);
+        const oppAbbr = getRaceAbbr(oppRace);
+        if (!ourAbbr || !oppAbbr || ourAbbr === oppAbbr) continue;
+        const impact = raceImpacts[`${ourAbbr}v${oppAbbr}`];
+        if (impact && typeof impact.ratingChange === 'number') {
+          totalDelta += impact.ratingChange;
+          hasImpact = true;
+        }
+      }
+    }
+
+    return hasImpact ? totalDelta : null;
+  };
+
+  const getMatchResult = (match: any, ourTeam: any): { won: boolean; isDraw: boolean } => {
+    const isDraw = typeof match.isDraw === 'boolean'
+      ? match.isDraw
+      : match.team1_score === match.team2_score;
+    if (isDraw) return { won: false, isDraw: true };
+
+    if (typeof match.won === 'boolean') {
+      return { won: match.won, isDraw: false };
+    }
+
+    const ourIsTeam1 = ourTeam?.player1 === match.team1?.player1 && ourTeam?.player2 === match.team1?.player2;
+    if (ourIsTeam1) {
+      return { won: (match.team1_score || 0) > (match.team2_score || 0), isDraw: false };
+    }
+    return { won: (match.team2_score || 0) > (match.team1_score || 0), isDraw: false };
   };
 
   // Calculate matchup statistics with ratings
@@ -113,7 +134,6 @@ export function RaceMatchupStats({
       losses: number; 
       draws: number;
       rating: number;
-      matchCount: number;
     }>();
 
     // Sort matches chronologically to process ratings in order
@@ -124,86 +144,29 @@ export function RaceMatchupStats({
     });
 
     sortedMatches.forEach(match => {
-      // Determine if our player/team is team1 or team2
-      let opponentTeam: { player1: string; player2: string };
-
-      if (playerNames.length === 1) {
-        // Single player
-        if (match.team1.player1 === playerNames[0] || match.team1.player2 === playerNames[0]) {
-          opponentTeam = match.team2;
-        } else {
-          opponentTeam = match.team1;
-        }
-      } else if (playerNames.length === 2) {
-        // Team
-        const team1Players = [match.team1.player1, match.team1.player2].filter(Boolean).sort().join('+');
-        const ourPlayers = [...playerNames].sort().join('+');
-        if (team1Players === ourPlayers) {
-          opponentTeam = match.team2;
-        } else {
-          opponentTeam = match.team1;
-        }
-      } else {
-        return;
-      }
-
-      // Get opponent races - use actual races from match data if available
-      const opponentRaces = getMatchRaces(match, opponentTeam);
-      const opp1Race = opponentRaces.race1;
-      const opp2Race = opponentRaces.race2;
-
-      // Skip if we don't have race data for opponent team
-      if (!opp1Race) return;
-      if (opponentTeam.player2 && !opp2Race) return; // Skip if player2 exists but no race data
-
-      // Create matchup string (e.g., "TP", "ZZ", "P")
-      let matchupKey: string;
-      if (opponentTeam.player2 && opp2Race) {
-        // 2v2 matchup - sort races alphabetically for consistency
-        const races = [getRaceAbbr(opp1Race), getRaceAbbr(opp2Race)].sort();
-        matchupKey = races.join('');
-      } else if (!opponentTeam.player2) {
-        // 1v1 or partner-less opponent
-        matchupKey = getRaceAbbr(opp1Race);
-      } else {
-        return; // Skip if inconsistent data
-      }
+      const perspective = resolvePerspectiveTeams(match);
+      if (!perspective) return;
+      const matchupKey = getOpponentMatchupKey(perspective.opponentTeam);
+      if (!matchupKey) return;
+      const backendRaceDelta = getBackendRaceImpactDelta(match, perspective.ourTeam, perspective.opponentTeam);
+      if (backendRaceDelta === null) return;
 
       if (!matchupMap.has(matchupKey)) {
         matchupMap.set(matchupKey, { 
           wins: 0, 
           losses: 0, 
           draws: 0,
-          rating: 0,
-          matchCount: 0
+          rating: 0
         });
       }
 
       const stats = matchupMap.get(matchupKey)!;
-      
-      // Calculate rating change for this matchup
-      const allMatchups = Array.from(matchupMap.values());
-      const populationMean = allMatchups.length > 0 
-        ? allMatchups.reduce((sum, s) => sum + s.rating, 0) / allMatchups.length 
-        : 0;
-      const populationVariance = allMatchups.length > 0
-        ? allMatchups.reduce((sum, s) => sum + Math.pow(s.rating - populationMean, 2), 0) / allMatchups.length
-        : 0;
-      const populationStdDev = Math.max(Math.sqrt(populationVariance), 50);
-      
-      // Compare against neutral baseline (0) - absolute matchup strength
-      const opponentRating = 0;
-      const expectedWin = predictWinProbability(stats.rating, opponentRating, populationStdDev);
-      const kFactor = getKFactor(stats.matchCount + 1);
-      const ratingChange = calculateRatingChange(expectedWin, match.won, kFactor, match.isDraw);
-      
-      // Update stats
-      stats.rating += ratingChange;
-      stats.matchCount++;
-      
-      if (match.isDraw) {
+      stats.rating += backendRaceDelta;
+
+      const { won, isDraw } = getMatchResult(match, perspective.ourTeam);
+      if (isDraw) {
         stats.draws++;
-      } else if (match.won) {
+      } else if (won) {
         stats.wins++;
       } else {
         stats.losses++;
@@ -216,9 +179,6 @@ export function RaceMatchupStats({
       const total = stats.wins + stats.losses + stats.draws;
       const winRate = total > 0 ? (stats.wins / total) * 100 : 0;
       
-      // Calculate overall rating change (final rating from initial 0)
-      const ratingChange = stats.rating;
-      
       matchups.push({
         matchup,
         wins: stats.wins,
@@ -227,7 +187,7 @@ export function RaceMatchupStats({
         total,
         winRate,
         rating: stats.rating,
-        ratingChange
+        ratingChange: stats.rating
       });
     });
 
@@ -242,46 +202,12 @@ export function RaceMatchupStats({
     
     // Filter match history for this specific matchup
     const filtered = matchHistory.filter(match => {
-      let opponentTeam: { player1: string; player2: string };
-      
-      if (playerNames.length === 1) {
-        // Single player
-        if (match.team1.player1 === playerNames[0] || match.team1.player2 === playerNames[0]) {
-          opponentTeam = match.team2;
-        } else {
-          opponentTeam = match.team1;
-        }
-      } else if (playerNames.length === 2) {
-        // Team
-        const team1Players = [match.team1.player1, match.team1.player2].filter(Boolean).sort().join('+');
-        const ourPlayers = [...playerNames].sort().join('+');
-        if (team1Players === ourPlayers) {
-          opponentTeam = match.team2;
-        } else {
-          opponentTeam = match.team1;
-        }
-      } else {
-        return false;
-      }
-      
-      // Get opponent races - use actual races from match data if available
-      const opponentRaces = getMatchRaces(match, opponentTeam);
-      const opp1Race = opponentRaces.race1;
-      const opp2Race = opponentRaces.race2;
-      
-      if (!opp1Race) return false;
-      if (opponentTeam.player2 && !opp2Race) return false;
-      
-      let matchupKey: string;
-      if (opponentTeam.player2 && opp2Race) {
-        const races = [getRaceAbbr(opp1Race), getRaceAbbr(opp2Race)].sort();
-        matchupKey = races.join('');
-      } else if (!opponentTeam.player2) {
-        matchupKey = getRaceAbbr(opp1Race);
-      } else {
-        return false;
-      }
-      
+      const perspective = resolvePerspectiveTeams(match);
+      if (!perspective) return false;
+      const matchupKey = getOpponentMatchupKey(perspective.opponentTeam);
+      if (!matchupKey) return false;
+      const backendRaceDelta = getBackendRaceImpactDelta(match, perspective.ourTeam, perspective.opponentTeam);
+      if (backendRaceDelta === null) return false;
       return matchupKey === matchup;
     });
     

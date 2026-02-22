@@ -316,11 +316,13 @@ export async function calculateTeamRaceRankings(mainCircuitOnly = false, seasons
           combo1Wins: 0,
           combo1Losses: 0,
           combo1Points: 0,
+          combo1Confidence: 0,
           // Stats for combo2 perspective
           combo2Matches: 0,
           combo2Wins: 0,
           combo2Losses: 0,
           combo2Points: 0,
+          combo2Confidence: 0,
           // Overall matchup stats (combined)
           matches: 0,
           wins: 0, // wins for combo1
@@ -336,6 +338,7 @@ export async function calculateTeamRaceRankings(mainCircuitOnly = false, seasons
       // Determine which combo won
       // combo1 is the one that comes first alphabetically in the matchup key
       const combo1Won = (team1Combo === combo1 && team1Won) || (team2Combo === combo1 && team2Won);
+      const combo1Lost = !isDraw && !combo1Won;
 
       // Update overall matchup stats
       matchupStats.matches++;
@@ -351,7 +354,9 @@ export async function calculateTeamRaceRankings(mainCircuitOnly = false, seasons
       matchupStats.combo1Matches++;
       matchupStats.combo2Matches++;
 
-      if (combo1Won) {
+      if (isDraw) {
+        // Draw: no wins/losses for either side
+      } else if (combo1Won) {
         matchupStats.combo1Wins++;
         matchupStats.combo2Losses++;
       } else {
@@ -363,56 +368,62 @@ export async function calculateTeamRaceRankings(mainCircuitOnly = false, seasons
       // This creates a zero-sum relationship within the matchup
       const combo1RatingBefore = matchupStats.combo1Points;
       const combo2RatingBefore = matchupStats.combo2Points;
+      const combo1ConfidenceBefore = matchupStats.combo1Confidence || 0;
+      const combo2ConfidenceBefore = matchupStats.combo2Confidence || 0;
 
       // Calculate population statistics for team race matchups (adapts to actual skill distribution)
       const populationStats = calculatePopulationStats(teamRaceStats);
       const populationStdDev = populationStats.stdDev;
       const populationMean = populationStats.mean;
 
+      // Use pre-match counts for K-factor calculation.
+      // updateStatsForMatch increments matches internally.
       // Create temporary stats objects for updateStatsForMatch
       const combo1TempStats = {
-        matches: matchupStats.combo1Matches,
+        matches: matchupStats.combo1Matches - 1,
         wins: matchupStats.combo1Wins,
         losses: matchupStats.combo1Losses,
-        points: matchupStats.combo1Points
+        points: matchupStats.combo1Points,
+        confidence: combo1ConfidenceBefore
       };
 
       const combo2TempStats = {
-        matches: matchupStats.combo2Matches,
+        matches: matchupStats.combo2Matches - 1,
         wins: matchupStats.combo2Wins,
         losses: matchupStats.combo2Losses,
-        points: matchupStats.combo2Points
+        points: matchupStats.combo2Points,
+        confidence: combo2ConfidenceBefore
       };
 
       // Update combo1 stats comparing against combo2
       const combo1Result = updateStatsForMatch(
         combo1TempStats,
         combo1Won,
-        !combo1Won,
+        combo1Lost,
         combo2RatingBefore,
         populationStdDev,
-        0,
+        combo2ConfidenceBefore,
         null,
-        populationMean,
-        isDraw
+        populationMean
       );
 
       // Update combo2 stats comparing against combo1 (before combo1 update)
       const combo2Result = updateStatsForMatch(
         combo2TempStats,
-        !combo1Won,
+        combo1Lost,
         combo1Won,
         combo1RatingBefore,
         populationStdDev,
-        0,
+        combo1ConfidenceBefore,
         null,
-        populationMean,
-        isDraw
+        populationMean
       );
 
       // Apply changes back to matchup stats
       matchupStats.combo1Points = combo1TempStats.points;
       matchupStats.combo2Points = combo2TempStats.points;
+      matchupStats.combo1Confidence = combo1TempStats.confidence || 0;
+      matchupStats.combo2Confidence = combo2TempStats.confidence || 0;
 
       // Net points for combo1 (used for overall ranking)
       matchupStats.points = matchupStats.combo1Points - matchupStats.combo2Points;
@@ -423,11 +434,11 @@ export async function calculateTeamRaceRankings(mainCircuitOnly = false, seasons
 
       const team1Stats = (team1Combo === combo1)
         ? { ratingBefore: combo1RatingBefore, result: combo1Result, won: combo1Won, isDraw: isDraw, opponentRating: combo2RatingBefore }
-        : { ratingBefore: combo2RatingBefore, result: combo2Result, won: !combo1Won, isDraw: isDraw, opponentRating: combo1RatingBefore };
+        : { ratingBefore: combo2RatingBefore, result: combo2Result, won: combo1Lost, isDraw: isDraw, opponentRating: combo1RatingBefore };
 
       const team2Stats = (team2Combo === combo1)
         ? { ratingBefore: combo1RatingBefore, result: combo1Result, won: combo1Won, isDraw: isDraw, opponentRating: combo2RatingBefore }
-        : { ratingBefore: combo2RatingBefore, result: combo2Result, won: !combo1Won, isDraw: isDraw, opponentRating: combo1RatingBefore };
+        : { ratingBefore: combo2RatingBefore, result: combo2Result, won: combo1Lost, isDraw: isDraw, opponentRating: combo1RatingBefore };
 
       // Get player races for display
       const getRaceAbbr = (race) => {

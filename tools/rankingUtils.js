@@ -35,10 +35,9 @@ export function hasValidScores(match) {
  * Initialize stats object for a new entity
  * @param {string} name - Name/identifier of the entity
  * @param {Object} additionalFields - Additional fields to include in stats object
- * @param {number} populationMean - Population mean rating (default: 0). New players start at population mean instead of 0
  * @returns {Object} Initialized stats object
  */
-export function initializeStats(name, additionalFields = {}, populationMean = 0) {
+export function initializeStats(name, additionalFields = {}) {
   return {
     name,
     matches: 0,

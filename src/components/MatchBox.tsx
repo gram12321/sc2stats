@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Match, Race } from '../types/tournament';
 import { getPlayerDefaults } from '../lib/playerDefaults';
+import { getRaceAbbr } from '../lib/utils';
 
 interface MatchBoxProps {
   match: Match;
@@ -44,12 +45,6 @@ export function MatchBox({ match, onClick, teamRankings }: MatchBoxProps) {
     return matchRace || defaults[playerName] || null;
   };
   
-  const getRaceAbbrev = (race: Race | null | undefined): string => {
-    if (!race) return '';
-    // Random gets 'R', others get first letter
-    return race === 'Random' ? 'R' : race[0];
-  };
-  
   // Get team ranking key (alphabetically sorted players)
   const getTeamKey = (player1: string, player2: string): string => {
     return [player1, player2].sort().join('+');
@@ -78,7 +73,7 @@ export function MatchBox({ match, onClick, teamRankings }: MatchBoxProps) {
               {match.team1.player1.name}
               {getRace(match.team1.player1.name, match.team1.player1.race) && (
                 <span className="ml-1 text-xs text-gray-500">
-                  ({getRaceAbbrev(getRace(match.team1.player1.name, match.team1.player1.race))})
+                  ({getRaceAbbr(getRace(match.team1.player1.name, match.team1.player1.race))})
                 </span>
               )}
             </div>
@@ -86,7 +81,7 @@ export function MatchBox({ match, onClick, teamRankings }: MatchBoxProps) {
               {match.team1.player2.name}
               {getRace(match.team1.player2.name, match.team1.player2.race) && (
                 <span className="ml-1 text-xs text-gray-500">
-                  ({getRaceAbbrev(getRace(match.team1.player2.name, match.team1.player2.race))})
+                  ({getRaceAbbr(getRace(match.team1.player2.name, match.team1.player2.race))})
                 </span>
               )}
               {team1Ranking && (
@@ -115,7 +110,7 @@ export function MatchBox({ match, onClick, teamRankings }: MatchBoxProps) {
               {match.team2.player1.name}
               {getRace(match.team2.player1.name, match.team2.player1.race) && (
                 <span className="ml-1 text-xs text-gray-500">
-                  ({getRaceAbbrev(getRace(match.team2.player1.name, match.team2.player1.race))})
+                  ({getRaceAbbr(getRace(match.team2.player1.name, match.team2.player1.race))})
                 </span>
               )}
             </div>
@@ -123,7 +118,7 @@ export function MatchBox({ match, onClick, teamRankings }: MatchBoxProps) {
               {match.team2.player2.name}
               {getRace(match.team2.player2.name, match.team2.player2.race) && (
                 <span className="ml-1 text-xs text-gray-500">
-                  ({getRaceAbbrev(getRace(match.team2.player2.name, match.team2.player2.race))})
+                  ({getRaceAbbr(getRace(match.team2.player2.name, match.team2.player2.race))})
                 </span>
               )}
               {team2Ranking && (

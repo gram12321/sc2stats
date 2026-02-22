@@ -4,30 +4,11 @@ import { RankingFilters } from '../components/RankingFilters';
 import { Race } from '../types/tournament';
 import { getPlayerDefaults } from '../lib/playerDefaults';
 import { formatRankingPoints } from '../lib/utils';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow
-} from '../components/ui/table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Input } from '../components/ui/input';
 import { Badge } from '../components/ui/badge';
-import {
-  Search,
-  ArrowUpDown,
-  ArrowUp,
-  ArrowDown,
-  Loader2,
-  Trophy,
-  Users,
-  Target,
-  Minus,
-  Swords,
-  Crown
-} from 'lucide-react';
+import { Search, ArrowUpDown, ArrowUp, ArrowDown, Loader2, Trophy, Users, Target, Minus, Swords, Crown } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 interface PlayerRanking {

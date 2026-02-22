@@ -152,6 +152,24 @@ function getAverageOpponentRating(opponentNames, playerStats) {
 }
 
 /**
+ * Calculate average confidence of opponent players
+ */
+function getAverageOpponentConfidence(opponentNames, playerStats) {
+  if (opponentNames.length === 0) return 0;
+
+  const confidences = opponentNames
+    .map(name => {
+      const stats = playerStats.get(name);
+      return stats ? (stats.confidence || 0) : 0;
+    })
+    .filter(conf => conf !== undefined);
+
+  if (confidences.length === 0) return 0;
+
+  return confidences.reduce((sum, conf) => sum + conf, 0) / confidences.length;
+}
+
+/**
  * Calculate player rankings from matches with optional seed ratings
  * 
  * @param {Array} sortedMatches - Matches to process (chronologically sorted)
@@ -182,20 +200,15 @@ function calculateRankingsFromMatches(sortedMatches, seedRatings = null, passNam
       match.team2?.player2?.name
     ].filter(Boolean);
 
-    // Calculate population statistics BEFORE initializing new players
-    const existingPopulationStats = calculatePopulationStats(playerStats);
-    const populationMean = existingPopulationStats.mean;
-    const populationStdDev = existingPopulationStats.stdDev;
-
     // Initialize players if they don't exist yet
     for (const playerName of [...team1Players, ...team2Players]) {
       if (!playerStats.has(playerName)) {
-        // If we have seed ratings, use them; otherwise start at population mean
+        // If we have seed ratings, use them; otherwise use fixed anchor initialization
         if (seedRatings && seedRatings.has(playerName)) {
           const seedRating = seedRatings.get(playerName);
           playerStats.set(playerName, initializeStatsWithSeed(playerName, seedRating));
         } else {
-          playerStats.set(playerName, initializeStats(playerName, {}, populationMean));
+          playerStats.set(playerName, initializeStats(playerName, {}));
         }
       }
     }
@@ -208,17 +221,37 @@ function calculateRankingsFromMatches(sortedMatches, seedRatings = null, passNam
     // Calculate average opponent ratings for each team
     const team1AvgOpponentRating = getAverageOpponentRating(team2Players, playerStats);
     const team2AvgOpponentRating = getAverageOpponentRating(team1Players, playerStats);
+    const team1AvgOpponentConfidence = getAverageOpponentConfidence(team2Players, playerStats);
+    const team2AvgOpponentConfidence = getAverageOpponentConfidence(team1Players, playerStats);
 
     // Update stats for team1 players
     for (const playerName of team1Players) {
       const stats = playerStats.get(playerName);
-      updateStatsForMatch(stats, team1Won, team2Won, team1AvgOpponentRating, finalPopulationStdDev, 0, null, finalPopulationMean);
+      updateStatsForMatch(
+        stats,
+        team1Won,
+        team2Won,
+        team1AvgOpponentRating,
+        finalPopulationStdDev,
+        team1AvgOpponentConfidence,
+        null,
+        finalPopulationMean
+      );
     }
 
     // Update stats for team2 players
     for (const playerName of team2Players) {
       const stats = playerStats.get(playerName);
-      updateStatsForMatch(stats, team2Won, team1Won, team2AvgOpponentRating, finalPopulationStdDev, 0, null, finalPopulationMean);
+      updateStatsForMatch(
+        stats,
+        team2Won,
+        team1Won,
+        team2AvgOpponentRating,
+        finalPopulationStdDev,
+        team2AvgOpponentConfidence,
+        null,
+        finalPopulationMean
+      );
     }
   }
 
@@ -268,14 +301,9 @@ function calculateTeamRankingsFromMatches(sortedMatches, seedRatings = null, pas
     const team1PlayersSorted = [team1Player1, team1Player2].sort();
     const team2PlayersSorted = [team2Player1, team2Player2].sort();
 
-    // Calculate population statistics BEFORE initializing new teams
-    const existingPopulationStats = calculatePopulationStats(teamStats);
-    const populationMean = existingPopulationStats.mean;
-    const populationStdDev = existingPopulationStats.stdDev;
-
     // Initialize teams if they don't exist yet
     if (!teamStats.has(team1Key)) {
-      // If we have seed ratings, use them; otherwise start at population mean
+      // If we have seed ratings, use them; otherwise use fixed anchor initialization
       if (seedRatings && seedRatings.has(team1Key)) {
         const seedRating = seedRatings.get(team1Key);
         teamStats.set(team1Key, initializeStatsWithSeed(team1Key, seedRating, {
@@ -286,12 +314,12 @@ function calculateTeamRankingsFromMatches(sortedMatches, seedRatings = null, pas
         teamStats.set(team1Key, initializeStats(team1Key, {
           player1: team1PlayersSorted[0],
           player2: team1PlayersSorted[1]
-        }, populationMean));
+        }));
       }
     }
 
     if (!teamStats.has(team2Key)) {
-      // If we have seed ratings, use them; otherwise start at population mean
+      // If we have seed ratings, use them; otherwise use fixed anchor initialization
       if (seedRatings && seedRatings.has(team2Key)) {
         const seedRating = seedRatings.get(team2Key);
         teamStats.set(team2Key, initializeStatsWithSeed(team2Key, seedRating, {
@@ -302,7 +330,7 @@ function calculateTeamRankingsFromMatches(sortedMatches, seedRatings = null, pas
         teamStats.set(team2Key, initializeStats(team2Key, {
           player1: team2PlayersSorted[0],
           player2: team2PlayersSorted[1]
-        }, populationMean));
+        }));
       }
     }
 
@@ -312,6 +340,8 @@ function calculateTeamRankingsFromMatches(sortedMatches, seedRatings = null, pas
 
     const team1Rating = team1Stats.points;
     const team2Rating = team2Stats.points;
+    const team1Confidence = team1Stats.confidence || 0;
+    const team2Confidence = team2Stats.confidence || 0;
 
     // Recalculate population statistics
     const finalPopulationStats = calculatePopulationStats(teamStats);
@@ -325,8 +355,26 @@ function calculateTeamRankingsFromMatches(sortedMatches, seedRatings = null, pas
     );
 
     // Update stats
-    updateStatsForMatch(team1Stats, team1Won, team2Won, team2Rating, finalPopulationStdDev, 0, null, finalPopulationMean);
-    updateStatsForMatch(team2Stats, team2Won, team1Won, team1Rating, finalPopulationStdDev, 0, null, finalPopulationMean);
+    updateStatsForMatch(
+      team1Stats,
+      team1Won,
+      team2Won,
+      team2Rating,
+      finalPopulationStdDev,
+      team2Confidence,
+      null,
+      finalPopulationMean
+    );
+    updateStatsForMatch(
+      team2Stats,
+      team2Won,
+      team1Won,
+      team1Rating,
+      finalPopulationStdDev,
+      team1Confidence,
+      null,
+      finalPopulationMean
+    );
   }
 
   console.log(`${passName}: Completed. ${teamStats.size} teams processed.`);

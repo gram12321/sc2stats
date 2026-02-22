@@ -103,13 +103,13 @@ export function updateConfidence(stats, expectedWin, actualWin, isDraw = false) 
  * @param {number} confidence - Confidence percentage (0-100)
  * @returns {number} Adjusted K-factor
  */
-export function applyConfidenceAdjustment(baseK, confidence) {
-  // Lower confidence = higher K-factor adjustment
-  // Reduced volatility: Max multiplier lowered from 1.5x to 1.2x
-  // Confidence 0%: K multiplied by 1.2 (20% increase)
-  // Confidence 50%: K multiplied by 1.1 (10% increase)
-  // Confidence 100%: K unchanged
-  const confidenceMultiplier = 1 + ((100 - confidence) / 100) * 0.2;
+export function applyConfidenceAdjustment(baseK, confidence, opponentConfidence = 0) {
+  // Use combined confidence from both entities to set volatility.
+  // Lower combined confidence => higher K-factor adjustment.
+  const selfConfidence = Number.isFinite(confidence) ? Math.max(0, Math.min(100, confidence)) : 0;
+  const oppConfidence = Number.isFinite(opponentConfidence) ? Math.max(0, Math.min(100, opponentConfidence)) : 0;
+  const combinedConfidence = (selfConfidence + oppConfidence) / 2;
+  const confidenceMultiplier = 1 + ((100 - combinedConfidence) / 100) * 0.2;
   return baseK * confidenceMultiplier;
 }
 
@@ -254,7 +254,7 @@ export function updateStatsForMatch(stats, won, lost, opponentRating, population
   const baseK = getProvisionalKFactor(stats.matches);
 
   // Apply confidence adjustment individually
-  const adjustedK = applyConfidenceAdjustment(baseK, stats.confidence);
+  const adjustedK = applyConfidenceAdjustment(baseK, stats.confidence, opponentConfidence);
 
   // Calculate expected win probability using population-based scale
   // For first match: use population mean instead of current rating (which might be 0 or mean)
@@ -304,6 +304,7 @@ export function updateStatsForMatch(stats, won, lost, opponentRating, population
       baseK,
       adjustedK,
       confidence: stats.confidence,
+      opponentConfidence,
       matchCount: stats.matches,
       populationStdDev
     }
