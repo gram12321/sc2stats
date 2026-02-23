@@ -1,6 +1,8 @@
+import { useMemo, useState, useEffect } from 'react';
 import { Trophy, Users, Swords, Info, LayoutDashboard, Crown, Medal, Flag } from 'lucide-react';
 import { Button } from './ui/button';
 import { cn } from '../lib/utils';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from './ui/sheet';
 
 interface HeaderProps {
       onNavigate: (view: 'tournaments' | 'players' | 'player-rankings' | 'team-rankings' | 'race-rankings' | 'team-race-rankings' | 'matches' | 'info') => void;
@@ -8,6 +10,27 @@ interface HeaderProps {
 }
 
 export function Header({ onNavigate, currentView }: HeaderProps) {
+      const [versionLogOpen, setVersionLogOpen] = useState(false);
+      const [versionLogRaw, setVersionLogRaw] = useState<string | null>(null);
+
+      useEffect(() => {
+            fetch('/api/versionlog')
+                  .then((r) => (r.ok ? r.text() : Promise.reject(new Error('Failed to load'))))
+                  .then(setVersionLogRaw)
+                  .catch(() => setVersionLogRaw(''));
+      }, []);
+
+      // Extract latest version from first "## Version X - title" in versionlog
+      const appVersion = useMemo(() => {
+            if (!versionLogRaw) return 'v0.0.0';
+            try {
+                  const match = versionLogRaw.match(/^##\s+Version\s+([0-9a-zA-Z\.\-]+)\s+-/m);
+                  return match ? `v${match[1]}` : 'v0.0.0';
+            } catch {
+                  return 'v0.0.0';
+            }
+      }, [versionLogRaw]);
+
       const isActive = (view: string) => currentView === view;
 
       const NavButton = ({ view, icon: Icon, label }: { view: string, icon: any, label: string }) => (
@@ -26,6 +49,7 @@ export function Header({ onNavigate, currentView }: HeaderProps) {
       );
 
       return (
+            <>
             <div className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
                   <div className="container flex h-16 max-w-7xl items-center justify-between px-4 sm:px-8 mx-auto">
                         <div
@@ -50,8 +74,36 @@ export function Header({ onNavigate, currentView }: HeaderProps) {
                               <NavButton view="players" icon={Users} label="Manage" />
                               <NavButton view="matches" icon={Swords} label="Matches" />
                               <NavButton view="info" icon={Info} label="Info" />
+                              <button
+                                    type="button"
+                                    onClick={() => setVersionLogOpen(true)}
+                                    className="shrink-0 text-xs text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded hover:bg-accent"
+                                    title="View version log"
+                              >
+                                    {appVersion}
+                              </button>
                         </div>
                   </div>
             </div>
+
+            <Sheet open={versionLogOpen} onOpenChange={setVersionLogOpen}>
+                  <SheetContent side="right" className="w-full sm:max-w-2xl overflow-hidden flex flex-col p-0">
+                        <SheetHeader className="border-b px-6 py-4 shrink-0">
+                              <SheetTitle>Version log</SheetTitle>
+                        </SheetHeader>
+                        <div className="flex-1 overflow-auto px-6 py-4">
+                              {versionLogRaw === null ? (
+                                    <p className="text-muted-foreground text-sm">Loading…</p>
+                              ) : versionLogRaw === '' ? (
+                                    <p className="text-muted-foreground text-sm">Version log unavailable.</p>
+                              ) : (
+                                    <pre className="text-xs text-foreground whitespace-pre-wrap font-sans break-words">
+                                          {versionLogRaw}
+                                    </pre>
+                              )}
+                        </div>
+                  </SheetContent>
+            </Sheet>
+      </>
       );
 }

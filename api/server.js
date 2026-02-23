@@ -38,6 +38,19 @@ async function loadSeeds() {
   }
 }
 
+const versionLogPath = join(__dirname, '..', 'docs', 'versionlog.md');
+
+// Version log (for topbar version + view in app)
+app.get('/api/versionlog', async (req, res) => {
+  try {
+    const content = await readFile(versionLogPath, 'utf-8');
+    res.type('text/plain').send(content);
+  } catch (err) {
+    console.error('Error reading version log:', err);
+    res.status(500).send('Version log unavailable.');
+  }
+});
+
 // List all JSON files in output directory
 app.get('/api/tournaments', async (req, res) => {
   try {
