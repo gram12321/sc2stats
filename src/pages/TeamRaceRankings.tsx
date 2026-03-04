@@ -7,10 +7,14 @@ import { getPlayerDefaults } from '../lib/playerDefaults';
 import { MatchHistoryItem } from '../components/MatchHistoryItem';
 
 const ROUND_ORDER: Record<string, number> = {
-  'Round of 16': 1,
-  'Round of 8': 2,
+  'Round of 32': 1,
+  'Round of 16': 2,
+  'Round of 8': 3,
+  'Upper Bracket Quarterfinals': 3,
   'Quarterfinals': 3,
+  'Upper Bracket Semifinals': 4,
   'Semifinals': 4,
+  'Upper Bracket Final': 5,
   'Final': 5,
   'Grand Final': 5
 };
