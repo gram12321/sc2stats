@@ -284,6 +284,60 @@ app.get('/api/team-rankings', async (req, res) => {
   }
 });
 
+// Get team ranks at tournament context (rank before each team's first scored match in that tournament)
+app.get('/api/tournament-team-rankings/:slug', async (req, res) => {
+  try {
+    const tournamentSlug = decodeURIComponent(req.params.slug);
+    const useSeeds = req.query.useSeeds === 'true';
+    const isMainCircuitOnly = req.query.mainCircuitOnly === 'true';
+    const seasons = req.query.seasons ? req.query.seasons.split(',') : null;
+
+    let teamSeeds = null;
+    if (useSeeds) {
+      const seeds = await loadSeeds();
+      teamSeeds = seeds.teamSeeds;
+    }
+
+    const { matchHistory } = await calculateTeamRankings(teamSeeds, isMainCircuitOnly, seasons);
+
+    const tournamentMatches = (matchHistory || [])
+      .filter(match => match.tournament_slug === tournamentSlug)
+      .sort((a, b) => {
+        const dateA = new Date(a.match_date || a.tournament_date || 0).getTime();
+        const dateB = new Date(b.match_date || b.tournament_date || 0).getTime();
+        if (dateA !== dateB) return dateA - dateB;
+        return (a.match_id || '').localeCompare(b.match_id || '');
+      });
+
+    const rankMap = {};
+
+    for (const match of tournamentMatches) {
+      const impacts = match.team_impacts || {};
+      for (const [teamKey, impact] of Object.entries(impacts)) {
+        if (rankMap[teamKey] !== undefined) continue;
+
+        const rawRank = impact?.rankBefore;
+        const parsedRank = typeof rawRank === 'number'
+          ? rawRank
+          : parseInt(String(rawRank), 10);
+
+        if (!Number.isNaN(parsedRank) && parsedRank > 0) {
+          rankMap[teamKey] = parsedRank;
+        }
+      }
+    }
+
+    res.json({
+      tournament_slug: tournamentSlug,
+      basis: 'rank-before-first-scored-match',
+      ranks: rankMap
+    });
+  } catch (error) {
+    console.error('Error getting tournament team rankings:', error);
+    res.status(500).json({ error: 'Failed to get tournament team rankings' });
+  }
+});
+
 // Get seeded player rankings (from three-pass seeding process)
 app.get('/api/seeded-player-rankings', async (req, res) => {
   try {

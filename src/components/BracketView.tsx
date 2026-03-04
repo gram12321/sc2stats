@@ -34,18 +34,26 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
   useEffect(() => {
     const loadTeamRankings = async () => {
       try {
-        const response = await fetch('/api/team-rankings');
-        if (!response.ok) return;
-        const data = await response.json();
-        // Create a map of team key (sorted players) -> rank
-        const rankMap: Record<string, number> = {};
-        data.forEach((team: any, index: number) => {
-          const teamKey = [team.player1, team.player2].sort().join('+');
-          rankMap[teamKey] = index + 1;
-        });
-        setTeamRankings(rankMap);
+        const slug = tournamentData.tournament.liquipedia_slug;
+        if (!slug) {
+          setTeamRankings({});
+          return;
+        }
+
+        const tournamentResponse = await fetch(`/api/tournament-team-rankings/${encodeURIComponent(slug)}`);
+
+        if (tournamentResponse.ok) {
+          const tournamentData = await tournamentResponse.json();
+          const rankMap: Record<string, number> = tournamentData?.ranks || {};
+          setTeamRankings(rankMap);
+          return;
+        }
+
+        console.warn(`Tournament rank endpoint unavailable for ${slug}: ${tournamentResponse.status}`);
+        setTeamRankings({});
       } catch (err) {
         console.error('Error loading team rankings:', err);
+        setTeamRankings({});
       }
     };
     
@@ -63,7 +71,7 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
     
     loadTeamRankings();
     loadPlayers();
-  }, []);
+  }, [tournamentData.tournament.liquipedia_slug]);
 
   // Update effect to handle prop changes and auto-detection
   useEffect(() => {

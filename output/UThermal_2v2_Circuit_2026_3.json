@@ -583,6 +583,216 @@
       "date": "2026-03-01",
       "games": [],
       "tournament_slug": "UThermal_2v2_Circuit/2026/3"
+    },
+    {
+      "match_id": "early_1772616660194",
+      "round": "Early Round 1",
+      "team1": {
+        "player1": {
+          "name": "YoungYakov",
+          "race": null
+        },
+        "player2": {
+          "name": "Percival",
+          "race": null
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Urono",
+          "race": null
+        },
+        "player2": {
+          "name": "Viper",
+          "race": null
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 0,
+      "best_of": 3,
+      "date": "2026-03-01",
+      "games": [],
+      "tournament_slug": "UThermal_2v2_Circuit/2026/3"
+    },
+    {
+      "match_id": "early_1772616774641",
+      "round": "Early Round 1",
+      "team1": {
+        "player1": {
+          "name": "MindelVK",
+          "race": null
+        },
+        "player2": {
+          "name": "Strange",
+          "race": null
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "DefMars",
+          "race": null
+        },
+        "player2": {
+          "name": "ZaRDieNT",
+          "race": null
+        }
+      },
+      "team1_score": 0,
+      "team2_score": 2,
+      "best_of": 3,
+      "date": "2026-03-01",
+      "games": [],
+      "tournament_slug": "UThermal_2v2_Circuit/2026/3"
+    },
+    {
+      "match_id": "early_1772616806191",
+      "round": "Early Round 2",
+      "team1": {
+        "player1": {
+          "name": "DefMars",
+          "race": null
+        },
+        "player2": {
+          "name": "ZaRDieNT",
+          "race": null
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "ShoWTimE",
+          "race": null
+        },
+        "player2": {
+          "name": "ZhuGeLiang",
+          "race": null
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 0,
+      "best_of": 3,
+      "date": "2026-03-01",
+      "games": [],
+      "tournament_slug": "UThermal_2v2_Circuit/2026/3"
+    },
+    {
+      "match_id": "early_1772617027294",
+      "round": "Early Round 1",
+      "team1": {
+        "player1": {
+          "name": "HolyHit",
+          "race": null
+        },
+        "player2": {
+          "name": "FightingFrog",
+          "race": null
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Nicoract",
+          "race": null
+        },
+        "player2": {
+          "name": "Gerald",
+          "race": null
+        }
+      },
+      "team1_score": 0,
+      "team2_score": 2,
+      "best_of": 3,
+      "date": "2026-03-01",
+      "games": [],
+      "tournament_slug": "UThermal_2v2_Circuit/2026/3"
+    },
+    {
+      "match_id": "early_1772617060939",
+      "round": "Early Round 2",
+      "team1": {
+        "player1": {
+          "name": "herO",
+          "race": null
+        },
+        "player2": {
+          "name": "SHIN",
+          "race": null
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Nicoract",
+          "race": null
+        },
+        "player2": {
+          "name": "Gerald",
+          "race": null
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 0,
+      "best_of": 3,
+      "date": "2026-03-01",
+      "games": [],
+      "tournament_slug": "UThermal_2v2_Circuit/2026/3"
+    },
+    {
+      "match_id": "early_1772617413907",
+      "round": "Early Round 1",
+      "team1": {
+        "player1": {
+          "name": "Ryung",
+          "race": null
+        },
+        "player2": {
+          "name": "Maru",
+          "race": null
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "INexorable",
+          "race": null
+        },
+        "player2": {
+          "name": "goblin",
+          "race": null
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 0,
+      "best_of": 3,
+      "date": "2026-03-01",
+      "games": [],
+      "tournament_slug": "UThermal_2v2_Circuit/2026/3"
+    },
+    {
+      "match_id": "early_1772617498940",
+      "round": "Early Round 2",
+      "team1": {
+        "player1": {
+          "name": "Ryung",
+          "race": null
+        },
+        "player2": {
+          "name": "Maru",
+          "race": null
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "MaxPax",
+          "race": null
+        },
+        "player2": {
+          "name": "Lambo",
+          "race": null
+        }
+      },
+      "team1_score": 0,
+      "team2_score": 2,
+      "best_of": 3,
+      "date": "2026-03-01",
+      "games": [],
+      "tournament_slug": "UThermal_2v2_Circuit/2026/3"
     }
   ]
 }
