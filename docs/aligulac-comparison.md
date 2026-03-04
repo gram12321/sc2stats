@@ -170,3 +170,19 @@ Primary Aligulac references:
 - Your system is currently a **highly tunable Elo-like online model** with practical features for 2v2/series context.
 - Aligulac is a **Bayesian-like period model with explicit uncertainty and race decomposition** for 1v1.
 - If your goal is “Aligulac-like calibration quality,” the biggest upgrade path is: **uncertainty state + inactivity handling + race-adjusted core rating**.
+
+---
+
+## Calibration toggle (current implementation)
+
+Probability calibration is now implemented as a toggle in `tools/rankingCalculations.js`.
+
+- **Default now:** enabled with `temperature = 1.4`
+- **Disable for baseline comparison:**
+  - `setPredictionCalibration({ enabled: false })`
+- **Enable with custom value:**
+  - `setPredictionCalibration({ enabled: true, temperature: 1.2 })`
+- **Inspect current state:**
+  - `getPredictionCalibrationSettings()`
+
+This allows A/B testing without changing core rating update logic.

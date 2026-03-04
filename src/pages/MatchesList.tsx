@@ -3,8 +3,10 @@ import { useRankingSettings } from '../context/RankingSettingsContext';
 import { RankingFilters } from '../components/RankingFilters';
 import { Race } from '../types/tournament';
 import { getPlayerDefaults } from '../lib/playerDefaults';
+import { getPlayerCountries } from '../lib/playerCountries';
 import { MatchHistoryItem } from '../components/MatchHistoryItem';
 import { getRaceAbbr } from '../lib/utils';
+import { formatTournamentName } from '../lib/display';
 
 interface MatchHistory {
   match_id: string;
@@ -86,6 +88,7 @@ export function MatchesList({ initialTournament, focusMatchId }: MatchesListProp
   const [playerRankings, setPlayerRankings] = useState<Record<string, { rank: number; points: number; confidence: number }>>({});
   const [teamRankings, setTeamRankings] = useState<Record<string, { rank: number; points: number; confidence: number }>>({});
   const [playerRaces, setPlayerRaces] = useState<Record<string, Race>>({});
+  const [playerCountries, setPlayerCountries] = useState<Record<string, string>>({});
   const [comboRankings, setComboRankings] = useState<Record<string, { points: number }>>({});
   const { seasons, useSeededRankings, mainCircuitOnly } = useRankingSettings();
 
@@ -97,6 +100,7 @@ export function MatchesList({ initialTournament, focusMatchId }: MatchesListProp
 
   useEffect(() => {
     loadPlayerRaces();
+    loadPlayerCountries();
   }, []);
 
   useEffect(() => {
@@ -190,6 +194,15 @@ export function MatchesList({ initialTournament, focusMatchId }: MatchesListProp
       setPlayerRaces(defaults);
     } catch (err) {
       console.error('Error loading player races:', err);
+    }
+  };
+
+  const loadPlayerCountries = async () => {
+    try {
+      const countries = await getPlayerCountries();
+      setPlayerCountries(countries);
+    } catch (err) {
+      console.error('Error loading player countries:', err);
     }
   };
 
@@ -309,7 +322,7 @@ export function MatchesList({ initialTournament, focusMatchId }: MatchesListProp
                 <option value="">All Tournaments</option>
                 {tournaments.map(tournament => (
                   <option key={tournament.slug} value={tournament.slug}>
-                    {tournament.name}
+                    {formatTournamentName(tournament.slug || tournament.name)}
                   </option>
                 ))}
               </select>
@@ -375,6 +388,7 @@ export function MatchesList({ initialTournament, focusMatchId }: MatchesListProp
                     team2Rank={team2Rank ? { rank: team2Rank.rank, points: team2Rank.points, confidence: team2Rank.confidence } : null}
                     playerRankings={playerRankingsMap}
                     playerRaces={playerRaces}
+                    playerCountries={playerCountries}
                     showRatingBreakdown={true}
                     highlightPlayers={[]}
                     showWinLoss={true}

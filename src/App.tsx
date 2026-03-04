@@ -104,7 +104,7 @@ export function App() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground font-sans antialiased selection:bg-primary/20 selection:text-primary">
+    <div className="min-h-screen bg-background text-[15px] text-foreground font-sans antialiased selection:bg-primary/20 selection:text-primary">
       <RankingSettingsProvider>
         <Header onNavigate={(view) => navigate(view as View)} currentView={navState.view} />
         <main className="container max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">

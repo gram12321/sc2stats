@@ -12,6 +12,18 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const outputDir = join(__dirname, '..', 'output');
 const playerDefaultsFile = join(outputDir, 'player_defaults.json');
+const playerCountriesFile = join(outputDir, 'player_countries.json');
+const metadataJsonFiles = new Set(['player_defaults.json', 'player_countries.json']);
+
+function isTournamentJsonFile(fileName) {
+  return fileName.endsWith('.json') && !metadataJsonFiles.has(fileName) && !fileName.startsWith('seeded_');
+}
+
+function normalizeCountryCode(country) {
+  if (!country) return null;
+  const normalized = String(country).trim().toUpperCase();
+  return /^[A-Z]{2}$/.test(normalized) ? normalized : null;
+}
 
 const app = express();
 app.use(cors());
@@ -59,6 +71,68 @@ function shouldReplacePlayerName(currentName, fromName, toName) {
   }
 
   return currentName !== toName && currentName.trimEnd() === toName;
+}
+
+function extractPlayerCountriesFromTournamentData(tournamentData, target = {}) {
+  if (!tournamentData?.matches || !Array.isArray(tournamentData.matches)) {
+    return target;
+  }
+
+  tournamentData.matches.forEach((match) => {
+    const players = [
+      match?.team1?.player1,
+      match?.team1?.player2,
+      match?.team2?.player1,
+      match?.team2?.player2
+    ];
+
+    players.forEach((player) => {
+      if (!player?.name) return;
+      const code = normalizeCountryCode(player?.country || player?.nation || player?.flag);
+      if (code && !target[player.name]) {
+        target[player.name] = code;
+      }
+    });
+  });
+
+  return target;
+}
+
+async function loadStoredPlayerCountries() {
+  try {
+    const content = await readFile(playerCountriesFile, 'utf-8');
+    const parsed = JSON.parse(content);
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {};
+
+    const normalized = {};
+    Object.entries(parsed).forEach(([name, country]) => {
+      const code = normalizeCountryCode(country);
+      if (code) normalized[name] = code;
+    });
+    return normalized;
+  } catch (err) {
+    if (err.code === 'ENOENT') return {};
+    throw err;
+  }
+}
+
+async function loadScrapedPlayerCountries() {
+  const countries = {};
+  const files = await readdir(outputDir);
+  const tournamentFiles = files.filter(isTournamentJsonFile);
+
+  for (const file of tournamentFiles) {
+    try {
+      const filePath = join(outputDir, file);
+      const content = await readFile(filePath, 'utf-8');
+      const data = JSON.parse(content);
+      extractPlayerCountriesFromTournamentData(data, countries);
+    } catch (err) {
+      console.error(`Error reading ${file} for scraped countries:`, err);
+    }
+  }
+
+  return countries;
 }
 
 function replacePlayerInTournamentData(tournamentData, fromName, toName) {
@@ -192,7 +266,7 @@ app.get('/api/versionlog', async (req, res) => {
 app.get('/api/tournaments', async (req, res) => {
   try {
     const files = await readdir(outputDir);
-    const jsonFiles = files.filter(f => f.endsWith('.json') && f !== 'player_defaults.json' && !f.startsWith('seeded_'));
+    const jsonFiles = files.filter(isTournamentJsonFile);
 
     const tournaments = await Promise.all(
       jsonFiles.map(async (file) => {
@@ -290,7 +364,7 @@ app.post('/api/tournaments/:filename', async (req, res) => {
 app.get('/api/players', async (req, res) => {
   try {
     const files = await readdir(outputDir);
-    const jsonFiles = files.filter(f => f.endsWith('.json') && f !== 'player_defaults.json');
+    const jsonFiles = files.filter((file) => file.endsWith('.json') && !metadataJsonFiles.has(file));
 
     const playerSet = new Set();
 
@@ -325,9 +399,7 @@ app.get('/api/players', async (req, res) => {
 app.get('/api/player-teammates', async (req, res) => {
   try {
     const files = await readdir(outputDir);
-    const jsonFiles = files.filter(
-      (f) => f.endsWith('.json') && f !== 'player_defaults.json' && !f.startsWith('seeded_')
-    );
+    const jsonFiles = files.filter(isTournamentJsonFile);
 
     const teammateCounts = new Map();
 
@@ -403,9 +475,7 @@ app.post('/api/players/rename', async (req, res) => {
     }
 
     const files = await readdir(outputDir);
-    const tournamentFiles = files.filter(
-      (file) => file.endsWith('.json') && file !== 'player_defaults.json' && !file.startsWith('seeded_')
-    );
+    const tournamentFiles = files.filter(isTournamentJsonFile);
 
     let filesUpdated = 0;
     let replacements = 0;
@@ -438,6 +508,26 @@ app.post('/api/players/rename', async (req, res) => {
         });
         await writeFile(playerDefaultsFile, JSON.stringify(defaults, null, 2), 'utf-8');
         defaultsUpdated = true;
+      }
+    } catch (err) {
+      if (err.code !== 'ENOENT') throw err;
+    }
+
+    let countriesUpdated = false;
+    try {
+      const countriesContent = await readFile(playerCountriesFile, 'utf-8');
+      const countries = JSON.parse(countriesContent);
+
+      const countrySourceKeys = Object.keys(countries).filter((key) => shouldReplacePlayerName(key, fromName, toName));
+      if (countrySourceKeys.length > 0) {
+        countrySourceKeys.forEach((sourceKey) => {
+          if (!Object.prototype.hasOwnProperty.call(countries, toName)) {
+            countries[toName] = countries[sourceKey];
+          }
+          delete countries[sourceKey];
+        });
+        await writeFile(playerCountriesFile, JSON.stringify(countries, null, 2), 'utf-8');
+        countriesUpdated = true;
       }
     } catch (err) {
       if (err.code !== 'ENOENT') throw err;
@@ -483,7 +573,7 @@ app.post('/api/players/rename', async (req, res) => {
       }
     }
 
-    if (replacements === 0 && seededReplacements === 0 && !defaultsUpdated) {
+    if (replacements === 0 && seededReplacements === 0 && !defaultsUpdated && !countriesUpdated) {
       if (isWhitespaceVariantMerge) {
         return res.status(404).json({ error: `No trailing-whitespace variants found for "${toName}"` });
       }
@@ -497,6 +587,7 @@ app.post('/api/players/rename', async (req, res) => {
       filesUpdated,
       replacements,
       defaultsUpdated,
+      countriesUpdated,
       seededFilesUpdated,
       seededReplacements
     });
@@ -577,6 +668,52 @@ app.put('/api/player-defaults/:playerName', async (req, res) => {
   } catch (error) {
     console.error('Error updating player default:', error);
     res.status(500).json({ error: 'Failed to update player default' });
+  }
+});
+
+// Get player countries (stored overrides + scraped fallbacks)
+app.get('/api/player-countries', async (req, res) => {
+  try {
+    const [stored, scraped] = await Promise.all([
+      loadStoredPlayerCountries(),
+      loadScrapedPlayerCountries()
+    ]);
+
+    // Stored values override scraped defaults
+    res.json({ ...scraped, ...stored });
+  } catch (error) {
+    console.error('Error getting player countries:', error);
+    res.status(500).json({ error: 'Failed to get player countries' });
+  }
+});
+
+// Update single player country
+app.put('/api/player-countries/:playerName', async (req, res) => {
+  try {
+    const playerName = decodeURIComponent(req.params.playerName);
+    const country = normalizeCountryCode(req.body?.country);
+
+    let countries = {};
+    try {
+      const content = await readFile(playerCountriesFile, 'utf-8');
+      countries = JSON.parse(content);
+    } catch (err) {
+      if (err.code !== 'ENOENT') throw err;
+    }
+
+    if (!country) {
+      delete countries[playerName];
+    } else {
+      countries[playerName] = country;
+    }
+
+    await mkdir(outputDir, { recursive: true });
+    await writeFile(playerCountriesFile, JSON.stringify(countries, null, 2), 'utf-8');
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error updating player country:', error);
+    res.status(500).json({ error: 'Failed to update player country' });
   }
 });
 

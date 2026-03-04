@@ -15,7 +15,7 @@ import {
 } from '../components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Input } from '../components/ui/input';
-import { Badge } from '../components/ui/badge';
+import { RaceBadge } from '../components/ui/RaceBadge';
 import { Button } from '../components/ui/button';
 import {
   Search,
@@ -230,16 +230,6 @@ export function RaceRankings({ }: RaceRankingsProps) {
 
   const sortedCombinedRankings = sortData(filteredCombinedRankings, combinedSortColumn, combinedSortDirection);
 
-
-  const getRaceBadgeColor = (race: string) => {
-    switch (race) {
-      case 'Terran': return 'bg-blue-500/10 text-blue-500 hover:bg-blue-500/20';
-      case 'Zerg': return 'bg-purple-500/10 text-purple-500 hover:bg-purple-500/20';
-      case 'Protoss': return 'bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20';
-      case 'Random': return 'bg-gray-500/10 text-gray-400 hover:bg-gray-500/20';
-      default: return 'bg-gray-500/10 text-gray-400';
-    }
-  };
 
   const loadMatchHistory = async (matchup: RaceRanking, isCombined: boolean = false) => {
     try {
@@ -457,7 +447,7 @@ export function RaceRankings({ }: RaceRankingsProps) {
                       <TableCell className="font-medium text-center">{index + 1}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          <Badge variant="outline" className={cn("border-0", getRaceBadgeColor(matchup.race1))}>{matchup.race1}</Badge>
+                          <RaceBadge race={matchup.race1} showName />
                           <span className="text-muted-foreground text-xs">vs All</span>
                         </div>
                       </TableCell>
@@ -515,9 +505,9 @@ export function RaceRankings({ }: RaceRankingsProps) {
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          <Badge variant="outline" className={cn("border-0", getRaceBadgeColor(matchup.race1))}>{matchup.race1}</Badge>
+                          <RaceBadge race={matchup.race1} showName />
                           <span className="text-muted-foreground text-xs">vs</span>
-                          <Badge variant="outline" className={cn("border-0", getRaceBadgeColor(matchup.race2))}>{matchup.race2}</Badge>
+                          <RaceBadge race={matchup.race2} showName />
                         </div>
                       </TableCell>
                       <TableCell className="text-center text-muted-foreground">{matchup.matches}</TableCell>

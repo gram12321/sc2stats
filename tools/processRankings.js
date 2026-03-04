@@ -57,7 +57,7 @@ function getPlayerRace(player, playerDefaults = {}) {
  */
 async function loadTournamentFiles() {
   const files = await readdir(outputDir);
-  const jsonFiles = files.filter(f => f.endsWith('.json') && f !== 'player_defaults.json');
+  const jsonFiles = files.filter(f => f.endsWith('.json') && f !== 'player_defaults.json' && f !== 'player_countries.json');
 
   const tournaments = [];
 

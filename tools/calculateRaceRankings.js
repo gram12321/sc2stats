@@ -128,7 +128,7 @@ export async function calculateRaceRankings(mainCircuitOnly = false, seasons = n
 
     // Read all JSON files from output directory
     const files = await readdir(outputDir);
-    const jsonFiles = files.filter(f => f.endsWith('.json') && f !== 'player_defaults.json');
+    const jsonFiles = files.filter(f => f.endsWith('.json') && f !== 'player_defaults.json' && f !== 'player_countries.json');
     console.log(`Found ${jsonFiles.length} tournament JSON files`);
 
     // Collect all matches with tournament metadata

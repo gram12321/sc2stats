@@ -1,12 +1,15 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useRankingSettings } from '../context/RankingSettingsContext';
 import { formatRankingPoints, getRaceAbbr, getRoundSortOrder } from '../lib/utils';
+import { formatTournamentName } from '../lib/display';
 import { Race } from '../types/tournament';
 import { getPlayerDefaults } from '../lib/playerDefaults';
+import { getPlayerCountries } from '../lib/playerCountries';
 import { MatchHistoryItem } from '../components/MatchHistoryItem';
 import { RatingChart } from '../components/RatingChart';
 import { RaceMatchupStats } from '../components/RaceMatchupStats';
 import { RankingFilters } from '../components/RankingFilters';
+import { CountryFlag } from '../components/ui/CountryFlag';
 
 interface TeamMatch {
   match_id: string;
@@ -97,6 +100,7 @@ export function TeamDetails({ player1, player2, onBack }: TeamDetailsProps) {
   const [playerRankings, setPlayerRankings] = useState<Record<string, { rank: number; points: number; confidence: number }>>({});
   const [teamRankings, setTeamRankings] = useState<Record<string, { rank: number; points: number; confidence: number }>>({});
   const [playerRaces, setPlayerRaces] = useState<Record<string, Race>>({});
+  const [playerCountries, setPlayerCountries] = useState<Record<string, string>>({});
   const [comboRankings, setComboRankings] = useState<Record<string, { points: number }>>({});
   const [chartMode, setChartMode] = useState<'rating' | 'rank'>('rating');
   const { seasons, mainCircuitOnly, useSeededRankings } = useRankingSettings();
@@ -106,6 +110,7 @@ export function TeamDetails({ player1, player2, onBack }: TeamDetailsProps) {
     loadPlayerRankings();
     loadTeamRankings();
     loadAllPlayerRaces();
+    loadAllPlayerCountries();
     loadComboRankings();
   }, [player1, player2, useSeededRankings, seasons, mainCircuitOnly]);
 
@@ -189,6 +194,15 @@ export function TeamDetails({ player1, player2, onBack }: TeamDetailsProps) {
       setPlayerRaces(defaults);
     } catch (err) {
       console.error('Error loading player races:', err);
+    }
+  };
+
+  const loadAllPlayerCountries = async () => {
+    try {
+      const countries = await getPlayerCountries();
+      setPlayerCountries(countries);
+    } catch (err) {
+      console.error('Error loading player countries:', err);
     }
   };
 
@@ -342,7 +356,7 @@ export function TeamDetails({ player1, player2, onBack }: TeamDetailsProps) {
         confidence: impact?.confidence,
         matchId: match.match_id,
         matchNum: 0,
-        tournamentName: match.tournament_slug.replace(/-/g, ' '),
+        tournamentName: formatTournamentName(match.tournament_slug),
         opponent: opponentName
       };
     }).filter(d => d.rating !== 0);
@@ -379,15 +393,19 @@ export function TeamDetails({ player1, player2, onBack }: TeamDetailsProps) {
     );
   }
 
-  const teamName = `${team.player1} + ${team.player2}`;
-
   return (
     <div className="min-h-screen bg-background">
       <div className="bg-card border-b border-border shadow-sm">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-foreground">{teamName}</h1>
+              <h1 className="text-2xl font-bold text-foreground inline-flex items-center gap-2">
+                <CountryFlag country={playerCountries[team.player1]} />
+                <span>{team.player1}</span>
+                <span className="text-muted-foreground">+</span>
+                <CountryFlag country={playerCountries[team.player2]} />
+                <span>{team.player2}</span>
+              </h1>
             </div>
             <div className="flex items-center gap-4">
               <RankingFilters
@@ -526,6 +544,7 @@ export function TeamDetails({ player1, player2, onBack }: TeamDetailsProps) {
                       team2Rank={team2Rank ? { rank: team2Rank.rank, points: team2Rank.points, confidence: team2Rank.confidence } : null}
                       playerRankings={playerRankingsMap}
                       playerRaces={playerRaces}
+                      playerCountries={playerCountries}
                       highlightPlayers={[team.player1, team.player2]}
                       highlightTeamKey={teamKey}
                       highlightCombo={highlightedCombo}

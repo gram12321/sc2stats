@@ -2,11 +2,15 @@ import { useState, useEffect, useMemo } from 'react';
 import { useRankingSettings } from '../context/RankingSettingsContext';
 import { Race } from '../types/tournament';
 import { getPlayerDefaults } from '../lib/playerDefaults';
+import { getPlayerCountries } from '../lib/playerCountries';
 import { formatRankingPoints, getRaceAbbr } from '../lib/utils';
+import { formatTournamentName } from '../lib/display';
 import { MatchHistoryItem } from '../components/MatchHistoryItem';
 import { RatingChart } from '../components/RatingChart';
 import { RaceMatchupStats } from '../components/RaceMatchupStats';
 import { RankingFilters } from '../components/RankingFilters';
+import { RaceBadge } from '../components/ui/RaceBadge';
+import { CountryFlag } from '../components/ui/CountryFlag';
 
 interface PlayerMatch {
   match_id: string;
@@ -97,6 +101,7 @@ export function PlayerDetails({ playerName, onBack }: PlayerDetailsProps) {
   const [playerRankings, setPlayerRankings] = useState<Record<string, { rank: number; points: number; confidence: number }>>({});
   const [teamRankings, setTeamRankings] = useState<Record<string, { rank: number; points: number; confidence: number }>>({});
   const [playerRaces, setPlayerRaces] = useState<Record<string, Race>>({});
+  const [playerCountries, setPlayerCountries] = useState<Record<string, string>>({});
   const [comboRankings, setComboRankings] = useState<Record<string, { points: number }>>({});
   const [chartMode, setChartMode] = useState<'rating' | 'rank'>('rating');
   const { seasons, mainCircuitOnly, useSeededRankings } = useRankingSettings();
@@ -107,6 +112,7 @@ export function PlayerDetails({ playerName, onBack }: PlayerDetailsProps) {
     loadPlayerRankings();
     loadTeamRankings();
     loadAllPlayerRaces();
+    loadAllPlayerCountries();
     loadComboRankings();
   }, [playerName, useSeededRankings, seasons, mainCircuitOnly]);
 
@@ -199,6 +205,15 @@ export function PlayerDetails({ playerName, onBack }: PlayerDetailsProps) {
       setPlayerRaces(defaults);
     } catch (err) {
       console.error('Error loading player races:', err);
+    }
+  };
+
+  const loadAllPlayerCountries = async () => {
+    try {
+      const countries = await getPlayerCountries();
+      setPlayerCountries(countries);
+    } catch (err) {
+      console.error('Error loading player countries:', err);
     }
   };
 
@@ -297,17 +312,6 @@ export function PlayerDetails({ playerName, onBack }: PlayerDetailsProps) {
     return (b.match_id || '').localeCompare(a.match_id || '');
   }) : [];
 
-  const getRaceBadgeColor = (race: Race | null | undefined) => {
-    if (!race) return 'bg-gray-100 text-gray-600';
-    switch (race) {
-      case 'Terran': return 'bg-blue-100 text-blue-800';
-      case 'Zerg': return 'bg-purple-100 text-purple-800';
-      case 'Protoss': return 'bg-yellow-100 text-yellow-800';
-      case 'Random': return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-600';
-    }
-  };
-
   const chartData = useMemo(() => {
     if (!sortedMatchHistory.length) return [];
 
@@ -361,7 +365,7 @@ export function PlayerDetails({ playerName, onBack }: PlayerDetailsProps) {
         confidence: impact?.confidence,
         matchId: match.match_id,
         matchNum: 0,
-        tournamentName: match.tournament_slug.replace(/-/g, ' '),
+        tournamentName: formatTournamentName(match.tournament_slug),
         opponent: opponentName
       };
     }).filter(point => point.rating !== 0); // Basic filter to ensure valid points
@@ -404,11 +408,14 @@ export function PlayerDetails({ playerName, onBack }: PlayerDetailsProps) {
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-foreground">{player.name}</h1>
+              <h1 className="text-2xl font-bold text-foreground inline-flex items-center gap-2">
+                <CountryFlag country={playerCountries[player.name]} />
+                {player.name}
+              </h1>
               {playerRace && (
-                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium mt-2 ${getRaceBadgeColor(playerRace)}`}>
-                  {playerRace}
-                </span>
+                <div className="mt-2">
+                  <RaceBadge race={playerRace} showName />
+                </div>
               )}
             </div>
             <div className="flex items-center gap-4">
@@ -537,6 +544,7 @@ export function PlayerDetails({ playerName, onBack }: PlayerDetailsProps) {
                       team2Rank={team2Rank ? { rank: team2Rank.rank, points: team2Rank.points, confidence: team2Rank.confidence } : null}
                       playerRankings={playerRankingsMap}
                       playerRaces={playerRaces}
+                      playerCountries={playerCountries}
                       highlightPlayers={[playerName]}
                       showWinLoss={true}
                       winLossValue={match.won}

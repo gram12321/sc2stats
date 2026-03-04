@@ -233,7 +233,7 @@ export async function calculateTeamRankings(seeds = null, mainCircuitOnly = fals
   try {
     // Read all JSON files from output directory
     const files = await readdir(outputDir);
-    const jsonFiles = files.filter(f => f.endsWith('.json') && f !== 'player_defaults.json' && !f.startsWith('seeded_'));
+    const jsonFiles = files.filter(f => f.endsWith('.json') && f !== 'player_defaults.json' && f !== 'player_countries.json' && !f.startsWith('seeded_'));
 
     // Collect all matches with tournament metadata
     for (const file of jsonFiles) {

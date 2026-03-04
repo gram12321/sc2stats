@@ -39,6 +39,54 @@ export function getNewnessKFactor(matchCount) {
   return Math.min(50, adaptiveK);
 }
 
+let predictionCalibrationSettings = {
+  enabled: true,
+  temperature: 1.4
+};
+
+function clampProbability(value) {
+  return Math.min(0.999999, Math.max(0.000001, value));
+}
+
+/**
+ * Configure optional probability calibration.
+ * When enabled, probabilities are passed through temperature scaling in logit space.
+ *
+ * @param {Object} options
+ * @param {boolean} options.enabled - Whether calibration is enabled
+ * @param {number} options.temperature - Temperature (>0). Higher -> less extreme probabilities
+ */
+export function setPredictionCalibration(options = {}) {
+  const { enabled, temperature } = options;
+
+  if (typeof enabled === 'boolean') {
+    predictionCalibrationSettings.enabled = enabled;
+  }
+
+  if (Number.isFinite(temperature) && temperature > 0) {
+    predictionCalibrationSettings.temperature = temperature;
+  }
+}
+
+export function getPredictionCalibrationSettings() {
+  return { ...predictionCalibrationSettings };
+}
+
+export function calibrateWinProbability(probability) {
+  const p = clampProbability(probability);
+
+  if (!predictionCalibrationSettings.enabled) {
+    return p;
+  }
+
+  const t = predictionCalibrationSettings.temperature;
+  const logit = Math.log(p / (1 - p));
+  const scaled = logit / t;
+  const calibrated = 1 / (1 + Math.exp(-scaled));
+
+  return clampProbability(calibrated);
+}
+
 /**
  * Update confidence based on prediction accuracy
  * Confidence starts at 0% and increases when predictions are correct,
@@ -422,7 +470,8 @@ export function updateStatsForMatch(
 
   const isDraw = !won && !lost;
 
-  const expectedWin = predictWinProbability(ratingToUse, opponentRating, populationStdDev);
+  const rawExpectedWin = predictWinProbability(ratingToUse, opponentRating, populationStdDev);
+  const expectedWin = calibrateWinProbability(rawExpectedWin);
 
   // Series-length signal strength for binary outcome (A)
   const bestOf = Number.isFinite(matchContext?.bestOf) ? matchContext.bestOf : null;
@@ -495,6 +544,7 @@ export function updateStatsForMatch(
   return {
     ratingChange,
     calculationDetails: {
+      rawExpectedWin,
       expectedWin,
       baseK,
       adjustedK,

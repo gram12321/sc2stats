@@ -1,6 +1,9 @@
 import { Race } from '../types/tournament';
 import { formatRankingPoints, getRaceAbbr } from '../lib/utils';
+import { formatTournamentName } from '../lib/display';
 import { Tooltip } from './ui/tooltip';
+import { RaceBadge } from './ui/RaceBadge';
+import { CountryFlag } from './ui/CountryFlag';
 import { cn } from '../lib/utils'; // Import cn utility
 
 interface PlayerImpact {
@@ -143,6 +146,7 @@ interface MatchHistoryItemProps {
   team2Rank?: TeamRanking | null;
   playerRankings?: Record<string, PlayerRanking>;
   playerRaces?: Record<string, Race>;
+  playerCountries?: Record<string, string>;
   highlightPlayers?: string[];
   highlightTeamKey?: string;
   highlightRace?: string;
@@ -508,6 +512,7 @@ export function MatchHistoryItem({
   team2Rank,
   playerRankings = {},
   playerRaces = {},
+  playerCountries = {},
   highlightPlayers = [],
   highlightTeamKey,
   highlightRace,
@@ -642,7 +647,7 @@ export function MatchHistoryItem({
       {/* Header row */}
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          <span className="font-medium text-foreground">{match.tournament_slug}</span>
+          <span className="font-medium text-foreground">{formatTournamentName(match.tournament_slug)}</span>
           <span>•</span>
           <span>{match.round}</span>
           <span>•</span>
@@ -703,8 +708,9 @@ export function MatchHistoryItem({
               return (
                 <div key={playerName} className="flex items-center gap-1 shrink-0">
                   {idx > 0 && <span className="text-muted-foreground">+</span>}
+                  <CountryFlag country={playerCountries[playerName]} />
                   <span className={isHighlighted ? "text-primary font-bold" : "text-foreground"}>{playerName}</span>
-                  {raceAbbr && <span className="text-xs text-muted-foreground">({raceAbbr})</span>}
+                  {raceAbbr && <RaceBadge race={raceAbbr} className="h-4 px-1 text-[10px]" />}
                   {rank && <span className="text-[10px] text-muted-foreground/70">#{rank}</span>}
                   {impact && (
                     <Tooltip content={getRatingChangeTooltip(impact, playerName, team2Players.join('+'), 'player')}>
@@ -737,7 +743,8 @@ export function MatchHistoryItem({
               return (
                 <div key={playerName} className="flex items-center gap-1 shrink-0 flex-row-reverse">
                   <span className={isHighlighted ? "text-primary font-bold" : "text-foreground"}>{playerName}</span>
-                  {raceAbbr && <span className="text-xs text-muted-foreground">({raceAbbr})</span>}
+                  <CountryFlag country={playerCountries[playerName]} />
+                  {raceAbbr && <RaceBadge race={raceAbbr} className="h-4 px-1 text-[10px]" />}
                   {rank && <span className="text-[10px] text-muted-foreground/70">#{rank}</span>}
                   {impact && (
                     <Tooltip content={getRatingChangeTooltip(impact, playerName, team1Players.join('+'), 'player')}>

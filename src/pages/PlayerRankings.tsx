@@ -3,13 +3,15 @@ import { useRankingSettings } from '../context/RankingSettingsContext';
 import { RankingFilters } from '../components/RankingFilters';
 import { Race } from '../types/tournament';
 import { getPlayerDefaults } from '../lib/playerDefaults';
+import { getPlayerCountries } from '../lib/playerCountries';
 import { formatRankingPoints } from '../lib/utils';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Input } from '../components/ui/input';
-import { Badge } from '../components/ui/badge';
+import { RaceBadge } from '../components/ui/RaceBadge';
 import { Search, ArrowUpDown, ArrowUp, ArrowDown, Loader2, Trophy, Users, Target, Minus, Swords, Crown } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { CountryFlag } from '../components/ui/CountryFlag';
 
 interface PlayerRanking {
   name: string;
@@ -27,6 +29,7 @@ interface PlayerRankingsProps {
 export function PlayerRankings({ onNavigateToPlayer }: PlayerRankingsProps) {
   const [rankings, setRankings] = useState<PlayerRanking[]>([]);
   const [playerRaces, setPlayerRaces] = useState<Record<string, Race>>({});
+  const [playerCountries, setPlayerCountries] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -43,6 +46,7 @@ export function PlayerRankings({ onNavigateToPlayer }: PlayerRankingsProps) {
   useEffect(() => {
     loadRankings();
     loadPlayerRaces();
+    loadPlayerCountries();
   }, [useSeededRankings, mainCircuitOnly, seasons]);
 
   const loadRankings = async () => {
@@ -76,6 +80,15 @@ export function PlayerRankings({ onNavigateToPlayer }: PlayerRankingsProps) {
       setPlayerRaces(defaults);
     } catch (err) {
       console.error('Error loading player races:', err);
+    }
+  };
+
+  const loadPlayerCountries = async () => {
+    try {
+      const countries = await getPlayerCountries();
+      setPlayerCountries(countries);
+    } catch (err) {
+      console.error('Error loading player countries:', err);
     }
   };
 
@@ -152,16 +165,6 @@ export function PlayerRankings({ onNavigateToPlayer }: PlayerRankingsProps) {
     }
     return { ...player, displayRank: rank };
   });
-
-  const getRaceBadgeColor = (race: Race | null | undefined) => {
-    switch (race) {
-      case 'Terran': return 'bg-blue-500/10 text-blue-500 hover:bg-blue-500/20';
-      case 'Zerg': return 'bg-purple-500/10 text-purple-500 hover:bg-purple-500/20';
-      case 'Protoss': return 'bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20';
-      case 'Random': return 'bg-gray-500/10 text-gray-400 hover:bg-gray-500/20';
-      default: return 'bg-gray-500/10 text-gray-400';
-    }
-  };
 
   const SortIcon = ({ column }: { column: keyof PlayerRanking | 'rank' }) => {
     if (sortColumn !== column) return <ArrowUpDown className="ml-1 h-3 w-3 text-muted-foreground" />;
@@ -324,18 +327,15 @@ export function PlayerRankings({ onNavigateToPlayer }: PlayerRankingsProps) {
                           <TableCell>
                             <button
                               onClick={() => onNavigateToPlayer && onNavigateToPlayer(player.name)}
-                              className="font-semibold text-foreground hover:text-primary transition-colors hover:underline decoration-primary/50 underline-offset-4"
+                              className="font-semibold text-foreground hover:text-primary transition-colors hover:underline decoration-primary/50 underline-offset-4 inline-flex items-center gap-2"
                             >
+                              <CountryFlag country={playerCountries[player.name]} />
                               {player.name}
                             </button>
                           </TableCell>
 
                           <TableCell>
-                            {race && (
-                              <Badge variant="outline" className={cn("border-0 font-medium", getRaceBadgeColor(race))}>
-                                {race}
-                              </Badge>
-                            )}
+                            <RaceBadge race={race} showName />
                           </TableCell>
 
                           <TableCell className="text-center text-muted-foreground">{player.matches}</TableCell>

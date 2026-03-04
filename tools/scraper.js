@@ -105,21 +105,28 @@ function parseTeam(opponentText) {
     return match ? match[1].trim() : null;
   };
 
+  const normalizeCountryCode = (value) => {
+    if (!value) return null;
+    const normalized = String(value).trim().toUpperCase();
+    return /^[A-Z]{2}$/.test(normalized) ? normalized : null;
+  };
+
   const p1 = getParam('p1');
   const p2 = getParam('p2');
+  const p1Country = normalizeCountryCode(getParam('p1flag'));
+  const p2Country = normalizeCountryCode(getParam('p2flag'));
 
   if (!p1 || !p2) return null;
 
   // Normalize: alphabetical order
-  const players = [p1, p2].sort();
+  const players = [
+    { name: p1, country: p1Country || undefined },
+    { name: p2, country: p2Country || undefined }
+  ].sort((a, b) => a.name.localeCompare(b.name));
 
   return {
-    player1: {
-      name: players[0]
-    },
-    player2: {
-      name: players[1]
-    }
+    player1: players[0],
+    player2: players[1]
   };
 }
 

@@ -3,7 +3,8 @@ import { useRankingSettings } from '../context/RankingSettingsContext';
 import { RankingFilters } from '../components/RankingFilters';
 import { Race } from '../types/tournament';
 import { getPlayerDefaults } from '../lib/playerDefaults';
-import { formatRankingPoints, getRaceAbbr } from '../lib/utils';
+import { getPlayerCountries } from '../lib/playerCountries';
+import { formatRankingPoints } from '../lib/utils';
 import {
   Table,
   TableBody,
@@ -14,7 +15,7 @@ import {
 } from '../components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Input } from '../components/ui/input';
-import { Badge } from '../components/ui/badge';
+import { RaceBadge } from '../components/ui/RaceBadge';
 import {
   Search,
   ArrowUpDown,
@@ -28,6 +29,7 @@ import {
   Crown
 } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { CountryFlag } from '../components/ui/CountryFlag';
 
 interface TeamRanking {
   player1: string;
@@ -51,6 +53,7 @@ interface TeamRankingsProps {
 export function TeamRankings({ onNavigateToTeam }: TeamRankingsProps) {
   const [rankings, setRankings] = useState<TeamRanking[]>([]);
   const [playerRaces, setPlayerRaces] = useState<Record<string, Race>>({});
+  const [playerCountries, setPlayerCountries] = useState<Record<string, string>>({});
   const [playerRankings, setPlayerRankings] = useState<Record<string, number>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -68,6 +71,7 @@ export function TeamRankings({ onNavigateToTeam }: TeamRankingsProps) {
   useEffect(() => {
     loadRankings();
     loadPlayerRaces();
+    loadPlayerCountries();
     loadPlayerRankings();
   }, [useSeededRankings, mainCircuitOnly, seasons]);
 
@@ -101,6 +105,15 @@ export function TeamRankings({ onNavigateToTeam }: TeamRankingsProps) {
       setPlayerRaces(defaults);
     } catch (err) {
       console.error('Error loading player races:', err);
+    }
+  };
+
+  const loadPlayerCountries = async () => {
+    try {
+      const countries = await getPlayerCountries();
+      setPlayerCountries(countries);
+    } catch (err) {
+      console.error('Error loading player countries:', err);
     }
   };
 
@@ -210,16 +223,6 @@ export function TeamRankings({ onNavigateToTeam }: TeamRankingsProps) {
     }
     return { ...team, displayRank: rank };
   });
-
-  const getRaceBadgeColor = (race: Race | null | undefined) => {
-    switch (race) {
-      case 'Terran': return 'bg-blue-500/10 text-blue-500 hover:bg-blue-500/20';
-      case 'Zerg': return 'bg-purple-500/10 text-purple-500 hover:bg-purple-500/20';
-      case 'Protoss': return 'bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20';
-      case 'Random': return 'bg-gray-500/10 text-gray-400 hover:bg-gray-500/20';
-      default: return 'bg-gray-500/10 text-gray-400';
-    }
-  };
 
   const SortIcon = ({ column }: { column: keyof TeamRanking | 'rank' | 'player1' }) => {
     if (sortColumn !== column) return <ArrowUpDown className="ml-1 h-3 w-3 text-muted-foreground" />;
@@ -378,6 +381,7 @@ export function TeamRankings({ onNavigateToTeam }: TeamRankingsProps) {
                             <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
                               {/* Player 1 */}
                               <div className="flex items-center gap-1.5">
+                                <CountryFlag country={playerCountries[team.player1]} />
                                 {onNavigateToTeam ? (
                                   <button
                                     onClick={() => onNavigateToTeam(team.player1, team.player2)}
@@ -387,9 +391,7 @@ export function TeamRankings({ onNavigateToTeam }: TeamRankingsProps) {
                                   </button>
                                 ) : <span className="font-semibold">{team.player1}</span>}
                                 {player1Race && (
-                                  <Badge variant="outline" className={cn("text-[10px] h-5 px-1 border-0", getRaceBadgeColor(player1Race))}>
-                                    {getRaceAbbr(player1Race)}
-                                  </Badge>
+                                  <RaceBadge race={player1Race} className="h-5 px-1 text-[10px]" />
                                 )}
                                 {playerRankings[team.player1] && (
                                   <span className="text-xs text-muted-foreground">#{playerRankings[team.player1]}</span>
@@ -399,6 +401,7 @@ export function TeamRankings({ onNavigateToTeam }: TeamRankingsProps) {
 
                               {/* Player 2 */}
                               <div className="flex items-center gap-1.5">
+                                <CountryFlag country={playerCountries[team.player2]} />
                                 {onNavigateToTeam ? (
                                   <button
                                     onClick={() => onNavigateToTeam(team.player1, team.player2)}
@@ -408,9 +411,7 @@ export function TeamRankings({ onNavigateToTeam }: TeamRankingsProps) {
                                   </button>
                                 ) : <span className="font-semibold">{team.player2}</span>}
                                 {player2Race && (
-                                  <Badge variant="outline" className={cn("text-[10px] h-5 px-1 border-0", getRaceBadgeColor(player2Race))}>
-                                    {getRaceAbbr(player2Race)}
-                                  </Badge>
+                                  <RaceBadge race={player2Race} className="h-5 px-1 text-[10px]" />
                                 )}
                                 {playerRankings[team.player2] && (
                                   <span className="text-xs text-muted-foreground">#{playerRankings[team.player2]}</span>

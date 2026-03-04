@@ -8,8 +8,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
 import { Checkbox } from '../components/ui/checkbox';
 import { Label } from '../components/ui/label';
+import { RaceBadge } from '../components/ui/RaceBadge';
 import { getPlayerDefaults } from '../lib/playerDefaults';
 import { getRaceAbbr } from '../lib/utils';
+import { formatTournamentName } from '../lib/display';
 import { Race } from '../types/tournament';
 
 interface Team {
@@ -436,7 +438,7 @@ export function Highlights({ onNavigateToMatch, onNavigateToPlayer, onNavigateTo
         case 'date':
           return sortDate(a.match.match_date || a.match.tournament_date, b.match.match_date || b.match.tournament_date, playerSort.direction);
         case 'event':
-          return sortString(a.match.tournament_slug, b.match.tournament_slug, playerSort.direction);
+          return sortString(formatTournamentName(a.match.tournament_slug), formatTournamentName(b.match.tournament_slug), playerSort.direction);
         case 'rating':
         default:
           return sortNumber(a.rating, b.rating, playerSort.direction);
@@ -454,7 +456,7 @@ export function Highlights({ onNavigateToMatch, onNavigateToPlayer, onNavigateTo
         case 'date':
           return sortDate(a.match.match_date || a.match.tournament_date, b.match.match_date || b.match.tournament_date, teamSort.direction);
         case 'event':
-          return sortString(a.match.tournament_slug, b.match.tournament_slug, teamSort.direction);
+          return sortString(formatTournamentName(a.match.tournament_slug), formatTournamentName(b.match.tournament_slug), teamSort.direction);
         case 'rating':
         default:
           return sortNumber(a.rating, b.rating, teamSort.direction);
@@ -472,7 +474,7 @@ export function Highlights({ onNavigateToMatch, onNavigateToPlayer, onNavigateTo
         case 'date':
           return sortDate(a.match.match_date || a.match.tournament_date, b.match.match_date || b.match.tournament_date, raceSort.direction);
         case 'event':
-          return sortString(a.match.tournament_slug, b.match.tournament_slug, raceSort.direction);
+          return sortString(formatTournamentName(a.match.tournament_slug), formatTournamentName(b.match.tournament_slug), raceSort.direction);
         case 'rating':
           return sortNumber(a.rating, b.rating, raceSort.direction);
         case 'race':
@@ -492,7 +494,7 @@ export function Highlights({ onNavigateToMatch, onNavigateToPlayer, onNavigateTo
         case 'date':
           return sortDate(a.match.match_date || a.match.tournament_date, b.match.match_date || b.match.tournament_date, comboSort.direction);
         case 'event':
-          return sortString(a.match.tournament_slug, b.match.tournament_slug, comboSort.direction);
+          return sortString(formatTournamentName(a.match.tournament_slug), formatTournamentName(b.match.tournament_slug), comboSort.direction);
         case 'rating':
           return sortNumber(a.rating, b.rating, comboSort.direction);
         case 'combo':
@@ -601,7 +603,7 @@ export function Highlights({ onNavigateToMatch, onNavigateToPlayer, onNavigateTo
             <div><span className="text-muted-foreground">Favorite Expected:</span> {(favoriteExpectedWin * 100).toFixed(1)}%</div>
             <div><span className="text-muted-foreground">Winner Expected:</span> {(winnerExpectedWin * 100).toFixed(1)}%</div>
             <div className="md:col-span-2"><span className="text-muted-foreground">{metricLabel}:</span> {metricValue}</div>
-            <div className="md:col-span-2 truncate" title={match.tournament_slug}><span className="text-muted-foreground">Event:</span> {match.tournament_slug}</div>
+            <div className="md:col-span-2 truncate" title={match.tournament_slug}><span className="text-muted-foreground">Event:</span> {formatTournamentName(match.tournament_slug)}</div>
           </div>
 
           {renderOpenMatchButton(match)}
@@ -636,7 +638,7 @@ export function Highlights({ onNavigateToMatch, onNavigateToPlayer, onNavigateTo
           <div><span className="text-muted-foreground">Team:</span> {getTeamDisplayWithRaces(winnerTeam)}</div>
           <div><span className="text-muted-foreground">Gain:</span> +{ratingGain.toFixed(2)}</div>
           <div><span className="text-muted-foreground">Date:</span> {formatDate(match.match_date || match.tournament_date)}</div>
-          <div className="truncate" title={match.tournament_slug}><span className="text-muted-foreground">Event:</span> {match.tournament_slug}</div>
+          <div className="truncate" title={match.tournament_slug}><span className="text-muted-foreground">Event:</span> {formatTournamentName(match.tournament_slug)}</div>
           {renderOpenMatchButton(match)}
         </CardContent>
       </Card>
@@ -734,7 +736,7 @@ export function Highlights({ onNavigateToMatch, onNavigateToPlayer, onNavigateTo
                             <TableCell className="p-2 text-xs">{peak.race || '—'}</TableCell>
                             <TableCell className="p-2 text-xs text-right font-mono">{peak.rating.toFixed(2)}</TableCell>
                             <TableCell className="p-2 text-xs">{formatDate(peak.match.match_date || peak.match.tournament_date)}</TableCell>
-                            <TableCell className="p-2 text-xs max-w-[18rem] truncate" title={peak.match.tournament_slug}>{peak.match.tournament_slug}</TableCell>
+                            <TableCell className="p-2 text-xs max-w-[18rem] truncate" title={peak.match.tournament_slug}>{formatTournamentName(peak.match.tournament_slug)}</TableCell>
                             <TableCell className="p-2 text-xs text-right">{renderOpenMatchButton(peak.match)}</TableCell>
                           </TableRow>
                         ))}
@@ -772,7 +774,7 @@ export function Highlights({ onNavigateToMatch, onNavigateToPlayer, onNavigateTo
                               </TableCell>
                               <TableCell className="p-2 text-xs text-right font-mono">{peak.rating.toFixed(2)}</TableCell>
                               <TableCell className="p-2 text-xs">{formatDate(peak.match.match_date || peak.match.tournament_date)}</TableCell>
-                              <TableCell className="p-2 text-xs max-w-[18rem] truncate" title={peak.match.tournament_slug}>{peak.match.tournament_slug}</TableCell>
+                              <TableCell className="p-2 text-xs max-w-[18rem] truncate" title={peak.match.tournament_slug}>{formatTournamentName(peak.match.tournament_slug)}</TableCell>
                               <TableCell className="p-2 text-xs text-right">{renderOpenMatchButton(peak.match)}</TableCell>
                             </TableRow>
                           );
@@ -801,7 +803,7 @@ export function Highlights({ onNavigateToMatch, onNavigateToPlayer, onNavigateTo
                       <TableBody>
                         {sortedRacePeaks.map((entry) => (
                           <TableRow key={`race-${entry.race}-${entry.key}`}>
-                            <TableCell className="p-2 text-xs font-medium">{entry.race}</TableCell>
+                            <TableCell className="p-2 text-xs font-medium"><RaceBadge race={entry.race} /></TableCell>
                             <TableCell className="p-2 text-xs">
                               <button type="button" onClick={() => onNavigateToPlayer?.(entry.key)} className="font-medium hover:text-primary transition-colors">
                                 {entry.label}
@@ -809,7 +811,7 @@ export function Highlights({ onNavigateToMatch, onNavigateToPlayer, onNavigateTo
                             </TableCell>
                             <TableCell className="p-2 text-xs text-right font-mono">{entry.rating.toFixed(2)}</TableCell>
                             <TableCell className="p-2 text-xs">{formatDate(entry.match.match_date || entry.match.tournament_date)}</TableCell>
-                            <TableCell className="p-2 text-xs max-w-[18rem] truncate" title={entry.match.tournament_slug}>{entry.match.tournament_slug}</TableCell>
+                            <TableCell className="p-2 text-xs max-w-[18rem] truncate" title={entry.match.tournament_slug}>{formatTournamentName(entry.match.tournament_slug)}</TableCell>
                             <TableCell className="p-2 text-xs text-right">{renderOpenMatchButton(entry.match)}</TableCell>
                           </TableRow>
                         ))}
@@ -847,7 +849,7 @@ export function Highlights({ onNavigateToMatch, onNavigateToPlayer, onNavigateTo
                               </TableCell>
                               <TableCell className="p-2 text-xs text-right font-mono">{entry.rating.toFixed(2)}</TableCell>
                               <TableCell className="p-2 text-xs">{formatDate(entry.match.match_date || entry.match.tournament_date)}</TableCell>
-                              <TableCell className="p-2 text-xs max-w-[18rem] truncate" title={entry.match.tournament_slug}>{entry.match.tournament_slug}</TableCell>
+                              <TableCell className="p-2 text-xs max-w-[18rem] truncate" title={entry.match.tournament_slug}>{formatTournamentName(entry.match.tournament_slug)}</TableCell>
                               <TableCell className="p-2 text-xs text-right">{renderOpenMatchButton(entry.match)}</TableCell>
                             </TableRow>
                           );
