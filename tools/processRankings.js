@@ -380,6 +380,18 @@ function calculateRankingsFromMatches(sortedMatches, seeds = null, playerDefault
       });
     }
 
+    // Calculate rankings after processing this match
+    const updatedRankings = sortRankings(Array.from(playerStats.values()));
+    const updatedRankMap = new Map();
+    updatedRankings.forEach((p, index) => updatedRankMap.set(p.name, index + 1));
+
+    // Enrich impacts with post-match rank context
+    for (const [playerName, impact] of playerImpacts.entries()) {
+      const updatedStats = playerStats.get(playerName);
+      impact.rankAfter = updatedRankMap.get(playerName) || '-';
+      impact.rankAfterConfidence = updatedStats?.confidence || 0;
+    }
+
     // Store match history entry
     matchHistory.push({
       match_id: match.match_id,

@@ -143,6 +143,18 @@ export function calculateTeamRankingsFromMatches(sortedMatches, seeds = null) {
         team1Stats.matches
       );
 
+      // Calculate rankings after processing this match
+      const updatedRankings = sortRankings(
+        Array.from(teamStats.values()),
+        (team) => `${team.player1}+${team.player2}`
+      );
+      const updatedRankMap = new Map();
+      updatedRankings.forEach((t, index) => updatedRankMap.set(`${t.player1}+${t.player2}`, index + 1));
+      const team1RankAfter = updatedRankMap.get(team1Key) || '-';
+      const team2RankAfter = updatedRankMap.get(team2Key) || '-';
+      const team1RankAfterConfidence = team1Stats.confidence || 0;
+      const team2RankAfterConfidence = team2Stats.confidence || 0;
+
       // Store match history entry
       matchHistory.push({
         match_id: match.match_id,
@@ -165,6 +177,8 @@ export function calculateTeamRankingsFromMatches(sortedMatches, seeds = null) {
             ratingBefore: team1Rating,
             rankBefore: team1RankBefore,
             rankBeforeConfidence: team1RankBeforeConfidence,
+            rankAfter: team1RankAfter,
+            rankAfterConfidence: team1RankAfterConfidence,
             ratingChange: team1Result.ratingChange,
             won: team1Won,
             isDraw: isDraw,
@@ -175,6 +189,8 @@ export function calculateTeamRankingsFromMatches(sortedMatches, seeds = null) {
             ratingBefore: team2Rating,
             rankBefore: team2RankBefore,
             rankBeforeConfidence: team2RankBeforeConfidence,
+            rankAfter: team2RankAfter,
+            rankAfterConfidence: team2RankAfterConfidence,
             ratingChange: team2Result.ratingChange,
             won: team2Won,
             isDraw: isDraw,

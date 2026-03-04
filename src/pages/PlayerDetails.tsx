@@ -40,6 +40,7 @@ interface PlayerMatch {
   player_impacts?: Record<string, {
     ratingBefore: number;
     rankBefore?: number | string;
+    rankAfter?: number | string;
     ratingChange: number;
     won: boolean;
     opponentRating: number;
@@ -312,9 +313,7 @@ export function PlayerDetails({ playerName, onBack }: PlayerDetailsProps) {
 
       // Determine rank
       let rank: number | undefined;
-      // rankBefore comes as string ('-' or number) or number.
-      // processRankings.js: rankBefore = rankMap.get(playerName) || '-'; (rankMap uses 1-based index)
-      const rVal = impact?.rankBefore;
+      const rVal = impact?.rankAfter ?? impact?.rankBefore;
       if (rVal && rVal !== '-') {
         rank = Number(rVal);
       }

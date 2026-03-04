@@ -37,6 +37,7 @@ interface TeamMatch {
     won: boolean;
     opponentRating: number;
     rankBefore?: number | string;
+    rankAfter?: number | string;
     confidence?: number;
     populationStdDev?: number;
   }>;
@@ -300,7 +301,7 @@ export function TeamDetails({ player1, player2, onBack }: TeamDetailsProps) {
 
       // Determine rank
       let rank: number | undefined;
-      const rVal = impact?.rankBefore;
+      const rVal = impact?.rankAfter ?? impact?.rankBefore;
       if (rVal && rVal !== '-') {
         rank = Number(rVal);
       }

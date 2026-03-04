@@ -52,7 +52,6 @@
   "Antarct": "Protoss",
   "Melu": "Zerg",
   "threepoint": "Zerg",
-  "starfish": "Zerg",
   "DIMAGA": "Zerg",
   "HateCheese": "Protoss",
   "Tikky": "Terran",
@@ -103,7 +102,6 @@
   "Goswser": "Zerg",
   "MaxGio": "Zerg",
   "Ryoku": "Zerg",
-  "arrogfire": "Protoss",
   "ByuN": "Terran",
   "Spazymazy": "Zerg",
   "Creed": "Terran",
@@ -175,5 +173,7 @@
   "Rogue": "Zerg",
   "SunSet": "Zerg",
   "AlexeiStukov": "Zerg",
-  "Coral": "Terran"
+  "Coral": "Terran",
+  "LateleX": "Protoss",
+  "NightMare": "Protoss"
 }

@@ -7,6 +7,8 @@ interface PlayerImpact {
   ratingBefore: number;
   rankBefore?: number | string;
   rankBeforeConfidence?: number;
+  rankAfter?: number | string;
+  rankAfterConfidence?: number;
   ratingChange: number;
   won: boolean;
   isDraw?: boolean;
@@ -24,6 +26,8 @@ interface TeamImpact {
   ratingBefore: number;
   rankBefore?: number | string;
   rankBeforeConfidence?: number;
+  rankAfter?: number | string;
+  rankAfterConfidence?: number;
   ratingChange: number;
   won: boolean;
   isDraw?: boolean;
@@ -62,6 +66,10 @@ interface MatchData {
   combo_impacts?: Record<string, TeamImpact>;
   race_impacts?: Record<string, {
     ratingBefore: number;
+    rankBefore?: number | string;
+    rankBeforeConfidence?: number;
+    rankAfter?: number | string;
+    rankAfterConfidence?: number;
     ratingChange: number;
     won: boolean;
     isDraw?: boolean;
@@ -381,20 +389,21 @@ export function MatchHistoryItem({
   };
 
   const resolveTeamRank = (currentRankObj: TeamRanking | undefined | null, impact: TeamImpact | null) => {
-    if (impact && impact.rankBefore !== undefined) {
-      const validRank = parseRank(impact.rankBefore);
-      const result: Partial<TeamRanking> = {};
-      if (impact.rankBeforeConfidence !== undefined) {
-        result.confidence = impact.rankBeforeConfidence;
-      } else if (currentRankObj) {
-        result.confidence = currentRankObj.confidence;
-      }
-      if (validRank) {
-        result.rank = validRank;
-        return result as TeamRanking;
-      }
-    }
-    return currentRankObj;
+    const beforeRank = parseRank(impact?.rankBefore);
+    const afterRank = parseRank(impact?.rankAfter);
+    const fallbackRank = currentRankObj?.rank;
+
+    const resolvedBefore = beforeRank ?? fallbackRank;
+    const resolvedAfter = afterRank ?? resolvedBefore;
+
+    if (!resolvedBefore && !resolvedAfter) return null;
+
+    return {
+      beforeRank: resolvedBefore,
+      afterRank: resolvedAfter,
+      beforeConfidence: impact?.rankBeforeConfidence ?? currentRankObj?.confidence,
+      afterConfidence: impact?.rankAfterConfidence ?? currentRankObj?.confidence
+    };
   };
 
   const displayTeam1Rank = resolveTeamRank(shouldSwap ? team2Rank : team1Rank, team1Impact);
@@ -406,14 +415,10 @@ export function MatchHistoryItem({
   const team1Won = team1Score > team2Score;
 
   const resolvePlayerRank = (playerName: string, impact: PlayerImpact | null) => {
-    let rank = playerRankings[playerName]?.rank;
-    if (impact && impact.rankBefore !== undefined) {
-      const r = parseRank(impact.rankBefore);
-      if (r !== undefined) {
-        rank = r;
-      }
-    }
-    return rank;
+    const fallback = playerRankings[playerName]?.rank;
+    const rankAfter = parseRank(impact?.rankAfter);
+    const rankBefore = parseRank(impact?.rankBefore);
+    return rankAfter ?? rankBefore ?? fallback;
   };
 
   const displayTeam1Key = normalizeTeamKey(team1Data.player1, team1Data.player2);
@@ -469,12 +474,16 @@ export function MatchHistoryItem({
               "flex items-center gap-1 shrink-0 px-1.5 py-0.5 rounded border text-xs",
               isTeam1Highlighted ? "bg-primary/10 border-primary/30" : "bg-muted/50 border-border"
             )}>
-              <span className="font-bold text-foreground">T#{displayTeam1Rank.rank}</span>
+              <span className="font-bold text-foreground">
+                {displayTeam1Rank.beforeRank && displayTeam1Rank.afterRank && displayTeam1Rank.beforeRank !== displayTeam1Rank.afterRank
+                  ? `T#${displayTeam1Rank.beforeRank}→#${displayTeam1Rank.afterRank}`
+                  : `T#${displayTeam1Rank.afterRank || displayTeam1Rank.beforeRank}`}
+              </span>
               <span className={cn(
                 "font-semibold",
-                displayTeam1Rank.confidence >= 70 ? "text-primary" : displayTeam1Rank.confidence >= 40 ? "text-yellow-500" : "text-muted-foreground"
+                (displayTeam1Rank.afterConfidence || 0) >= 70 ? "text-primary" : (displayTeam1Rank.afterConfidence || 0) >= 40 ? "text-yellow-500" : "text-muted-foreground"
               )}>
-                {Math.round(displayTeam1Rank.confidence)}%
+                {Math.round(displayTeam1Rank.afterConfidence || 0)}%
               </span>
               {team1Impact && (
                 <Tooltip content={getRatingChangeTooltip(team1Impact, team1Players.join('+'), team2Players.join('+'), 'team')}>
@@ -557,11 +566,15 @@ export function MatchHistoryItem({
               )}
               <span className={cn(
                 "font-semibold",
-                displayTeam2Rank.confidence >= 70 ? "text-primary" : displayTeam2Rank.confidence >= 40 ? "text-yellow-500" : "text-muted-foreground"
+                (displayTeam2Rank.afterConfidence || 0) >= 70 ? "text-primary" : (displayTeam2Rank.afterConfidence || 0) >= 40 ? "text-yellow-500" : "text-muted-foreground"
               )}>
-                {Math.round(displayTeam2Rank.confidence)}%
+                {Math.round(displayTeam2Rank.afterConfidence || 0)}%
               </span>
-              <span className="font-bold text-foreground">T#{displayTeam2Rank.rank}</span>
+              <span className="font-bold text-foreground">
+                {displayTeam2Rank.beforeRank && displayTeam2Rank.afterRank && displayTeam2Rank.beforeRank !== displayTeam2Rank.afterRank
+                  ? `T#${displayTeam2Rank.beforeRank}→#${displayTeam2Rank.afterRank}`
+                  : `T#${displayTeam2Rank.afterRank || displayTeam2Rank.beforeRank}`}
+              </span>
             </div>
           )}
         </div>

@@ -40,6 +40,127 @@ async function loadSeeds() {
 
 const versionLogPath = join(__dirname, '..', 'docs', 'versionlog.md');
 
+function normalizePlayerNameForSimilarity(name) {
+  return String(name || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '');
+}
+
+function replacePlayerInTournamentData(tournamentData, fromName, toName) {
+  if (!tournamentData?.matches || !Array.isArray(tournamentData.matches)) {
+    return { changed: false, replacements: 0 };
+  }
+
+  let replacements = 0;
+
+  tournamentData.matches.forEach((match) => {
+    const players = [
+      match?.team1?.player1,
+      match?.team1?.player2,
+      match?.team2?.player1,
+      match?.team2?.player2
+    ];
+
+    players.forEach((player) => {
+      if (player?.name === fromName) {
+        player.name = toName;
+        replacements += 1;
+      }
+    });
+  });
+
+  return { changed: replacements > 0, replacements };
+}
+
+function replacePlayerInSeededPlayerSeeds(data, fromName, toName) {
+  if (!data || typeof data !== 'object' || Array.isArray(data)) {
+    return { changed: false, replacements: 0, updated: data };
+  }
+
+  if (!(fromName in data)) {
+    return { changed: false, replacements: 0, updated: data };
+  }
+
+  const updated = { ...data };
+  const fromValue = updated[fromName];
+
+  if (!(toName in updated)) {
+    updated[toName] = fromValue;
+  }
+
+  delete updated[fromName];
+
+  return { changed: true, replacements: 1, updated };
+}
+
+function replacePlayerInSeededTeamSeeds(data, fromName, toName) {
+  if (!data || typeof data !== 'object' || Array.isArray(data)) {
+    return { changed: false, replacements: 0, updated: data };
+  }
+
+  let replacements = 0;
+  const updated = {};
+
+  Object.entries(data).forEach(([teamKey, value]) => {
+    const [p1, p2] = teamKey.split('+');
+    if (!p1 || !p2) {
+      updated[teamKey] = value;
+      return;
+    }
+
+    const nextP1 = p1 === fromName ? toName : p1;
+    const nextP2 = p2 === fromName ? toName : p2;
+    if (nextP1 !== p1 || nextP2 !== p2) {
+      replacements += (nextP1 !== p1 ? 1 : 0) + (nextP2 !== p2 ? 1 : 0);
+    }
+
+    const nextKey = [nextP1, nextP2].sort().join('+');
+    if (!(nextKey in updated)) {
+      updated[nextKey] = value;
+    }
+  });
+
+  return { changed: replacements > 0, replacements, updated };
+}
+
+function replacePlayerInSeededPlayerRankings(data, fromName, toName) {
+  if (!Array.isArray(data)) {
+    return { changed: false, replacements: 0, updated: data };
+  }
+
+  let replacements = 0;
+  const updated = data.map((row) => {
+    if (row?.name === fromName) {
+      replacements += 1;
+      return { ...row, name: toName };
+    }
+    return row;
+  });
+
+  return { changed: replacements > 0, replacements, updated };
+}
+
+function replacePlayerInSeededTeamRankings(data, fromName, toName) {
+  if (!Array.isArray(data)) {
+    return { changed: false, replacements: 0, updated: data };
+  }
+
+  let replacements = 0;
+  const updated = data.map((row) => {
+    const nextPlayer1 = row?.player1 === fromName ? toName : row?.player1;
+    const nextPlayer2 = row?.player2 === fromName ? toName : row?.player2;
+
+    if (nextPlayer1 !== row?.player1 || nextPlayer2 !== row?.player2) {
+      replacements += (nextPlayer1 !== row?.player1 ? 1 : 0) + (nextPlayer2 !== row?.player2 ? 1 : 0);
+      return { ...row, player1: nextPlayer1, player2: nextPlayer2 };
+    }
+
+    return row;
+  });
+
+  return { changed: replacements > 0, replacements, updated };
+}
+
 // Version log (for topbar version + view in app)
 app.get('/api/versionlog', async (req, res) => {
   try {
@@ -181,6 +302,124 @@ app.get('/api/players', async (req, res) => {
   } catch (error) {
     console.error('Error getting players:', error);
     res.status(500).json({ error: 'Failed to get players' });
+  }
+});
+
+app.post('/api/players/rename', async (req, res) => {
+  try {
+    const fromName = String(req.body?.fromName || '').trim();
+    const toName = String(req.body?.toName || '').trim();
+
+    if (!fromName || !toName) {
+      return res.status(400).json({ error: 'Both fromName and toName are required' });
+    }
+
+    if (fromName === toName) {
+      return res.status(400).json({ error: 'fromName and toName are the same' });
+    }
+
+    const fromNormalized = normalizePlayerNameForSimilarity(fromName);
+    const toNormalized = normalizePlayerNameForSimilarity(toName);
+
+    if (!fromNormalized || !toNormalized) {
+      return res.status(400).json({ error: 'Names must include at least one letter or number' });
+    }
+
+    const files = await readdir(outputDir);
+    const tournamentFiles = files.filter(
+      (file) => file.endsWith('.json') && file !== 'player_defaults.json' && !file.startsWith('seeded_')
+    );
+
+    let filesUpdated = 0;
+    let replacements = 0;
+
+    for (const file of tournamentFiles) {
+      const filePath = join(outputDir, file);
+      const content = await readFile(filePath, 'utf-8');
+      const data = JSON.parse(content);
+
+      const result = replacePlayerInTournamentData(data, fromName, toName);
+      if (result.changed) {
+        await writeFile(filePath, JSON.stringify(data, null, 2), 'utf-8');
+        filesUpdated += 1;
+        replacements += result.replacements;
+      }
+    }
+
+    let defaultsUpdated = false;
+    try {
+      const defaultsContent = await readFile(playerDefaultsFile, 'utf-8');
+      const defaults = JSON.parse(defaultsContent);
+
+      if (Object.prototype.hasOwnProperty.call(defaults, fromName)) {
+        if (!Object.prototype.hasOwnProperty.call(defaults, toName)) {
+          defaults[toName] = defaults[fromName];
+        }
+        delete defaults[fromName];
+        await writeFile(playerDefaultsFile, JSON.stringify(defaults, null, 2), 'utf-8');
+        defaultsUpdated = true;
+      }
+    } catch (err) {
+      if (err.code !== 'ENOENT') throw err;
+    }
+
+    const seededUpdaters = [
+      {
+        filename: 'seeded_player_seeds.json',
+        updater: replacePlayerInSeededPlayerSeeds
+      },
+      {
+        filename: 'seeded_team_seeds.json',
+        updater: replacePlayerInSeededTeamSeeds
+      },
+      {
+        filename: 'seeded_player_rankings.json',
+        updater: replacePlayerInSeededPlayerRankings
+      },
+      {
+        filename: 'seeded_team_rankings.json',
+        updater: replacePlayerInSeededTeamRankings
+      }
+    ];
+
+    let seededFilesUpdated = 0;
+    let seededReplacements = 0;
+
+    for (const item of seededUpdaters) {
+      const filePath = join(outputDir, item.filename);
+      try {
+        const content = await readFile(filePath, 'utf-8');
+        const data = JSON.parse(content);
+        const result = item.updater(data, fromName, toName);
+        if (result.changed) {
+          await writeFile(filePath, JSON.stringify(result.updated, null, 2), 'utf-8');
+          seededFilesUpdated += 1;
+          seededReplacements += result.replacements;
+        }
+      } catch (err) {
+        if (err.code !== 'ENOENT') {
+          console.error(`Error updating ${item.filename}:`, err);
+        }
+      }
+    }
+
+    if (replacements === 0 && seededReplacements === 0 && !defaultsUpdated) {
+      return res.status(404).json({ error: `Player "${fromName}" was not found` });
+    }
+
+    res.json({
+      success: true,
+      fromName,
+      toName,
+      filesUpdated,
+      replacements,
+      defaultsUpdated,
+      seededFilesUpdated,
+      seededReplacements
+    });
+  } catch (error) {
+    console.error('Error renaming player:', error);
+    res.status(500).json({ error: 'Failed to rename player' });
   }
 });
 

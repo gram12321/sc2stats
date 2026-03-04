@@ -1,10 +1,59 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Race } from '../types/tournament';
-import { getPlayerDefaults, setPlayerDefault, clearPlayerDefaults } from '../lib/playerDefaults';
+import { getPlayerDefaults, setPlayerDefault, clearPlayerDefaults, renamePlayerName } from '../lib/playerDefaults';
 
 const RACES: Exclude<Race, null>[] = ['Terran', 'Zerg', 'Protoss', 'Random'];
 
 interface PlayerManagerProps { }
+
+interface SimilarNamePair {
+  nameA: string;
+  nameB: string;
+}
+
+const normalizeNameForSimilarity = (name: string) =>
+  name.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+const levenshteinDistance = (a: string, b: string): number => {
+  if (a === b) return 0;
+  if (a.length === 0) return b.length;
+  if (b.length === 0) return a.length;
+
+  const matrix: number[][] = Array.from({ length: a.length + 1 }, () => Array(b.length + 1).fill(0));
+
+  for (let i = 0; i <= a.length; i += 1) matrix[i][0] = i;
+  for (let j = 0; j <= b.length; j += 1) matrix[0][j] = j;
+
+  for (let i = 1; i <= a.length; i += 1) {
+    for (let j = 1; j <= b.length; j += 1) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      matrix[i][j] = Math.min(
+        matrix[i - 1][j] + 1,
+        matrix[i][j - 1] + 1,
+        matrix[i - 1][j - 1] + cost
+      );
+    }
+  }
+
+  return matrix[a.length][b.length];
+};
+
+const isLikelySamePlayerName = (left: string, right: string): boolean => {
+  if (!left || !right || left === right) return false;
+
+  if (left.toLowerCase() === right.toLowerCase()) return true;
+
+  const normalizedLeft = normalizeNameForSimilarity(left);
+  const normalizedRight = normalizeNameForSimilarity(right);
+
+  if (!normalizedLeft || !normalizedRight || normalizedLeft === normalizedRight) {
+    return normalizedLeft === normalizedRight;
+  }
+
+  const minLength = Math.min(normalizedLeft.length, normalizedRight.length);
+  const threshold = minLength >= 8 ? 2 : 1;
+  return levenshteinDistance(normalizedLeft, normalizedRight) <= threshold;
+};
 
 export function PlayerManager({ }: PlayerManagerProps) {
   const [players, setPlayers] = useState<string[]>([]);
@@ -14,11 +63,27 @@ export function PlayerManager({ }: PlayerManagerProps) {
   const [error, setError] = useState<string | null>(null);
   const [hideWithDefaults, setHideWithDefaults] = useState(true);
   const [filterRace, setFilterRace] = useState<Race | 'All'>('All');
+  const [renameFrom, setRenameFrom] = useState('');
+  const [renameTo, setRenameTo] = useState('');
+  const [isRenaming, setIsRenaming] = useState(false);
+  const [renameFeedback, setRenameFeedback] = useState<string | null>(null);
+  const [renameError, setRenameError] = useState<string | null>(null);
 
   useEffect(() => {
     loadPlayers();
     loadDefaults();
   }, []);
+
+  useEffect(() => {
+    if (!players.length) {
+      setRenameFrom('');
+      return;
+    }
+
+    if (!renameFrom || !players.includes(renameFrom)) {
+      setRenameFrom(players[0]);
+    }
+  }, [players, renameFrom]);
 
   const loadPlayers = async () => {
     try {
@@ -84,6 +149,84 @@ export function PlayerManager({ }: PlayerManagerProps) {
         console.error('Error clearing defaults:', err);
       }
     }
+  };
+
+  const similarNamePairs = useMemo<SimilarNamePair[]>(() => {
+    const pairs: SimilarNamePair[] = [];
+
+    for (let i = 0; i < players.length; i += 1) {
+      for (let j = i + 1; j < players.length; j += 1) {
+        const nameA = players[i];
+        const nameB = players[j];
+        if (isLikelySamePlayerName(nameA, nameB)) {
+          pairs.push({ nameA, nameB });
+        }
+      }
+    }
+
+    return pairs.slice(0, 25);
+  }, [players]);
+
+  const handleRenamePlayer = async () => {
+    const fromName = renameFrom.trim();
+    const toName = renameTo.trim();
+
+    setRenameFeedback(null);
+    setRenameError(null);
+
+    if (!fromName || !toName) {
+      setRenameError('Please select a player and provide a new name.');
+      return;
+    }
+
+    if (fromName === toName) {
+      setRenameError('Old and new name are identical.');
+      return;
+    }
+
+    const existingMatch = players.find((player) => player === toName && player !== fromName);
+    if (existingMatch) {
+      const mergeConfirmed = window.confirm(
+        `"${toName}" already exists. Continue and merge all "${fromName}" records into "${toName}"?`
+      );
+      if (!mergeConfirmed) {
+        return;
+      }
+    }
+
+    const similarExisting = players
+      .filter((player) => player !== fromName && player !== toName)
+      .filter((player) => isLikelySamePlayerName(toName, player))
+      .slice(0, 5);
+
+    if (similarExisting.length > 0) {
+      const confirmSimilar = window.confirm(
+        `The new name "${toName}" looks very similar to: ${similarExisting.join(', ')}.\n\nConfirm this is intended for the same player?`
+      );
+      if (!confirmSimilar) {
+        return;
+      }
+    }
+
+    setIsRenaming(true);
+    try {
+      await renamePlayerName(fromName, toName);
+      await Promise.all([loadPlayers(), loadDefaults()]);
+      setRenameFeedback(`Renamed "${fromName}" to "${toName}" successfully.`);
+      setRenameTo('');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to rename player';
+      setRenameError(message);
+    } finally {
+      setIsRenaming(false);
+    }
+  };
+
+  const prefillRenameFromSuggestion = (fromName: string, toName: string) => {
+    setRenameFrom(fromName);
+    setRenameTo(toName);
+    setRenameFeedback(null);
+    setRenameError(null);
   };
 
   const filtered = useMemo(() => {
@@ -202,6 +345,91 @@ export function PlayerManager({ }: PlayerManagerProps) {
                   </button>
                 </div>
               )}
+
+              <div className="pt-4 mt-4 border-t border-gray-200 space-y-3">
+                <div>
+                  <h2 className="text-sm font-semibold text-gray-900">Rename player</h2>
+                  <p className="text-xs text-gray-600 mt-1">
+                    Use this when a player changed nickname or has a typo/case mismatch.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <select
+                    value={renameFrom}
+                    onChange={(e) => setRenameFrom(e.target.value)}
+                    className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    {players.map((player) => (
+                      <option key={player} value={player}>
+                        {player}
+                      </option>
+                    ))}
+                  </select>
+
+                  <input
+                    type="text"
+                    value={renameTo}
+                    onChange={(e) => setRenameTo(e.target.value)}
+                    placeholder="New player name"
+                    className="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+
+                  <button
+                    onClick={handleRenamePlayer}
+                    disabled={isRenaming || !renameFrom || !renameTo.trim()}
+                    className="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isRenaming ? 'Renaming...' : 'Rename Player'}
+                  </button>
+                </div>
+
+                {renameFeedback && (
+                  <div className="text-sm text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-md px-3 py-2">
+                    {renameFeedback}
+                  </div>
+                )}
+
+                {renameError && (
+                  <div className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-md px-3 py-2">
+                    {renameError}
+                  </div>
+                )}
+
+                <div>
+                  <div className="text-xs font-medium text-gray-700 mb-2">
+                    Auto-detected similar names ({similarNamePairs.length})
+                  </div>
+                  {similarNamePairs.length === 0 ? (
+                    <div className="text-xs text-gray-500">No obvious duplicates detected.</div>
+                  ) : (
+                    <div className="space-y-2 max-h-36 overflow-y-auto pr-1">
+                      {similarNamePairs.map((pair) => (
+                        <div
+                          key={`${pair.nameA}-${pair.nameB}`}
+                          className="flex items-center justify-between gap-3 text-xs border border-amber-200 bg-amber-50 rounded-md px-3 py-2"
+                        >
+                          <span className="text-gray-700">{pair.nameA} ↔ {pair.nameB}</span>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => prefillRenameFromSuggestion(pair.nameA, pair.nameB)}
+                              className="text-blue-700 hover:text-blue-900 underline"
+                            >
+                              Use {pair.nameA} → {pair.nameB}
+                            </button>
+                            <button
+                              onClick={() => prefillRenameFromSuggestion(pair.nameB, pair.nameA)}
+                              className="text-blue-700 hover:text-blue-900 underline"
+                            >
+                              Use {pair.nameB} → {pair.nameA}
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
 
             {/* Player List */}
