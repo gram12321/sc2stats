@@ -50,6 +50,20 @@ async function loadSeeds() {
   }
 }
 
+function getTeamRatingOptions(req, playerSeeds = null) {
+  const useIntermediateTeamRating = req.query.useIntermediateTeamRating === 'true';
+  const parsedFadeMatches = parseInt(req.query.intermediateFadeMatches, 10);
+  const intermediateFadeMatches = Number.isFinite(parsedFadeMatches) && parsedFadeMatches > 0
+    ? parsedFadeMatches
+    : 20;
+
+  return {
+    useIntermediateTeamRating,
+    intermediateFadeMatches,
+    playerSeeds
+  };
+}
+
 const versionLogPath = join(__dirname, '..', 'docs', 'versionlog.md');
 
 function normalizePlayerNameForSimilarity(name) {
@@ -395,6 +409,45 @@ app.get('/api/players', async (req, res) => {
   }
 });
 
+// Get player match counts across tournaments
+app.get('/api/player-match-counts', async (req, res) => {
+  try {
+    const files = await readdir(outputDir);
+    const jsonFiles = files.filter((file) => file.endsWith('.json') && !metadataJsonFiles.has(file) && !file.startsWith('seeded_'));
+
+    const matchCounts = {};
+
+    const increment = (name) => {
+      if (!name) return;
+      matchCounts[name] = (matchCounts[name] || 0) + 1;
+    };
+
+    for (const file of jsonFiles) {
+      try {
+        const filePath = join(outputDir, file);
+        const content = await readFile(filePath, 'utf-8');
+        const data = JSON.parse(content);
+
+        if (!Array.isArray(data?.matches)) continue;
+
+        data.matches.forEach((match) => {
+          increment(match?.team1?.player1?.name);
+          increment(match?.team1?.player2?.name);
+          increment(match?.team2?.player1?.name);
+          increment(match?.team2?.player2?.name);
+        });
+      } catch (err) {
+        console.error(`Error reading ${file} for player match counts:`, err);
+      }
+    }
+
+    res.json(matchCounts);
+  } catch (error) {
+    console.error('Error getting player match counts:', error);
+    res.status(500).json({ error: 'Failed to get player match counts' });
+  }
+});
+
 // Get teammate history per player across all tournaments
 app.get('/api/player-teammates', async (req, res) => {
   try {
@@ -735,7 +788,12 @@ app.get('/api/team-rankings', async (req, res) => {
   try {
     const isMainCircuitOnly = req.query.mainCircuitOnly === 'true';
     const seasons = req.query.seasons ? req.query.seasons.split(',') : null;
-    const { rankings } = await calculateTeamRankings(null, isMainCircuitOnly, seasons);
+    const { rankings } = await calculateTeamRankings(
+      null,
+      isMainCircuitOnly,
+      seasons,
+      getTeamRatingOptions(req)
+    );
     res.json(rankings);
   } catch (error) {
     console.error('Error calculating team rankings:', error);
@@ -752,12 +810,19 @@ app.get('/api/tournament-team-rankings/:slug', async (req, res) => {
     const seasons = req.query.seasons ? req.query.seasons.split(',') : null;
 
     let teamSeeds = null;
+    let playerSeeds = null;
     if (useSeeds) {
       const seeds = await loadSeeds();
       teamSeeds = seeds.teamSeeds;
+      playerSeeds = seeds.playerSeeds;
     }
 
-    const { matchHistory } = await calculateTeamRankings(teamSeeds, isMainCircuitOnly, seasons);
+    const { matchHistory } = await calculateTeamRankings(
+      teamSeeds,
+      isMainCircuitOnly,
+      seasons,
+      getTeamRatingOptions(req, playerSeeds)
+    );
 
     const tournamentMatches = (matchHistory || [])
       .filter(match => match.tournament_slug === tournamentSlug)
@@ -840,11 +905,16 @@ app.get('/api/seeded-team-rankings', async (req, res) => {
     const seededRankingsFile = join(outputDir, 'seeded_team_rankings.json');
     try {
       // Load seeds for recalculation
-      const { teamSeeds } = await loadSeeds();
+      const { teamSeeds, playerSeeds } = await loadSeeds();
 
       // If filtering is needed, recalculate with filters and seeds
       if (isMainCircuitOnly || (seasons && seasons.length > 0)) {
-        const { rankings } = await calculateTeamRankings(teamSeeds, isMainCircuitOnly, seasons);
+        const { rankings } = await calculateTeamRankings(
+          teamSeeds,
+          isMainCircuitOnly,
+          seasons,
+          getTeamRatingOptions(req, playerSeeds)
+        );
         res.json(rankings);
       } else {
         // No filtering, return pre-calculated results
@@ -887,7 +957,12 @@ app.get('/api/race-matchup/:race1/:race2', async (req, res) => {
     const hideRandom = req.query.hideRandom === 'true';
     const seasons = req.query.seasons ? req.query.seasons.split(',') : null;
     const { matchHistory } = await calculateRaceRankings(isMainCircuitOnly, seasons, hideRandom);
-    const { matchHistory: teamMatchHistory } = await calculateTeamRankings(null, isMainCircuitOnly, seasons);
+    const { matchHistory: teamMatchHistory } = await calculateTeamRankings(
+      null,
+      isMainCircuitOnly,
+      seasons,
+      getTeamRatingOptions(req)
+    );
     const { matchHistory: playerMatchHistory } = await calculateRankings(null, isMainCircuitOnly, seasons);
 
     // Create matchup key (e.g., "PvT")
@@ -947,7 +1022,12 @@ app.get('/api/race-combo/:race', async (req, res) => {
     const hideRandom = req.query.hideRandom === 'true';
     const seasons = req.query.seasons ? req.query.seasons.split(',') : null;
     const { matchHistory } = await calculateRaceRankings(isMainCircuitOnly, seasons, hideRandom);
-    const { matchHistory: teamMatchHistory } = await calculateTeamRankings(null, isMainCircuitOnly, seasons);
+    const { matchHistory: teamMatchHistory } = await calculateTeamRankings(
+      null,
+      isMainCircuitOnly,
+      seasons,
+      getTeamRatingOptions(req)
+    );
     const { matchHistory: playerMatchHistory } = await calculateRankings(null, isMainCircuitOnly, seasons);
 
     // Create maps for quick lookup
@@ -996,7 +1076,12 @@ app.get('/api/team-race-rankings', async (req, res) => {
     const hideRandom = req.query.hideRandom === 'true';
     const seasons = req.query.seasons ? req.query.seasons.split(',') : null;
     const { rankings, combinedRankings, matchHistory } = await calculateTeamRaceRankings(isMainCircuitOnly, seasons, hideRandom);
-    const { matchHistory: teamMatchHistory } = await calculateTeamRankings(null, isMainCircuitOnly, seasons);
+    const { matchHistory: teamMatchHistory } = await calculateTeamRankings(
+      null,
+      isMainCircuitOnly,
+      seasons,
+      getTeamRatingOptions(req)
+    );
 
     // Create map of team match history for quick lookup
     const teamMatchMap = new Map();
@@ -1032,7 +1117,12 @@ app.get('/api/team-race-matchup/:combo1/:combo2', async (req, res) => {
     const hideRandom = req.query.hideRandom === 'true';
     const seasons = req.query.seasons ? req.query.seasons.split(',') : null;
     const { matchHistory } = await calculateTeamRaceRankings(isMainCircuitOnly, seasons, hideRandom);
-    const { matchHistory: teamMatchHistory } = await calculateTeamRankings(null, isMainCircuitOnly, seasons);
+    const { matchHistory: teamMatchHistory } = await calculateTeamRankings(
+      null,
+      isMainCircuitOnly,
+      seasons,
+      getTeamRatingOptions(req)
+    );
     const { matchHistory: playerMatchHistory } = await calculateRankings(null, isMainCircuitOnly, seasons);
     const { matchHistory: raceMatchHistory } = await calculateRaceRankings(isMainCircuitOnly, seasons, hideRandom);
 
@@ -1101,7 +1191,12 @@ app.get('/api/team-race-combo/:combo', async (req, res) => {
     const hideRandom = req.query.hideRandom === 'true';
     const seasons = req.query.seasons ? req.query.seasons.split(',') : null;
     const { matchHistory } = await calculateTeamRaceRankings(isMainCircuitOnly, seasons, hideRandom);
-    const { matchHistory: teamMatchHistory } = await calculateTeamRankings(null, isMainCircuitOnly, seasons);
+    const { matchHistory: teamMatchHistory } = await calculateTeamRankings(
+      null,
+      isMainCircuitOnly,
+      seasons,
+      getTeamRatingOptions(req)
+    );
     const { matchHistory: playerMatchHistory } = await calculateRankings(null, isMainCircuitOnly, seasons);
     const { matchHistory: raceMatchHistory } = await calculateRaceRankings(isMainCircuitOnly, seasons, hideRandom);
 
@@ -1188,7 +1283,12 @@ app.get('/api/match-history', async (req, res) => {
     const seasons = req.query.seasons ? req.query.seasons.split(',') : null;
     const hideRandom = req.query.hideRandom === 'true';
     const { rankings, matchHistory } = await calculateRankings(playerSeeds, req.query.mainCircuitOnly === 'true', seasons);
-    const { matchHistory: teamMatchHistory } = await calculateTeamRankings(teamSeeds, req.query.mainCircuitOnly === 'true', seasons);
+    const { matchHistory: teamMatchHistory } = await calculateTeamRankings(
+      teamSeeds,
+      req.query.mainCircuitOnly === 'true',
+      seasons,
+      getTeamRatingOptions(req, playerSeeds)
+    );
     const { matchHistory: raceMatchHistory } = await calculateRaceRankings(req.query.mainCircuitOnly === 'true', seasons, hideRandom);
     const { matchHistory: comboMatchHistory } = await calculateTeamRaceRankings(req.query.mainCircuitOnly === 'true', seasons, hideRandom);
 
@@ -1299,7 +1399,12 @@ app.get('/api/player/:playerName', async (req, res) => {
     const seasons = req.query.seasons ? req.query.seasons.split(',') : null;
     const hideRandom = req.query.hideRandom === 'true';
     const { rankings, matchHistory } = await calculateRankings(playerSeeds, req.query.mainCircuitOnly === 'true', seasons);
-    const { matchHistory: teamMatchHistory } = await calculateTeamRankings(teamSeeds, req.query.mainCircuitOnly === 'true', seasons);
+    const { matchHistory: teamMatchHistory } = await calculateTeamRankings(
+      teamSeeds,
+      req.query.mainCircuitOnly === 'true',
+      seasons,
+      getTeamRatingOptions(req, playerSeeds)
+    );
     const { matchHistory: raceMatchHistory } = await calculateRaceRankings(req.query.mainCircuitOnly === 'true', seasons, hideRandom);
     const { matchHistory: comboMatchHistory } = await calculateTeamRaceRankings(req.query.mainCircuitOnly === 'true', seasons, hideRandom);
 
@@ -1391,7 +1496,12 @@ app.get('/api/team/:player1/:player2', async (req, res) => {
 
     const seasons = req.query.seasons ? req.query.seasons.split(',') : null;
     const hideRandom = req.query.hideRandom === 'true';
-    const { rankings, matchHistory } = await calculateTeamRankings(teamSeeds, req.query.mainCircuitOnly === 'true', seasons);
+    const { rankings, matchHistory } = await calculateTeamRankings(
+      teamSeeds,
+      req.query.mainCircuitOnly === 'true',
+      seasons,
+      getTeamRatingOptions(req, playerSeeds)
+    );
 
     const team = rankings.find(t =>
       (t.player1 === player1 && t.player2 === player2) ||

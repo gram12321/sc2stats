@@ -129,7 +129,7 @@ export function Highlights({ onNavigateToMatch, onNavigateToPlayer, onNavigateTo
   const [raceSort, setRaceSort] = useState<SortState>({ column: 'race', direction: 'asc' });
   const [comboSort, setComboSort] = useState<SortState>({ column: 'combo', direction: 'asc' });
 
-  const { seasons, useSeededRankings, mainCircuitOnly, hideRandom, setHideRandom } = useRankingSettings();
+  const { seasons, useSeededRankings, mainCircuitOnly, useIntermediateTeamRating, hideRandom, setHideRandom } = useRankingSettings();
 
   useEffect(() => {
     getPlayerDefaults()
@@ -146,6 +146,7 @@ export function Highlights({ onNavigateToMatch, onNavigateToPlayer, onNavigateTo
         const params = new URLSearchParams();
         if (useSeededRankings) params.append('useSeeds', 'true');
         if (mainCircuitOnly) params.append('mainCircuitOnly', 'true');
+        if (useIntermediateTeamRating) params.append('useIntermediateTeamRating', 'true');
         if (hideRandom) params.append('hideRandom', 'true');
         if (seasons && seasons.length > 0) params.append('seasons', seasons.join(','));
 
@@ -161,7 +162,7 @@ export function Highlights({ onNavigateToMatch, onNavigateToPlayer, onNavigateTo
     };
 
     loadMatches();
-  }, [useSeededRankings, mainCircuitOnly, hideRandom, seasons]);
+  }, [useSeededRankings, mainCircuitOnly, useIntermediateTeamRating, hideRandom, seasons]);
 
   const resolveRaceAbbr = (rawRace: string | undefined, playerName: string): string => {
     if (rawRace) {
@@ -654,7 +655,7 @@ export function Highlights({ onNavigateToMatch, onNavigateToPlayer, onNavigateTo
             <p className="text-sm text-muted-foreground mt-1">Expected-win highlights and peak-rating records from current filter scope.</p>
           </div>
           <div className="flex flex-col items-start md:items-end gap-3">
-            <RankingFilters showSeeded={true} showMainCircuit={true} showConfidence={false} />
+            <RankingFilters showSeeded={true} showMainCircuit={true} showIntermediateTeamRating={true} showConfidence={false} />
             <div className="flex items-center space-x-2">
               <Checkbox
                 id="highlights-hide-random"

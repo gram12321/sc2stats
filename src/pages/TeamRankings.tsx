@@ -65,6 +65,7 @@ export function TeamRankings({ onNavigateToTeam }: TeamRankingsProps) {
     useSeededRankings,
     filterLowConfidence,
     mainCircuitOnly,
+    useIntermediateTeamRating,
     seasons,
   } = useRankingSettings();
 
@@ -73,7 +74,7 @@ export function TeamRankings({ onNavigateToTeam }: TeamRankingsProps) {
     loadPlayerRaces();
     loadPlayerCountries();
     loadPlayerRankings();
-  }, [useSeededRankings, mainCircuitOnly, seasons]);
+  }, [useSeededRankings, mainCircuitOnly, useIntermediateTeamRating, seasons]);
 
   const loadRankings = async () => {
     try {
@@ -82,6 +83,7 @@ export function TeamRankings({ onNavigateToTeam }: TeamRankingsProps) {
       const endpoint = useSeededRankings ? '/api/seeded-team-rankings' : '/api/team-rankings';
       const queryParams = new URLSearchParams();
       if (mainCircuitOnly) queryParams.append('mainCircuitOnly', 'true');
+      if (useIntermediateTeamRating) queryParams.append('useIntermediateTeamRating', 'true');
       if (seasons.length > 0) queryParams.append('seasons', seasons.join(','));
       const response = await fetch(`${endpoint}?${queryParams.toString()}`);
       if (!response.ok) {
@@ -249,6 +251,7 @@ export function TeamRankings({ onNavigateToTeam }: TeamRankingsProps) {
           showSeeded={true}
           showConfidence={true}
           showMainCircuit={true}
+          showIntermediateTeamRating={true}
           confidenceThreshold={confidenceThreshold}
         />
       </div>

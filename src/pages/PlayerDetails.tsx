@@ -104,7 +104,7 @@ export function PlayerDetails({ playerName, onBack }: PlayerDetailsProps) {
   const [playerCountries, setPlayerCountries] = useState<Record<string, string>>({});
   const [comboRankings, setComboRankings] = useState<Record<string, { points: number }>>({});
   const [chartMode, setChartMode] = useState<'rating' | 'rank'>('rating');
-  const { seasons, mainCircuitOnly, useSeededRankings } = useRankingSettings();
+  const { seasons, mainCircuitOnly, useSeededRankings, useIntermediateTeamRating } = useRankingSettings();
 
   useEffect(() => {
     loadPlayerDetails();
@@ -114,7 +114,7 @@ export function PlayerDetails({ playerName, onBack }: PlayerDetailsProps) {
     loadAllPlayerRaces();
     loadAllPlayerCountries();
     loadComboRankings();
-  }, [playerName, useSeededRankings, seasons, mainCircuitOnly]);
+  }, [playerName, useSeededRankings, seasons, mainCircuitOnly, useIntermediateTeamRating]);
 
   const loadPlayerDetails = async () => {
     try {
@@ -123,6 +123,7 @@ export function PlayerDetails({ playerName, onBack }: PlayerDetailsProps) {
       const params = new URLSearchParams();
       if (useSeededRankings) params.append('useSeeds', 'true');
       if (mainCircuitOnly) params.append('mainCircuitOnly', 'true');
+      if (useIntermediateTeamRating) params.append('useIntermediateTeamRating', 'true');
       if (seasons && seasons.length > 0) params.append('seasons', seasons.join(','));
 
       const response = await fetch(`/api/player/${encodeURIComponent(playerName)}?${params.toString()}`);
@@ -154,6 +155,7 @@ export function PlayerDetails({ playerName, onBack }: PlayerDetailsProps) {
     try {
       const params = new URLSearchParams();
       if (mainCircuitOnly) params.append('mainCircuitOnly', 'true');
+      if (useIntermediateTeamRating) params.append('useIntermediateTeamRating', 'true');
       if (seasons && seasons.length > 0) params.append('seasons', seasons.join(','));
 
       const endpoint = useSeededRankings ? '/api/seeded-player-rankings' : '/api/player-rankings';
@@ -178,6 +180,7 @@ export function PlayerDetails({ playerName, onBack }: PlayerDetailsProps) {
     try {
       const params = new URLSearchParams();
       if (mainCircuitOnly) params.append('mainCircuitOnly', 'true');
+      if (useIntermediateTeamRating) params.append('useIntermediateTeamRating', 'true');
       if (seasons && seasons.length > 0) params.append('seasons', seasons.join(','));
 
       const endpoint = useSeededRankings ? '/api/seeded-team-rankings' : '/api/team-rankings';
@@ -422,6 +425,7 @@ export function PlayerDetails({ playerName, onBack }: PlayerDetailsProps) {
               <RankingFilters
                 showSeeded={true}
                 showMainCircuit={true}
+                showIntermediateTeamRating={true}
                 showConfidence={false}
               />
               {onBack && (

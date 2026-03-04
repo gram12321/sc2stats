@@ -90,7 +90,7 @@ export function MatchesList({ initialTournament, focusMatchId }: MatchesListProp
   const [playerRaces, setPlayerRaces] = useState<Record<string, Race>>({});
   const [playerCountries, setPlayerCountries] = useState<Record<string, string>>({});
   const [comboRankings, setComboRankings] = useState<Record<string, { points: number }>>({});
-  const { seasons, useSeededRankings, mainCircuitOnly } = useRankingSettings();
+  const { seasons, useSeededRankings, mainCircuitOnly, useIntermediateTeamRating } = useRankingSettings();
 
   useEffect(() => {
     if (initialTournament !== undefined) {
@@ -108,11 +108,11 @@ export function MatchesList({ initialTournament, focusMatchId }: MatchesListProp
     loadPlayerRankings();
     loadTeamRankings();
     loadComboRankings();
-  }, [seasons, mainCircuitOnly]);
+  }, [seasons, mainCircuitOnly, useIntermediateTeamRating]);
 
   useEffect(() => {
     loadMatches();
-  }, [selectedTournament, useSeededRankings, seasons, mainCircuitOnly]);
+  }, [selectedTournament, useSeededRankings, seasons, mainCircuitOnly, useIntermediateTeamRating]);
 
   useEffect(() => {
     if (!focusMatchId || isLoading || matches.length === 0) return;
@@ -130,6 +130,7 @@ export function MatchesList({ initialTournament, focusMatchId }: MatchesListProp
     try {
       const params = new URLSearchParams();
       if (mainCircuitOnly) params.append('mainCircuitOnly', 'true');
+      if (useIntermediateTeamRating) params.append('useIntermediateTeamRating', 'true');
       if (seasons && seasons.length > 0) params.append('seasons', seasons.join(','));
 
       const response = await fetch(`/api/tournaments?${params.toString()}`);
@@ -145,6 +146,7 @@ export function MatchesList({ initialTournament, focusMatchId }: MatchesListProp
     try {
       const params = new URLSearchParams();
       if (mainCircuitOnly) params.append('mainCircuitOnly', 'true');
+      if (useIntermediateTeamRating) params.append('useIntermediateTeamRating', 'true');
       if (seasons && seasons.length > 0) params.append('seasons', seasons.join(','));
 
       const response = await fetch(`/api/player-rankings?${params.toString()}`);
@@ -240,6 +242,7 @@ export function MatchesList({ initialTournament, focusMatchId }: MatchesListProp
       if (selectedTournament) params.append('tournament', selectedTournament);
       if (useSeededRankings) params.append('useSeeds', 'true');
       if (mainCircuitOnly) params.append('mainCircuitOnly', 'true');
+      if (useIntermediateTeamRating) params.append('useIntermediateTeamRating', 'true');
       if (seasons && seasons.length > 0) params.append('seasons', seasons.join(','));
 
       const url = `/api/match-history?${params.toString()}`;
@@ -331,6 +334,7 @@ export function MatchesList({ initialTournament, focusMatchId }: MatchesListProp
               <RankingFilters
                 showSeeded={true}
                 showMainCircuit={true}
+                showIntermediateTeamRating={true}
                 showConfidence={false}
               />
             </div>

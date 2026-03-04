@@ -11,6 +11,7 @@ interface RankingFiltersProps {
       showSeeded?: boolean;
       showConfidence?: boolean;
       showMainCircuit?: boolean;
+      showIntermediateTeamRating?: boolean;
       confidenceThreshold?: number;
 }
 
@@ -18,6 +19,7 @@ export function RankingFilters({
       showSeeded = false,
       showConfidence = false,
       showMainCircuit = true,
+      showIntermediateTeamRating = false,
       confidenceThreshold,
 }: RankingFiltersProps) {
       const {
@@ -27,6 +29,8 @@ export function RankingFilters({
             setFilterLowConfidence,
             mainCircuitOnly,
             setMainCircuitOnly,
+            useIntermediateTeamRating,
+            setUseIntermediateTeamRating,
             seasons,
             setSeasons,
       } = useRankingSettings();
@@ -76,6 +80,19 @@ export function RankingFilters({
                               />
                               <Label htmlFor="mainCircuit" className="text-sm font-medium cursor-pointer">
                                     Main Circuit Only
+                              </Label>
+                        </div>
+                  )}
+
+                  {showIntermediateTeamRating && (
+                        <div className="flex items-center space-x-2">
+                              <Checkbox
+                                    id="intermediateTeamRating"
+                                    checked={useIntermediateTeamRating}
+                                    onCheckedChange={(checked) => setUseIntermediateTeamRating(checked === true)}
+                              />
+                              <Label htmlFor="intermediateTeamRating" className="text-sm font-medium cursor-pointer">
+                                    Intermediate Team Rating
                               </Label>
                         </div>
                   )}
