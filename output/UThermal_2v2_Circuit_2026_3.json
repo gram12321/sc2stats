@@ -15,7 +15,9 @@
       "Rust Bucket",
       "Undercurrent",
       "Yellowjacket"
-    ]
+    ],
+    "is_main_circuit": true,
+    "season": 2026
   },
   "matches": [
     {
@@ -23,22 +25,26 @@
       "round": "Upper Bracket Quarterfinals",
       "team1": {
         "player1": {
-          "name": "Cure"
+          "name": "Cure",
+          "race": "Terran"
         },
         "player2": {
-          "name": "Rogue"
+          "name": "Rogue",
+          "race": "Zerg"
         }
       },
       "team2": {
         "player1": {
-          "name": "Percival"
+          "name": "Percival",
+          "race": "Terran"
         },
         "player2": {
-          "name": "YoungYakov"
+          "name": "YoungYakov",
+          "race": "Zerg"
         }
       },
-      "team1_score": null,
-      "team2_score": null,
+      "team1_score": 2,
+      "team2_score": 0,
       "best_of": 3,
       "date": "2026-03-01 18:15",
       "games": [],
@@ -75,22 +81,26 @@
       "round": "Upper Bracket Quarterfinals",
       "team1": {
         "player1": {
-          "name": "Lambo"
+          "name": "Lambo",
+          "race": "Zerg"
         },
         "player2": {
-          "name": "MaxPax"
+          "name": "MaxPax",
+          "race": "Protoss"
         }
       },
       "team2": {
         "player1": {
-          "name": "SKillous"
+          "name": "SKillous",
+          "race": "Protoss"
         },
         "player2": {
-          "name": "SunSet"
+          "name": "SunSet",
+          "race": "Zerg"
         }
       },
-      "team1_score": null,
-      "team2_score": null,
+      "team1_score": 2,
+      "team2_score": 1,
       "best_of": 3,
       "date": "2026-03-01 18:10",
       "games": [],
@@ -452,6 +462,126 @@
           "winner": 1
         }
       ],
+      "tournament_slug": "UThermal_2v2_Circuit/2026/3"
+    },
+    {
+      "match_id": "early_1772615789745",
+      "round": "Early Round 1",
+      "team1": {
+        "player1": {
+          "name": "Cure",
+          "race": null
+        },
+        "player2": {
+          "name": "Rogue",
+          "race": null
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "MiniZergUA",
+          "race": null
+        },
+        "player2": {
+          "name": "SickNess",
+          "race": null
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 1,
+      "best_of": 3,
+      "date": "2026-03-01",
+      "games": [],
+      "tournament_slug": "UThermal_2v2_Circuit/2026/3"
+    },
+    {
+      "match_id": "early_1772615996984",
+      "round": "Early Round 2",
+      "team1": {
+        "player1": {
+          "name": "Rogue",
+          "race": null
+        },
+        "player2": {
+          "name": "Cure",
+          "race": null
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "ByuN",
+          "race": null
+        },
+        "player2": {
+          "name": "Solar",
+          "race": null
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 0,
+      "best_of": 3,
+      "date": "2026-03-01",
+      "games": [],
+      "tournament_slug": "UThermal_2v2_Circuit/2026/3"
+    },
+    {
+      "match_id": "early_1772616283533",
+      "round": "Early Round 1",
+      "team1": {
+        "player1": {
+          "name": "Kelazhur",
+          "race": null
+        },
+        "player2": {
+          "name": "Krystianer",
+          "race": null
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "ART",
+          "race": null
+        },
+        "player2": {
+          "name": "iosup",
+          "race": null
+        }
+      },
+      "team1_score": 0,
+      "team2_score": 2,
+      "best_of": 3,
+      "date": "2026-03-01",
+      "games": [],
+      "tournament_slug": "UThermal_2v2_Circuit/2026/3"
+    },
+    {
+      "match_id": "early_1772616307869",
+      "round": "Early Round 2",
+      "team1": {
+        "player1": {
+          "name": "ART",
+          "race": null
+        },
+        "player2": {
+          "name": "iosup",
+          "race": null
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "YoungYakov",
+          "race": null
+        },
+        "player2": {
+          "name": "Percival",
+          "race": null
+        }
+      },
+      "team1_score": 1,
+      "team2_score": 2,
+      "best_of": 3,
+      "date": "2026-03-01",
+      "games": [],
       "tournament_slug": "UThermal_2v2_Circuit/2026/3"
     }
   ]
