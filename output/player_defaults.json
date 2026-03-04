@@ -87,7 +87,6 @@
   "Urono": "Protoss",
   "LookMaNoSens": "Zerg",
   "GuGus": "Terran",
-  "Calftowin": "Protoss",
   "Kinpach": "Random",
   "Bombilla": "Terran",
   "Dmega": "Protoss",
@@ -175,5 +174,6 @@
   "AlexeiStukov": "Zerg",
   "Coral": "Terran",
   "LateleX": "Protoss",
-  "NightMare": "Protoss"
+  "NightMare": "Protoss",
+  "CalfToWin": "Protoss"
 }

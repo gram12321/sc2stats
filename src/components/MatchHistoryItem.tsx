@@ -380,96 +380,109 @@ function getRatingChangeTooltip(
             </div>
           </div>
         )}
-        {baseK !== undefined && (
-          <div className="pt-1 border-t border-border mt-1 grid grid-cols-2 gap-x-2">
-            <div><span className="text-muted-foreground">Base K:</span> {baseK.toFixed(1)}</div>
-            {adjustedK !== undefined && adjustedK !== baseK && (
-              <div><span className="text-muted-foreground">Adj K:</span> {adjustedK.toFixed(1)}</div>
-            )}
-            {confidenceMultiplier !== undefined && (
-              <div className="text-muted-foreground">Conf Mult: {confidenceMultiplier.toFixed(3)}x</div>
-            )}
-            {hasProtectionInfo && (
-              <div className="text-muted-foreground">Protect vs New: {protectionMultiplier!.toFixed(3)}x</div>
-            )}
-            {isNewVsNewModerated && (
-              <div className="text-muted-foreground col-span-2">
-                New vs New: protection is moderated so both ratings can calibrate early.
-              </div>
-            )}
-            {confidence !== undefined && (
-              <div className="text-muted-foreground">Conf: {Math.round(confidence)}%</div>
-            )}
-            {matchCount !== undefined && (
-              <div className="text-muted-foreground">Matches: {matchCount}</div>
-            )}
-            {opponentMatchCount !== undefined && (
-              <div className="text-muted-foreground">Opp Matches: {Math.round(opponentMatchCount)}</div>
-            )}
-          </div>
-        )}
         {hasCompositeBreakdown ? (
-          <div className="pt-1 border-t border-border mt-1 space-y-1">
-            <div className="text-muted-foreground mb-0.5">Calculation:</div>
-            <div className="text-[10px] text-muted-foreground bg-muted/50 px-1.5 py-1 rounded border border-border space-y-0.5">
-              <div><span className="font-semibold">1) Adjusted K</span> (base for both terms)</div>
-              <div className="font-mono">Adj K = {kExpression} = {adjustedK.toFixed(3)}</div>
-            </div>
-            <div className="text-[10px] text-muted-foreground bg-muted/50 px-1.5 py-1 rounded border border-border space-y-0.5">
-              <div><span className="font-semibold">2) Match term</span> (result only)</div>
-              {outcomeSeriesMultiplier !== undefined && (
-                <div className="font-mono">
-                  Match K = Adj K × Result series factor = {adjustedK.toFixed(3)} × {outcomeSeriesMultiplier.toFixed(3)} = {matchK!.toFixed(3)}
+          <>
+            <details className="pt-1 border-t border-border mt-1">
+              <summary className="text-muted-foreground cursor-pointer select-none">Calculation</summary>
+              <div className="mt-1 space-y-1">
+                {baseK !== undefined && (
+                  <div className="text-[10px] text-muted-foreground bg-muted/50 px-1.5 py-1 rounded border border-border grid grid-cols-2 gap-x-2">
+                    <div>Base K: {baseK.toFixed(1)}</div>
+                    {adjustedK !== undefined && adjustedK !== baseK && (
+                      <div>Adj K: {adjustedK.toFixed(1)}</div>
+                    )}
+                    {confidenceMultiplier !== undefined && (
+                      <div>Conf Mult: {confidenceMultiplier.toFixed(3)}x</div>
+                    )}
+                    {hasProtectionInfo && (
+                      <div>Protect vs New: {protectionMultiplier!.toFixed(3)}x</div>
+                    )}
+                    {confidence !== undefined && (
+                      <div>Conf: {Math.round(confidence)}%</div>
+                    )}
+                    {matchCount !== undefined && (
+                      <div>Matches: {matchCount}</div>
+                    )}
+                    {opponentMatchCount !== undefined && (
+                      <div>Opp Matches: {Math.round(opponentMatchCount)}</div>
+                    )}
+                    {isNewVsNewModerated && (
+                      <div className="col-span-2 italic">
+                        New vs New: protection is moderated so both ratings can calibrate early.
+                      </div>
+                    )}
+                  </div>
+                )}
+                <div className="text-[10px] text-muted-foreground bg-muted/50 px-1.5 py-1 rounded border border-border space-y-0.5">
+                  <div><span className="font-semibold">1) Adjusted K</span> (base for both terms)</div>
+                  <div className="font-mono">Adj K = {kExpression} = {adjustedK.toFixed(3)}</div>
                 </div>
-              )}
-              <div className="font-mono">
-                Result delta = Actual - Expected = {actualResult.toFixed(3)} - {expectedWin.toFixed(3)} = {(actualResult - expectedWin).toFixed(3)}
-              </div>
-              <div className="font-mono">
-                Match term = {matchK!.toFixed(3)} × {(actualResult - expectedWin).toFixed(3)} = {matchRatingChange!.toFixed(3)}
-              </div>
-            </div>
-            <div className="text-[10px] text-muted-foreground bg-muted/50 px-1.5 py-1 rounded border border-border space-y-0.5">
-              <div><span className="font-semibold">3) Scoreline term</span> (map margin)</div>
-              {hasScoreShareInputs && (
-                <>
+                <div className="text-[10px] text-muted-foreground bg-muted/50 px-1.5 py-1 rounded border border-border space-y-0.5">
+                  <div><span className="font-semibold">2) Match term</span> (result only)</div>
+                  {outcomeSeriesMultiplier !== undefined && (
+                    <div className="font-mono">
+                      Match K = Adj K × Result series factor = {adjustedK.toFixed(3)} × {outcomeSeriesMultiplier.toFixed(3)} = {matchK!.toFixed(3)}
+                    </div>
+                  )}
                   <div className="font-mono">
-                    Score share = maps won / maps played = {actualScoreShare!.toFixed(3)}
+                    Result delta = Actual - Expected = {actualResult.toFixed(3)} - {expectedWin.toFixed(3)} = {(actualResult - expectedWin).toFixed(3)}
                   </div>
                   <div className="font-mono">
-                    Score delta = Actual - Expected score share = {actualScoreShare!.toFixed(3)} - {expectedScoreShare!.toFixed(3)} = {(actualScoreShare! - expectedScoreShare!).toFixed(3)}
+                    Match term = {matchK!.toFixed(3)} × {(actualResult - expectedWin).toFixed(3)} = {matchRatingChange!.toFixed(3)}
                   </div>
-                </>
-              )}
-              {(seriesScoreMultiplier !== undefined || scoreReliabilityMultiplier !== undefined || scoreWeight !== undefined) && (
-                <div className="font-mono">
-                  Score weight = 0.55 × Margin series factor ({seriesScoreMultiplier?.toFixed(3) ?? '-'}) × Reliability ({scoreReliabilityMultiplier?.toFixed(3) ?? '-'}) = {scoreWeight?.toFixed(3) ?? '-'}
                 </div>
-              )}
-              <div className="font-mono">
-                Score K = Adj K × Score weight = {adjustedK.toFixed(3)} × {scoreWeight?.toFixed(3) ?? '-'} = {derivedScoreK.toFixed(3)}
-              </div>
-              {hasScoreShareInputs && (
-                <div className="font-mono">
-                  Score term = {derivedScoreK.toFixed(3)} × {(actualScoreShare! - expectedScoreShare!).toFixed(3)} = {scoreRatingChange!.toFixed(3)}
+                <div className="text-[10px] text-muted-foreground bg-muted/50 px-1.5 py-1 rounded border border-border space-y-0.5">
+                  <div><span className="font-semibold">3) Scoreline term</span> (map margin)</div>
+                  {hasScoreShareInputs && (
+                    <>
+                      <div className="font-mono">
+                        Score share = maps won / maps played = {actualScoreShare!.toFixed(3)}
+                      </div>
+                      <div className="font-mono">
+                        Score delta = Actual - Expected score share = {actualScoreShare!.toFixed(3)} - {expectedScoreShare!.toFixed(3)} = {(actualScoreShare! - expectedScoreShare!).toFixed(3)}
+                      </div>
+                    </>
+                  )}
+                  {(seriesScoreMultiplier !== undefined || scoreReliabilityMultiplier !== undefined || scoreWeight !== undefined) && (
+                    <div className="font-mono">
+                      Score weight = 0.55 × Margin series factor ({seriesScoreMultiplier?.toFixed(3) ?? '-'}) × Reliability ({scoreReliabilityMultiplier?.toFixed(3) ?? '-'}) = {scoreWeight?.toFixed(3) ?? '-'}
+                    </div>
+                  )}
+                  <div className="font-mono">
+                    Score K = Adj K × Score weight = {adjustedK.toFixed(3)} × {scoreWeight?.toFixed(3) ?? '-'} = {derivedScoreK.toFixed(3)}
+                  </div>
+                  {hasScoreShareInputs && (
+                    <div className="font-mono">
+                      Score term = {derivedScoreK.toFixed(3)} × {(actualScoreShare! - expectedScoreShare!).toFixed(3)} = {scoreRatingChange!.toFixed(3)}
+                    </div>
+                  )}
+                  {!scoreSignalUsed && (
+                    <div className="italic">No extra scoreline signal used for this series format.</div>
+                  )}
                 </div>
-              )}
-              {!scoreSignalUsed && (
-                <div className="italic">No extra scoreline signal used for this series format.</div>
-              )}
-            </div>
-            {(bestOf !== null && bestOf !== undefined || mapsPlayed !== null && mapsPlayed !== undefined) && (
-              <div className="text-[10px] text-muted-foreground text-center">
-                {bestOf !== null && bestOf !== undefined ? `BO${bestOf}` : 'Series'}{mapsPlayed !== null && mapsPlayed !== undefined ? ` • ${mapsPlayed} map${mapsPlayed === 1 ? '' : 's'}` : ''}
+                {(bestOf !== null && bestOf !== undefined || mapsPlayed !== null && mapsPlayed !== undefined) && (
+                  <div className="text-[10px] text-muted-foreground text-center">
+                    {bestOf !== null && bestOf !== undefined ? `BO${bestOf}` : 'Series'}{mapsPlayed !== null && mapsPlayed !== undefined ? ` • ${mapsPlayed} map${mapsPlayed === 1 ? '' : 's'}` : ''}
+                  </div>
+                )}
+                <details className="text-[10px] text-muted-foreground bg-muted/50 px-1.5 py-1 rounded border border-border">
+                  <summary className="cursor-pointer select-none">Show factor details</summary>
+                  <div className="pt-1 space-y-0.5 font-mono">
+                    <div>Result series factor: {outcomeSeriesMultiplier?.toFixed(3) ?? '-'}</div>
+                    <div>Margin series factor: {seriesScoreMultiplier?.toFixed(3) ?? '-'}</div>
+                    <div>Reliability factor: {scoreReliabilityMultiplier?.toFixed(3) ?? '-'}</div>
+                    <div>Score weight: {scoreWeight?.toFixed(3) ?? '-'}</div>
+                  </div>
+                </details>
               </div>
-            )}
-            <div className="font-mono text-xs bg-muted px-1.5 py-1 rounded border border-border text-center">
+            </details>
+            <div className="font-mono text-xs bg-muted px-1.5 py-1 rounded border border-border text-center mt-1">
               Total change = Match term + Scoreline term = {matchRatingChange!.toFixed(3)} + {scoreRatingChange!.toFixed(3)} = {ratingChange.toFixed(3)}
             </div>
             <div className="text-muted-foreground text-[10px] mt-0.5 text-center italic">
               Display rounding may differ slightly from internal decimals.
             </div>
-          </div>
+          </>
         ) : (
           <div className="pt-1 border-t border-border mt-1">
             <div className="text-muted-foreground mb-0.5">Final Calculation:</div>
