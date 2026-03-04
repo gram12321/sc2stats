@@ -58,6 +58,18 @@ const formatEarlyRoundName = (type: EarlyRoundType, number: number): string => {
   return `Early Round ${number}`;
 };
 
+const getTeamKey = (team?: Match['team1']): string | null => {
+  const player1 = team?.player1?.name?.trim() || '';
+  const player2 = team?.player2?.name?.trim() || '';
+  const names = [player1, player2].filter(Boolean).sort();
+  if (names.length < 2) return null;
+  return names.join('+');
+};
+
+const normalizePlayerName = (name?: string): string => {
+  return String(name || '').trim().toLowerCase();
+};
+
 interface BracketViewProps {
   data: TournamentData;
   filename: string;
@@ -71,6 +83,7 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [teamRankings, setTeamRankings] = useState<Record<string, number>>({});
   const [allPlayers, setAllPlayers] = useState<string[]>([]);
+  const [historicalTeammates, setHistoricalTeammates] = useState<Record<string, string[]>>({});
   const [isAddingMatch, setIsAddingMatch] = useState(false);
   const [selectedEarlyRound, setSelectedEarlyRound] = useState<string>('Early Round 1');
   const [newEarlyRoundType, setNewEarlyRoundType] = useState<EarlyRoundType>('standard');
@@ -86,6 +99,115 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
     games: []
   });
   const { useSeededRankings, mainCircuitOnly, seasons } = useRankingSettings();
+
+  const tournamentTeammates = useMemo(() => {
+    const teammateCounts = new Map<string, Map<string, number>>();
+
+    const addTeammate = (playerA?: string, playerB?: string) => {
+      const normalizedA = normalizePlayerName(playerA);
+      const normalizedB = normalizePlayerName(playerB);
+      if (!normalizedA || !normalizedB || normalizedA === normalizedB || !playerB?.trim()) return;
+
+      if (!teammateCounts.has(normalizedA)) {
+        teammateCounts.set(normalizedA, new Map<string, number>());
+      }
+
+      const currentCount = teammateCounts.get(normalizedA)!.get(playerB.trim()) || 0;
+      teammateCounts.get(normalizedA)!.set(playerB.trim(), currentCount + 1);
+    };
+
+    tournamentData.matches.forEach((match) => {
+      addTeammate(match.team1?.player1?.name, match.team1?.player2?.name);
+      addTeammate(match.team1?.player2?.name, match.team1?.player1?.name);
+      addTeammate(match.team2?.player1?.name, match.team2?.player2?.name);
+      addTeammate(match.team2?.player2?.name, match.team2?.player1?.name);
+    });
+
+    const result = new Map<string, string[]>();
+    teammateCounts.forEach((counts, playerName) => {
+      const sortedTeammates = Array.from(counts.entries())
+        .sort((a, b) => {
+          if (b[1] !== a[1]) return b[1] - a[1];
+          return a[0].localeCompare(b[0]);
+        })
+        .map(([teammate]) => teammate);
+      result.set(playerName, sortedTeammates);
+    });
+
+    return result;
+  }, [tournamentData.matches]);
+
+  const historicalTeammatesByPlayer = useMemo(() => {
+    const byPlayer = new Map<string, string[]>();
+
+    Object.entries(historicalTeammates).forEach(([playerName, teammates]) => {
+      const normalized = normalizePlayerName(playerName);
+      if (!normalized || !Array.isArray(teammates)) return;
+      byPlayer.set(normalized, teammates.filter(Boolean));
+    });
+
+    return byPlayer;
+  }, [historicalTeammates]);
+
+  const getPrioritizedPlayers = (anchorPlayerName?: string) => {
+    const normalizedAnchor = normalizePlayerName(anchorPlayerName);
+    if (!normalizedAnchor) return allPlayers;
+
+    const prioritizedPlayers: string[] = [];
+    const seen = new Set<string>();
+
+    const addPlayer = (playerName?: string) => {
+      const trimmed = String(playerName || '').trim();
+      if (!trimmed || seen.has(trimmed)) return;
+      seen.add(trimmed);
+      prioritizedPlayers.push(trimmed);
+    };
+
+    (tournamentTeammates.get(normalizedAnchor) || []).forEach(addPlayer);
+    (historicalTeammatesByPlayer.get(normalizedAnchor) || []).forEach(addPlayer);
+    allPlayers.forEach(addPlayer);
+
+    return prioritizedPlayers;
+  };
+
+  const handleNewMatchPlayerChange = (
+    teamKey: 'team1' | 'team2',
+    playerKey: 'player1' | 'player2',
+    playerName: string
+  ) => {
+    setNewMatch((previousMatch) => {
+      const previousTeam = previousMatch[teamKey] || { player1: { name: '' }, player2: { name: '' } };
+      const updatedTeam = {
+        player1: { ...previousTeam.player1 },
+        player2: { ...previousTeam.player2 }
+      };
+
+      updatedTeam[playerKey] = {
+        ...updatedTeam[playerKey],
+        name: playerName
+      };
+
+      if (playerKey === 'player1') {
+        const normalizedPlayer = normalizePlayerName(playerName);
+        const existingTeammate = normalizePlayerName(updatedTeam.player2.name);
+        const suggestedTeammate =
+          (tournamentTeammates.get(normalizedPlayer) || [])[0] ||
+          (historicalTeammatesByPlayer.get(normalizedPlayer) || [])[0];
+
+        if (!existingTeammate && suggestedTeammate && normalizePlayerName(suggestedTeammate) !== normalizedPlayer) {
+          updatedTeam.player2 = {
+            ...updatedTeam.player2,
+            name: suggestedTeammate
+          };
+        }
+      }
+
+      return {
+        ...previousMatch,
+        [teamKey]: updatedTeam
+      };
+    });
+  };
 
   // Load team rankings and all players
   useEffect(() => {
@@ -130,9 +252,21 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
         console.error('Error loading players:', err);
       }
     };
+
+    const loadHistoricalTeammates = async () => {
+      try {
+        const response = await fetch('/api/player-teammates');
+        if (!response.ok) return;
+        const data = await response.json();
+        setHistoricalTeammates(data?.teammates || {});
+      } catch (err) {
+        console.error('Error loading historical teammates:', err);
+      }
+    };
     
     loadTeamRankings();
     loadPlayers();
+    loadHistoricalTeammates();
   }, [tournamentData.tournament.liquipedia_slug, useSeededRankings, mainCircuitOnly, seasons]);
 
   // Update effect to handle prop changes and auto-detection
@@ -374,12 +508,66 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
   };
 
   const groupedEarlyRounds = useMemo(() => {
-    return earlyRoundNames.reduce((acc, roundName) => {
+    const groupedByRound = earlyRoundNames.reduce((acc, roundName) => {
       acc[roundName] = earlyRoundsMatches
         .filter(m => m.round === roundName)
         .sort((a, b) => a.match_id.localeCompare(b.match_id));
       return acc;
     }, {} as Record<string, Match[]>);
+
+    const orderedByRound: Record<string, Match[]> = { ...groupedByRound };
+
+    (['standard', 'upper', 'lower'] as EarlyRoundType[]).forEach(type => {
+      const sectionRounds = earlyRoundNames.filter(roundName => parseEarlyRound(roundName)?.type === type);
+
+      sectionRounds.forEach((roundName, roundIndex) => {
+        const currentMatches = groupedByRound[roundName] || [];
+
+        if (roundIndex === 0 || currentMatches.length <= 1) {
+          orderedByRound[roundName] = currentMatches;
+          return;
+        }
+
+        const previousRoundName = sectionRounds[roundIndex - 1];
+        const previousMatches = orderedByRound[previousRoundName] || [];
+        const previousTeamToSlot = new Map<string, number>();
+
+        previousMatches.forEach((match, index) => {
+          const team1Key = getTeamKey(match.team1);
+          const team2Key = getTeamKey(match.team2);
+          if (team1Key) previousTeamToSlot.set(team1Key, index);
+          if (team2Key) previousTeamToSlot.set(team2Key, index);
+        });
+
+        orderedByRound[roundName] = [...currentMatches].sort((a, b) => {
+          const aTeam1 = getTeamKey(a.team1);
+          const aTeam2 = getTeamKey(a.team2);
+          const bTeam1 = getTeamKey(b.team1);
+          const bTeam2 = getTeamKey(b.team2);
+
+          const aSlots = [aTeam1, aTeam2]
+            .map(team => (team ? previousTeamToSlot.get(team) : undefined))
+            .filter((slot): slot is number => slot !== undefined);
+          const bSlots = [bTeam1, bTeam2]
+            .map(team => (team ? previousTeamToSlot.get(team) : undefined))
+            .filter((slot): slot is number => slot !== undefined);
+
+          const aMin = aSlots.length > 0 ? Math.min(...aSlots) : Number.POSITIVE_INFINITY;
+          const bMin = bSlots.length > 0 ? Math.min(...bSlots) : Number.POSITIVE_INFINITY;
+
+          if (aMin !== bMin) return aMin - bMin;
+
+          const aMax = aSlots.length > 0 ? Math.max(...aSlots) : Number.POSITIVE_INFINITY;
+          const bMax = bSlots.length > 0 ? Math.max(...bSlots) : Number.POSITIVE_INFINITY;
+
+          if (aMax !== bMax) return aMax - bMax;
+
+          return (a.match_id || '').localeCompare(b.match_id || '');
+        });
+      });
+    });
+
+    return orderedByRound;
   }, [earlyRoundsMatches, earlyRoundNames]);
 
   const earlyRoundSections = useMemo(() => {
@@ -404,6 +592,128 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
         rounds: sections[type]
       }));
   }, [earlyRoundNames]);
+
+  const earlySectionLayouts = useMemo(() => {
+    const MATCH_SPACING = 140;
+    const MIN_VERTICAL_GAP = 110;
+    const TOP_PADDING = 20;
+    const BOTTOM_PADDING = 140;
+
+    const sectionLayouts = new Map<EarlyRoundType, {
+      minHeight: number;
+      roundMatchTopById: Record<string, Map<string, number>>;
+    }>();
+
+    (['standard', 'upper', 'lower'] as EarlyRoundType[]).forEach(type => {
+      const section = earlyRoundSections.find(s => s.type === type);
+      if (!section) return;
+
+      const roundMatchTopById: Record<string, Map<string, number>> = {};
+      let previousTeamToTop = new Map<string, number>();
+      let sectionMaxTop = 0;
+
+      section.rounds.forEach((roundName, roundIndex) => {
+        const matches = groupedEarlyRounds[roundName] || [];
+        const rawTops: number[] = [];
+        let fallbackTop = 0;
+
+        matches.forEach((match, matchIndex) => {
+          if (roundIndex === 0) {
+            rawTops.push(matchIndex * MATCH_SPACING);
+            fallbackTop = (matchIndex + 1) * MATCH_SPACING;
+            return;
+          }
+
+          const feederTops = [getTeamKey(match.team1), getTeamKey(match.team2)]
+            .map(teamKey => (teamKey ? previousTeamToTop.get(teamKey) : undefined))
+            .filter((top): top is number => top !== undefined);
+
+          if (feederTops.length > 0) {
+            const averageTop = feederTops.reduce((sum, top) => sum + top, 0) / feederTops.length;
+            rawTops.push(averageTop);
+            fallbackTop = Math.max(fallbackTop, averageTop + MATCH_SPACING);
+          } else {
+            rawTops.push(fallbackTop);
+            fallbackTop += MATCH_SPACING;
+          }
+        });
+
+        const adjustedTops: number[] = [];
+        rawTops.forEach((top, index) => {
+          if (index === 0) {
+            adjustedTops.push(top);
+            return;
+          }
+
+          const previousTop = adjustedTops[index - 1];
+          adjustedTops.push(Math.max(top, previousTop + MIN_VERTICAL_GAP));
+        });
+
+        const roundTopMap = new Map<string, number>();
+        matches.forEach((match, index) => {
+          const absoluteTop = TOP_PADDING + (adjustedTops[index] ?? 0);
+          roundTopMap.set(match.match_id, absoluteTop);
+          sectionMaxTop = Math.max(sectionMaxTop, absoluteTop);
+        });
+
+        roundMatchTopById[roundName] = roundTopMap;
+
+        previousTeamToTop = new Map<string, number>();
+        matches.forEach((match) => {
+          const top = roundTopMap.get(match.match_id);
+          if (top === undefined) return;
+
+          const team1 = getTeamKey(match.team1);
+          const team2 = getTeamKey(match.team2);
+          if (team1) previousTeamToTop.set(team1, top);
+          if (team2) previousTeamToTop.set(team2, top);
+        });
+      });
+
+      sectionLayouts.set(type, {
+        minHeight: Math.max(460, sectionMaxTop + BOTTOM_PADDING),
+        roundMatchTopById
+      });
+    });
+
+    return sectionLayouts;
+  }, [earlyRoundSections, groupedEarlyRounds]);
+
+  const earlySectionEntrantsByMatchId = useMemo(() => {
+    const entrantsByMatch = new Map<string, Set<string>>();
+
+    (['standard', 'upper', 'lower'] as EarlyRoundType[]).forEach(type => {
+      const sectionRounds = earlyRoundNames.filter(roundName => parseEarlyRound(roundName)?.type === type);
+      const seenTeams = new Set<string>();
+
+      sectionRounds.forEach((roundName, roundIndex) => {
+        const matches = groupedEarlyRounds[roundName] || [];
+
+        matches.forEach(match => {
+          const entrants = new Set<string>();
+          const team1 = getTeamKey(match.team1);
+          const team2 = getTeamKey(match.team2);
+          const shouldMarkExternalEntry = type === 'lower' ? true : roundIndex > 0;
+
+          [team1, team2].forEach(team => {
+            if (!team) return;
+
+            if (shouldMarkExternalEntry && !seenTeams.has(team)) {
+              entrants.add(team);
+            }
+
+            seenTeams.add(team);
+          });
+
+          if (entrants.size > 0) {
+            entrantsByMatch.set(`${type}:${match.match_id}`, entrants);
+          }
+        });
+      });
+    });
+
+    return entrantsByMatch;
+  }, [earlyRoundNames, groupedEarlyRounds]);
 
   // Separate rounds into upper bracket and lower bracket
   // Lower bracket rounds are explicitly named "Lower Bracket", everything else is upper bracket
@@ -481,6 +791,59 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
       return acc;
     }, {} as Record<string, Match[]>);
   }, [bracketMatches, upperBracketRounds, lowerBracketRounds]);
+
+  const lowerBracketEntrantsByMatchId = useMemo(() => {
+    const entrantsByMatch = new Map<string, Set<string>>();
+    const seenLowerBracketTeams = new Set<string>();
+
+    lowerBracketRounds.forEach((roundName, roundIndex) => {
+      const matches = groupedMatches[roundName] || [];
+
+      matches.forEach(match => {
+        const entrants = new Set<string>();
+        const team1 = getTeamKey(match.team1);
+        const team2 = getTeamKey(match.team2);
+
+        [team1, team2].forEach(team => {
+          if (!team) return;
+
+          if (roundIndex > 0 && !seenLowerBracketTeams.has(team)) {
+            entrants.add(team);
+          }
+
+          seenLowerBracketTeams.add(team);
+        });
+
+        if (entrants.size > 0) {
+          entrantsByMatch.set(match.match_id, entrants);
+        }
+      });
+    });
+
+    return entrantsByMatch;
+  }, [lowerBracketRounds, groupedMatches]);
+
+  const getDisplayMatchWithEntrantOnTop = (match: Match, entrantKeys?: Set<string>): Match => {
+    if (!entrantKeys || entrantKeys.size === 0) return match;
+
+    const team1Key = getTeamKey(match.team1);
+    const team2Key = getTeamKey(match.team2);
+
+    const team1IsEntrant = !!team1Key && entrantKeys.has(team1Key);
+    const team2IsEntrant = !!team2Key && entrantKeys.has(team2Key);
+
+    if (!team1IsEntrant && team2IsEntrant) {
+      return {
+        ...match,
+        team1: match.team2,
+        team2: match.team1,
+        team1_score: match.team2_score,
+        team2_score: match.team1_score
+      };
+    }
+
+    return match;
+  };
 
   const groupedByGroup = useMemo(() => {
     return groupNames.reduce((acc, groupName) => {
@@ -716,13 +1079,7 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
                           type="text"
                           list="player-suggestions"
                           value={newMatch.team1?.player1.name || ''}
-                          onChange={(e) => setNewMatch({
-                            ...newMatch,
-                            team1: {
-                              ...newMatch.team1!,
-                              player1: { ...newMatch.team1!.player1, name: e.target.value }
-                            }
-                          })}
+                          onChange={(e) => handleNewMatchPlayerChange('team1', 'player1', e.target.value)}
                           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                           placeholder="Select or enter player name"
                           autoComplete="off"
@@ -732,15 +1089,9 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
                         <label className="block text-sm text-gray-600 mb-1">Player 2 Name</label>
                         <input
                           type="text"
-                          list="player-suggestions"
+                          list="team1-player2-suggestions"
                           value={newMatch.team1?.player2.name || ''}
-                          onChange={(e) => setNewMatch({
-                            ...newMatch,
-                            team1: {
-                              ...newMatch.team1!,
-                              player2: { ...newMatch.team1!.player2, name: e.target.value }
-                            }
-                          })}
+                          onChange={(e) => handleNewMatchPlayerChange('team1', 'player2', e.target.value)}
                           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                           placeholder="Select or enter player name"
                           autoComplete="off"
@@ -771,13 +1122,7 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
                           type="text"
                           list="player-suggestions"
                           value={newMatch.team2?.player1.name || ''}
-                          onChange={(e) => setNewMatch({
-                            ...newMatch,
-                            team2: {
-                              ...newMatch.team2!,
-                              player1: { ...newMatch.team2!.player1, name: e.target.value }
-                            }
-                          })}
+                          onChange={(e) => handleNewMatchPlayerChange('team2', 'player1', e.target.value)}
                           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                           placeholder="Select or enter player name"
                           autoComplete="off"
@@ -787,15 +1132,9 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
                         <label className="block text-sm text-gray-600 mb-1">Player 2 Name</label>
                         <input
                           type="text"
-                          list="player-suggestions"
+                          list="team2-player2-suggestions"
                           value={newMatch.team2?.player2.name || ''}
-                          onChange={(e) => setNewMatch({
-                            ...newMatch,
-                            team2: {
-                              ...newMatch.team2!,
-                              player2: { ...newMatch.team2!.player2, name: e.target.value }
-                            }
-                          })}
+                          onChange={(e) => handleNewMatchPlayerChange('team2', 'player2', e.target.value)}
                           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                           placeholder="Select or enter player name"
                           autoComplete="off"
@@ -840,6 +1179,18 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
                     <option key={playerName} value={playerName} />
                   ))}
                 </datalist>
+
+                <datalist id="team1-player2-suggestions">
+                  {getPrioritizedPlayers(newMatch.team1?.player1.name).map(playerName => (
+                    <option key={`t1p2-${playerName}`} value={playerName} />
+                  ))}
+                </datalist>
+
+                <datalist id="team2-player2-suggestions">
+                  {getPrioritizedPlayers(newMatch.team2?.player1.name).map(playerName => (
+                    <option key={`t2p2-${playerName}`} value={playerName} />
+                  ))}
+                </datalist>
               </div>
             )}
 
@@ -854,8 +1205,14 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
                     </h3>
                   </div>
                   <div className="overflow-x-auto">
-                    <div className="inline-flex gap-8">
-                      {section.rounds.map((roundName) => (
+                    <div className="inline-flex gap-10">
+                      {section.rounds.map((roundName, roundIndex) => {
+                        const matches = groupedEarlyRounds[roundName] || [];
+                        const sectionLayout = earlySectionLayouts.get(section.type);
+                        const sectionMinHeight = sectionLayout?.minHeight ?? 460;
+                        const roundMatchTopById = sectionLayout?.roundMatchTopById[roundName] ?? new Map<string, number>();
+
+                        return (
                         <div key={roundName} className="flex flex-col min-w-[200px]">
                           {/* Round Header */}
                           <div className="mb-4 text-center relative">
@@ -875,17 +1232,31 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
                               </svg>
                             </button>
                             <p className="text-xs text-gray-500 mt-1">
-                              {groupedEarlyRounds[roundName]?.length || 0} matches
+                              {matches.length} matches
                             </p>
                           </div>
 
                           {/* Matches */}
-                          <div className="flex flex-col gap-4 py-4">
-                            {groupedEarlyRounds[roundName]?.length > 0 ? (
-                              groupedEarlyRounds[roundName].map((match) => (
-                                <div key={match.match_id} className="relative">
+                          <div
+                            className="relative flex-grow py-4"
+                            style={{ minHeight: `${sectionMinHeight}px` }}
+                          >
+                            {matches.length > 0 ? (
+                              matches.map((match) => {
+                                const entrantTeams = earlySectionEntrantsByMatchId.get(`${section.type}:${match.match_id}`);
+                                const displayMatch = getDisplayMatchWithEntrantOnTop(match, entrantTeams);
+                                const top = roundMatchTopById.get(match.match_id) ?? 20;
+
+                                return (
+                                <div key={match.match_id} className="absolute left-0 right-0" style={{ top: `${top}px` }}>
+                                  {entrantTeams && entrantTeams.size > 0 && (
+                                    <>
+                                      <div className="absolute -top-6 left-1/2 h-6 w-px -translate-x-1/2 bg-gray-400"></div>
+                                      <div className="absolute -top-7 left-1/2 h-2 w-2 -translate-x-1/2 rounded-full bg-gray-400"></div>
+                                    </>
+                                  )}
                                   <MatchBox
-                                    match={match}
+                                    match={displayMatch}
                                     teamRankings={teamRankings}
                                     onClick={(e) => {
                                       e.stopPropagation();
@@ -904,8 +1275,13 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
                                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                                     </svg>
                                   </button>
+
+                                  {/* Connecting line to next round */}
+                                  {roundIndex < section.rounds.length - 1 && (
+                                    <div className="absolute top-1/2 -right-4 w-4 h-px bg-gray-400"></div>
+                                  )}
                                 </div>
-                              ))
+                              )})
                             ) : (
                               <div className="text-center py-8 text-gray-400 text-sm">
                                 <svg className="w-8 h-8 mx-auto mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -916,7 +1292,7 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
                             )}
                           </div>
                         </div>
-                      ))}
+                      )})}
                     </div>
                   </div>
                 </div>
@@ -1039,11 +1415,6 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
                     const matches = groupedMatches[round] || [];
                     if (matches.length === 0) return null;
 
-                    const receivesUpperBracketDrop =
-                      round === 'Lower Bracket Round 2' ||
-                      round === 'Lower Bracket Quarterfinals' ||
-                      round === 'Lower Bracket Final';
-
                     return (
                       <div key={round} className="flex flex-col min-w-[200px]">
                         {/* Round Header */}
@@ -1055,16 +1426,20 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
 
                         {/* Matches */}
                         <div className="flex flex-col justify-around flex-grow py-4 min-h-[400px]">
-                          {matches.map((match) => (
+                          {matches.map((match) => {
+                            const entrantTeams = lowerBracketEntrantsByMatchId.get(match.match_id);
+                            const displayMatch = getDisplayMatchWithEntrantOnTop(match, entrantTeams);
+
+                            return (
                             <div key={match.match_id} className="relative">
-                              {receivesUpperBracketDrop && (
+                              {entrantTeams && entrantTeams.size > 0 && (
                                 <>
                                   <div className="absolute -top-6 left-1/2 h-6 w-px -translate-x-1/2 bg-gray-400"></div>
                                   <div className="absolute -top-7 left-1/2 h-2 w-2 -translate-x-1/2 rounded-full bg-gray-400"></div>
                                 </>
                               )}
                               <MatchBox
-                                match={match}
+                                match={displayMatch}
                                 teamRankings={teamRankings}
                                 onClick={(e) => {
                                   e.stopPropagation();
@@ -1077,7 +1452,7 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
                                 <div className="absolute top-1/2 -right-4 w-4 h-px bg-gray-400"></div>
                               )}
                             </div>
-                          ))}
+                          )})}
                         </div>
                       </div>
                     );
