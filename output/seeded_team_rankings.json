@@ -2,20 +2,20 @@
   {
     "player1": "MaxPax",
     "player2": "Spirit",
-    "matches": 22,
-    "wins": 21,
+    "matches": 23,
+    "wins": 22,
     "losses": 1,
-    "points": 280.34070416104265,
-    "confidence": 63.971186049504055
+    "points": 176.71882468361812,
+    "confidence": 65.58885377437261
   },
   {
     "player1": "Lambo",
     "player2": "MaxPax",
-    "matches": 4,
-    "wins": 4,
-    "losses": 0,
-    "points": 211.4103362593026,
-    "confidence": 13.799375
+    "matches": 19,
+    "wins": 17,
+    "losses": 2,
+    "points": 171.6677661454657,
+    "confidence": 52.8779995592651
   },
   {
     "player1": "ShoWTimE",
@@ -23,71 +23,98 @@
     "matches": 16,
     "wins": 13,
     "losses": 3,
-    "points": 176.77507254480912,
-    "confidence": 40.34409675901024
+    "points": 136.48286626360328,
+    "confidence": 43.04589719732343
+  },
+  {
+    "player1": "SHIN",
+    "player2": "herO",
+    "matches": 11,
+    "wins": 9,
+    "losses": 2,
+    "points": 126.68467354569455,
+    "confidence": 24.51814243924805
+  },
+  {
+    "player1": "Elazer",
+    "player2": "ShoWTimE",
+    "matches": 11,
+    "wins": 7,
+    "losses": 4,
+    "points": 114.07891090948655,
+    "confidence": 15.267724205068358
   },
   {
     "player1": "Elazer",
     "player2": "SKillous",
-    "matches": 19,
-    "wins": 14,
+    "matches": 20,
+    "wins": 15,
     "losses": 5,
-    "points": 173.13790898463682,
-    "confidence": 54.87500634002393
+    "points": 110.02298891044077,
+    "confidence": 60.07887650914577
   },
   {
-    "player1": "Harstem",
-    "player2": "Lambo",
-    "matches": 18,
-    "wins": 13,
-    "losses": 5,
-    "points": 172.30347995104006,
-    "confidence": 45.458176956238205
+    "player1": "ShoWTimE",
+    "player2": "uThermal",
+    "matches": 7,
+    "wins": 5,
+    "losses": 2,
+    "points": 107.9849199199491,
+    "confidence": 9.036874999999998
+  },
+  {
+    "player1": "Clem",
+    "player2": "trigger",
+    "matches": 29,
+    "wins": 19,
+    "losses": 10,
+    "points": 105.39765086167192,
+    "confidence": 47.00290013793642
   },
   {
     "player1": "ByuN",
     "player2": "Solar",
-    "matches": 4,
-    "wins": 4,
-    "losses": 0,
-    "points": 162.1195751837408,
-    "confidence": 4.5125
-  },
-  {
-    "player1": "MilkiCow",
-    "player2": "Wayne",
-    "matches": 16,
+    "matches": 13,
     "wins": 10,
-    "losses": 6,
-    "points": 140.15161871228258,
-    "confidence": 36.538467536120784
+    "losses": 3,
+    "points": 101.99670309363971,
+    "confidence": 26.070182575542944
   },
   {
-    "player1": "ByuN",
-    "player2": "Zoun",
-    "matches": 3,
-    "wins": 2,
-    "losses": 1,
-    "points": 138.93866443713625,
-    "confidence": 4.5125
-  },
-  {
-    "player1": "Elazer",
-    "player2": "Harstem",
-    "matches": 4,
+    "player1": "Cure",
+    "player2": "Rogue",
+    "matches": 6,
     "wins": 4,
-    "losses": 0,
-    "points": 138.93557845549088,
-    "confidence": 9.5125
+    "losses": 2,
+    "points": 92.72058270957449,
+    "confidence": 17.905779687499997
   },
   {
     "player1": "HeRoMaRinE",
-    "player2": "Statis",
-    "matches": 4,
-    "wins": 3,
-    "losses": 1,
-    "points": 127.39960012937256,
-    "confidence": 18.549374999999998
+    "player2": "Jumy",
+    "matches": 6,
+    "wins": 4,
+    "losses": 2,
+    "points": 84.08784513119349,
+    "confidence": 12.6914359375
+  },
+  {
+    "player1": "Serral",
+    "player2": "ZhuGeLiang",
+    "matches": 18,
+    "wins": 11,
+    "losses": 7,
+    "points": 80.50528762252313,
+    "confidence": 35.347217926660896
+  },
+  {
+    "player1": "Harstem",
+    "player2": "Lambo",
+    "matches": 23,
+    "wins": 17,
+    "losses": 6,
+    "points": 77.33744636951741,
+    "confidence": 57.193011969330534
   },
   {
     "player1": "ShoWTimE",
@@ -95,62 +122,35 @@
     "matches": 5,
     "wins": 3,
     "losses": 2,
-    "points": 120.24938513310417,
+    "points": 76.57593905716125,
     "confidence": 17.87190625
   },
   {
-    "player1": "NightPhoenix",
-    "player2": "Wayne",
-    "matches": 8,
+    "player1": "Elazer",
+    "player2": "Harstem",
+    "matches": 6,
     "wins": 5,
-    "losses": 3,
-    "points": 117.50985814484788,
-    "confidence": 25.416270390624998
-  },
-  {
-    "player1": "GgMaChine",
-    "player2": "Shameless",
-    "matches": 40,
-    "wins": 26,
-    "losses": 13,
-    "points": 106.48220762979595,
-    "confidence": 62.47883050357846
-  },
-  {
-    "player1": "Jumy",
-    "player2": "YoungYakov",
-    "matches": 21,
-    "wins": 13,
-    "losses": 8,
-    "points": 104.90982298744555,
-    "confidence": 40.30808106340767
-  },
-  {
-    "player1": "Serral",
-    "player2": "ZhuGeLiang",
-    "matches": 12,
-    "wins": 7,
-    "losses": 5,
-    "points": 101.83389060706212,
-    "confidence": 34.738586084854006
-  },
-  {
-    "player1": "Clem",
-    "player2": "trigger",
-    "matches": 15,
-    "wins": 9,
-    "losses": 6,
-    "points": 100.17982175355354,
-    "confidence": 40.24541753089966
+    "losses": 1,
+    "points": 69.14663110842126,
+    "confidence": 17.2039359375
   },
   {
     "player1": "Larry",
     "player2": "Night",
-    "matches": 4,
-    "wins": 2,
+    "matches": 5,
+    "wins": 3,
     "losses": 2,
-    "points": 99.14896724382427,
-    "confidence": 9.75
+    "points": 64.50249068603418,
+    "confidence": 13.82253125
+  },
+  {
+    "player1": "HeRoMaRinE",
+    "player2": "Statis",
+    "matches": 6,
+    "wins": 4,
+    "losses": 2,
+    "points": 62.872745319170924,
+    "confidence": 26.490810937499997
   },
   {
     "player1": "Shameless",
@@ -158,7 +158,7 @@
     "matches": 1,
     "wins": 1,
     "losses": 0,
-    "points": 93.28838322707324,
+    "points": 60.688606737403354,
     "confidence": 0
   },
   {
@@ -167,8 +167,62 @@
     "matches": 1,
     "wins": 1,
     "losses": 0,
-    "points": 91.33722157995692,
+    "points": 57.90092809819749,
     "confidence": 0
+  },
+  {
+    "player1": "NightPhoenix",
+    "player2": "Wayne",
+    "matches": 9,
+    "wins": 6,
+    "losses": 3,
+    "points": 56.24349044395769,
+    "confidence": 15.985381843945314
+  },
+  {
+    "player1": "Maru",
+    "player2": "herO",
+    "matches": 5,
+    "wins": 3,
+    "losses": 2,
+    "points": 56.21049769838086,
+    "confidence": 13.335031249999998
+  },
+  {
+    "player1": "ByuN",
+    "player2": "Zoun",
+    "matches": 3,
+    "wins": 2,
+    "losses": 1,
+    "points": 55.242596694821756,
+    "confidence": 4.5125
+  },
+  {
+    "player1": "Jumy",
+    "player2": "YoungYakov",
+    "matches": 23,
+    "wins": 15,
+    "losses": 8,
+    "points": 54.005933455456386,
+    "confidence": 37.92957197852162
+  },
+  {
+    "player1": "goblin",
+    "player2": "uThermal",
+    "matches": 37,
+    "wins": 23,
+    "losses": 14,
+    "points": 52.83781305757156,
+    "confidence": 53.871568734204935
+  },
+  {
+    "player1": "NightMare",
+    "player2": "SHIN",
+    "matches": 4,
+    "wins": 3,
+    "losses": 1,
+    "points": 51.818015512098576,
+    "confidence": 14.2625
   },
   {
     "player1": "ByuN",
@@ -176,71 +230,17 @@
     "matches": 4,
     "wins": 3,
     "losses": 1,
-    "points": 90.69691176643411,
+    "points": 51.75084067695793,
     "confidence": 14.2625
-  },
-  {
-    "player1": "Krystianer",
-    "player2": "Arrogfire",
-    "matches": 3,
-    "wins": 2,
-    "losses": 1,
-    "points": 88.01382363944606,
-    "confidence": 9.2625
-  },
-  {
-    "player1": "Shameless",
-    "player2": "Spirit",
-    "matches": 1,
-    "wins": 1,
-    "losses": 0,
-    "points": 79.18902413093254,
-    "confidence": 0
-  },
-  {
-    "player1": "Lambo",
-    "player2": "goblin",
-    "matches": 1,
-    "wins": 1,
-    "losses": 0,
-    "points": 77.20548776097156,
-    "confidence": 0
-  },
-  {
-    "player1": "Shameless",
-    "player2": "ShoWTimE",
-    "matches": 1,
-    "wins": 1,
-    "losses": 0,
-    "points": 75.65519342462211,
-    "confidence": 0
-  },
-  {
-    "player1": "DefMars",
-    "player2": "MiniZergUA",
-    "matches": 3,
-    "wins": 2,
-    "losses": 1,
-    "points": 69.98446335947891,
-    "confidence": 4.75
-  },
-  {
-    "player1": "goblin",
-    "player2": "uThermal",
-    "matches": 27,
-    "wins": 15,
-    "losses": 12,
-    "points": 64.49071606452954,
-    "confidence": 40.803519236080284
   },
   {
     "player1": "Ryung",
     "player2": "SHIN",
-    "matches": 7,
-    "wins": 4,
-    "losses": 3,
-    "points": 61.43927377558358,
-    "confidence": 9.2625
+    "matches": 11,
+    "wins": 7,
+    "losses": 4,
+    "points": 51.2097263012424,
+    "confidence": 24.030642439248048
   },
   {
     "player1": "Elazer",
@@ -248,35 +248,143 @@
     "matches": 4,
     "wins": 2,
     "losses": 2,
-    "points": 58.82143010724682,
+    "points": 49.77052351418692,
     "confidence": 9.036874999999998
   },
   {
-    "player1": "Lambo",
-    "player2": "Spirit",
+    "player1": "DefMars",
+    "player2": "MiniZergUA",
     "matches": 3,
     "wins": 2,
     "losses": 1,
-    "points": 52.05330119885696,
-    "confidence": 14.2625
+    "points": 47.79145071648662,
+    "confidence": 9.75
+  },
+  {
+    "player1": "GgMaChine",
+    "player2": "Shameless",
+    "matches": 54,
+    "wins": 34,
+    "losses": 19,
+    "points": 46.64115846747568,
+    "confidence": 66.79436949204829
   },
   {
     "player1": "Cham",
     "player2": "SpeCial",
-    "matches": 2,
-    "wins": 1,
+    "matches": 3,
+    "wins": 2,
     "losses": 1,
-    "points": 49.83551490182699,
+    "points": 45.82611310736385,
+    "confidence": 9.5125
+  },
+  {
+    "player1": "Shameless",
+    "player2": "Spirit",
+    "matches": 1,
+    "wins": 1,
+    "losses": 0,
+    "points": 45.752938589300406,
+    "confidence": 0
+  },
+  {
+    "player1": "MilkiCow",
+    "player2": "Wayne",
+    "matches": 25,
+    "wins": 15,
+    "losses": 10,
+    "points": 44.821090591549805,
+    "confidence": 38.36469454422592
+  },
+  {
+    "player1": "DefMars",
+    "player2": "ZaRDieNT",
+    "matches": 25,
+    "wins": 12,
+    "losses": 13,
+    "points": 42.44874088837025,
+    "confidence": 58.30391671056118
+  },
+  {
+    "player1": "Percival",
+    "player2": "YoungYakov",
+    "matches": 11,
+    "wins": 6,
+    "losses": 5,
+    "points": 41.966374188460584,
+    "confidence": 32.5223289197168
+  },
+  {
+    "player1": "Kelazhur",
+    "player2": "Krystianer",
+    "matches": 7,
+    "wins": 4,
+    "losses": 3,
+    "points": 41.56691163797347,
+    "confidence": 12.453935937499999
+  },
+  {
+    "player1": "Lambo",
+    "player2": "goblin",
+    "matches": 1,
+    "wins": 1,
+    "losses": 0,
+    "points": 38.955188566322605,
+    "confidence": 0
+  },
+  {
+    "player1": "Serral",
+    "player2": "uThermal",
+    "matches": 5,
+    "wins": 3,
+    "losses": 2,
+    "points": 36.21634513859196,
+    "confidence": 9.036874999999998
+  },
+  {
+    "player1": "Kelazhur",
+    "player2": "Lambo",
+    "matches": 3,
+    "wins": 2,
+    "losses": 1,
+    "points": 35.41357136783528,
+    "confidence": 4.5125
+  },
+  {
+    "player1": "Shameless",
+    "player2": "ShoWTimE",
+    "matches": 1,
+    "wins": 1,
+    "losses": 0,
+    "points": 32.900467358623374,
+    "confidence": 0
+  },
+  {
+    "player1": "Spazymazy",
+    "player2": "Urono",
+    "matches": 3,
+    "wins": 2,
+    "losses": 1,
+    "points": 29.03641541296929,
     "confidence": 5
   },
   {
-    "player1": "Spirit",
-    "player2": "goblin",
+    "player1": "SKillous",
+    "player2": "SunSet",
     "matches": 2,
     "wins": 1,
     "losses": 1,
-    "points": 49.4350011646486,
-    "confidence": 9.75
+    "points": 22.957506413330464,
+    "confidence": 5
+  },
+  {
+    "player1": "Elazer",
+    "player2": "goblin",
+    "matches": 7,
+    "wins": 4,
+    "losses": 3,
+    "points": 22.670628881789778,
+    "confidence": 21.093739140624997
   },
   {
     "player1": "Elazer",
@@ -284,7 +392,7 @@
     "matches": 1,
     "wins": 1,
     "losses": 0,
-    "points": 48,
+    "points": 19.8,
     "confidence": 0
   },
   {
@@ -293,7 +401,7 @@
     "matches": 1,
     "wins": 1,
     "losses": 0,
-    "points": 48,
+    "points": 19.8,
     "confidence": 0
   },
   {
@@ -302,7 +410,7 @@
     "matches": 1,
     "wins": 1,
     "losses": 0,
-    "points": 48,
+    "points": 19.8,
     "confidence": 0
   },
   {
@@ -311,7 +419,7 @@
     "matches": 1,
     "wins": 1,
     "losses": 0,
-    "points": 48,
+    "points": 19.8,
     "confidence": 0
   },
   {
@@ -320,7 +428,7 @@
     "matches": 1,
     "wins": 1,
     "losses": 0,
-    "points": 48,
+    "points": 19.8,
     "confidence": 0
   },
   {
@@ -329,7 +437,7 @@
     "matches": 1,
     "wins": 1,
     "losses": 0,
-    "points": 48,
+    "points": 19.8,
     "confidence": 0
   },
   {
@@ -338,7 +446,7 @@
     "matches": 1,
     "wins": 1,
     "losses": 0,
-    "points": 48,
+    "points": 19.8,
     "confidence": 0
   },
   {
@@ -347,7 +455,7 @@
     "matches": 1,
     "wins": 1,
     "losses": 0,
-    "points": 48,
+    "points": 19.8,
     "confidence": 0
   },
   {
@@ -356,7 +464,7 @@
     "matches": 1,
     "wins": 1,
     "losses": 0,
-    "points": 48,
+    "points": 19.8,
     "confidence": 0
   },
   {
@@ -365,7 +473,7 @@
     "matches": 1,
     "wins": 1,
     "losses": 0,
-    "points": 48,
+    "points": 19.8,
     "confidence": 0
   },
   {
@@ -374,7 +482,7 @@
     "matches": 1,
     "wins": 1,
     "losses": 0,
-    "points": 48,
+    "points": 19.8,
     "confidence": 0
   },
   {
@@ -383,7 +491,7 @@
     "matches": 1,
     "wins": 1,
     "losses": 0,
-    "points": 48,
+    "points": 19.8,
     "confidence": 0
   },
   {
@@ -392,7 +500,7 @@
     "matches": 1,
     "wins": 1,
     "losses": 0,
-    "points": 48,
+    "points": 19.8,
     "confidence": 0
   },
   {
@@ -401,7 +509,7 @@
     "matches": 1,
     "wins": 1,
     "losses": 0,
-    "points": 48,
+    "points": 19.8,
     "confidence": 0
   },
   {
@@ -410,7 +518,7 @@
     "matches": 1,
     "wins": 1,
     "losses": 0,
-    "points": 48,
+    "points": 19.8,
     "confidence": 0
   },
   {
@@ -419,7 +527,7 @@
     "matches": 1,
     "wins": 1,
     "losses": 0,
-    "points": 48,
+    "points": 19.8,
     "confidence": 0
   },
   {
@@ -428,7 +536,7 @@
     "matches": 1,
     "wins": 1,
     "losses": 0,
-    "points": 48,
+    "points": 19.8,
     "confidence": 0
   },
   {
@@ -437,7 +545,7 @@
     "matches": 1,
     "wins": 1,
     "losses": 0,
-    "points": 48,
+    "points": 19.8,
     "confidence": 0
   },
   {
@@ -446,7 +554,7 @@
     "matches": 1,
     "wins": 1,
     "losses": 0,
-    "points": 48,
+    "points": 19.8,
     "confidence": 0
   },
   {
@@ -455,7 +563,7 @@
     "matches": 1,
     "wins": 1,
     "losses": 0,
-    "points": 48,
+    "points": 19.8,
     "confidence": 0
   },
   {
@@ -464,16 +572,7 @@
     "matches": 1,
     "wins": 1,
     "losses": 0,
-    "points": 48,
-    "confidence": 0
-  },
-  {
-    "player1": "Serral",
-    "player2": "uThermal",
-    "matches": 1,
-    "wins": 1,
-    "losses": 0,
-    "points": 48,
+    "points": 19.8,
     "confidence": 0
   },
   {
@@ -482,7 +581,7 @@
     "matches": 1,
     "wins": 1,
     "losses": 0,
-    "points": 48,
+    "points": 19.8,
     "confidence": 0
   },
   {
@@ -491,7 +590,7 @@
     "matches": 1,
     "wins": 1,
     "losses": 0,
-    "points": 48,
+    "points": 19.8,
     "confidence": 0
   },
   {
@@ -500,7 +599,7 @@
     "matches": 1,
     "wins": 1,
     "losses": 0,
-    "points": 48,
+    "points": 19.8,
     "confidence": 0
   },
   {
@@ -509,7 +608,7 @@
     "matches": 1,
     "wins": 1,
     "losses": 0,
-    "points": 48,
+    "points": 19.8,
     "confidence": 0
   },
   {
@@ -518,35 +617,161 @@
     "matches": 1,
     "wins": 1,
     "losses": 0,
-    "points": 48,
+    "points": 19.8,
     "confidence": 0
   },
   {
-    "player1": "ART",
-    "player2": "Kinpach",
+    "player1": "KratosLeZerg",
+    "player2": "tMac",
     "matches": 2,
     "wins": 1,
     "losses": 1,
-    "points": 47.438768989882206,
+    "points": 19.702049906908726,
     "confidence": 9.75
   },
   {
-    "player1": "Percival",
-    "player2": "YoungYakov",
-    "matches": 5,
-    "wins": 3,
+    "player1": "Cham",
+    "player2": "RyeRye",
+    "matches": 2,
+    "wins": 1,
+    "losses": 1,
+    "points": 18.50846652152072,
+    "confidence": 9.75
+  },
+  {
+    "player1": "Tikky",
+    "player2": "threepoint",
+    "matches": 4,
+    "wins": 2,
     "losses": 2,
-    "points": 47.240104272707526,
+    "points": 16.910599577496118,
+    "confidence": 9.2625
+  },
+  {
+    "player1": "KuroiHumor",
+    "player2": "蟹阿金",
+    "matches": 2,
+    "wins": 1,
+    "losses": 1,
+    "points": 14.17188727821857,
+    "confidence": 5
+  },
+  {
+    "player1": "Lambo",
+    "player2": "Spirit",
+    "matches": 3,
+    "wins": 2,
+    "losses": 1,
+    "points": 13.780090857779372,
+    "confidence": 9.2625
+  },
+  {
+    "player1": "Blask",
+    "player2": "goblin",
+    "matches": 2,
+    "wins": 1,
+    "losses": 1,
+    "points": 13.000355041424873,
+    "confidence": 5
+  },
+  {
+    "player1": "Elazer",
+    "player2": "Gerald",
+    "matches": 2,
+    "wins": 1,
+    "losses": 1,
+    "points": 11.775306556030912,
+    "confidence": 5
+  },
+  {
+    "player1": "Gerald",
+    "player2": "Nicoract",
+    "matches": 20,
+    "wins": 10,
+    "losses": 10,
+    "points": 11.555944900534016,
+    "confidence": 50.69245432290938
+  },
+  {
+    "player1": "SKillous",
+    "player2": "uThermal",
+    "matches": 4,
+    "wins": 2,
+    "losses": 2,
+    "points": 11.46896456366739,
     "confidence": 14.036874999999998
   },
   {
-    "player1": "DefMars",
-    "player2": "ZaRDieNT",
-    "matches": 9,
-    "wins": 3,
-    "losses": 6,
-    "points": 45.84124449984676,
-    "confidence": 25.123966297070314
+    "player1": "Harstem",
+    "player2": "MaxPax",
+    "matches": 2,
+    "wins": 1,
+    "losses": 1,
+    "points": 11.324406916474713,
+    "confidence": 5
+  },
+  {
+    "player1": "Creed",
+    "player2": "MasterVasya",
+    "matches": 2,
+    "wins": 1,
+    "losses": 1,
+    "points": 10.61257536253044,
+    "confidence": 5
+  },
+  {
+    "player1": "Aimliloke",
+    "player2": "Blarty",
+    "matches": 2,
+    "wins": 1,
+    "losses": 1,
+    "points": 7.964712656671198,
+    "confidence": 9.75
+  },
+  {
+    "player1": "GuMiho",
+    "player2": "Ryung",
+    "matches": 2,
+    "wins": 1,
+    "losses": 1,
+    "points": 7.657025797592718,
+    "confidence": 5
+  },
+  {
+    "player1": "Spirit",
+    "player2": "goblin",
+    "matches": 3,
+    "wins": 1,
+    "losses": 2,
+    "points": 7.403190099412761,
+    "confidence": 14.2625
+  },
+  {
+    "player1": "Jumy",
+    "player2": "Shino",
+    "matches": 2,
+    "wins": 1,
+    "losses": 1,
+    "points": 6.732925212140469,
+    "confidence": 9.75
+  },
+  {
+    "player1": "Moja",
+    "player2": "SKillous",
+    "matches": 2,
+    "wins": 1,
+    "losses": 1,
+    "points": 4.995540684788292,
+    "confidence": 5
+  },
+  {
+    "player1": "Bunny",
+    "player2": "sOs",
+    "matches": 5,
+    "wins": 2,
+    "losses": 3,
+    "points": 3.940138044414569,
+    "confidence": 12.87190625
   },
   {
     "player1": "Rex",
@@ -554,7 +779,52 @@
     "matches": 2,
     "wins": 1,
     "losses": 1,
-    "points": 45.037869755532974,
+    "points": 3.4186496927108507,
+    "confidence": 9.75
+  },
+  {
+    "player1": "Arrogfire",
+    "player2": "Krystianer",
+    "matches": 5,
+    "wins": 3,
+    "losses": 2,
+    "points": 2.1530311506013717,
+    "confidence": 12.87190625
+  },
+  {
+    "player1": "Pie",
+    "player2": "RotterdaM",
+    "matches": 2,
+    "wins": 1,
+    "losses": 1,
+    "points": 0.7623710863375344,
+    "confidence": 5
+  },
+  {
+    "player1": "Cham",
+    "player2": "Jumy",
+    "matches": 2,
+    "wins": 1,
+    "losses": 1,
+    "points": -0.4317545301380292,
+    "confidence": 9.75
+  },
+  {
+    "player1": "Lambo",
+    "player2": "ShoWTimE",
+    "matches": 4,
+    "wins": 2,
+    "losses": 2,
+    "points": -0.4412790914877984,
+    "confidence": 5
+  },
+  {
+    "player1": "HonMonO",
+    "player2": "threepoint",
+    "matches": 2,
+    "wins": 1,
+    "losses": 1,
+    "points": -0.5318491289106255,
     "confidence": 9.75
   },
   {
@@ -563,169 +833,7 @@
     "matches": 2,
     "wins": 1,
     "losses": 1,
-    "points": 44.651789755819465,
-    "confidence": 9.75
-  },
-  {
-    "player1": "Elazer",
-    "player2": "goblin",
-    "matches": 7,
-    "wins": 4,
-    "losses": 3,
-    "points": 42.583781872662165,
-    "confidence": 21.093739140624997
-  },
-  {
-    "player1": "Elazer",
-    "player2": "ShoWTimE",
-    "matches": 8,
-    "wins": 4,
-    "losses": 4,
-    "points": 40.53879160127508,
-    "confidence": 20.54855062109375
-  },
-  {
-    "player1": "Brat_OK",
-    "player2": "MindelVK",
-    "matches": 19,
-    "wins": 9,
-    "losses": 9,
-    "points": 37.83020475983871,
-    "confidence": 46.88830539776659
-  },
-  {
-    "player1": "Gerald",
-    "player2": "Nicoract",
-    "matches": 13,
-    "wins": 6,
-    "losses": 7,
-    "points": 35.11394597025116,
-    "confidence": 34.403291672049484
-  },
-  {
-    "player1": "Creed",
-    "player2": "MasterVasya",
-    "matches": 2,
-    "wins": 1,
-    "losses": 1,
-    "points": 35.03385885340529,
-    "confidence": 5
-  },
-  {
-    "player1": "Kelazhur",
-    "player2": "Lambo",
-    "matches": 2,
-    "wins": 1,
-    "losses": 1,
-    "points": 32.79321659466383,
-    "confidence": 9.75
-  },
-  {
-    "player1": "HeRoMaRinE",
-    "player2": "Moja",
-    "matches": 2,
-    "wins": 1,
-    "losses": 1,
-    "points": 29.266707997986707,
-    "confidence": 9.75
-  },
-  {
-    "player1": "Moja",
-    "player2": "OpTiMiStC",
-    "matches": 5,
-    "wins": 2,
-    "losses": 3,
-    "points": 26.800730829229018,
-    "confidence": 17.87190625
-  },
-  {
-    "player1": "Spazymazy",
-    "player2": "Urono",
-    "matches": 2,
-    "wins": 1,
-    "losses": 1,
-    "points": 19.527379304139096,
-    "confidence": 5
-  },
-  {
-    "player1": "MasterVasya",
-    "player2": "iosup",
-    "matches": 7,
-    "wins": 3,
-    "losses": 3,
-    "points": 19.273174960403416,
-    "confidence": 30.166270390624998
-  },
-  {
-    "player1": "DnS",
-    "player2": "Kelazhur",
-    "matches": 2,
-    "wins": 1,
-    "losses": 1,
-    "points": 16.374017824799004,
-    "confidence": 9.75
-  },
-  {
-    "player1": "DefMars",
-    "player2": "Gref",
-    "matches": 7,
-    "wins": 3,
-    "losses": 4,
-    "points": 5.171131689455354,
-    "confidence": 25.416270390624998
-  },
-  {
-    "player1": "Creed",
-    "player2": "YoungYakov",
-    "matches": 2,
-    "wins": 1,
-    "losses": 1,
-    "points": 2.4361735953226145,
-    "confidence": 5
-  },
-  {
-    "player1": "MiniZergUA",
-    "player2": "SickNess",
-    "matches": 2,
-    "wins": 1,
-    "losses": 1,
-    "points": 1.688853849615355,
-    "confidence": 9.75
-  },
-  {
-    "player1": "Elazer",
-    "player2": "Serral",
-    "matches": 2,
-    "wins": 1,
-    "losses": 1,
-    "points": 0.41557851243567967,
-    "confidence": 9.75
-  },
-  {
-    "player1": "Cham",
-    "player2": "RyeRye",
-    "matches": 1,
-    "wins": 0,
-    "losses": 1,
-    "points": -1.8018818054322323,
-    "confidence": 5
-  },
-  {
-    "player1": "DIMAGA",
-    "player2": "Starfish",
-    "matches": 7,
-    "wins": 3,
-    "losses": 4,
-    "points": -4.183214684796615,
-    "confidence": 22.010490703124997
-  },
-  {
-    "player1": "Tikky",
-    "player2": "threepoint",
-    "matches": 3,
-    "wins": 1,
-    "losses": 2,
-    "points": -4.6095164283095755,
+    "points": -1.6013692172867238,
     "confidence": 9.75
   },
   {
@@ -734,17 +842,71 @@
     "matches": 1,
     "wins": 0,
     "losses": 1,
-    "points": -5.159773094441668,
+    "points": -3.3387959268332734,
     "confidence": 5
   },
   {
-    "player1": "Harstem",
-    "player2": "MaxPax",
+    "player1": "ShaDoWn",
+    "player2": "YoungYakov",
+    "matches": 2,
+    "wins": 1,
+    "losses": 1,
+    "points": -3.4310830099066294,
+    "confidence": 5
+  },
+  {
+    "player1": "GeneParmesean",
+    "player2": "Quaz",
+    "matches": 2,
+    "wins": 1,
+    "losses": 1,
+    "points": -3.6000000000000014,
+    "confidence": 5
+  },
+  {
+    "player1": "SickNess",
+    "player2": "ZaRDieNT",
+    "matches": 5,
+    "wins": 2,
+    "losses": 3,
+    "points": -3.9195018711686056,
+    "confidence": 13.82253125
+  },
+  {
+    "player1": "千年之狐",
+    "player2": "南忧",
+    "matches": 2,
+    "wins": 1,
+    "losses": 1,
+    "points": -4.240329432463199,
+    "confidence": 0
+  },
+  {
+    "player1": "lomzaenjoyer",
+    "player2": "marmolada",
+    "matches": 2,
+    "wins": 1,
+    "losses": 1,
+    "points": -5.432353243042524,
+    "confidence": 0
+  },
+  {
+    "player1": "Kelazhur",
+    "player2": "Nicoract",
     "matches": 1,
     "wins": 0,
     "losses": 1,
-    "points": -5.278007467775145,
+    "points": -5.775219480153019,
     "confidence": 5
+  },
+  {
+    "player1": "DefMars",
+    "player2": "Gref",
+    "matches": 8,
+    "wins": 4,
+    "losses": 4,
+    "points": -6.09052934884744,
+    "confidence": 16.547365703125
   },
   {
     "player1": "Gerald",
@@ -752,70 +914,142 @@
     "matches": 1,
     "wins": 0,
     "losses": 1,
-    "points": -6.089549137403793,
+    "points": -6.153664087232394,
     "confidence": 5
   },
   {
-    "player1": "Jumy",
-    "player2": "Shino",
+    "player1": "Droptimus",
+    "player2": "Matt",
     "matches": 1,
     "wins": 0,
     "losses": 1,
-    "points": -6.613374010274405,
+    "points": -6.21634956899557,
     "confidence": 5
   },
   {
-    "player1": "DIMAGA",
-    "player2": "Starfish",
-    "matches": 1,
-    "wins": 0,
-    "losses": 1,
-    "points": -8.423681129806706,
-    "confidence": 5
-  },
-  {
-    "player1": "AwesomeSauce",
-    "player2": "VaST",
-    "matches": 1,
-    "wins": 0,
-    "losses": 1,
-    "points": -9.354862588086844,
-    "confidence": 5
-  },
-  {
-    "player1": "Lambo",
-    "player2": "ShoWTimE",
+    "player1": "CaptainSam",
+    "player2": "Viper",
     "matches": 3,
     "wins": 1,
     "losses": 2,
-    "points": -11.445195573699522,
-    "confidence": 4.5125
+    "points": -6.543122124526226,
+    "confidence": 14.2625
   },
   {
-    "player1": "Gerald",
-    "player2": "Krystianer",
-    "matches": 3,
-    "wins": 1,
+    "player1": "Creed",
+    "player2": "YoungYakov",
+    "matches": 4,
+    "wins": 2,
     "losses": 2,
-    "points": -11.518657254101782,
-    "confidence": 4.75
+    "points": -7.309673287620484,
+    "confidence": 9.2625
   },
   {
-    "player1": "HeroMarine",
-    "player2": "Statis",
+    "player1": "Lulu",
+    "player2": "Wingent",
+    "matches": 2,
+    "wins": 1,
+    "losses": 1,
+    "points": -7.396171100176677,
+    "confidence": 0
+  },
+  {
+    "player1": "ART",
+    "player2": "iosup",
+    "matches": 6,
+    "wins": 2,
+    "losses": 4,
+    "points": -7.456578863295302,
+    "confidence": 17.4539359375
+  },
+  {
+    "player1": "Bumbz",
+    "player2": "Molten",
+    "matches": 2,
+    "wins": 1,
+    "losses": 1,
+    "points": -7.752362692800638,
+    "confidence": 0
+  },
+  {
+    "player1": "Iba",
+    "player2": "boanaan",
     "matches": 1,
     "wins": 0,
     "losses": 1,
-    "points": -12.167030092463994,
+    "points": -7.906430134999512,
     "confidence": 5
   },
   {
-    "player1": "Lambo",
+    "player1": "FeydRautha",
+    "player2": "MuadDib",
+    "matches": 2,
+    "wins": 1,
+    "losses": 1,
+    "points": -8.184912666426866,
+    "confidence": 0
+  },
+  {
+    "player1": "HeRoMaRinE",
+    "player2": "Moja",
+    "matches": 2,
+    "wins": 1,
+    "losses": 1,
+    "points": -8.259713323488759,
+    "confidence": 5
+  },
+  {
+    "player1": "prome",
+    "player2": "ssida",
+    "matches": 1,
+    "wins": 0,
+    "losses": 1,
+    "points": -8.533329604252817,
+    "confidence": 5
+  },
+  {
+    "player1": "Elazer",
     "player2": "Serral",
+    "matches": 2,
+    "wins": 1,
+    "losses": 1,
+    "points": -8.968604532182948,
+    "confidence": 9.75
+  },
+  {
+    "player1": "Maru",
+    "player2": "Ryung",
+    "matches": 3,
+    "wins": 1,
+    "losses": 2,
+    "points": -9.63343788519315,
+    "confidence": 9.75
+  },
+  {
+    "player1": "ART",
+    "player2": "Kinpach",
+    "matches": 3,
+    "wins": 1,
+    "losses": 2,
+    "points": -9.732106027450879,
+    "confidence": 9.5125
+  },
+  {
+    "player1": "MaxGio",
+    "player2": "Ryoku",
+    "matches": 2,
+    "wins": 1,
+    "losses": 1,
+    "points": -9.920087420691665,
+    "confidence": 5
+  },
+  {
+    "player1": "Marineking",
+    "player2": "Shaolin",
     "matches": 1,
     "wins": 0,
     "losses": 1,
-    "points": -12.316408811127047,
+    "points": -10.48923343072911,
     "confidence": 5
   },
   {
@@ -824,25 +1058,7 @@
     "matches": 1,
     "wins": 0,
     "losses": 1,
-    "points": -13.248745289229708,
-    "confidence": 5
-  },
-  {
-    "player1": "Jumy",
-    "player2": "ShoWTimE",
-    "matches": 2,
-    "wins": 1,
-    "losses": 1,
-    "points": -13.797406099296449,
-    "confidence": 9.75
-  },
-  {
-    "player1": "Blademaster",
-    "player2": "Hardwell",
-    "matches": 1,
-    "wins": 0,
-    "losses": 1,
-    "points": -14.231053465480207,
+    "points": -10.859206925149048,
     "confidence": 5
   },
   {
@@ -851,16 +1067,7 @@
     "matches": 1,
     "wins": 0,
     "losses": 1,
-    "points": -14.555041524852104,
-    "confidence": 5
-  },
-  {
-    "player1": "Darjeeling",
-    "player2": "Havertz",
-    "matches": 1,
-    "wins": 0,
-    "losses": 1,
-    "points": -14.744367723339295,
+    "points": -10.927643207471299,
     "confidence": 5
   },
   {
@@ -869,25 +1076,43 @@
     "matches": 1,
     "wins": 0,
     "losses": 1,
-    "points": -15.898907776086894,
+    "points": -11.019663087447862,
     "confidence": 5
   },
   {
-    "player1": "Iba",
-    "player2": "boanaan",
+    "player1": "Devourer2",
+    "player2": "KingKurzeHose",
     "matches": 1,
     "wins": 0,
     "losses": 1,
-    "points": -15.923043632171586,
+    "points": -11.163912508330771,
     "confidence": 5
   },
   {
-    "player1": "KingSlayeR",
-    "player2": "Lemon",
+    "player1": "Jumy",
+    "player2": "ShoWTimE",
+    "matches": 2,
+    "wins": 1,
+    "losses": 1,
+    "points": -11.333704869271486,
+    "confidence": 9.75
+  },
+  {
+    "player1": "BabyMarine",
+    "player2": "MilkiCow",
     "matches": 1,
     "wins": 0,
     "losses": 1,
-    "points": -16.662687984908732,
+    "points": -11.66507173356851,
+    "confidence": 5
+  },
+  {
+    "player1": "Krystianer",
+    "player2": "MilkiCow",
+    "matches": 1,
+    "wins": 0,
+    "losses": 1,
+    "points": -11.743866089297512,
     "confidence": 5
   },
   {
@@ -896,25 +1121,34 @@
     "matches": 1,
     "wins": 0,
     "losses": 1,
-    "points": -16.7458637786236,
+    "points": -11.819508561720797,
     "confidence": 5
   },
   {
-    "player1": "SickNess",
-    "player2": "ZaRDieNT",
-    "matches": 4,
-    "wins": 1,
-    "losses": 3,
-    "points": -16.788717518874208,
-    "confidence": 9.036874999999998
-  },
-  {
-    "player1": "Elazer",
-    "player2": "Gerald",
+    "player1": "Ezreal",
+    "player2": "Icelin",
     "matches": 1,
     "wins": 0,
     "losses": 1,
-    "points": -17.08706417282643,
+    "points": -11.83092651453732,
+    "confidence": 5
+  },
+  {
+    "player1": "ART",
+    "player2": "Taruviel",
+    "matches": 1,
+    "wins": 0,
+    "losses": 1,
+    "points": -12.12077759704173,
+    "confidence": 5
+  },
+  {
+    "player1": "MindelVK",
+    "player2": "UedSoldier",
+    "matches": 1,
+    "wins": 0,
+    "losses": 1,
+    "points": -12.280111276223886,
     "confidence": 5
   },
   {
@@ -923,79 +1157,34 @@
     "matches": 1,
     "wins": 0,
     "losses": 1,
-    "points": -18.616086315963845,
+    "points": -13.02510259799658,
     "confidence": 5
   },
   {
-    "player1": "Bombilla",
-    "player2": "Dmega",
-    "matches": 1,
-    "wins": 0,
-    "losses": 1,
-    "points": -18.73224098762808,
-    "confidence": 5
-  },
-  {
-    "player1": "Fjant",
-    "player2": "uThermal",
+    "player1": "Eternity",
+    "player2": "Rex",
     "matches": 2,
     "wins": 1,
     "losses": 1,
-    "points": -18.831898352107025,
+    "points": -13.116252421787346,
     "confidence": 9.75
   },
   {
-    "player1": "GuMiho",
-    "player2": "Ryung",
-    "matches": 1,
-    "wins": 0,
+    "player1": "AlexDeathR",
+    "player2": "Pagliacci",
+    "matches": 2,
+    "wins": 1,
     "losses": 1,
-    "points": -19.003028501399537,
-    "confidence": 5
+    "points": -13.366320880534676,
+    "confidence": 0
   },
   {
-    "player1": "EchoSoldier",
-    "player2": "Lena",
+    "player1": "immortal",
+    "player2": "zgeorgin",
     "matches": 1,
     "wins": 0,
     "losses": 1,
-    "points": -19.177090038685293,
-    "confidence": 5
-  },
-  {
-    "player1": "BabyMarine",
-    "player2": "MilkiCow",
-    "matches": 1,
-    "wins": 0,
-    "losses": 1,
-    "points": -21.850552215761777,
-    "confidence": 5
-  },
-  {
-    "player1": "GuGus",
-    "player2": "Urono",
-    "matches": 1,
-    "wins": 0,
-    "losses": 1,
-    "points": -23.06228766034961,
-    "confidence": 5
-  },
-  {
-    "player1": "MaxGio",
-    "player2": "Ryoku",
-    "matches": 1,
-    "wins": 0,
-    "losses": 1,
-    "points": -23.15473133213692,
-    "confidence": 5
-  },
-  {
-    "player1": "DarkSatas",
-    "player2": "HateCheese",
-    "matches": 1,
-    "wins": 0,
-    "losses": 1,
-    "points": -23.178904618168858,
+    "points": -13.866922603811833,
     "confidence": 5
   },
   {
@@ -1004,70 +1193,70 @@
     "matches": 1,
     "wins": 0,
     "losses": 1,
-    "points": -23.192792111478067,
+    "points": -14.202952015090908,
     "confidence": 5
   },
   {
-    "player1": "Spazymazy",
-    "player2": "acheron",
-    "matches": 2,
-    "wins": 1,
+    "player1": "MiniZergUA",
+    "player2": "SickNess",
+    "matches": 10,
+    "wins": 4,
+    "losses": 6,
+    "points": -14.983182416378751,
+    "confidence": 32.68818402753906
+  },
+  {
+    "player1": "ghostlyswarm",
+    "player2": "practicex",
+    "matches": 1,
+    "wins": 0,
     "losses": 1,
-    "points": -23.855163875025088,
-    "confidence": 9.75
+    "points": -15.07432636324584,
+    "confidence": 5
+  },
+  {
+    "player1": "AwesomeSauce",
+    "player2": "VaST",
+    "matches": 1,
+    "wins": 0,
+    "losses": 1,
+    "points": -15.508945901359382,
+    "confidence": 5
+  },
+  {
+    "player1": "Bodga",
+    "player2": "Wok",
+    "matches": 1,
+    "wins": 0,
+    "losses": 1,
+    "points": -15.810481333997924,
+    "confidence": 5
+  },
+  {
+    "player1": "AlexeiStukov",
+    "player2": "PoppyJay",
+    "matches": 1,
+    "wins": 0,
+    "losses": 1,
+    "points": -15.89562814616529,
+    "confidence": 5
   },
   {
     "player1": "Has",
     "player2": "Rex",
-    "matches": 1,
-    "wins": 0,
+    "matches": 2,
+    "wins": 1,
     "losses": 1,
-    "points": -24.181667440511255,
-    "confidence": 5
+    "points": -15.909729784244632,
+    "confidence": 9.75
   },
   {
-    "player1": "Moja",
-    "player2": "SKillous",
+    "player1": "Panorama",
+    "player2": "Ryantha",
     "matches": 1,
     "wins": 0,
     "losses": 1,
-    "points": -24.649311012083846,
-    "confidence": 5
-  },
-  {
-    "player1": "Aimliloke",
-    "player2": "Nokota",
-    "matches": 1,
-    "wins": 0,
-    "losses": 1,
-    "points": -24.99705648651823,
-    "confidence": 5
-  },
-  {
-    "player1": "Arrogfire",
-    "player2": "Krystianer",
-    "matches": 1,
-    "wins": 0,
-    "losses": 1,
-    "points": -26.047524734116983,
-    "confidence": 5
-  },
-  {
-    "player1": "Moja",
-    "player2": "uThermal",
-    "matches": 1,
-    "wins": 0,
-    "losses": 1,
-    "points": -26.18912216827198,
-    "confidence": 5
-  },
-  {
-    "player1": "ShaDoWn",
-    "player2": "YoungYakov",
-    "matches": 1,
-    "wins": 0,
-    "losses": 1,
-    "points": -27.229803343632987,
+    "points": -15.91007221380241,
     "confidence": 5
   },
   {
@@ -1076,79 +1265,97 @@
     "matches": 1,
     "wins": 0,
     "losses": 1,
-    "points": -27.48612178063781,
-    "confidence": 5
-  },
-  {
-    "player1": "Antarct",
-    "player2": "Melu",
-    "matches": 1,
-    "wins": 0,
-    "losses": 1,
-    "points": -27.568207107880298,
+    "points": -15.955045945935641,
     "confidence": 5
   },
   {
     "player1": "Dolan",
-    "player2": "Hardwell",
+    "player2": "Rob",
     "matches": 1,
     "wins": 0,
     "losses": 1,
-    "points": -29.191184653718672,
+    "points": -16.25078491454648,
     "confidence": 5
   },
   {
-    "player1": "Replicant",
-    "player2": "Tiger",
-    "matches": 14,
-    "wins": 4,
-    "losses": 9,
-    "points": -33.24297317857784,
-    "confidence": 34.63322473651238
+    "player1": "Gerald",
+    "player2": "Krystianer",
+    "matches": 5,
+    "wins": 2,
+    "losses": 3,
+    "points": -16.499983289550947,
+    "confidence": 13.35940625
   },
   {
-    "player1": "MilkiCow",
-    "player2": "Vanya",
+    "player1": "EchoSoldier",
+    "player2": "Lena",
     "matches": 1,
     "wins": 0,
     "losses": 1,
-    "points": -33.3487213606767,
+    "points": -16.84698944927056,
     "confidence": 5
   },
   {
-    "player1": "Erbest",
-    "player2": "SickNess",
-    "matches": 3,
+    "player1": "Loviuf",
+    "player2": "Purce",
+    "matches": 2,
     "wins": 1,
-    "losses": 2,
-    "points": -35.11277525751073,
-    "confidence": 9.2625
+    "losses": 1,
+    "points": -17.00336740133376,
+    "confidence": 9.75
   },
   {
-    "player1": "ByuN",
-    "player2": "Ryung",
+    "player1": "Aza",
+    "player2": "Viper",
     "matches": 1,
     "wins": 0,
     "losses": 1,
-    "points": -35.877684052372715,
+    "points": -17.213499777215826,
     "confidence": 5
   },
   {
-    "player1": "FoxeR",
-    "player2": "Mixu",
+    "player1": "DarkSatas",
+    "player2": "HateCheese",
     "matches": 1,
     "wins": 0,
     "losses": 1,
-    "points": -35.98804843629966,
+    "points": -17.535401668361704,
     "confidence": 5
   },
   {
-    "player1": "ZhuGeLiang",
-    "player2": "goblin",
+    "player1": "DnS",
+    "player2": "Kelazhur",
+    "matches": 2,
+    "wins": 1,
+    "losses": 1,
+    "points": -17.601392830049015,
+    "confidence": 0
+  },
+  {
+    "player1": "GuGus",
+    "player2": "Urono",
+    "matches": 4,
+    "wins": 1,
+    "losses": 3,
+    "points": -17.644957837504634,
+    "confidence": 14.2625
+  },
+  {
+    "player1": "Darjeeling",
+    "player2": "Havertz",
     "matches": 1,
     "wins": 0,
     "losses": 1,
-    "points": -36.07782629900336,
+    "points": -17.879149394650504,
+    "confidence": 5
+  },
+  {
+    "player1": "KingSlayeR",
+    "player2": "Lemon",
+    "matches": 1,
+    "wins": 0,
+    "losses": 1,
+    "points": -18.090456800054497,
     "confidence": 5
   },
   {
@@ -1157,16 +1364,7 @@
     "matches": 1,
     "wins": 0,
     "losses": 1,
-    "points": -37.17535941418454,
-    "confidence": 5
-  },
-  {
-    "player1": "Loviuf",
-    "player2": "Purce",
-    "matches": 1,
-    "wins": 0,
-    "losses": 1,
-    "points": -38.41526166613523,
+    "points": -18.411769668971072,
     "confidence": 5
   },
   {
@@ -1175,79 +1373,88 @@
     "matches": 1,
     "wins": 0,
     "losses": 1,
-    "points": -39.18920733785947,
+    "points": -18.52575252650412,
     "confidence": 5
   },
   {
-    "player1": "Gerald",
-    "player2": "Indy",
+    "player1": "Brick",
+    "player2": "Hotcheese",
     "matches": 1,
     "wins": 0,
     "losses": 1,
-    "points": -40.166269565995606,
+    "points": -18.586095894675537,
     "confidence": 5
   },
   {
-    "player1": "Lemon",
-    "player2": "deer",
-    "matches": 5,
-    "wins": 1,
-    "losses": 4,
-    "points": -40.29534188722035,
-    "confidence": 17.87190625
-  },
-  {
-    "player1": "Krystianer",
-    "player2": "Ninja",
+    "player1": "Antarct",
+    "player2": "Melu",
     "matches": 1,
     "wins": 0,
     "losses": 1,
-    "points": -40.84461372420177,
+    "points": -18.91988105732767,
     "confidence": 5
   },
   {
-    "player1": "CaptainSam",
+    "player1": "Urono",
     "player2": "Viper",
-    "matches": 2,
-    "wins": 0,
-    "losses": 2,
-    "points": -42.158596201216156,
-    "confidence": 9.75
-  },
-  {
-    "player1": "Jaeger",
-    "player2": "RACCOON",
-    "matches": 2,
-    "wins": 0,
-    "losses": 2,
-    "points": -43.77244400333619,
-    "confidence": 9.75
-  },
-  {
-    "player1": "Aelith",
-    "player2": "Elimisu",
     "matches": 1,
     "wins": 0,
     "losses": 1,
-    "points": -45.27220089338229,
+    "points": -19.04382221276249,
     "confidence": 5
   },
   {
-    "player1": "Tiger",
-    "player2": "UltraMarine",
-    "matches": 4,
-    "wins": 1,
-    "losses": 3,
-    "points": -45.78245218463193,
-    "confidence": 9.5125
+    "player1": "Moja",
+    "player2": "OpTiMiStC",
+    "matches": 7,
+    "wins": 3,
+    "losses": 4,
+    "points": -19.40283410779681,
+    "confidence": 25.416270390624998
   },
   {
-    "player1": "FightingFrog",
-    "player2": "HolyHit",
+    "player1": "ByuN",
+    "player2": "Ryung",
     "matches": 1,
     "wins": 0,
     "losses": 1,
-    "points": -46.31008643913283,
+    "points": -19.50382393356565,
+    "confidence": 5
+  },
+  {
+    "player1": "Alantar",
+    "player2": "AttilaThePun ",
+    "matches": 1,
+    "wins": 0,
+    "losses": 1,
+    "points": -19.57595358315201,
+    "confidence": 5
+  },
+  {
+    "player1": "Lambo",
+    "player2": "Serral",
+    "matches": 1,
+    "wins": 0,
+    "losses": 1,
+    "points": -19.71665056480804,
+    "confidence": 5
+  },
+  {
+    "player1": "FoxeR",
+    "player2": "Mixu",
+    "matches": 1,
+    "wins": 0,
+    "losses": 1,
+    "points": -19.76747168072216,
+    "confidence": 5
+  },
+  {
+    "player1": "AlexDeathR",
+    "player2": "DeadlyPotato",
+    "matches": 1,
+    "wins": 0,
+    "losses": 1,
+    "points": -19.8,
     "confidence": 5
   },
   {
@@ -1256,7 +1463,7 @@
     "matches": 1,
     "wins": 0,
     "losses": 1,
-    "points": -48,
+    "points": -19.8,
     "confidence": 5
   },
   {
@@ -1265,16 +1472,16 @@
     "matches": 1,
     "wins": 0,
     "losses": 1,
-    "points": -48,
+    "points": -19.8,
     "confidence": 5
   },
   {
-    "player1": "Cham",
-    "player2": "Jumy",
+    "player1": "CoralViper",
+    "player2": "RoXas",
     "matches": 1,
     "wins": 0,
     "losses": 1,
-    "points": -48,
+    "points": -19.8,
     "confidence": 5
   },
   {
@@ -1283,25 +1490,7 @@
     "matches": 1,
     "wins": 0,
     "losses": 1,
-    "points": -48,
-    "confidence": 5
-  },
-  {
-    "player1": "Eternity",
-    "player2": "Rex",
-    "matches": 1,
-    "wins": 0,
-    "losses": 1,
-    "points": -48,
-    "confidence": 5
-  },
-  {
-    "player1": "GeneParmesean",
-    "player2": "Quaz",
-    "matches": 1,
-    "wins": 0,
-    "losses": 1,
-    "points": -48,
+    "points": -19.8,
     "confidence": 5
   },
   {
@@ -1310,7 +1499,7 @@
     "matches": 1,
     "wins": 0,
     "losses": 1,
-    "points": -48,
+    "points": -19.8,
     "confidence": 5
   },
   {
@@ -1319,7 +1508,7 @@
     "matches": 1,
     "wins": 0,
     "losses": 1,
-    "points": -48,
+    "points": -19.8,
     "confidence": 5
   },
   {
@@ -1328,7 +1517,7 @@
     "matches": 1,
     "wins": 0,
     "losses": 1,
-    "points": -48,
+    "points": -19.8,
     "confidence": 5
   },
   {
@@ -1337,7 +1526,7 @@
     "matches": 1,
     "wins": 0,
     "losses": 1,
-    "points": -48,
+    "points": -19.8,
     "confidence": 5
   },
   {
@@ -1346,7 +1535,34 @@
     "matches": 1,
     "wins": 0,
     "losses": 1,
-    "points": -48,
+    "points": -19.8,
+    "confidence": 5
+  },
+  {
+    "player1": "HateCheese",
+    "player2": "MaxMor",
+    "matches": 1,
+    "wins": 0,
+    "losses": 1,
+    "points": -19.8,
+    "confidence": 5
+  },
+  {
+    "player1": "INexorable",
+    "player2": "goblin",
+    "matches": 1,
+    "wins": 0,
+    "losses": 1,
+    "points": -19.8,
+    "confidence": 5
+  },
+  {
+    "player1": "Infinity",
+    "player2": "Viper",
+    "matches": 1,
+    "wins": 0,
+    "losses": 1,
+    "points": -19.8,
     "confidence": 5
   },
   {
@@ -1355,7 +1571,7 @@
     "matches": 1,
     "wins": 0,
     "losses": 1,
-    "points": -48,
+    "points": -19.8,
     "confidence": 5
   },
   {
@@ -1364,7 +1580,7 @@
     "matches": 1,
     "wins": 0,
     "losses": 1,
-    "points": -48,
+    "points": -19.8,
     "confidence": 5
   },
   {
@@ -1373,7 +1589,7 @@
     "matches": 1,
     "wins": 0,
     "losses": 1,
-    "points": -48,
+    "points": -19.8,
     "confidence": 5
   },
   {
@@ -1382,7 +1598,7 @@
     "matches": 1,
     "wins": 0,
     "losses": 1,
-    "points": -48,
+    "points": -19.8,
     "confidence": 5
   },
   {
@@ -1391,7 +1607,25 @@
     "matches": 1,
     "wins": 0,
     "losses": 1,
-    "points": -48,
+    "points": -19.8,
+    "confidence": 5
+  },
+  {
+    "player1": "Manci",
+    "player2": "Sasha",
+    "matches": 1,
+    "wins": 0,
+    "losses": 1,
+    "points": -19.8,
+    "confidence": 5
+  },
+  {
+    "player1": "MANGRUSL",
+    "player2": "prome",
+    "matches": 1,
+    "wins": 0,
+    "losses": 1,
+    "points": -19.8,
     "confidence": 5
   },
   {
@@ -1400,7 +1634,7 @@
     "matches": 1,
     "wins": 0,
     "losses": 1,
-    "points": -48,
+    "points": -19.8,
     "confidence": 5
   },
   {
@@ -1409,7 +1643,7 @@
     "matches": 1,
     "wins": 0,
     "losses": 1,
-    "points": -48,
+    "points": -19.8,
     "confidence": 5
   },
   {
@@ -1418,7 +1652,16 @@
     "matches": 1,
     "wins": 0,
     "losses": 1,
-    "points": -48,
+    "points": -19.8,
+    "confidence": 5
+  },
+  {
+    "player1": "myway",
+    "player2": "sirunde",
+    "matches": 1,
+    "wins": 0,
+    "losses": 1,
+    "points": -19.8,
     "confidence": 5
   },
   {
@@ -1427,7 +1670,7 @@
     "matches": 1,
     "wins": 0,
     "losses": 1,
-    "points": -48,
+    "points": -19.8,
     "confidence": 5
   },
   {
@@ -1436,7 +1679,16 @@
     "matches": 1,
     "wins": 0,
     "losses": 1,
-    "points": -48,
+    "points": -19.8,
+    "confidence": 5
+  },
+  {
+    "player1": "OldFninetyone",
+    "player2": "Shaxing",
+    "matches": 1,
+    "wins": 0,
+    "losses": 1,
+    "points": -19.8,
     "confidence": 5
   },
   {
@@ -1445,7 +1697,7 @@
     "matches": 1,
     "wins": 0,
     "losses": 1,
-    "points": -48,
+    "points": -19.8,
     "confidence": 5
   },
   {
@@ -1454,7 +1706,7 @@
     "matches": 1,
     "wins": 0,
     "losses": 1,
-    "points": -48,
+    "points": -19.8,
     "confidence": 5
   },
   {
@@ -1463,7 +1715,7 @@
     "matches": 1,
     "wins": 0,
     "losses": 1,
-    "points": -48,
+    "points": -19.8,
     "confidence": 5
   },
   {
@@ -1472,7 +1724,7 @@
     "matches": 1,
     "wins": 0,
     "losses": 1,
-    "points": -48,
+    "points": -19.8,
     "confidence": 5
   },
   {
@@ -1481,16 +1733,7 @@
     "matches": 1,
     "wins": 0,
     "losses": 1,
-    "points": -48,
-    "confidence": 5
-  },
-  {
-    "player1": "SKillous",
-    "player2": "uThermal",
-    "matches": 1,
-    "wins": 0,
-    "losses": 1,
-    "points": -48,
+    "points": -19.8,
     "confidence": 5
   },
   {
@@ -1499,7 +1742,25 @@
     "matches": 1,
     "wins": 0,
     "losses": 1,
-    "points": -48,
+    "points": -19.8,
+    "confidence": 5
+  },
+  {
+    "player1": "SolidSazu",
+    "player2": "Solidduky",
+    "matches": 1,
+    "wins": 0,
+    "losses": 1,
+    "points": -19.8,
+    "confidence": 5
+  },
+  {
+    "player1": "SpætmajseMechDonalds",
+    "player2": "Unknown",
+    "matches": 1,
+    "wins": 0,
+    "losses": 1,
+    "points": -19.8,
     "confidence": 5
   },
   {
@@ -1508,7 +1769,25 @@
     "matches": 1,
     "wins": 0,
     "losses": 1,
-    "points": -48,
+    "points": -19.8,
+    "confidence": 5
+  },
+  {
+    "player1": "STALKER",
+    "player2": "WorldLife",
+    "matches": 1,
+    "wins": 0,
+    "losses": 1,
+    "points": -19.8,
+    "confidence": 5
+  },
+  {
+    "player1": "Unknown",
+    "player2": "bArth_lancel",
+    "matches": 1,
+    "wins": 0,
+    "losses": 1,
+    "points": -19.8,
     "confidence": 5
   },
   {
@@ -1517,7 +1796,7 @@
     "matches": 1,
     "wins": 0,
     "losses": 1,
-    "points": -48,
+    "points": -19.8,
     "confidence": 5
   },
   {
@@ -1526,7 +1805,7 @@
     "matches": 1,
     "wins": 0,
     "losses": 1,
-    "points": -48,
+    "points": -19.8,
     "confidence": 5
   },
   {
@@ -1535,8 +1814,161 @@
     "matches": 1,
     "wins": 0,
     "losses": 1,
-    "points": -48,
+    "points": -19.8,
     "confidence": 5
+  },
+  {
+    "player1": "Jamshat",
+    "player2": "TheOvermind",
+    "matches": 1,
+    "wins": 0,
+    "losses": 1,
+    "points": -20.073527587928353,
+    "confidence": 0
+  },
+  {
+    "player1": "BrOnZiEViLe",
+    "player2": "Urono",
+    "matches": 1,
+    "wins": 0,
+    "losses": 1,
+    "points": -20.205611570404667,
+    "confidence": 5
+  },
+  {
+    "player1": "SilencedBomb",
+    "player2": "brunetmist",
+    "matches": 1,
+    "wins": 0,
+    "losses": 1,
+    "points": -20.210475603583454,
+    "confidence": 0
+  },
+  {
+    "player1": "Gialluca",
+    "player2": "Loviuf",
+    "matches": 1,
+    "wins": 0,
+    "losses": 1,
+    "points": -20.26351438878601,
+    "confidence": 5
+  },
+  {
+    "player1": "AlexeiStukov",
+    "player2": "CostPhoenix",
+    "matches": 1,
+    "wins": 0,
+    "losses": 1,
+    "points": -20.536521545454292,
+    "confidence": 0
+  },
+  {
+    "player1": "Aza",
+    "player2": "BobertJoe",
+    "matches": 1,
+    "wins": 0,
+    "losses": 1,
+    "points": -20.759017410464857,
+    "confidence": 0
+  },
+  {
+    "player1": "Tigereye",
+    "player2": "xgboost",
+    "matches": 1,
+    "wins": 0,
+    "losses": 1,
+    "points": -20.87141305047493,
+    "confidence": 0
+  },
+  {
+    "player1": "Polo64",
+    "player2": "RandomHero",
+    "matches": 1,
+    "wins": 0,
+    "losses": 1,
+    "points": -20.89835585798834,
+    "confidence": 0
+  },
+  {
+    "player1": "Aelith",
+    "player2": "Elimisu",
+    "matches": 1,
+    "wins": 0,
+    "losses": 1,
+    "points": -21.135120989724513,
+    "confidence": 0
+  },
+  {
+    "player1": "FiatPunto",
+    "player2": "Loviuf",
+    "matches": 1,
+    "wins": 0,
+    "losses": 1,
+    "points": -21.492208329651763,
+    "confidence": 0
+  },
+  {
+    "player1": "MasterVasya",
+    "player2": "iosup",
+    "matches": 7,
+    "wins": 3,
+    "losses": 3,
+    "points": -21.81581592213949,
+    "confidence": 25.653770390625002
+  },
+  {
+    "player1": "Fjant",
+    "player2": "uThermal",
+    "matches": 2,
+    "wins": 1,
+    "losses": 1,
+    "points": -21.829654255490244,
+    "confidence": 9.75
+  },
+  {
+    "player1": "Gerald",
+    "player2": "Indy",
+    "matches": 1,
+    "wins": 0,
+    "losses": 1,
+    "points": -21.920417449508452,
+    "confidence": 0
+  },
+  {
+    "player1": "Germuccio",
+    "player2": "bakerman",
+    "matches": 1,
+    "wins": 0,
+    "losses": 1,
+    "points": -22.039608320910304,
+    "confidence": 0
+  },
+  {
+    "player1": "MilkiCow",
+    "player2": "Vanya",
+    "matches": 2,
+    "wins": 1,
+    "losses": 1,
+    "points": -22.683734344827364,
+    "confidence": 9.75
+  },
+  {
+    "player1": "Aimliloke",
+    "player2": "Nokota",
+    "matches": 1,
+    "wins": 0,
+    "losses": 1,
+    "points": -22.776735175187202,
+    "confidence": 5
+  },
+  {
+    "player1": "Coucoute",
+    "player2": "Fjant",
+    "matches": 1,
+    "wins": 0,
+    "losses": 1,
+    "points": -23.0881089640577,
+    "confidence": 0
   },
   {
     "player1": "Sivean",
@@ -1544,34 +1976,97 @@
     "matches": 1,
     "wins": 0,
     "losses": 1,
-    "points": -50.941494406402256,
-    "confidence": 0
+    "points": -23.106521659549006,
+    "confidence": 5
   },
   {
-    "player1": "MilkiCow",
-    "player2": "YoungYakov",
+    "player1": "Caylx",
+    "player2": "The Wok",
     "matches": 1,
     "wins": 0,
     "losses": 1,
-    "points": -55.20767484353402,
+    "points": -23.11605599135428,
     "confidence": 0
   },
   {
-    "player1": "ErebusBlack",
-    "player2": "Goswser",
+    "player1": "Moja",
+    "player2": "uThermal",
     "matches": 1,
     "wins": 0,
     "losses": 1,
-    "points": -58.79283746216679,
+    "points": -23.330622099269828,
+    "confidence": 5
+  },
+  {
+    "player1": "ZhuGeLiang",
+    "player2": "goblin",
+    "matches": 1,
+    "wins": 0,
+    "losses": 1,
+    "points": -24.036451447307353,
     "confidence": 0
   },
   {
-    "player1": "HiGhDrA",
-    "player2": "Mixu",
+    "player1": "Lemon",
+    "player2": "deer",
+    "matches": 6,
+    "wins": 2,
+    "losses": 4,
+    "points": -24.208355233489506,
+    "confidence": 21.7408109375
+  },
+  {
+    "player1": "Brat_OK",
+    "player2": "MindelVK",
+    "matches": 26,
+    "wins": 12,
+    "losses": 13,
+    "points": -24.30881704502535,
+    "confidence": 50.1198921749038
+  },
+  {
+    "player1": "IceCream",
+    "player2": "Rake",
     "matches": 1,
     "wins": 0,
     "losses": 1,
-    "points": -63.471279284363405,
+    "points": -24.82224329316671,
+    "confidence": 5
+  },
+  {
+    "player1": "Nicoract",
+    "player2": "Spirit",
+    "matches": 1,
+    "wins": 0,
+    "losses": 1,
+    "points": -25.5783004986527,
+    "confidence": 0
+  },
+  {
+    "player1": "Bombilla",
+    "player2": "Dmega",
+    "matches": 1,
+    "wins": 0,
+    "losses": 1,
+    "points": -25.754721493072434,
+    "confidence": 5
+  },
+  {
+    "player1": "Fluffy",
+    "player2": "Peekaboo",
+    "matches": 4,
+    "wins": 1,
+    "losses": 3,
+    "points": -26.05242639385478,
+    "confidence": 14.2625
+  },
+  {
+    "player1": "Krystianer",
+    "player2": "Ninja",
+    "matches": 1,
+    "wins": 0,
+    "losses": 1,
+    "points": -26.106182875095897,
     "confidence": 0
   },
   {
@@ -1580,26 +2075,53 @@
     "matches": 1,
     "wins": 0,
     "losses": 1,
-    "points": -63.585538226446154,
+    "points": -26.70072584174913,
     "confidence": 0
   },
   {
-    "player1": "Antarct",
-    "player2": "EruptioN",
-    "matches": 2,
-    "wins": 0,
-    "losses": 2,
-    "points": -64.02825025514448,
-    "confidence": 9.75
-  },
-  {
-    "player1": "Nicoract",
-    "player2": "Spirit",
+    "player1": "EruptioN",
+    "player2": "Tiger",
     "matches": 1,
     "wins": 0,
     "losses": 1,
-    "points": -64.48073656706622,
+    "points": -27.155182837790846,
     "confidence": 0
+  },
+  {
+    "player1": "CaptainSam",
+    "player2": "Coucoute",
+    "matches": 1,
+    "wins": 0,
+    "losses": 1,
+    "points": -27.528127638580543,
+    "confidence": 0
+  },
+  {
+    "player1": "ShoWTimE",
+    "player2": "ZhuGeLiang",
+    "matches": 1,
+    "wins": 0,
+    "losses": 1,
+    "points": -27.97405396518844,
+    "confidence": 5
+  },
+  {
+    "player1": "MiniZergUA",
+    "player2": "ZergCaban",
+    "matches": 1,
+    "wins": 0,
+    "losses": 1,
+    "points": -28.39013469514528,
+    "confidence": 0
+  },
+  {
+    "player1": "MindelVK",
+    "player2": "Strange",
+    "matches": 1,
+    "wins": 0,
+    "losses": 1,
+    "points": -28.412550973377147,
+    "confidence": 5
   },
   {
     "player1": "GamerRichy",
@@ -1607,8 +2129,98 @@
     "matches": 1,
     "wins": 0,
     "losses": 1,
-    "points": -71.83059352339919,
+    "points": -31.855361734904683,
     "confidence": 0
+  },
+  {
+    "player1": "Fjant",
+    "player2": "LateleX",
+    "matches": 2,
+    "wins": 0,
+    "losses": 2,
+    "points": -35.174262456703026,
+    "confidence": 4.75
+  },
+  {
+    "player1": "Coral",
+    "player2": "RoXas",
+    "matches": 2,
+    "wins": 0,
+    "losses": 2,
+    "points": -35.91842123368824,
+    "confidence": 9.75
+  },
+  {
+    "player1": "Jaeger",
+    "player2": "RACCOON",
+    "matches": 2,
+    "wins": 0,
+    "losses": 2,
+    "points": -37.02086404101418,
+    "confidence": 9.75
+  },
+  {
+    "player1": "ChickenKing",
+    "player2": "irgenwas",
+    "matches": 1,
+    "wins": 0,
+    "losses": 1,
+    "points": -39.80118921317899,
+    "confidence": 0
+  },
+  {
+    "player1": "MilkiCow",
+    "player2": "YoungYakov",
+    "matches": 1,
+    "wins": 0,
+    "losses": 1,
+    "points": -39.957751134956396,
+    "confidence": 0
+  },
+  {
+    "player1": "Mucosa",
+    "player2": "halfcheese",
+    "matches": 1,
+    "wins": 0,
+    "losses": 1,
+    "points": -44.191001891973166,
+    "confidence": 0
+  },
+  {
+    "player1": "Tiger",
+    "player2": "UltraMarine",
+    "matches": 10,
+    "wins": 3,
+    "losses": 7,
+    "points": -45.415472196793495,
+    "confidence": 35.83943107616211
+  },
+  {
+    "player1": "herO",
+    "player2": "sOs",
+    "matches": 1,
+    "wins": 0,
+    "losses": 1,
+    "points": -47.74127984253187,
+    "confidence": 0
+  },
+  {
+    "player1": "Spazymazy",
+    "player2": "acheron",
+    "matches": 4,
+    "wins": 1,
+    "losses": 3,
+    "points": -49.316709797670676,
+    "confidence": 13.549375
+  },
+  {
+    "player1": "Antarct",
+    "player2": "EruptioN",
+    "matches": 2,
+    "wins": 0,
+    "losses": 2,
+    "points": -56.2428826538421,
+    "confidence": 9.75
   },
   {
     "player1": "ART",
@@ -1616,17 +2228,35 @@
     "matches": 5,
     "wins": 1,
     "losses": 4,
-    "points": -93.06789996567043,
-    "confidence": 22.62190625
+    "points": -56.65944740736309,
+    "confidence": 18.10940625
   },
   {
-    "player1": "Calftowin",
-    "player2": "LookMaNoSens",
-    "matches": 3,
+    "player1": "DIMAGA",
+    "player2": "Starfish",
+    "matches": 12,
+    "wins": 3,
+    "losses": 9,
+    "points": -56.91186404052332,
+    "confidence": 38.943839497613254
+  },
+  {
+    "player1": "Kitsune",
+    "player2": "ShOcKer",
+    "matches": 1,
     "wins": 0,
-    "losses": 3,
-    "points": -103.28391662987546,
-    "confidence": 14.2625
+    "losses": 1,
+    "points": -58.33454075284503,
+    "confidence": 0
+  },
+  {
+    "player1": "Erbest",
+    "player2": "SickNess",
+    "matches": 3,
+    "wins": 1,
+    "losses": 2,
+    "points": -58.96154717650033,
+    "confidence": 9.2625
   },
   {
     "player1": "Shameless",
@@ -1634,34 +2264,79 @@
     "matches": 2,
     "wins": 0,
     "losses": 2,
-    "points": -103.52268205323251,
+    "points": -59.34300897108156,
+    "confidence": 9.75
+  },
+  {
+    "player1": "FightingFrog",
+    "player2": "HolyHit",
+    "matches": 2,
+    "wins": 0,
+    "losses": 2,
+    "points": -60.18576936790839,
+    "confidence": 5
+  },
+  {
+    "player1": "Replicant",
+    "player2": "Tiger",
+    "matches": 16,
+    "wins": 4,
+    "losses": 11,
+    "points": -63.94453657539704,
+    "confidence": 44.96392698924578
+  },
+  {
+    "player1": "Blademaster",
+    "player2": "Hardwell",
+    "matches": 2,
+    "wins": 0,
+    "losses": 2,
+    "points": -65.56887581104463,
+    "confidence": 9.75
+  },
+  {
+    "player1": "HiGhDrA",
+    "player2": "Mixu",
+    "matches": 2,
+    "wins": 0,
+    "losses": 2,
+    "points": -74.4307047992291,
+    "confidence": 9.75
+  },
+  {
+    "player1": "Dolan",
+    "player2": "Hardwell",
+    "matches": 2,
+    "wins": 0,
+    "losses": 2,
+    "points": -77.82159771824209,
+    "confidence": 9.75
+  },
+  {
+    "player1": "ErebusBlack",
+    "player2": "Goswser",
+    "matches": 2,
+    "wins": 0,
+    "losses": 2,
+    "points": -80.59115166640417,
     "confidence": 9.75
   },
   {
     "player1": "FIGARO",
     "player2": "RiSky",
-    "matches": 2,
+    "matches": 3,
     "wins": 0,
-    "losses": 2,
-    "points": -106.82026637608972,
-    "confidence": 9.75
+    "losses": 3,
+    "points": -82.78140573729156,
+    "confidence": 14.2625
   },
   {
-    "player1": "Rapuncel",
-    "player2": "RomanDeMolde",
-    "matches": 2,
-    "wins": 0,
-    "losses": 2,
-    "points": -142.50116524187746,
-    "confidence": 9.75
-  },
-  {
-    "player1": "Anticore",
-    "player2": "Azura",
+    "player1": "Calftowin",
+    "player2": "LookMaNoSens",
     "matches": 6,
     "wins": 0,
     "losses": 6,
-    "points": -159.6795734469473,
+    "points": -84.12768549812454,
     "confidence": 26.490810937499997
   },
   {
@@ -1670,7 +2345,25 @@
     "matches": 2,
     "wins": 0,
     "losses": 2,
-    "points": -168.46661575966476,
+    "points": -97.79600902010026,
+    "confidence": 5
+  },
+  {
+    "player1": "Rapuncel",
+    "player2": "RomanDeMolde",
+    "matches": 2,
+    "wins": 0,
+    "losses": 2,
+    "points": -104.06872244167774,
     "confidence": 9.75
+  },
+  {
+    "player1": "Anticore",
+    "player2": "Azura",
+    "matches": 13,
+    "wins": 2,
+    "losses": 11,
+    "points": -113.50217544808302,
+    "confidence": 40.47783221892449
   }
 ]

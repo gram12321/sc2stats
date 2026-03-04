@@ -2,6 +2,61 @@ import { useState, useMemo, useEffect } from 'react';
 import { TournamentData, Match } from '../types/tournament';
 import { MatchBox } from './MatchBox';
 import { MatchEditor } from './MatchEditor';
+import { useRankingSettings } from '../context/RankingSettingsContext';
+
+type EarlyRoundType = 'standard' | 'upper' | 'lower';
+
+const EARLY_ROUND_LABELS: Record<EarlyRoundType, string> = {
+  standard: 'Round',
+  upper: 'Upper Bracket',
+  lower: 'Lower Bracket'
+};
+
+const EARLY_ROUND_SECTION_TITLES: Record<EarlyRoundType, string> = {
+  standard: 'Early Rounds',
+  upper: 'Early Upper Bracket',
+  lower: 'Early Lower Bracket'
+};
+
+const EARLY_ROUND_TYPE_ORDER: Record<EarlyRoundType, number> = {
+  standard: 0,
+  upper: 1,
+  lower: 2
+};
+
+const parseEarlyRound = (roundName: string): { type: EarlyRoundType; number: number } | null => {
+  const standardMatch = roundName.match(/^Early Round (\d+)$/i);
+  if (standardMatch) {
+    return {
+      type: 'standard',
+      number: parseInt(standardMatch[1], 10)
+    };
+  }
+
+  const upperMatch = roundName.match(/^Early Upper Bracket Round (\d+)$/i);
+  if (upperMatch) {
+    return {
+      type: 'upper',
+      number: parseInt(upperMatch[1], 10)
+    };
+  }
+
+  const lowerMatch = roundName.match(/^Early Lower Bracket Round (\d+)$/i);
+  if (lowerMatch) {
+    return {
+      type: 'lower',
+      number: parseInt(lowerMatch[1], 10)
+    };
+  }
+
+  return null;
+};
+
+const formatEarlyRoundName = (type: EarlyRoundType, number: number): string => {
+  if (type === 'upper') return `Early Upper Bracket Round ${number}`;
+  if (type === 'lower') return `Early Lower Bracket Round ${number}`;
+  return `Early Round ${number}`;
+};
 
 interface BracketViewProps {
   data: TournamentData;
@@ -18,6 +73,7 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
   const [allPlayers, setAllPlayers] = useState<string[]>([]);
   const [isAddingMatch, setIsAddingMatch] = useState(false);
   const [selectedEarlyRound, setSelectedEarlyRound] = useState<string>('Early Round 1');
+  const [newEarlyRoundType, setNewEarlyRoundType] = useState<EarlyRoundType>('standard');
   const [emptyEarlyRounds, setEmptyEarlyRounds] = useState<string[]>([]);
   const [newMatch, setNewMatch] = useState<Partial<Match>>({
     round: 'Early Round 1',
@@ -29,6 +85,7 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
     date: tournamentData.tournament.date,
     games: []
   });
+  const { useSeededRankings, mainCircuitOnly, seasons } = useRankingSettings();
 
   // Load team rankings and all players
   useEffect(() => {
@@ -40,7 +97,12 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
           return;
         }
 
-        const tournamentResponse = await fetch(`/api/tournament-team-rankings/${encodeURIComponent(slug)}`);
+        const params = new URLSearchParams();
+        if (useSeededRankings) params.append('useSeeds', 'true');
+        if (mainCircuitOnly) params.append('mainCircuitOnly', 'true');
+        if (seasons && seasons.length > 0) params.append('seasons', seasons.join(','));
+
+        const tournamentResponse = await fetch(`/api/tournament-team-rankings/${encodeURIComponent(slug)}?${params.toString()}`);
 
         if (tournamentResponse.ok) {
           const tournamentData = await tournamentResponse.json();
@@ -71,7 +133,7 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
     
     loadTeamRankings();
     loadPlayers();
-  }, [tournamentData.tournament.liquipedia_slug]);
+  }, [tournamentData.tournament.liquipedia_slug, useSeededRankings, mainCircuitOnly, seasons]);
 
   // Update effect to handle prop changes and auto-detection
   useEffect(() => {
@@ -123,7 +185,7 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
     const earlyRoundSet = new Set<string>();
 
     tournamentData.matches.forEach(match => {
-      if (match.round.startsWith('Early Round ')) {
+      if (parseEarlyRound(match.round)) {
         earlyRounds.push(match);
         earlyRoundSet.add(match.round);
       } else if (match.round.startsWith('Group ')) {
@@ -139,9 +201,18 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
 
     // Sort early rounds by number (Early Round 1, Early Round 2, etc.)
     const sortedEarlyRounds = Array.from(allEarlyRounds).sort((a, b) => {
-      const numA = parseInt(a.replace('Early Round ', ''));
-      const numB = parseInt(b.replace('Early Round ', ''));
-      return numA - numB;
+      const parsedA = parseEarlyRound(a);
+      const parsedB = parseEarlyRound(b);
+
+      if (parsedA && parsedB) {
+        const typeOrderDiff = EARLY_ROUND_TYPE_ORDER[parsedA.type] - EARLY_ROUND_TYPE_ORDER[parsedB.type];
+        if (typeOrderDiff !== 0) return typeOrderDiff;
+        return parsedA.number - parsedB.number;
+      }
+
+      if (parsedA) return -1;
+      if (parsedB) return 1;
+      return a.localeCompare(b);
     });
 
     return {
@@ -286,14 +357,16 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
   };
 
   const handleAddEarlyRound = () => {
-    // Find the highest existing early round number
+    // Find the highest existing early round number for the selected bracket type
     let maxRoundNum = 0;
     earlyRoundNames.forEach(roundName => {
-      const num = parseInt(roundName.replace('Early Round ', ''));
-      if (num > maxRoundNum) maxRoundNum = num;
+      const parsedRound = parseEarlyRound(roundName);
+      if (parsedRound?.type === newEarlyRoundType && parsedRound.number > maxRoundNum) {
+        maxRoundNum = parsedRound.number;
+      }
     });
-    
-    const newRoundName = `Early Round ${maxRoundNum + 1}`;
+
+    const newRoundName = formatEarlyRoundName(newEarlyRoundType, maxRoundNum + 1);
     setEmptyEarlyRounds([...emptyEarlyRounds, newRoundName]);
     setSelectedEarlyRound(newRoundName);
     setSaveMessage(`${newRoundName} created! Add matches to it.`);
@@ -308,6 +381,29 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
       return acc;
     }, {} as Record<string, Match[]>);
   }, [earlyRoundsMatches, earlyRoundNames]);
+
+  const earlyRoundSections = useMemo(() => {
+    const sections: Record<EarlyRoundType, string[]> = {
+      standard: [],
+      upper: [],
+      lower: []
+    };
+
+    earlyRoundNames.forEach(roundName => {
+      const parsedRound = parseEarlyRound(roundName);
+      if (parsedRound) {
+        sections[parsedRound.type].push(roundName);
+      }
+    });
+
+    return (['standard', 'upper', 'lower'] as EarlyRoundType[])
+      .filter(type => sections[type].length > 0)
+      .map(type => ({
+        type,
+        title: EARLY_ROUND_SECTION_TITLES[type],
+        rounds: sections[type]
+      }));
+  }, [earlyRoundNames]);
 
   // Separate rounds into upper bracket and lower bracket
   // Lower bracket rounds are explicitly named "Lower Bracket", everything else is upper bracket
@@ -555,11 +651,21 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
               </p>
             </div>
             <div className="flex gap-2">
+              <select
+                value={newEarlyRoundType}
+                onChange={(e) => setNewEarlyRoundType(e.target.value as EarlyRoundType)}
+                className="px-3 py-2 border border-gray-300 rounded-md bg-white text-gray-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                title="Type of round to create"
+              >
+                <option value="standard">Round</option>
+                <option value="upper">Upper Bracket</option>
+                <option value="lower">Lower Bracket</option>
+              </select>
               <button
                 onClick={handleAddEarlyRound}
                 className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
               >
-                + Add Round
+                + Add {EARLY_ROUND_LABELS[newEarlyRoundType]}
               </button>
               {earlyRoundNames.length > 0 && (
                 <button
@@ -739,71 +845,82 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
 
           {/* Display early rounds horizontally like bracket */}
           {earlyRoundNames.length > 0 ? (
-            <div className="max-w-full overflow-x-auto">
-              <div className="inline-flex gap-8 px-6">
-                {earlyRoundNames.map((roundName) => (
-                  <div key={roundName} className="flex flex-col min-w-[200px]">
-                    {/* Round Header */}
-                    <div className="mb-4 text-center relative">
-                      <h3 className="text-sm font-semibold text-gray-700 bg-gray-100 px-3 py-1 rounded">
-                        {roundName}
-                      </h3>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteRound(roundName);
-                        }}
-                        className="absolute top-0 right-0 p-1 bg-red-500 text-white rounded hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500"
-                        title={`Delete ${roundName}`}
-                      >
-                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </button>
-                      <p className="text-xs text-gray-500 mt-1">
-                        {groupedEarlyRounds[roundName]?.length || 0} matches
-                      </p>
-                    </div>
-
-                    {/* Matches */}
-                    <div className="flex flex-col gap-4 py-4">
-                      {groupedEarlyRounds[roundName]?.length > 0 ? (
-                        groupedEarlyRounds[roundName].map((match) => (
-                          <div key={match.match_id} className="relative">
-                            <MatchBox
-                              match={match}
-                              teamRankings={teamRankings}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setSelectedMatch(match);
-                              }}
-                            />
+            <div className="max-w-full px-6 space-y-8">
+              {earlyRoundSections.map((section) => (
+                <div key={section.type}>
+                  <div className="mb-3 text-center">
+                    <h3 className="inline-block text-sm font-semibold text-gray-700 bg-gray-200 px-4 py-1 rounded">
+                      {section.title}
+                    </h3>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <div className="inline-flex gap-8">
+                      {section.rounds.map((roundName) => (
+                        <div key={roundName} className="flex flex-col min-w-[200px]">
+                          {/* Round Header */}
+                          <div className="mb-4 text-center relative">
+                            <h3 className="text-sm font-semibold text-gray-700 bg-gray-100 px-3 py-1 rounded">
+                              {roundName}
+                            </h3>
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                handleDeleteMatch(match.match_id);
+                                handleDeleteRound(roundName);
                               }}
-                              className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 z-10"
-                              title="Delete match"
+                              className="absolute top-0 right-0 p-1 bg-red-500 text-white rounded hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500"
+                              title={`Delete ${roundName}`}
                             >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                               </svg>
                             </button>
+                            <p className="text-xs text-gray-500 mt-1">
+                              {groupedEarlyRounds[roundName]?.length || 0} matches
+                            </p>
                           </div>
-                        ))
-                      ) : (
-                        <div className="text-center py-8 text-gray-400 text-sm">
-                          <svg className="w-8 h-8 mx-auto mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                          </svg>
-                          <p>No matches yet</p>
+
+                          {/* Matches */}
+                          <div className="flex flex-col gap-4 py-4">
+                            {groupedEarlyRounds[roundName]?.length > 0 ? (
+                              groupedEarlyRounds[roundName].map((match) => (
+                                <div key={match.match_id} className="relative">
+                                  <MatchBox
+                                    match={match}
+                                    teamRankings={teamRankings}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setSelectedMatch(match);
+                                    }}
+                                  />
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleDeleteMatch(match.match_id);
+                                    }}
+                                    className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 z-10"
+                                    title="Delete match"
+                                  >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                  </button>
+                                </div>
+                              ))
+                            ) : (
+                              <div className="text-center py-8 text-gray-400 text-sm">
+                                <svg className="w-8 h-8 mx-auto mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                </svg>
+                                <p>No matches yet</p>
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      )}
+                      ))}
                     </div>
                   </div>
-                ))}
-              </div>
+                </div>
+              ))}
             </div>
           ) : (
             <div className="max-w-7xl mx-auto px-6">

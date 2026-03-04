@@ -6,6 +6,7 @@ import { formatRankingPoints, getRaceAbbr } from '../lib/utils';
 import { MatchHistoryItem } from '../components/MatchHistoryItem';
 import { RatingChart } from '../components/RatingChart';
 import { RaceMatchupStats } from '../components/RaceMatchupStats';
+import { RankingFilters } from '../components/RankingFilters';
 
 interface PlayerMatch {
   match_id: string;
@@ -97,9 +98,8 @@ export function PlayerDetails({ playerName, onBack }: PlayerDetailsProps) {
   const [teamRankings, setTeamRankings] = useState<Record<string, { rank: number; points: number; confidence: number }>>({});
   const [playerRaces, setPlayerRaces] = useState<Record<string, Race>>({});
   const [comboRankings, setComboRankings] = useState<Record<string, { points: number }>>({});
-  const [useSeededRankings, setUseSeededRankings] = useState(false);
   const [chartMode, setChartMode] = useState<'rating' | 'rank'>('rating');
-  const { seasons } = useRankingSettings();
+  const { seasons, mainCircuitOnly, useSeededRankings } = useRankingSettings();
 
   useEffect(() => {
     loadPlayerDetails();
@@ -108,7 +108,7 @@ export function PlayerDetails({ playerName, onBack }: PlayerDetailsProps) {
     loadTeamRankings();
     loadAllPlayerRaces();
     loadComboRankings();
-  }, [playerName, useSeededRankings, seasons]);
+  }, [playerName, useSeededRankings, seasons, mainCircuitOnly]);
 
   const loadPlayerDetails = async () => {
     try {
@@ -116,6 +116,7 @@ export function PlayerDetails({ playerName, onBack }: PlayerDetailsProps) {
       setError(null);
       const params = new URLSearchParams();
       if (useSeededRankings) params.append('useSeeds', 'true');
+      if (mainCircuitOnly) params.append('mainCircuitOnly', 'true');
       if (seasons && seasons.length > 0) params.append('seasons', seasons.join(','));
 
       const response = await fetch(`/api/player/${encodeURIComponent(playerName)}?${params.toString()}`);
@@ -146,9 +147,11 @@ export function PlayerDetails({ playerName, onBack }: PlayerDetailsProps) {
   const loadPlayerRankings = async () => {
     try {
       const params = new URLSearchParams();
+      if (mainCircuitOnly) params.append('mainCircuitOnly', 'true');
       if (seasons && seasons.length > 0) params.append('seasons', seasons.join(','));
 
-      const response = await fetch(`/api/player-rankings?${params.toString()}`);
+      const endpoint = useSeededRankings ? '/api/seeded-player-rankings' : '/api/player-rankings';
+      const response = await fetch(`${endpoint}?${params.toString()}`);
       if (!response.ok) throw new Error('Failed to load player rankings');
       const data: PlayerRanking[] = await response.json();
       const rankMap: Record<string, { rank: number; points: number; confidence: number }> = {};
@@ -168,9 +171,11 @@ export function PlayerDetails({ playerName, onBack }: PlayerDetailsProps) {
   const loadTeamRankings = async () => {
     try {
       const params = new URLSearchParams();
+      if (mainCircuitOnly) params.append('mainCircuitOnly', 'true');
       if (seasons && seasons.length > 0) params.append('seasons', seasons.join(','));
 
-      const response = await fetch(`/api/team-rankings?${params.toString()}`);
+      const endpoint = useSeededRankings ? '/api/seeded-team-rankings' : '/api/team-rankings';
+      const response = await fetch(`${endpoint}?${params.toString()}`);
       if (!response.ok) throw new Error('Failed to load team rankings');
       const data: TeamRanking[] = await response.json();
       const rankMap: Record<string, { rank: number; points: number; confidence: number }> = {};
@@ -200,6 +205,7 @@ export function PlayerDetails({ playerName, onBack }: PlayerDetailsProps) {
   const loadComboRankings = async () => {
     try {
       const params = new URLSearchParams();
+      if (mainCircuitOnly) params.append('mainCircuitOnly', 'true');
       if (seasons && seasons.length > 0) params.append('seasons', seasons.join(','));
 
       const response = await fetch(`/api/team-race-rankings?${params.toString()}`);
@@ -406,23 +412,11 @@ export function PlayerDetails({ playerName, onBack }: PlayerDetailsProps) {
               )}
             </div>
             <div className="flex items-center gap-4">
-              <div className="flex items-center">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={useSeededRankings}
-                    onChange={(e) => setUseSeededRankings(e.target.checked)}
-                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                  />
-                  <span className="text-sm text-muted-foreground">Use Initial Seeds (Average of Pass 1 & 2)</span>
-                </label>
-                <div className="ml-2 group relative">
-                  <span className="cursor-help text-gray-400 text-xs border border-gray-400 rounded-full w-4 h-4 inline-flex items-center justify-center">?</span>
-                  <div className="invisible group-hover:visible absolute top-full right-0 mt-2 w-64 p-2 bg-gray-800 text-white text-xs rounded shadow-lg z-10">
-                    When checked, rankings start from a seed value derived from a preliminary analysis of all matches. Without this, everyone starts at 0.
-                  </div>
-                </div>
-              </div>
+              <RankingFilters
+                showSeeded={true}
+                showMainCircuit={true}
+                showConfidence={false}
+              />
               {onBack && (
                 <button
                   onClick={onBack}
