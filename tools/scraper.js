@@ -307,69 +307,75 @@ function parseGroupStage(wikitext, tournamentSlug) {
 function parseBracket(wikitext, tournamentSlug) {
   const matches = [];
 
-  // Find bracket section
-  const bracketStart = wikitext.indexOf('{{Bracket');
-  if (bracketStart === -1) return matches;
+  const normalizeRoundNameFromSection = (sectionTitle) => {
+    if (!sectionTitle) return null;
 
-  // Extract bracket content
-  let bracketContent = '';
-  let braceCount = 0;
-  let inBracket = false;
+    const normalized = sectionTitle
+      .replace(/\s+/g, ' ')
+      .trim();
 
-  for (let i = bracketStart; i < wikitext.length; i++) {
-    const nextTwo = wikitext.substring(i, i + 2);
+    const lower = normalized.toLowerCase();
 
-    if (nextTwo === '{{') {
-      braceCount++;
-      inBracket = true;
-    } else if (nextTwo === '}}' && inBracket) {
-      braceCount--;
-      if (braceCount === 0) {
-        bracketContent = wikitext.substring(bracketStart, i + 2);
-        break;
-      }
-    }
-  }
+    if (lower.includes('upper bracket quarterfinal')) return 'Upper Bracket Quarterfinals';
+    if (lower.includes('upper bracket semifinal')) return 'Upper Bracket Semifinals';
+    if (lower.includes('upper bracket final')) return 'Upper Bracket Final';
+    if (lower.includes('lower bracket round 1')) return 'Lower Bracket Round 1';
+    if (lower.includes('lower bracket round 2')) return 'Lower Bracket Round 2';
+    if (lower.includes('lower bracket quarterfinal')) return 'Lower Bracket Quarterfinals';
+    if (lower.includes('lower bracket semifinal')) return 'Lower Bracket Semifinals';
+    if (lower.includes('lower bracket final')) return 'Lower Bracket Final';
+    if (lower.includes('grand final')) return 'Grand Final';
+    if (lower.includes('quarterfinal')) return 'Quarterfinals';
+    if (lower.includes('semifinal')) return 'Semifinals';
 
-  if (!bracketContent) return matches;
-
-  // Round definitions
-  // First, scan for all matches to determine the structure (max round)
-  const allMatchRegex = /\|R(\d+)M(\d+)\s*=\s*\{\{Match/g;
-  let maxRound = 0;
-  let matchMatch;
-  const validMatches = [];
-
-  while ((matchMatch = allMatchRegex.exec(bracketContent)) !== null) {
-    const roundNum = parseInt(matchMatch[1]);
-    const matchNum = matchMatch[2];
-
-    if (roundNum > maxRound) maxRound = roundNum;
-
-    const startPos = matchMatch.index + matchMatch[0].length - '{{Match'.length;
-    validMatches.push({
-      roundNum,
-      matchNum,
-      startPos
-    });
-  }
-
-  // Round naming helper
-  const getRoundName = (rNum) => {
-    const depth = maxRound - rNum;
-    switch (depth) {
-      case 0: return 'Grand Final';
-      case 1: return 'Semifinals';
-      case 2: return 'Quarterfinals';
-      default: return `Round of ${Math.pow(2, depth + 1)}`;
-    }
+    return normalized;
   };
 
-  // Process and parse matches
-  validMatches.forEach(({ roundNum, matchNum, startPos }) => {
-    const matchText = extractNestedTemplate(bracketContent, startPos);
-    if (matchText) {
-      const roundName = getRoundName(roundNum);
+  let bracketStart = -1;
+  while ((bracketStart = wikitext.indexOf('{{Bracket', bracketStart + 1)) !== -1) {
+    const bracketContent = extractNestedTemplate(wikitext, bracketStart);
+    if (!bracketContent) continue;
+
+    // First, scan for all matches to determine fallback structure (max round)
+    const allMatchRegex = /\|R(\d+)M(\d+)\s*=\s*\{\{Match/g;
+    let maxRound = 0;
+    let matchMatch;
+
+    while ((matchMatch = allMatchRegex.exec(bracketContent)) !== null) {
+      const roundNum = parseInt(matchMatch[1]);
+      if (roundNum > maxRound) maxRound = roundNum;
+    }
+
+    const getFallbackRoundName = (rNum) => {
+      const depth = maxRound - rNum;
+      switch (depth) {
+        case 0: return 'Grand Final';
+        case 1: return 'Semifinals';
+        case 2: return 'Quarterfinals';
+        default: return `Round of ${Math.pow(2, depth + 1)}`;
+      }
+    };
+
+    // Scan bracket content in order, tracking section comments for accurate UB/LB naming
+    const sectionOrMatchRegex = /<!--\s*([^>]+?)\s*-->|\|R(\d+)M(\d+)\s*=\s*\{\{Match/g;
+    let tokenMatch;
+    let currentSection = null;
+
+    while ((tokenMatch = sectionOrMatchRegex.exec(bracketContent)) !== null) {
+      // Comment token updates current section context
+      if (tokenMatch[1]) {
+        currentSection = tokenMatch[1].trim();
+        continue;
+      }
+
+      const roundNum = parseInt(tokenMatch[2]);
+      const matchNum = tokenMatch[3];
+      const startPos = tokenMatch.index + tokenMatch[0].length - '{{Match'.length;
+      const matchText = extractNestedTemplate(bracketContent, startPos);
+
+      if (!matchText) continue;
+
+      const roundName = normalizeRoundNameFromSection(currentSection) || getFallbackRoundName(roundNum);
       const matchId = `R${roundNum}M${matchNum}`;
 
       const parsedMatch = parseMatch(matchText, roundName, matchId);
@@ -378,7 +384,7 @@ function parseBracket(wikitext, tournamentSlug) {
         matches.push(parsedMatch);
       }
     }
-  });
+  }
 
   return matches;
 }

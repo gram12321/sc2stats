@@ -20,7 +20,7 @@
   "matches": [
     {
       "match_id": "R1M1",
-      "round": "Round of 32",
+      "round": "Upper Bracket Quarterfinals",
       "team1": {
         "player1": {
           "name": "Cure"
@@ -46,7 +46,7 @@
     },
     {
       "match_id": "R1M2",
-      "round": "Round of 32",
+      "round": "Upper Bracket Quarterfinals",
       "team1": {
         "player1": {
           "name": "DefMars"
@@ -72,7 +72,7 @@
     },
     {
       "match_id": "R1M3",
-      "round": "Round of 32",
+      "round": "Upper Bracket Quarterfinals",
       "team1": {
         "player1": {
           "name": "Lambo"
@@ -98,7 +98,7 @@
     },
     {
       "match_id": "R1M4",
-      "round": "Round of 32",
+      "round": "Upper Bracket Quarterfinals",
       "team1": {
         "player1": {
           "name": "Clem"
@@ -133,7 +133,7 @@
     },
     {
       "match_id": "R2M1",
-      "round": "Round of 16",
+      "round": "Upper Bracket Semifinals",
       "team1": {
         "player1": {
           "name": "Cure"
@@ -172,7 +172,7 @@
     },
     {
       "match_id": "R2M2",
-      "round": "Round of 16",
+      "round": "Upper Bracket Semifinals",
       "team1": {
         "player1": {
           "name": "Lambo"
@@ -211,7 +211,7 @@
     },
     {
       "match_id": "R4M1",
-      "round": "Semifinals",
+      "round": "Upper Bracket Final",
       "team1": {
         "player1": {
           "name": "Cure"
@@ -250,7 +250,7 @@
     },
     {
       "match_id": "R1M5",
-      "round": "Round of 32",
+      "round": "Lower Bracket Round 1",
       "team1": {
         "player1": {
           "name": "DefMars"
@@ -276,7 +276,7 @@
     },
     {
       "match_id": "R1M6",
-      "round": "Round of 32",
+      "round": "Lower Bracket Round 1",
       "team1": {
         "player1": {
           "name": "Clem"
@@ -302,7 +302,7 @@
     },
     {
       "match_id": "R2M3",
-      "round": "Round of 16",
+      "round": "Lower Bracket Quarterfinals",
       "team1": {
         "player1": {
           "name": "Serral"
@@ -333,7 +333,7 @@
     },
     {
       "match_id": "R2M4",
-      "round": "Round of 16",
+      "round": "Lower Bracket Quarterfinals",
       "team1": {
         "player1": {
           "name": "SHIN"
@@ -364,7 +364,7 @@
     },
     {
       "match_id": "R3M1",
-      "round": "Quarterfinals",
+      "round": "Lower Bracket Semifinals",
       "team1": {
         "player1": {
           "name": "DefMars"
@@ -390,7 +390,7 @@
     },
     {
       "match_id": "R4M2",
-      "round": "Semifinals",
+      "round": "Lower Bracket Final",
       "team1": {
         "player1": {
           "name": "Cure"

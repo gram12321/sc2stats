@@ -850,10 +850,10 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
       {activeTab === 'playoffs' && bracketMatches.length > 0 && (
         <div className="max-w-full overflow-x-auto py-6">
           {isDoubleElimination ? (
-            // Double-elimination: Show upper and lower brackets side by side
-            <div className="flex gap-12 px-6">
+            // Double-elimination: Show upper bracket above lower bracket
+            <div className="flex flex-col gap-10 px-6 w-max">
               {/* Upper Bracket */}
-              <div className="flex-shrink-0">
+              <div>
                 <div className="mb-4 text-center">
                   <h2 className="text-lg font-bold text-gray-900 bg-blue-100 px-4 py-2 rounded">
                     Upper Bracket
@@ -903,7 +903,7 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
               </div>
 
               {/* Lower Bracket */}
-              <div className="flex-shrink-0">
+              <div>
                 <div className="mb-4 text-center">
                   <h2 className="text-lg font-bold text-gray-900 bg-red-100 px-4 py-2 rounded">
                     Lower Bracket
@@ -913,6 +913,11 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
                   {lowerBracketRounds.map((round, roundIndex) => {
                     const matches = groupedMatches[round] || [];
                     if (matches.length === 0) return null;
+
+                    const receivesUpperBracketDrop =
+                      round === 'Lower Bracket Round 2' ||
+                      round === 'Lower Bracket Quarterfinals' ||
+                      round === 'Lower Bracket Final';
 
                     return (
                       <div key={round} className="flex flex-col min-w-[200px]">
@@ -927,6 +932,12 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
                         <div className="flex flex-col justify-around flex-grow py-4 min-h-[400px]">
                           {matches.map((match) => (
                             <div key={match.match_id} className="relative">
+                              {receivesUpperBracketDrop && (
+                                <>
+                                  <div className="absolute -top-6 left-1/2 h-6 w-px -translate-x-1/2 bg-gray-400"></div>
+                                  <div className="absolute -top-7 left-1/2 h-2 w-2 -translate-x-1/2 rounded-full bg-gray-400"></div>
+                                </>
+                              )}
                               <MatchBox
                                 match={match}
                                 teamRankings={teamRankings}
@@ -951,7 +962,7 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
 
               {/* Grand Final (if exists) - shown separately after lower bracket */}
               {upperBracketRounds.includes('Grand Final') && (
-                <div className="flex-shrink-0">
+                <div>
                   <div className="mb-4 text-center">
                     <h2 className="text-lg font-bold text-gray-900 bg-yellow-100 px-4 py-2 rounded">
                       Grand Final
