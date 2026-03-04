@@ -15,7 +15,9 @@
       "Rohana",
       "Undercurrent",
       "Yellowjacket"
-    ]
+    ],
+    "is_main_circuit": true,
+    "season": 2025
   },
   "matches": [
     {
@@ -449,6 +451,186 @@
           "winner": 1
         }
       ],
+      "tournament_slug": "UThermal_2v2_Circuit/4"
+    },
+    {
+      "match_id": "early_1772633621222",
+      "round": "Early Round 1",
+      "team1": {
+        "player1": {
+          "name": "Hardwell",
+          "race": null
+        },
+        "player2": {
+          "name": "Blademaster",
+          "race": null
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Psz",
+          "race": null
+        },
+        "player2": {
+          "name": "Psz(Nihed)",
+          "race": null
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 0,
+      "best_of": 3,
+      "date": "2025-04-27",
+      "games": [],
+      "tournament_slug": "UThermal_2v2_Circuit/4"
+    },
+    {
+      "match_id": "early_1772633651136",
+      "round": "Early Round 1",
+      "team1": {
+        "player1": {
+          "name": "Lambo",
+          "race": null
+        },
+        "player2": {
+          "name": "Harstem",
+          "race": null
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "CJ",
+          "race": null
+        },
+        "player2": {
+          "name": "Killa",
+          "race": null
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 0,
+      "best_of": 3,
+      "date": "2025-04-27",
+      "games": [],
+      "tournament_slug": "UThermal_2v2_Circuit/4"
+    },
+    {
+      "match_id": "early_1772633706599",
+      "round": "Early Round 1",
+      "team1": {
+        "player1": {
+          "name": "Replicant",
+          "race": null
+        },
+        "player2": {
+          "name": "Tiger",
+          "race": null
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "RaGnaR",
+          "race": null
+        },
+        "player2": {
+          "name": "MullTastic",
+          "race": null
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 0,
+      "best_of": 3,
+      "date": "2025-04-27",
+      "games": [],
+      "tournament_slug": "UThermal_2v2_Circuit/4"
+    },
+    {
+      "match_id": "early_1772633732152",
+      "round": "Early Round 1",
+      "team1": {
+        "player1": {
+          "name": "DefMars",
+          "race": null
+        },
+        "player2": {
+          "name": "ZaRDieNT",
+          "race": null
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "NoobCake",
+          "race": null
+        },
+        "player2": {
+          "name": "MrMadman33",
+          "race": null
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 0,
+      "best_of": 3,
+      "date": "2025-04-27",
+      "games": [],
+      "tournament_slug": "UThermal_2v2_Circuit/4"
+    },
+    {
+      "match_id": "early_1772633757092",
+      "round": "Early Round 1",
+      "team1": {
+        "player1": {
+          "name": "DIMAGA",
+          "race": null
+        },
+        "player2": {
+          "name": "Starfish",
+          "race": null
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "AppleJuice",
+          "race": null
+        },
+        "player2": {
+          "name": "calyxkaylex",
+          "race": null
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 1,
+      "best_of": 3,
+      "date": "2025-04-27",
+      "games": [],
+      "tournament_slug": "UThermal_2v2_Circuit/4"
+    },
+    {
+      "match_id": "early_1772633791834",
+      "round": "Early Round 1",
+      "team1": {
+        "player1": {
+          "name": "Brat_OK",
+          "race": null
+        },
+        "player2": {
+          "name": "MindelVK",
+          "race": null
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Spartacus",
+          "race": null
+        },
+        "player2": {
+          "name": "FriedRice",
+          "race": null
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 0,
+      "best_of": 3,
+      "date": "2025-04-27",
+      "games": [],
       "tournament_slug": "UThermal_2v2_Circuit/4"
     }
   ]

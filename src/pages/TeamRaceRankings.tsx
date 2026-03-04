@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useRankingSettings } from '../context/RankingSettingsContext';
 import { RankingFilters } from '../components/RankingFilters';
-import { formatRankingPoints, ROUND_ORDER } from '../lib/utils';
+import { formatRankingPoints, getRoundSortOrder } from '../lib/utils';
 import { Race } from '../types/tournament';
 import { getPlayerDefaults } from '../lib/playerDefaults';
 import { MatchHistoryItem } from '../components/MatchHistoryItem';
@@ -893,8 +893,8 @@ export function TeamRaceRankings({ }: TeamRaceRankingsProps) {
                         }
 
                         // Fallback to round order (higher round first = newest first)
-                        const roundA = ROUND_ORDER[a.round] || 0;
-                        const roundB = ROUND_ORDER[b.round] || 0;
+                        const roundA = getRoundSortOrder(a.round);
+                        const roundB = getRoundSortOrder(b.round);
                         if (roundA !== roundB) {
                           return roundB - roundA;
                         }

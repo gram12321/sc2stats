@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useRankingSettings } from '../context/RankingSettingsContext';
-import { formatRankingPoints, getRaceAbbr, ROUND_ORDER } from '../lib/utils';
+import { formatRankingPoints, getRaceAbbr, getRoundSortOrder } from '../lib/utils';
 import { Race } from '../types/tournament';
 import { getPlayerDefaults } from '../lib/playerDefaults';
 import { MatchHistoryItem } from '../components/MatchHistoryItem';
@@ -285,8 +285,8 @@ export function TeamDetails({ player1, player2, onBack }: TeamDetailsProps) {
     }
 
     // Then by round order (higher round first = newest first)
-    const roundA = ROUND_ORDER[a.round] || 0;
-    const roundB = ROUND_ORDER[b.round] || 0;
+    const roundA = getRoundSortOrder(a.round);
+    const roundB = getRoundSortOrder(b.round);
     if (roundA !== roundB) {
       return roundB - roundA;
     }
