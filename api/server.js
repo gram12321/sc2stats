@@ -305,6 +305,68 @@ app.get('/api/players', async (req, res) => {
   }
 });
 
+// Get teammate history per player across all tournaments
+app.get('/api/player-teammates', async (req, res) => {
+  try {
+    const files = await readdir(outputDir);
+    const jsonFiles = files.filter(
+      (f) => f.endsWith('.json') && f !== 'player_defaults.json' && !f.startsWith('seeded_')
+    );
+
+    const teammateCounts = new Map();
+
+    const addPair = (playerA, playerB) => {
+      if (!playerA || !playerB || playerA === playerB) return;
+
+      if (!teammateCounts.has(playerA)) {
+        teammateCounts.set(playerA, new Map());
+      }
+
+      const currentCount = teammateCounts.get(playerA).get(playerB) || 0;
+      teammateCounts.get(playerA).set(playerB, currentCount + 1);
+    };
+
+    for (const file of jsonFiles) {
+      try {
+        const filePath = join(outputDir, file);
+        const content = await readFile(filePath, 'utf-8');
+        const data = JSON.parse(content);
+
+        if (!Array.isArray(data?.matches)) continue;
+
+        data.matches.forEach((match) => {
+          const t1p1 = match.team1?.player1?.name;
+          const t1p2 = match.team1?.player2?.name;
+          const t2p1 = match.team2?.player1?.name;
+          const t2p2 = match.team2?.player2?.name;
+
+          addPair(t1p1, t1p2);
+          addPair(t1p2, t1p1);
+          addPair(t2p1, t2p2);
+          addPair(t2p2, t2p1);
+        });
+      } catch (err) {
+        console.error(`Error reading ${file} for teammate history:`, err);
+      }
+    }
+
+    const teammates = {};
+    teammateCounts.forEach((counts, player) => {
+      teammates[player] = Array.from(counts.entries())
+        .sort((a, b) => {
+          if (b[1] !== a[1]) return b[1] - a[1];
+          return a[0].localeCompare(b[0]);
+        })
+        .map(([teammate]) => teammate);
+    });
+
+    res.json({ teammates });
+  } catch (error) {
+    console.error('Error getting player teammate history:', error);
+    res.status(500).json({ error: 'Failed to get player teammate history' });
+  }
+});
+
 app.post('/api/players/rename', async (req, res) => {
   try {
     const fromName = String(req.body?.fromName || '').trim();
