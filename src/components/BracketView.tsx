@@ -308,6 +308,7 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
 
     // Define round order for upper bracket (single-elimination or upper bracket of double-elimination)
     const upperBracketOrder = [
+      'Round of 32',
       'Round of 16',
       'Upper Bracket Quarterfinals',
       'Quarterfinals',
