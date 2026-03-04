@@ -129,7 +129,12 @@ export function calculateTeamRankingsFromMatches(sortedMatches, seeds = null) {
         team2Confidence,
         null,
         finalPopulationMean,
-        team2Stats.matches
+        team2Stats.matches,
+        {
+          teamScore: match.team1_score,
+          opponentScore: match.team2_score,
+          bestOf: match.best_of
+        }
       );
       const team2Result = updateStatsForMatch(
         team2Stats,
@@ -140,7 +145,12 @@ export function calculateTeamRankingsFromMatches(sortedMatches, seeds = null) {
         team1Confidence,
         null,
         finalPopulationMean,
-        team1Stats.matches
+        team1Stats.matches,
+        {
+          teamScore: match.team2_score,
+          opponentScore: match.team1_score,
+          bestOf: match.best_of
+        }
       );
 
       // Calculate rankings after processing this match

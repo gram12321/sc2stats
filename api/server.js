@@ -46,6 +46,21 @@ function normalizePlayerNameForSimilarity(name) {
     .replace(/[^a-z0-9]/g, '');
 }
 
+function shouldReplacePlayerName(currentName, fromName, toName) {
+  if (typeof currentName !== 'string') return false;
+
+  if (currentName === fromName) {
+    return currentName !== toName;
+  }
+
+  const isWhitespaceVariantMerge = fromName === toName;
+  if (!isWhitespaceVariantMerge) {
+    return false;
+  }
+
+  return currentName !== toName && currentName.trimEnd() === toName;
+}
+
 function replacePlayerInTournamentData(tournamentData, fromName, toName) {
   if (!tournamentData?.matches || !Array.isArray(tournamentData.matches)) {
     return { changed: false, replacements: 0 };
@@ -62,7 +77,7 @@ function replacePlayerInTournamentData(tournamentData, fromName, toName) {
     ];
 
     players.forEach((player) => {
-      if (player?.name === fromName) {
+      if (shouldReplacePlayerName(player?.name, fromName, toName)) {
         player.name = toName;
         replacements += 1;
       }
@@ -77,20 +92,21 @@ function replacePlayerInSeededPlayerSeeds(data, fromName, toName) {
     return { changed: false, replacements: 0, updated: data };
   }
 
-  if (!(fromName in data)) {
+  const updated = { ...data };
+  const sourceKeys = Object.keys(updated).filter((key) => shouldReplacePlayerName(key, fromName, toName));
+
+  if (sourceKeys.length === 0) {
     return { changed: false, replacements: 0, updated: data };
   }
 
-  const updated = { ...data };
-  const fromValue = updated[fromName];
+  sourceKeys.forEach((sourceKey) => {
+    if (!(toName in updated)) {
+      updated[toName] = updated[sourceKey];
+    }
+    delete updated[sourceKey];
+  });
 
-  if (!(toName in updated)) {
-    updated[toName] = fromValue;
-  }
-
-  delete updated[fromName];
-
-  return { changed: true, replacements: 1, updated };
+  return { changed: true, replacements: sourceKeys.length, updated };
 }
 
 function replacePlayerInSeededTeamSeeds(data, fromName, toName) {
@@ -108,8 +124,8 @@ function replacePlayerInSeededTeamSeeds(data, fromName, toName) {
       return;
     }
 
-    const nextP1 = p1 === fromName ? toName : p1;
-    const nextP2 = p2 === fromName ? toName : p2;
+    const nextP1 = shouldReplacePlayerName(p1, fromName, toName) ? toName : p1;
+    const nextP2 = shouldReplacePlayerName(p2, fromName, toName) ? toName : p2;
     if (nextP1 !== p1 || nextP2 !== p2) {
       replacements += (nextP1 !== p1 ? 1 : 0) + (nextP2 !== p2 ? 1 : 0);
     }
@@ -130,7 +146,7 @@ function replacePlayerInSeededPlayerRankings(data, fromName, toName) {
 
   let replacements = 0;
   const updated = data.map((row) => {
-    if (row?.name === fromName) {
+    if (shouldReplacePlayerName(row?.name, fromName, toName)) {
       replacements += 1;
       return { ...row, name: toName };
     }
@@ -147,8 +163,8 @@ function replacePlayerInSeededTeamRankings(data, fromName, toName) {
 
   let replacements = 0;
   const updated = data.map((row) => {
-    const nextPlayer1 = row?.player1 === fromName ? toName : row?.player1;
-    const nextPlayer2 = row?.player2 === fromName ? toName : row?.player2;
+    const nextPlayer1 = shouldReplacePlayerName(row?.player1, fromName, toName) ? toName : row?.player1;
+    const nextPlayer2 = shouldReplacePlayerName(row?.player2, fromName, toName) ? toName : row?.player2;
 
     if (nextPlayer1 !== row?.player1 || nextPlayer2 !== row?.player2) {
       replacements += (nextPlayer1 !== row?.player1 ? 1 : 0) + (nextPlayer2 !== row?.player2 ? 1 : 0);
@@ -369,18 +385,17 @@ app.get('/api/player-teammates', async (req, res) => {
 
 app.post('/api/players/rename', async (req, res) => {
   try {
-    const fromName = String(req.body?.fromName || '').trim();
+    const fromName = String(req.body?.fromName || '');
     const toName = String(req.body?.toName || '').trim();
+    const fromNameTrimmed = fromName.trim();
 
-    if (!fromName || !toName) {
+    if (!fromNameTrimmed || !toName) {
       return res.status(400).json({ error: 'Both fromName and toName are required' });
     }
 
-    if (fromName === toName) {
-      return res.status(400).json({ error: 'fromName and toName are the same' });
-    }
+    const isWhitespaceVariantMerge = fromName === toName;
 
-    const fromNormalized = normalizePlayerNameForSimilarity(fromName);
+    const fromNormalized = normalizePlayerNameForSimilarity(fromNameTrimmed);
     const toNormalized = normalizePlayerNameForSimilarity(toName);
 
     if (!fromNormalized || !toNormalized) {
@@ -413,11 +428,14 @@ app.post('/api/players/rename', async (req, res) => {
       const defaultsContent = await readFile(playerDefaultsFile, 'utf-8');
       const defaults = JSON.parse(defaultsContent);
 
-      if (Object.prototype.hasOwnProperty.call(defaults, fromName)) {
-        if (!Object.prototype.hasOwnProperty.call(defaults, toName)) {
-          defaults[toName] = defaults[fromName];
-        }
-        delete defaults[fromName];
+      const defaultSourceKeys = Object.keys(defaults).filter((key) => shouldReplacePlayerName(key, fromName, toName));
+      if (defaultSourceKeys.length > 0) {
+        defaultSourceKeys.forEach((sourceKey) => {
+          if (!Object.prototype.hasOwnProperty.call(defaults, toName)) {
+            defaults[toName] = defaults[sourceKey];
+          }
+          delete defaults[sourceKey];
+        });
         await writeFile(playerDefaultsFile, JSON.stringify(defaults, null, 2), 'utf-8');
         defaultsUpdated = true;
       }
@@ -466,6 +484,9 @@ app.post('/api/players/rename', async (req, res) => {
     }
 
     if (replacements === 0 && seededReplacements === 0 && !defaultsUpdated) {
+      if (isWhitespaceVariantMerge) {
+        return res.status(404).json({ error: `No trailing-whitespace variants found for "${toName}"` });
+      }
       return res.status(404).json({ error: `Player "${fromName}" was not found` });
     }
 

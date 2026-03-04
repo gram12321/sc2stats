@@ -389,7 +389,12 @@ export async function calculateRaceRankings(mainCircuitOnly = false, seasons = n
               inverseConfidenceBefore, // opponentConfidence
               matchupRatingBefore, // Use PvT's rating BEFORE update (explicit)
               populationMean, // Population mean (for first-match logic, though explicit rating takes precedence)
-              inverseMatchesBefore
+              inverseMatchesBefore,
+              {
+                teamScore: match.team1_score,
+                opponentScore: match.team2_score,
+                bestOf: match.best_of
+              }
             );
 
             // Update TvP: compare its BEFORE rating against PvT's BEFORE rating
@@ -403,7 +408,12 @@ export async function calculateRaceRankings(mainCircuitOnly = false, seasons = n
               matchupConfidenceBefore, // opponentConfidence
               inverseRatingBefore, // Use TvP's rating BEFORE update (explicit)
               populationMean, // Population mean (for first-match logic, though explicit rating takes precedence)
-              matchupMatchesBefore
+              matchupMatchesBefore,
+              {
+                teamScore: match.team2_score,
+                opponentScore: match.team1_score,
+                bestOf: match.best_of
+              }
             );
 
             // Track impact

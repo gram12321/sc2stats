@@ -337,7 +337,12 @@ function calculateRankingsFromMatches(sortedMatches, seeds = null, playerDefault
         team1AvgOpponentConfidence,
         null,
         finalPopulationMean,
-        team1AvgOpponentMatches
+        team1AvgOpponentMatches,
+        {
+          teamScore: match.team1_score,
+          opponentScore: match.team2_score,
+          bestOf: match.best_of
+        }
       );
       playerImpacts.set(playerName, {
         ratingBefore,
@@ -366,7 +371,12 @@ function calculateRankingsFromMatches(sortedMatches, seeds = null, playerDefault
         team2AvgOpponentConfidence,
         null,
         finalPopulationMean,
-        team2AvgOpponentMatches
+        team2AvgOpponentMatches,
+        {
+          teamScore: match.team2_score,
+          opponentScore: match.team1_score,
+          bestOf: match.best_of
+        }
       );
       playerImpacts.set(playerName, {
         ratingBefore,

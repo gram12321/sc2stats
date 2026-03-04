@@ -331,6 +331,9 @@ export async function calculateTeamRaceRankings(mainCircuitOnly = false, seasons
 
       const matchupStats = teamRaceStats.get(matchupKey);
       const [combo1, combo2] = matchupKey.split(' vs ');
+      const combo1IsTeam1 = team1Combo === combo1;
+      const combo1Score = combo1IsTeam1 ? match.team1_score : match.team2_score;
+      const combo2Score = combo1IsTeam1 ? match.team2_score : match.team1_score;
 
       // Determine which combo won
       // combo1 is the one that comes first alphabetically in the matchup key
@@ -402,7 +405,12 @@ export async function calculateTeamRaceRankings(mainCircuitOnly = false, seasons
         combo2ConfidenceBefore,
         null,
         populationMean,
-        combo2TempStats.matches
+        combo2TempStats.matches,
+        {
+          teamScore: combo1Score,
+          opponentScore: combo2Score,
+          bestOf: match.best_of
+        }
       );
 
       // Update combo2 stats comparing against combo1 (before combo1 update)
@@ -415,7 +423,12 @@ export async function calculateTeamRaceRankings(mainCircuitOnly = false, seasons
         combo1ConfidenceBefore,
         null,
         populationMean,
-        combo1TempStats.matches
+        combo1TempStats.matches,
+        {
+          teamScore: combo2Score,
+          opponentScore: combo1Score,
+          bestOf: match.best_of
+        }
       );
 
       // Apply changes back to matchup stats

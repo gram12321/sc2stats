@@ -20,6 +20,19 @@ interface PlayerImpact {
   opponentMatchCount?: number;
   confidence?: number;
   matchCount?: number;
+  matchK?: number;
+  matchRatingChange?: number;
+  scoreRatingChange?: number;
+  scoreSignalUsed?: boolean;
+  actualScoreShare?: number | null;
+  expectedScoreShare?: number | null;
+  bestOf?: number | null;
+  mapsPlayed?: number | null;
+  outcomeSeriesMultiplier?: number;
+  scoreWeight?: number;
+  scoreK?: number;
+  seriesScoreMultiplier?: number;
+  scoreReliabilityMultiplier?: number;
 }
 
 interface TeamImpact {
@@ -39,6 +52,19 @@ interface TeamImpact {
   opponentMatchCount?: number;
   confidence?: number;
   matchCount?: number;
+  matchK?: number;
+  matchRatingChange?: number;
+  scoreRatingChange?: number;
+  scoreSignalUsed?: boolean;
+  actualScoreShare?: number | null;
+  expectedScoreShare?: number | null;
+  bestOf?: number | null;
+  mapsPlayed?: number | null;
+  outcomeSeriesMultiplier?: number;
+  scoreWeight?: number;
+  scoreK?: number;
+  seriesScoreMultiplier?: number;
+  scoreReliabilityMultiplier?: number;
 }
 
 interface MatchData {
@@ -83,6 +109,19 @@ interface MatchData {
     opponentMatchCount?: number;
     confidence?: number;
     matchCount?: number;
+    matchK?: number;
+    matchRatingChange?: number;
+    scoreRatingChange?: number;
+    scoreSignalUsed?: boolean;
+    actualScoreShare?: number | null;
+    expectedScoreShare?: number | null;
+    bestOf?: number | null;
+    mapsPlayed?: number | null;
+    outcomeSeriesMultiplier?: number;
+    scoreWeight?: number;
+    scoreK?: number;
+    seriesScoreMultiplier?: number;
+    scoreReliabilityMultiplier?: number;
   }>;
 }
 
@@ -155,6 +194,51 @@ function getPlayerRaceInMatch(
   return defaultRace ? getRaceAbbr(defaultRace) : '';
 }
 
+function getCombination(n: number, k: number): number {
+  if (k < 0 || k > n) return 0;
+  if (k === 0 || k === n) return 1;
+  const reducedK = Math.min(k, n - k);
+  let result = 1;
+  for (let i = 1; i <= reducedK; i++) {
+    result = (result * (n - reducedK + i)) / i;
+  }
+  return result;
+}
+
+function getExpectedSeriesOutcomes(
+  expectedWin: number,
+  bestOf?: number | null,
+  mapsPlayed?: number | null
+): Array<{ score: string; probability: number }> {
+  const resolvedBestOf = Number.isFinite(bestOf) && (bestOf as number) > 0
+    ? (bestOf as number)
+    : (Number.isFinite(mapsPlayed) && (mapsPlayed as number) > 0 ? ((mapsPlayed as number) * 2) - 1 : null);
+
+  if (!Number.isFinite(resolvedBestOf) || (resolvedBestOf as number) <= 1) {
+    return [];
+  }
+
+  const p = Math.max(0, Math.min(1, expectedWin));
+  const q = 1 - p;
+  const winsNeeded = Math.floor((resolvedBestOf as number) / 2) + 1;
+  const outcomes: Array<{ score: string; probability: number }> = [];
+
+  for (let losses = 0; losses < winsNeeded; losses++) {
+    const ways = getCombination((winsNeeded - 1) + losses, losses);
+    const probability = ways * Math.pow(p, winsNeeded) * Math.pow(q, losses);
+    outcomes.push({ score: `${winsNeeded}-${losses}`, probability });
+  }
+
+  for (let wins = winsNeeded - 1; wins >= 0; wins--) {
+    const ways = getCombination((winsNeeded - 1) + wins, wins);
+    const probability = ways * Math.pow(q, winsNeeded) * Math.pow(p, wins);
+    outcomes.push({ score: `${wins}-${winsNeeded}`, probability });
+  }
+
+  const total = outcomes.reduce((sum, x) => sum + x.probability, 0) || 1;
+  return outcomes.map((x) => ({ ...x, probability: x.probability / total }));
+}
+
 function getRatingChangeTooltip(
   impact: PlayerImpact | TeamImpact,
   subjectName: string,
@@ -174,7 +258,20 @@ function getRatingChangeTooltip(
     confidenceMultiplier,
     opponentMatchCount,
     confidence,
-    matchCount
+    matchCount,
+    matchK,
+    matchRatingChange,
+    scoreRatingChange,
+    scoreSignalUsed,
+    actualScoreShare,
+    expectedScoreShare,
+    bestOf,
+    mapsPlayed,
+    outcomeSeriesMultiplier,
+    scoreWeight,
+    scoreK,
+    seriesScoreMultiplier,
+    scoreReliabilityMultiplier
   } = impact;
 
   if (expectedWin === undefined || adjustedK === undefined) {
@@ -213,6 +310,18 @@ function getRatingChangeTooltip(
     }
     return `${adjustedK.toFixed(1)}`;
   })();
+  const hasCompositeBreakdown =
+    matchK !== undefined &&
+    matchRatingChange !== undefined &&
+    scoreRatingChange !== undefined;
+  const hasScoreShareInputs = actualScoreShare !== null && actualScoreShare !== undefined && expectedScoreShare !== null && expectedScoreShare !== undefined;
+  const scoreDelta = hasScoreShareInputs ? (actualScoreShare - expectedScoreShare) : null;
+  const derivedScoreK = (scoreK !== undefined)
+    ? scoreK
+    : (scoreDelta !== null && Math.abs(scoreDelta) > 1e-9
+      ? scoreRatingChange! / scoreDelta
+      : 0);
+  const expectedSeriesOutcomes = getExpectedSeriesOutcomes(expectedWin, bestOf, mapsPlayed);
   const calculation = `${adjustedK.toFixed(1)} × (${actualResult} - ${expectedWin.toFixed(3)}) = ${formatRankingPoints(ratingChange)}`;
 
   return (
@@ -258,6 +367,19 @@ function getRatingChangeTooltip(
               (actualResult > expectedWin ? 'Outperformed' : 'Underperformed')} by {Math.abs(actualResult - expectedWin).toFixed(3)}
           </div>
         </div>
+        {expectedSeriesOutcomes.length > 0 && (
+          <div className="pt-1 border-t border-border mt-1">
+            <div className="text-muted-foreground mb-0.5">Expected Series Scorelines:</div>
+            <div className="grid grid-cols-[auto_1fr] gap-x-2 gap-y-0.5 text-[11px]">
+              {expectedSeriesOutcomes.map((outcome) => (
+                [
+                  <div key={`${outcome.score}-label`} className="text-muted-foreground">{outcome.score}:</div>,
+                  <div key={`${outcome.score}-value`} className="text-right">{(outcome.probability * 100).toFixed(1)}%</div>
+                ]
+              ))}
+            </div>
+          </div>
+        )}
         {baseK !== undefined && (
           <div className="pt-1 border-t border-border mt-1 grid grid-cols-2 gap-x-2">
             <div><span className="text-muted-foreground">Base K:</span> {baseK.toFixed(1)}</div>
@@ -286,18 +408,82 @@ function getRatingChangeTooltip(
             )}
           </div>
         )}
-        <div className="pt-1 border-t border-border mt-1">
-          <div className="text-muted-foreground mb-0.5">Final Calculation:</div>
-          <div className="font-mono text-[10px] text-muted-foreground bg-muted/50 px-1.5 py-0.5 rounded border border-border text-center mb-1">
-            K = {kExpression} = {adjustedK.toFixed(1)}
+        {hasCompositeBreakdown ? (
+          <div className="pt-1 border-t border-border mt-1 space-y-1">
+            <div className="text-muted-foreground mb-0.5">How this change is computed:</div>
+            <div className="text-[10px] text-muted-foreground bg-muted/50 px-1.5 py-1 rounded border border-border space-y-0.5">
+              <div><span className="font-semibold">1) Adjusted K</span> (base strength used for both terms)</div>
+              <div className="font-mono">Adj K = {kExpression} = {adjustedK.toFixed(3)}</div>
+            </div>
+            <div className="text-[10px] text-muted-foreground bg-muted/50 px-1.5 py-1 rounded border border-border space-y-0.5">
+              <div><span className="font-semibold">2) Match term</span> (win/draw/loss only; ignores map margin)</div>
+              {outcomeSeriesMultiplier !== undefined && (
+                <div className="font-mono">
+                  Match K = Adj K × Series-length trust-for-result = {adjustedK.toFixed(3)} × {outcomeSeriesMultiplier.toFixed(3)} = {matchK!.toFixed(3)}
+                </div>
+              )}
+              <div className="font-mono">
+                Result delta = Actual - Expected = {actualResult.toFixed(3)} - {expectedWin.toFixed(3)} = {(actualResult - expectedWin).toFixed(3)}
+              </div>
+              <div className="font-mono">
+                Match term = {matchK!.toFixed(3)} × {(actualResult - expectedWin).toFixed(3)} = {matchRatingChange!.toFixed(3)}
+              </div>
+            </div>
+            <div className="text-[10px] text-muted-foreground bg-muted/50 px-1.5 py-1 rounded border border-border space-y-0.5">
+              <div><span className="font-semibold">3) Scoreline term</span> (how dominant the map score was)</div>
+              {hasScoreShareInputs && (
+                <>
+                  <div className="font-mono">
+                    Score share = maps won / maps played = {actualScoreShare!.toFixed(3)}
+                  </div>
+                  <div className="font-mono">
+                    Score delta = Actual score share - Expected score share = {actualScoreShare!.toFixed(3)} - {expectedScoreShare!.toFixed(3)} = {(actualScoreShare! - expectedScoreShare!).toFixed(3)}
+                  </div>
+                </>
+              )}
+              {(seriesScoreMultiplier !== undefined || scoreReliabilityMultiplier !== undefined || scoreWeight !== undefined) && (
+                <div className="font-mono">
+                  Score weight = 0.55 × Series-length trust-for-margin ({seriesScoreMultiplier?.toFixed(3) ?? '-'}) × Reliability ({scoreReliabilityMultiplier?.toFixed(3) ?? '-'}) = {scoreWeight?.toFixed(3) ?? '-'}
+                </div>
+              )}
+              <div className="font-mono">
+                Score K = Adj K × Score weight = {adjustedK.toFixed(3)} × {scoreWeight?.toFixed(3) ?? '-'} = {derivedScoreK.toFixed(3)}
+              </div>
+              {hasScoreShareInputs && (
+                <div className="font-mono">
+                  Score term = {derivedScoreK.toFixed(3)} × {(actualScoreShare! - expectedScoreShare!).toFixed(3)} = {scoreRatingChange!.toFixed(3)}
+                </div>
+              )}
+              {!scoreSignalUsed && (
+                <div className="italic">No extra scoreline signal used for this series format.</div>
+              )}
+            </div>
+            {(bestOf !== null && bestOf !== undefined || mapsPlayed !== null && mapsPlayed !== undefined) && (
+              <div className="text-[10px] text-muted-foreground text-center">
+                {bestOf !== null && bestOf !== undefined ? `BO${bestOf}` : 'Series'}{mapsPlayed !== null && mapsPlayed !== undefined ? ` • ${mapsPlayed} map${mapsPlayed === 1 ? '' : 's'}` : ''}
+              </div>
+            )}
+            <div className="font-mono text-xs bg-muted px-1.5 py-1 rounded border border-border text-center">
+              Total change = Match term + Scoreline term = {matchRatingChange!.toFixed(3)} + {scoreRatingChange!.toFixed(3)} = {ratingChange.toFixed(3)}
+            </div>
+            <div className="text-muted-foreground text-[10px] mt-0.5 text-center italic">
+              Rounded display can differ slightly from exact internal decimals.
+            </div>
           </div>
-          <div className="font-mono text-xs bg-muted px-1.5 py-1 rounded border border-border text-center">
-            {calculation}
+        ) : (
+          <div className="pt-1 border-t border-border mt-1">
+            <div className="text-muted-foreground mb-0.5">Final Calculation:</div>
+            <div className="font-mono text-[10px] text-muted-foreground bg-muted/50 px-1.5 py-0.5 rounded border border-border text-center mb-1">
+              K = {kExpression} = {adjustedK.toFixed(1)}
+            </div>
+            <div className="font-mono text-xs bg-muted px-1.5 py-1 rounded border border-border text-center">
+              {calculation}
+            </div>
+            <div className="text-muted-foreground text-[10px] mt-0.5 text-center italic">
+              K-factor × (Actual - Expected) = Change
+            </div>
           </div>
-          <div className="text-muted-foreground text-[10px] mt-0.5 text-center italic">
-            K-factor × (Actual - Expected) = Change
-          </div>
-        </div>
+        )}
       </div>
     </div>
   );

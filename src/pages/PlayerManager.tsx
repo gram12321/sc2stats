@@ -168,7 +168,7 @@ export function PlayerManager({ }: PlayerManagerProps) {
   }, [players]);
 
   const handleRenamePlayer = async () => {
-    const fromName = renameFrom.trim();
+    const fromName = renameFrom;
     const toName = renameTo.trim();
 
     setRenameFeedback(null);

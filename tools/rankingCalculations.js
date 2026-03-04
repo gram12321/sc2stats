@@ -261,6 +261,71 @@ export function calculateRatingChange(expectedWin, actualWin, kFactor = 32, isDr
 }
 
 /**
+ * Get series-length reliability multiplier for binary match outcome signal.
+ * BO3 is treated as a strong signal compared to BO1.
+ *
+ * @param {number|null} bestOf - Declared best-of length
+ * @returns {number} Multiplier for match-outcome signal
+ */
+export function getSeriesOutcomeMultiplier(bestOf = null) {
+  if (!Number.isFinite(bestOf) || bestOf <= 0) return 1.0;
+  if (bestOf <= 1) return 0.9;
+  if (bestOf <= 3) return 1.08;
+  if (bestOf <= 5) return 1.16;
+  return 1.16 + ((bestOf - 5) * 0.03);
+}
+
+/**
+ * Get series-length reliability multiplier for score-share signal.
+ * BO1 carries no additional score-share information beyond win/loss.
+ *
+ * @param {number|null} bestOf - Declared best-of length
+ * @param {number|null} mapsPlayed - Number of maps actually played
+ * @returns {number} Multiplier for score-share signal
+ */
+export function getSeriesScoreMultiplier(bestOf = null, mapsPlayed = null) {
+  const resolvedBestOf = Number.isFinite(bestOf) && bestOf > 0
+    ? bestOf
+    : (Number.isFinite(mapsPlayed) && mapsPlayed > 0 ? ((mapsPlayed * 2) - 1) : null);
+
+  if (!Number.isFinite(resolvedBestOf) || resolvedBestOf <= 1) return 0;
+  if (resolvedBestOf <= 3) return 1.0;
+  if (resolvedBestOf <= 5) return 1.12;
+  return 1.12 + ((resolvedBestOf - 5) * 0.02);
+}
+
+/**
+ * Confidence/newness reliability for score-share signal.
+ * More established + higher confidence entities should trust score margins more.
+ *
+ * @param {number} selfMatchCount - Self matches played (after increment)
+ * @param {number|null} opponentMatchCount - Opponent matches played
+ * @param {number} selfConfidence - Self confidence (0-100)
+ * @param {number} opponentConfidence - Opponent confidence (0-100)
+ * @returns {number} Reliability multiplier
+ */
+export function getScoreReliabilityMultiplier(
+  selfMatchCount,
+  opponentMatchCount = null,
+  selfConfidence = 0,
+  opponentConfidence = 0
+) {
+  const selfConf = Number.isFinite(selfConfidence) ? Math.max(0, Math.min(100, selfConfidence)) : 0;
+  const oppConf = Number.isFinite(opponentConfidence) ? Math.max(0, Math.min(100, opponentConfidence)) : 0;
+  const combinedConfidence = (selfConf + oppConf) / 2;
+  const confidenceScale = 0.6 + ((combinedConfidence / 100) * 0.4); // 0.6x -> 1.0x
+
+  const selfNewness = getNewnessScore(Number.isFinite(selfMatchCount) ? selfMatchCount : 0);
+  const opponentNewness = Number.isFinite(opponentMatchCount)
+    ? getNewnessScore(opponentMatchCount)
+    : selfNewness;
+  const combinedEstablishedness = 1 - ((selfNewness + opponentNewness) / 2);
+  const newnessScale = 0.6 + (combinedEstablishedness * 0.4); // 0.6x -> 1.0x
+
+  return confidenceScale * newnessScale;
+}
+
+/**
  * Initialize stats with a seed rating (for seeding system)
  * This is a helper for the seeding process that starts entities with a pre-calculated rating
  * instead of starting at 0 or population mean
@@ -300,6 +365,10 @@ export function initializeStatsWithSeed(name, seedRating, additionalFields = {})
  * @param {number} opponentConfidence - Opponent's confidence (0-100, optional for future use)
  * @param {number} currentRating - Optional: explicit current rating to use (for zero-sum calculations)
  * @param {number|null} opponentMatchCount - Opponent match count for explicit newness asymmetry
+ * @param {Object} matchContext - Optional score context for score-aware updates
+ * @param {number} matchContext.teamScore - This entity's map score in the series
+ * @param {number} matchContext.opponentScore - Opponent map score in the series
+ * @param {number} matchContext.bestOf - Declared best-of length
  * @returns {Object} Object with ratingChange and calculation details
  */
 export function updateStatsForMatch(
@@ -311,7 +380,8 @@ export function updateStatsForMatch(
   opponentConfidence = 0,
   currentRating = null,
   populationMean = null,
-  opponentMatchCount = null
+  opponentMatchCount = null,
+  matchContext = null
 ) {
   // Check if this is the first match (before incrementing)
   const isFirstMatch = stats.matches === 0;
@@ -354,8 +424,55 @@ export function updateStatsForMatch(
 
   const expectedWin = predictWinProbability(ratingToUse, opponentRating, populationStdDev);
 
-  // Calculate rating change
-  const ratingChange = calculateRatingChange(expectedWin, won, adjustedK, isDraw);
+  // Series-length signal strength for binary outcome (A)
+  const bestOf = Number.isFinite(matchContext?.bestOf) ? matchContext.bestOf : null;
+  const outcomeSeriesMultiplier = getSeriesOutcomeMultiplier(bestOf);
+  const matchK = adjustedK * outcomeSeriesMultiplier;
+  const matchRatingChange = calculateRatingChange(expectedWin, won, matchK, isDraw);
+
+  // Score-share signal (B): allows slight point loss on narrow wins by heavy favorites
+  const teamScore = Number.isFinite(matchContext?.teamScore) ? matchContext.teamScore : null;
+  const opponentScore = Number.isFinite(matchContext?.opponentScore) ? matchContext.opponentScore : null;
+  const mapsPlayed = (Number.isFinite(teamScore) && Number.isFinite(opponentScore))
+    ? (teamScore + opponentScore)
+    : null;
+
+  let scoreRatingChange = 0;
+  let scoreSignalUsed = false;
+  let actualScoreShare = null;
+  let expectedScoreShare = null;
+  let scoreWeight = 0;
+  let scoreK = 0;
+  let seriesScoreMultiplier = 0;
+  let scoreReliabilityMultiplier = 0;
+
+  if (
+    Number.isFinite(teamScore) &&
+    Number.isFinite(opponentScore) &&
+    teamScore >= 0 &&
+    opponentScore >= 0 &&
+    mapsPlayed > 0
+  ) {
+    actualScoreShare = teamScore / mapsPlayed;
+    expectedScoreShare = expectedWin;
+
+    seriesScoreMultiplier = getSeriesScoreMultiplier(bestOf, mapsPlayed);
+    scoreReliabilityMultiplier = getScoreReliabilityMultiplier(
+      stats.matches,
+      opponentMatchCount,
+      stats.confidence,
+      opponentConfidence
+    );
+
+    // Base relative weight of score-share term versus binary outcome term.
+    scoreWeight = 0.55 * seriesScoreMultiplier * scoreReliabilityMultiplier;
+    scoreK = adjustedK * scoreWeight;
+
+    scoreRatingChange = scoreK * (actualScoreShare - expectedScoreShare);
+    scoreSignalUsed = scoreWeight > 0;
+  }
+
+  const ratingChange = matchRatingChange + scoreRatingChange;
 
   // Update confidence based on prediction accuracy
   updateConfidence(stats, expectedWin, won, isDraw);
@@ -381,6 +498,19 @@ export function updateStatsForMatch(
       expectedWin,
       baseK,
       adjustedK,
+      outcomeSeriesMultiplier,
+      matchK,
+      matchRatingChange,
+      scoreWeight,
+      scoreK,
+      seriesScoreMultiplier,
+      scoreReliabilityMultiplier,
+      scoreRatingChange,
+      scoreSignalUsed,
+      actualScoreShare,
+      expectedScoreShare,
+      bestOf,
+      mapsPlayed,
       confidenceMultiplier,
       opponentMatchCount,
       confidence: stats.confidence,

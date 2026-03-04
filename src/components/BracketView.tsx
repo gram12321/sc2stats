@@ -70,6 +70,10 @@ const normalizePlayerName = (name?: string): string => {
   return String(name || '').trim().toLowerCase();
 };
 
+const sanitizePlayerNameInput = (name?: string): string => {
+  return String(name || '').trimEnd();
+};
+
 interface BracketViewProps {
   data: TournamentData;
   filename: string;
@@ -184,7 +188,7 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
 
       updatedTeam[playerKey] = {
         ...updatedTeam[playerKey],
-        name: playerName
+        name: sanitizePlayerNameInput(playerName)
       };
 
       if (playerKey === 'player1') {
@@ -391,9 +395,14 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
   };
 
   const handleAddMatch = () => {
+    const team1Player1 = sanitizePlayerNameInput(newMatch.team1?.player1.name);
+    const team1Player2 = sanitizePlayerNameInput(newMatch.team1?.player2.name);
+    const team2Player1 = sanitizePlayerNameInput(newMatch.team2?.player1.name);
+    const team2Player2 = sanitizePlayerNameInput(newMatch.team2?.player2.name);
+
     // Validate that all player names are filled
-    if (!newMatch.team1?.player1.name || !newMatch.team1?.player2.name ||
-        !newMatch.team2?.player1.name || !newMatch.team2?.player2.name) {
+    if (!team1Player1.trim() || !team1Player2.trim() ||
+        !team2Player1.trim() || !team2Player2.trim()) {
       alert('Please fill in all player names');
       return;
     }
@@ -411,12 +420,12 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
       match_id: matchId,
       round: selectedEarlyRound,
       team1: {
-        player1: { name: newMatch.team1!.player1.name, race: newMatch.team1!.player1.race || null },
-        player2: { name: newMatch.team1!.player2.name, race: newMatch.team1!.player2.race || null }
+        player1: { name: team1Player1, race: newMatch.team1!.player1.race || null },
+        player2: { name: team1Player2, race: newMatch.team1!.player2.race || null }
       },
       team2: {
-        player1: { name: newMatch.team2!.player1.name, race: newMatch.team2!.player1.race || null },
-        player2: { name: newMatch.team2!.player2.name, race: newMatch.team2!.player2.race || null }
+        player1: { name: team2Player1, race: newMatch.team2!.player1.race || null },
+        player2: { name: team2Player2, race: newMatch.team2!.player2.race || null }
       },
       team1_score: newMatch.team1_score ?? null,
       team2_score: newMatch.team2_score ?? null,
