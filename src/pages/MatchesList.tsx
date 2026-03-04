@@ -72,9 +72,12 @@ interface TeamRanking {
   confidence: number;
 }
 
-interface MatchesListProps { }
+interface MatchesListProps {
+  initialTournament?: string;
+  focusMatchId?: string;
+}
 
-export function MatchesList({ }: MatchesListProps) {
+export function MatchesList({ initialTournament, focusMatchId }: MatchesListProps) {
   const [matches, setMatches] = useState<MatchHistory[]>([]);
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [selectedTournament, setSelectedTournament] = useState<string>('');
@@ -85,6 +88,12 @@ export function MatchesList({ }: MatchesListProps) {
   const [playerRaces, setPlayerRaces] = useState<Record<string, Race>>({});
   const [comboRankings, setComboRankings] = useState<Record<string, { points: number }>>({});
   const { seasons, useSeededRankings, mainCircuitOnly } = useRankingSettings();
+
+  useEffect(() => {
+    if (initialTournament !== undefined) {
+      setSelectedTournament(initialTournament);
+    }
+  }, [initialTournament]);
 
   useEffect(() => {
     loadPlayerRaces();
@@ -100,6 +109,18 @@ export function MatchesList({ }: MatchesListProps) {
   useEffect(() => {
     loadMatches();
   }, [selectedTournament, useSeededRankings, seasons, mainCircuitOnly]);
+
+  useEffect(() => {
+    if (!focusMatchId || isLoading || matches.length === 0) return;
+    const focusedMatch = matches.find((match) => match.match_id === focusMatchId);
+    if (!focusedMatch) return;
+
+    const elementId = `match-${focusedMatch.tournament_slug}-${focusedMatch.match_id}`;
+    const element = document.getElementById(elementId);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [focusMatchId, isLoading, matches]);
 
   const loadTournaments = async () => {
     try {
@@ -343,25 +364,30 @@ export function MatchesList({ }: MatchesListProps) {
               });
 
               return (
-                <MatchHistoryItem
+                <div
                   key={`${match.tournament_slug}-${match.match_id}`}
-                  match={match}
-                  team1Rank={team1Rank ? { rank: team1Rank.rank, points: team1Rank.points, confidence: team1Rank.confidence } : null}
-                  team2Rank={team2Rank ? { rank: team2Rank.rank, points: team2Rank.points, confidence: team2Rank.confidence } : null}
-                  playerRankings={playerRankingsMap}
-                  playerRaces={playerRaces}
-                  showRatingBreakdown={true}
-                  highlightPlayers={[]}
-                  showWinLoss={true}
-                  winLossValue={match.team1_score > match.team2_score}
-                  isDrawValue={match.team1_score === match.team2_score}
-                  comboRankings={comboRankings}
-                  extractRaceChanges={extractRaceChanges}
-                  normalizeTeamKey={normalizeTeamKey}
-                  getTeamImpact={getTeamImpact}
-                  getPlayerImpact={getPlayerImpact}
-                  formatDate={formatDate}
-                />
+                  id={`match-${match.tournament_slug}-${match.match_id}`}
+                  className={focusMatchId === match.match_id ? 'ring-2 ring-primary/40 rounded-lg' : ''}
+                >
+                  <MatchHistoryItem
+                    match={match}
+                    team1Rank={team1Rank ? { rank: team1Rank.rank, points: team1Rank.points, confidence: team1Rank.confidence } : null}
+                    team2Rank={team2Rank ? { rank: team2Rank.rank, points: team2Rank.points, confidence: team2Rank.confidence } : null}
+                    playerRankings={playerRankingsMap}
+                    playerRaces={playerRaces}
+                    showRatingBreakdown={true}
+                    highlightPlayers={[]}
+                    showWinLoss={true}
+                    winLossValue={match.team1_score > match.team2_score}
+                    isDrawValue={match.team1_score === match.team2_score}
+                    comboRankings={comboRankings}
+                    extractRaceChanges={extractRaceChanges}
+                    normalizeTeamKey={normalizeTeamKey}
+                    getTeamImpact={getTeamImpact}
+                    getPlayerImpact={getPlayerImpact}
+                    formatDate={formatDate}
+                  />
+                </div>
               );
             })}
           </div>

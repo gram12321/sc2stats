@@ -8,251 +8,263 @@ export function Info({ }: InfoProps) {
                         <div className="mb-2">
                               <h1 className="text-2xl font-bold text-gray-900">System Information</h1>
                         </div>
-                        {/* System Overview */}
+
                         <section className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
                               <h2 className="text-xl font-semibold text-gray-900 mb-4">System Overview</h2>
                               <p className="text-gray-700 leading-relaxed">
-                                    This system tracks and calculates rankings for StarCraft II matches based on tournament data.
-                                    It utilizes an Elo-rating based algorithm to determine the relative skill levels of players and teams.
-                                    The system processes match history to update ratings dynamically, providing insights into current form
-                                    and historical performance.
+                                    This project tracks StarCraft II 2v2 results and recalculates rankings from full match history.
+                                    Rankings are prediction-based and update after every match for players, teams, race matchups,
+                                    and team-race compositions. The system uses chronological replay of all included matches so current
+                                    ratings reflect the complete sequence of results.
                               </p>
                         </section>
 
-                        {/* Ranking Types */}
                         <section className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
                               <h2 className="text-xl font-semibold text-gray-900 mb-6">Ranking Categories</h2>
 
                               <div className="grid gap-6 md:grid-cols-2">
-                                    {/* Player Rankings */}
                                     <div className="bg-blue-50 rounded-lg p-5 border border-blue-100">
                                           <h3 className="text-lg font-bold text-blue-900 mb-2">Player Rankings</h3>
                                           <p className="text-blue-800 text-sm">
-                                                Tracks individual player performance in 2v2 matches.
-                                                Ratings are updated after every match, reflecting a player's current standing. The individual ranking take into account the performence
-                                                of a player in any team that he is a member of. Importantly the ranking still reflect how the player performs accourdingly to the team
-                                                that he is a member of, and the team they play against. (IE. if a player is on one team "A" with a highly ranked teammate he will be expected to win more, than when he plays on team "B" with a less ranked teammate)
+                                                Individual skill estimate across all teams that player has appeared in.
+                                                A player on a stronger team is expected to win more than the same player on a weaker team,
+                                                so context still matters even in individual ranking updates.
                                           </p>
                                     </div>
 
-                                    {/* Team Rankings */}
                                     <div className="bg-purple-50 rounded-lg p-5 border border-purple-100">
                                           <h3 className="text-lg font-bold text-purple-900 mb-2">Team Rankings</h3>
                                           <p className="text-purple-800 text-sm">
-                                                Rankings for fixed 2v2 teams. A team is defined by the unique combination
-                                                of two players, thus a player may be several times on the list if he has competed in several teams.
-                                                Rating changes affect the specific team unit rather than just individual players - though the rating of a player is also affected by the result of the team.
+                                                Ranking for fixed 2-player pairs. Each unique duo is a separate entity with its own match history,
+                                                confidence, and rating trajectory.
                                           </p>
                                     </div>
 
-                                    {/* Race Rankings */}
                                     <div className="bg-indigo-50 rounded-lg p-5 border border-indigo-100">
                                           <h3 className="text-lg font-bold text-indigo-900 mb-2">Race Statistics</h3>
                                           <p className="text-indigo-800 text-sm">
-                                                Aggregates performance data by race (Terran, Zerg, Protoss). This keeps tracts of the individual race, Independent of the Team composition. IE ZVT Not ZT VS ZP.
-                                                Thus In a match where a race is on both side ZT vs ZP that will be two updates for Z rating. ZVT and ZVP.  IE the Z on TZ play ZvP while the Z on ZP play ZvT
-                                                For now Race statistics are not used in the ranking system for Team and Player rankings. (IE Zerg players are not expected to perform better, if Z is in general considered the stronger race)
-                                                For now we keep an eye on race statistics, as they may or may not be bugged. Also note that Random race players are included by default but may be filtered out in UI.
-
+                                                Directional race matchups (e.g. PvT is different from TvP) updated from race-vs-race outcomes
+                                                extracted from team matches. These stats are analytical and do not directly modify player/team ratings.
                                           </p>
                                     </div>
 
-                                    {/* Team Race Rankings */}
                                     <div className="bg-orange-50 rounded-lg p-5 border border-orange-100">
                                           <h3 className="text-lg font-bold text-orange-900 mb-2">Team Race Statistics</h3>
                                           <p className="text-orange-800 text-sm">
-                                                Analyzes the performance of racial compositions in 2v2 matches. That is ZT VS ZP, ZT VS TP, ZP VS TP. Also Including Same race teams ZZ, PP, TT.
-                                                (e.g., Terran+Zerg vs Protoss+Protoss). Useful for understanding synergy between different race combinations.
-                                                For now Race statistics are not used in the ranking system for Team and Player rankings. (IE Zerg players are not expected to perform better, if Z is in general considered the stronger race)
-                                                For now we keep an eye on race statistics, as they may or may not be bugged. Also note that Random race players are included by default but may be filtered out in UI.
-                                                Keep in mind that race rankings does NOT take into account the strength of the Players/Teams in the expected win ratio. This is a skisma that we will have to look into over time. Essentially asking the question.
-                                                Is Protoss performing good because Protoss is strong, or is protoss performing good because Maxpax is strong?
+                                                Team composition matchup stats (e.g. PT vs ZZ). This tracks how race pairings perform as a unit.
+                                                Like race stats, this is currently analytical and separate from player/team leaderboard rank assignment.
                                           </p>
                                     </div>
                               </div>
                         </section>
 
-                        {/* Technical Details (Short) */}
-                        {/* Technical Implementation Details */}
                         <section className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
                               <h2 className="text-xl font-semibold text-gray-900 mb-4">Technical Implementation</h2>
 
                               <div className="space-y-6 text-gray-700">
-                                    {/* Algorithm */}
                                     <div>
                                           <h3 className="font-bold text-gray-900 mb-2">The Core Ranking Algorithm</h3>
                                           <p className="mb-2">
-                                                The system uses a modified prediction-based rating system (similar to Elo/Glicko).
-                                                Win probabilities are calculated using a logistic function based on the rating difference between opponents
-                                                and the population's standard deviation.
+                                                The model is Elo-like, but uses both match result and scoreline quality.
+                                                Expected win chance uses a logistic curve with adaptive population spread.
                                           </p>
                                           <ul className="list-disc list-inside bg-gray-50 p-4 rounded-md text-sm space-y-1">
-                                                <li><strong>Win Probability:</strong> <code>P(Win) = 1 / (1 + 10^((OpponentRating - PlayerRating) / ScaleFactor))</code></li>
-                                                <li><strong>Rating Change:</strong> <code>Change = K * (ActualResult - PredictedResult)</code></li>
-                                                <li><strong>Population Scaling:</strong> The scale factor adapts dynamically based on the standard deviation of all active players, ensuring the math fits the actual skill spread.</li>
+                                                <li><strong>Expected Win:</strong> <code>P(win) = 1 / (1 + 3^((opp - self) / populationStdDev))</code></li>
+                                                <li><strong>Final Change:</strong> <code>MatchTerm + ScorelineTerm</code></li>
+                                                <li><strong>ScorelineTerm:</strong> Can be positive or negative, so a winner may still lose points on a narrow underperformance.</li>
                                           </ul>
                                     </div>
 
-                                    {/* K-Factor & Confidence */}
                                     <div>
-                                          <h3 className="font-bold text-gray-900 mb-2">Volatility (K-Factor) & Confidence</h3>
+                                          <h3 className="font-bold text-gray-900 mb-2">K-Factor, Confidence, and Newness</h3>
                                           <p className="mb-2">
-                                                Ratings are not static; the speed at which they change (K-Factor) adapts to how much we "trust" the current rating.
+                                                Volatility is dynamic. The system blends provisional K scheduling, confidence, and opponent-newness protection.
                                           </p>
                                           <div className="grid md:grid-cols-2 gap-4 mt-2">
                                                 <div className="bg-blue-50 p-4 rounded-md">
                                                       <h4 className="font-semibold text-blue-900 text-sm mb-1">Provisional Period</h4>
                                                       <p className="text-xs text-blue-800">
-                                                            New entities use an explicit "newness" K-factor schedule:
-                                                            matches 1-2 are very high, 3-4 are damped, 5-8 are elevated again, then K decays toward a stable long-term level.
-                                                            This helps new players/teams calibrate quickly without keeping extreme volatility forever.
+                                                            Matches 1-2: very high K. Matches 3-4: damped. Matches 5-8: elevated.
+                                                            After that, K decays toward a stable long-term band.
                                                       </p>
                                                 </div>
                                                 <div className="bg-green-50 p-4 rounded-md">
                                                       <h4 className="font-semibold text-green-900 text-sm mb-1">Confidence Score</h4>
                                                       <p className="text-xs text-green-800">
-                                                            A separate "Confidence" score (0-100%) tracks prediction accuracy.
-                                                            Low combined confidence dampens K-factor adjustments (more conservative updates),
-                                                            while high combined confidence amplifies K-factor adjustments (faster correction when strong expectations are violated).
-                                                            The system also applies opponent-newness protection: facing very new opponents reduces rating impact on both wins and losses.
-                                                            When both sides are very new, this protection is moderated so early calibration can still happen.
-                                                            The confidence score is used as a treshold for aquiring a ranking. Both Players and Teams require a confidence score above average confidence to be ranked.
-                                                            The system tracks Players/Teams below average confidence and they can be shown in the rankings. But they do not receive a rank.
+                                                            Confidence (0-100%) tracks prediction reliability. Low combined confidence dampens impact;
+                                                            high combined confidence amplifies it. Facing very new opponents applies protection to reduce overreaction.
+                                                            In player/team pages, displayed numerical rank requires confidence above the current average threshold.
                                                       </p>
                                                 </div>
                                           </div>
                                     </div>
 
-                                    {/* Data Pipeline */}
                                     <div>
-                                          <h3 className="font-bold text-gray-900 mb-2">Chronological Processing</h3>
+                                          <h3 className="font-bold text-gray-900 mb-2">Series-Length and Scoreline Logic</h3>
                                           <p className="text-sm">
-                                                To ensure historical accuracy, all matches from all tournaments are aggregated and strictly sorted by time.
-                                                <code>Tournament Date → Match Date → Round (Ro16, QF, SF, F) → Match ID</code>.
-                                                This ensures the chronological processing of matches, which is important because the system values wins against higher rated players.
-                                                Thus its important that if you face a team that has consistantly (Before your match) performed good, you get rewarded for winning against them. Rather than the system not realizing your opponent is a established team. (IE Only truely new teams, are infact treated as new teams.)
+                                                Match result and scoreline use separate terms:
+                                                result term uses a series-length factor (BO3+ treated as stronger evidence than BO1),
+                                                while scoreline term uses map share (maps won / maps played), series-length reliability,
+                                                and confidence/newness reliability. This is why updates can reflect both who won and how cleanly they won.
                                           </p>
                                     </div>
 
-                                    {/* Seeded Rankings */}
+                                    <div>
+                                          <h3 className="font-bold text-gray-900 mb-2">Chronological Processing</h3>
+                                          <p className="text-sm">
+                                                Matches are replayed in strict order:
+                                                <code>Tournament Date → Match Date → Round Order → Match ID</code>.
+                                                This keeps historical state consistent so every expectation and rating update uses only information available at that point in time.
+                                          </p>
+                                    </div>
+
+                                    <div>
+                                          <h3 className="font-bold text-gray-900 mb-2">Filters and Scope</h3>
+                                          <p className="text-sm">
+                                                Rankings can be recalculated by main-circuit-only and by selected seasons.
+                                                These filters are computational filters, not just display filters: excluded matches are not part of the rating run.
+                                                Random race inclusion for race-based pages is also controlled by backend filtering.
+                                          </p>
+                                    </div>
+
                                     <div className="border-t pt-4">
-                                          <h3 className="font-bold text-gray-900 mb-2">Advanced: "Seeded" Rankings</h3>
+                                          <h3 className="font-bold text-gray-900 mb-2">Advanced: Seeded Rankings</h3>
                                           <p className="text-sm mb-3">
-                                                Standard rankings start everyone at 0. This creates a "Cold Start" problem where
-                                                early history is inaccurate until ratings settle. IE. Team maxpax+spirit are by default rated just the same as every other team in the beginning of season one, but we all know they are not equal strength to every other team.
-                                                We solve this with an optional <strong>3-Pass Seeding System</strong>:
+                                                Default mode starts entities at 0. Seeded mode uses precomputed seeds from a 3-pass process,
+                                                then runs final rankings from those seeds.
                                           </p>
                                           <ol className="list-decimal list-inside space-y-2 text-sm bg-amber-50 p-4 rounded-md border border-amber-100">
-                                                <li><strong>Pass 1 (Forward):</strong> Run preset of matches (1. season of Uthermal 2v2 Circuit) normally. </li>
-                                                <li><strong>Pass 2 (Backward):</strong> Run preset of matches <i>reverse</i>. This account for chronological processing. IE If we just run it forward, first tournament "Will matter more" Because eveyone is rating equally, by running it backwards we eliminate time chronological factor.</li>
-                                                <li><strong>Pass 3 (Final):</strong> A new forward run where every player <strong>starts</strong> (at match #1) with a seed rating derived from the average of Pass 1 & 2. Once this is done we discard the points given from Pass 1 & 2, and only keep the points given from Pass 3. Now we have a single run final score that takes into account the strength of the players from the very first match</li>
+                                                <li><strong>Pass 1:</strong> Forward run on seeding subset.</li>
+                                                <li><strong>Pass 2:</strong> Reverse run on same subset.</li>
+                                                <li><strong>Pass 3:</strong> Final forward run from averaged seeds; only pass 3 output is used for seeded leaderboards.</li>
                                           </ol>
+                                    </div>
 
+                                    <div>
+                                          <h3 className="font-bold text-gray-900 mb-2">Match Tooltip Guide</h3>
+                                          <p className="text-sm">
+                                                Rating tooltips show expected win, expected series scorelines, and total rating change by default.
+                                                The detailed math is available in the collapsed <strong>Calculation</strong> section.
+                                                Tooltips are interactive with delayed close, so details can be expanded while hovering.
+                                          </p>
                                     </div>
                               </div>
                         </section>
 
-                        {/* FAQ Section */}
                         <section className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
-                              <h2 className="text-xl font-semibold text-gray-900 mb-4">Frequently Asked Questions (FAQ)</h2>
+                              <h2 className="text-xl font-semibold text-gray-900 mb-4">FAQ</h2>
 
                               <div className="space-y-4">
                                     <div className="border-b border-gray-100 pb-4 last:border-0 last:pb-0">
                                           <h3 className="font-bold text-gray-900 mb-2">Why do some Teams/Players not have a rank?</h3>
                                           <p className="text-gray-700 text-sm leading-relaxed">
-                                                Some players/teams are not ranked because their "Confidence" score is too low. Confidence is the system's way of
-                                                describing how sure we are of the Player/Team's strength.
-                                                <br /><br />
-                                                Confidence goes up when a Team/Player plays more matches—especially if the result of the match is as the system predicted
-                                                (e.g., the team predicted to be stronger wins). If a team significantly outperforms or underperforms the expected result,
-                                                we lower the confidence in their rating.
-                                                <br /><br />
-                                                To receive a rank, a Team/Player must have a Confidence score above a set threshold (currently set to be greater than the average confidence).
-                                                Entities below this threshold are still tracked but do not receive a numerical rank.
+                                                Player/team pages use a confidence threshold for displayed rank position.
+                                                Entities below threshold are still tracked, but may appear without a numeric rank unless low-confidence filtering is enabled.
                                           </p>
                                     </div>
+
                                     <div className="border-b border-gray-100 pb-4 last:border-0 last:pb-0">
                                           <h3 className="font-bold text-gray-900 mb-2">Does my individual performance affect my Team Rating?</h3>
                                           <p className="text-gray-700 text-sm leading-relaxed">
-                                                No. Team Ratings treat a unique pair of players (e.g., Maru + Oliveira) as a single, distinct entity.
-                                                If Maru plays with a different partner (e.g., Maru + ByuN), that is considered a completely separate team with its own independent rating history.
-                                                <br /><br />
-                                                However, your <strong>Individual Player Rating</strong> tracks your personal performance across <i>all</i> the different teams you play in.
-                                                For example, Maru's individual rating is updated after matches played with Oliveira AND matches played with ByuN.
+                                                Team rating tracks each fixed duo as one entity.
+                                                Individual rating tracks your performance across all teams you played in.
                                           </p>
                                     </div>
 
                                     <div className="border-b border-gray-100 pb-4 last:border-0 last:pb-0">
                                           <h3 className="font-bold text-gray-900 mb-2">Are Race Statistics used to adjust player ratings?</h3>
                                           <p className="text-gray-700 text-sm leading-relaxed">
-                                                Currently, no. Race statistics (e.g., "Zerg is winning 60% of TvZ matchups") are tracked purely for analytical purposes to monitor game balance and meta trends.
-                                                The ranking system does not give "bonus points" for playing a weaker race or penalize playing a stronger one.
-                                                A win is a win, regardless of the racial matchup.
+                                                Yes. If a heavy favorite wins by a weaker scoreline than expected, the scoreline term can be negative enough
+                                                to partially or fully offset the positive match-result term.
                                           </p>
                                     </div>
 
                                     <div className="border-b border-gray-100 pb-4 last:border-0 last:pb-0">
-                                          <h3 className="font-bold text-gray-900 mb-2">Do Grand Final matches count more than Group Stage matches?</h3>
+                                          <h3 className="font-bold text-gray-900 mb-2">Do later rounds count more than early rounds?</h3>
                                           <p className="text-gray-700 text-sm leading-relaxed">
-                                                Strictly speaking, no. The ranking algorithm calculates points based on the <strong>skill difference</strong> between opponents, not the prestige of the match.
-                                                <br /><br />
-                                                Winning against a world-class team yields high points whether it happens in the Round of 16 or the Grand Finals. However, since players need to win to reach the Grand Finals, you are far more likely to face highly-rated opponents in later stages. Defeating these strong opponents yields more points. Additionally, both you and your opponents will likely have gained rating from your previous victories leading up to the final, increasing the stakes of the match naturally.
+                                                Not directly. Importance comes from opponent strength, confidence/newness context,
+                                                and series structure/scoreline, not from the round label itself.
                                           </p>
                                     </div>
 
                                     <div className="border-b border-gray-100 pb-4 last:border-0 last:pb-0">
-                                          <h3 className="font-bold text-gray-900 mb-2">How quickly can a new, strong team reach rank #1?</h3>
+                                          <h3 className="font-bold text-gray-900 mb-2">What does “Use Initial Seeds” do?</h3>
                                           <p className="text-gray-700 text-sm leading-relaxed">
-                                                Very quickly due to the <strong>Provisional "K-Factor"</strong>.
-                                                <br /><br />
-                                                New entities get higher early-match K values via a newness schedule, so if a strong team forms and dominates,
-                                                they can climb rapidly without needing hundreds of games.
-                                                <br /><br />
-                                                It is common for a newly formed super-team to achieve a #1 <i>rating</i> immediately after winning their first tournament. However, they might not appear on the official leaderboard immediately because they haven't met the <strong>Confidence Threshold</strong> (see above). They need to play enough games to prove their consistency before being awarded an official rank.
+                                                It switches player/team ranking pages to precomputed seeded outputs,
+                                                where entities start from seed ratings instead of flat zero.
                                           </p>
                                     </div>
 
                                     <div className="border-b border-gray-100 pb-4 last:border-0 last:pb-0">
-                                          <h3 className="font-bold text-gray-900 mb-2">What does the "Use Initial Seeds" toggle do?</h3>
+                                          <h3 className="font-bold text-gray-900 mb-2">Are race stats used to change player/team ratings?</h3>
                                           <p className="text-gray-700 text-sm leading-relaxed">
-                                                By default, everyone starts at the same fixed baseline (0). This represents "clean slate" performance.
-                                                Checking "Use Initial Seeds" activates a 3-pass algorithm where we simulate history forward, backward, and forward again.
-                                                This gives established players a starting rating based on their estimated skill, providing a more predictive ranking list from Day 1 of the season.
+                                                No. Race and team-race pages are currently analytical tracks, separate from player/team leaderboard updates.
                                           </p>
                                     </div>
 
                                     <div className="border-b border-gray-100 pb-4 last:border-0 last:pb-0">
-                                          <h3 className="font-bold text-gray-900 mb-2">Why is the Confidence Threshold necessary?</h3>
+                                          <h3 className="font-bold text-gray-900 mb-2">Why is a tournament missing from my current view?</h3>
                                           <p className="text-gray-700 text-sm leading-relaxed">
-                                                It prevents "One-Hit Wonders" from cluttering the top of the rankings.
-                                                Without it, a new team could play one lucky game against a top team, win, and get a massive inflated rating.
-                                                The threshold ensures that the leaderboard only shows players and teams with a statistically significant sample size of games.
+                                                Check filters first: Main Circuit Only, season checkboxes, and Random-race toggle for race pages.
+                                                These affect calculation scope, not just display.
+                                          </p>
+                                    </div>
+
+                                    <div className="border-b border-gray-100 pb-4 last:border-0 last:pb-0">
+                                          <h3 className="font-bold text-gray-900 mb-2">Why did “Biggest Upset” change when I enabled Main Circuit Only?</h3>
+                                          <p className="text-gray-700 text-sm leading-relaxed">
+                                                Highlights are recalculated from the currently included match set. Enabling Main Circuit Only does not just hide events;
+                                                it reruns the underlying ratings and expected-win values on that filtered history. So a match can still be included,
+                                                but move up or down in the upset ranking because its expected probability changed.
+                                          </p>
+                                    </div>
+
+                                    <div className="border-b border-gray-100 pb-4 last:border-0 last:pb-0">
+                                          <h3 className="font-bold text-gray-900 mb-2">What does “Expected Series Scorelines” mean in match tooltips?</h3>
+                                          <p className="text-gray-700 text-sm leading-relaxed">
+                                                It converts the expected single-map win chance into probabilities for each series outcome
+                                                (for example, 2-0 / 2-1 / 1-2 / 0-2 in BO3). It is a model expectation, not a prediction guarantee.
+                                          </p>
+                                    </div>
+
+                                    <div className="border-b border-gray-100 pb-4 last:border-0 last:pb-0">
+                                          <h3 className="font-bold text-gray-900 mb-2">Why does the tooltip have collapsed “Calculation” details?</h3>
+                                          <p className="text-gray-700 text-sm leading-relaxed">
+                                                The default tooltip now shows high-value summary first (expected result + total change).
+                                                Full math is available in the collapsed Calculation section and optional factor-details subsection
+                                                to reduce clutter while keeping full transparency.
+                                          </p>
+                                    </div>
+
+                                    <div className="border-b border-gray-100 pb-4 last:border-0 last:pb-0">
+                                          <h3 className="font-bold text-gray-900 mb-2">Why can tiny differences appear between shown terms and final total?</h3>
+                                          <p className="text-gray-700 text-sm leading-relaxed">
+                                                The model computes using full precision, but tooltip numbers are rounded for readability.
+                                                Small differences (for example ±0.001 to ±0.01) are rounding artifacts, not logic errors.
+                                          </p>
+                                    </div>
+
+                                    <div className="border-b border-gray-100 pb-4 last:border-0 last:pb-0">
+                                          <h3 className="font-bold text-gray-900 mb-2">Do BO3/BO5 series count differently than BO1?</h3>
+                                          <p className="text-gray-700 text-sm leading-relaxed">
+                                                Yes. Longer series are treated as stronger evidence than BO1.
+                                                The model increases trust in both result and scoreline margin for longer series, with BO3 already considered a strong signal.
+                                          </p>
+                                    </div>
+
+                                    <div className="border-b border-gray-100 pb-4 last:border-0 last:pb-0">
+                                          <h3 className="font-bold text-gray-900 mb-2">Does “Use Initial Seeds” affect race and team-race pages?</h3>
+                                          <p className="text-gray-700 text-sm leading-relaxed">
+                                                No. Seeded mode applies to player and team leaderboards.
+                                                Race and team-race pages currently use their own analytical calculations and are not switched to seeded outputs by that toggle.
                                           </p>
                                     </div>
 
                                     <div className="border-b border-gray-100 pb-4 last:border-0 last:pb-0">
                                           <h3 className="font-bold text-gray-900 mb-2">How often are rankings processed?</h3>
                                           <p className="text-gray-700 text-sm leading-relaxed">
-                                                Rankings are recalculated automatically whenever new tournament data is added to the system.
-                                                Since the system processes matches chronologically, adding an older tournament triggers a full recalculation of the history to ensure every subsequent match rating remains accurate.
-                                          </p>
-                                    </div>
-
-                                    <div className="border-b border-gray-100 pb-4 last:border-0 last:pb-0">
-                                          <h3 className="font-bold text-gray-900 mb-2">Why is X tournament not counted in the ranking?</h3>
-                                          <p className="text-gray-700 text-sm leading-relaxed">
-                                                For now the main focus of the ranking system is the Uthermal 2v2 circuit. We do add other tournaments, but provide an option for user to view the ranking without these non-circuit tournament matches.
-                                                <br /><br />
-                                                We however require at least one team in any non-main circuit tournament to be already ranked in the ranking system (otherwise the system will create "Parallel Rankings". That is, if the system has no context of the teams in a non-circuit tournament it will not know what level the players of that tournament are - and treat it as if it was a circuit tournament filled with players it does not know. i.e. It will likely value a non-circuit tournament win too high).
-                                                <br /><br />
-                                                Notice that this is not just a UI filter. Filtering out Non-Circuit matches will not just hide them, it will exclude them from the ranking calculation altogether.
-                                          </p>
-                                    </div>
-
-                                    <div className="border-b border-gray-100 pb-4 last:border-0 last:pb-0">
-                                          <h3 className="font-bold text-gray-900 mb-2">Can I suggest you add a tournament?</h3>
-                                          <p className="text-gray-700 text-sm leading-relaxed">
-                                                Absolutely! Make sure that at least one team in the target tournament is already ranked in the system, then contact me @Gram in the Uthermal Discord and give me a hint that this tournament should be added.
+                                                Rankings are recalculated from the relevant match history when pages/endpoints are requested.
+                                                Because runs are chronological, adding or editing older matches can change later ratings.
                                           </p>
                                     </div>
                               </div>
