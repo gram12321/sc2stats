@@ -220,6 +220,15 @@ export function Info({ }: InfoProps) {
                                     </div>
 
                                     <div className="border-b border-gray-100 pb-4 last:border-0 last:pb-0">
+                                          <h3 className="font-bold text-gray-900 mb-2">How does Random qualify for peak race/combo highlights?</h3>
+                                          <p className="text-gray-700 text-sm leading-relaxed">
+                                                Random is stricter than the fixed races in Highlights. For <strong>Peak-Rated Player of Each Race</strong>, a player only qualifies for Random
+                                                if Random is their most-used race pick in the current filtered dataset. For <strong>Peak-Rated Team of Each Combination</strong>,
+                                                a team only qualifies for a combo containing Random if that Random combo is the team’s most-used combo in the same filtered scope.
+                                          </p>
+                                    </div>
+
+                                    <div className="border-b border-gray-100 pb-4 last:border-0 last:pb-0">
                                           <h3 className="font-bold text-gray-900 mb-2">What does “Expected Series Scorelines” mean in match tooltips?</h3>
                                           <p className="text-gray-700 text-sm leading-relaxed">
                                                 It converts the expected single-map win chance into probabilities for each series outcome
