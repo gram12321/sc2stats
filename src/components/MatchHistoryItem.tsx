@@ -410,16 +410,16 @@ function getRatingChangeTooltip(
         )}
         {hasCompositeBreakdown ? (
           <div className="pt-1 border-t border-border mt-1 space-y-1">
-            <div className="text-muted-foreground mb-0.5">How this change is computed:</div>
+            <div className="text-muted-foreground mb-0.5">Calculation:</div>
             <div className="text-[10px] text-muted-foreground bg-muted/50 px-1.5 py-1 rounded border border-border space-y-0.5">
-              <div><span className="font-semibold">1) Adjusted K</span> (base strength used for both terms)</div>
+              <div><span className="font-semibold">1) Adjusted K</span> (base for both terms)</div>
               <div className="font-mono">Adj K = {kExpression} = {adjustedK.toFixed(3)}</div>
             </div>
             <div className="text-[10px] text-muted-foreground bg-muted/50 px-1.5 py-1 rounded border border-border space-y-0.5">
-              <div><span className="font-semibold">2) Match term</span> (win/draw/loss only; ignores map margin)</div>
+              <div><span className="font-semibold">2) Match term</span> (result only)</div>
               {outcomeSeriesMultiplier !== undefined && (
                 <div className="font-mono">
-                  Match K = Adj K × Series-length trust-for-result = {adjustedK.toFixed(3)} × {outcomeSeriesMultiplier.toFixed(3)} = {matchK!.toFixed(3)}
+                  Match K = Adj K × Result series factor = {adjustedK.toFixed(3)} × {outcomeSeriesMultiplier.toFixed(3)} = {matchK!.toFixed(3)}
                 </div>
               )}
               <div className="font-mono">
@@ -430,20 +430,20 @@ function getRatingChangeTooltip(
               </div>
             </div>
             <div className="text-[10px] text-muted-foreground bg-muted/50 px-1.5 py-1 rounded border border-border space-y-0.5">
-              <div><span className="font-semibold">3) Scoreline term</span> (how dominant the map score was)</div>
+              <div><span className="font-semibold">3) Scoreline term</span> (map margin)</div>
               {hasScoreShareInputs && (
                 <>
                   <div className="font-mono">
                     Score share = maps won / maps played = {actualScoreShare!.toFixed(3)}
                   </div>
                   <div className="font-mono">
-                    Score delta = Actual score share - Expected score share = {actualScoreShare!.toFixed(3)} - {expectedScoreShare!.toFixed(3)} = {(actualScoreShare! - expectedScoreShare!).toFixed(3)}
+                    Score delta = Actual - Expected score share = {actualScoreShare!.toFixed(3)} - {expectedScoreShare!.toFixed(3)} = {(actualScoreShare! - expectedScoreShare!).toFixed(3)}
                   </div>
                 </>
               )}
               {(seriesScoreMultiplier !== undefined || scoreReliabilityMultiplier !== undefined || scoreWeight !== undefined) && (
                 <div className="font-mono">
-                  Score weight = 0.55 × Series-length trust-for-margin ({seriesScoreMultiplier?.toFixed(3) ?? '-'}) × Reliability ({scoreReliabilityMultiplier?.toFixed(3) ?? '-'}) = {scoreWeight?.toFixed(3) ?? '-'}
+                  Score weight = 0.55 × Margin series factor ({seriesScoreMultiplier?.toFixed(3) ?? '-'}) × Reliability ({scoreReliabilityMultiplier?.toFixed(3) ?? '-'}) = {scoreWeight?.toFixed(3) ?? '-'}
                 </div>
               )}
               <div className="font-mono">
@@ -467,7 +467,7 @@ function getRatingChangeTooltip(
               Total change = Match term + Scoreline term = {matchRatingChange!.toFixed(3)} + {scoreRatingChange!.toFixed(3)} = {ratingChange.toFixed(3)}
             </div>
             <div className="text-muted-foreground text-[10px] mt-0.5 text-center italic">
-              Rounded display can differ slightly from exact internal decimals.
+              Display rounding may differ slightly from internal decimals.
             </div>
           </div>
         ) : (
