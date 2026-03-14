@@ -40,7 +40,7 @@ const outputDir = join(__dirname, '..', 'output');
  */
 async function loadTournamentFiles() {
   const files = await readdir(outputDir);
-  const jsonFiles = files.filter(f => f.endsWith('.json') && f !== 'player_defaults.json');
+  const jsonFiles = files.filter(f => f.endsWith('.json') && f !== 'player_defaults.json' && f !== 'player_countries.json');
 
   const tournaments = [];
 
@@ -242,7 +242,12 @@ function calculateRankingsFromMatches(sortedMatches, seedRatings = null, passNam
         team1AvgOpponentConfidence,
         null,
         finalPopulationMean,
-        team1AvgOpponentMatches
+        team1AvgOpponentMatches,
+        {
+          teamScore: match.team1_score,
+          opponentScore: match.team2_score,
+          bestOf: match.best_of
+        }
       );
     }
 
@@ -258,7 +263,12 @@ function calculateRankingsFromMatches(sortedMatches, seedRatings = null, passNam
         team2AvgOpponentConfidence,
         null,
         finalPopulationMean,
-        team2AvgOpponentMatches
+        team2AvgOpponentMatches,
+        {
+          teamScore: match.team2_score,
+          opponentScore: match.team1_score,
+          bestOf: match.best_of
+        }
       );
     }
   }
@@ -372,7 +382,12 @@ function calculateTeamRankingsFromMatches(sortedMatches, seedRatings = null, pas
       team2Confidence,
       null,
       finalPopulationMean,
-      team2Stats.matches
+      team2Stats.matches,
+      {
+        teamScore: match.team1_score,
+        opponentScore: match.team2_score,
+        bestOf: match.best_of
+      }
     );
     updateStatsForMatch(
       team2Stats,
@@ -383,7 +398,12 @@ function calculateTeamRankingsFromMatches(sortedMatches, seedRatings = null, pas
       team1Confidence,
       null,
       finalPopulationMean,
-      team1Stats.matches
+      team1Stats.matches,
+      {
+        teamScore: match.team2_score,
+        opponentScore: match.team1_score,
+        bestOf: match.best_of
+      }
     );
   }
 

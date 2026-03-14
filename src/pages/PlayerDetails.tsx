@@ -2,10 +2,15 @@ import { useState, useEffect, useMemo } from 'react';
 import { useRankingSettings } from '../context/RankingSettingsContext';
 import { Race } from '../types/tournament';
 import { getPlayerDefaults } from '../lib/playerDefaults';
+import { getPlayerCountries } from '../lib/playerCountries';
 import { formatRankingPoints, getRaceAbbr } from '../lib/utils';
+import { formatTournamentName } from '../lib/display';
 import { MatchHistoryItem } from '../components/MatchHistoryItem';
 import { RatingChart } from '../components/RatingChart';
 import { RaceMatchupStats } from '../components/RaceMatchupStats';
+import { RankingFilters } from '../components/RankingFilters';
+import { RaceBadge } from '../components/ui/RaceBadge';
+import { CountryFlag } from '../components/ui/CountryFlag';
 
 interface PlayerMatch {
   match_id: string;
@@ -40,6 +45,7 @@ interface PlayerMatch {
   player_impacts?: Record<string, {
     ratingBefore: number;
     rankBefore?: number | string;
+    rankAfter?: number | string;
     ratingChange: number;
     won: boolean;
     opponentRating: number;
@@ -95,10 +101,10 @@ export function PlayerDetails({ playerName, onBack }: PlayerDetailsProps) {
   const [playerRankings, setPlayerRankings] = useState<Record<string, { rank: number; points: number; confidence: number }>>({});
   const [teamRankings, setTeamRankings] = useState<Record<string, { rank: number; points: number; confidence: number }>>({});
   const [playerRaces, setPlayerRaces] = useState<Record<string, Race>>({});
+  const [playerCountries, setPlayerCountries] = useState<Record<string, string>>({});
   const [comboRankings, setComboRankings] = useState<Record<string, { points: number }>>({});
-  const [useSeededRankings, setUseSeededRankings] = useState(false);
   const [chartMode, setChartMode] = useState<'rating' | 'rank'>('rating');
-  const { seasons } = useRankingSettings();
+  const { seasons, mainCircuitOnly, useSeededRankings, useIntermediateTeamRating } = useRankingSettings();
 
   useEffect(() => {
     loadPlayerDetails();
@@ -106,8 +112,9 @@ export function PlayerDetails({ playerName, onBack }: PlayerDetailsProps) {
     loadPlayerRankings();
     loadTeamRankings();
     loadAllPlayerRaces();
+    loadAllPlayerCountries();
     loadComboRankings();
-  }, [playerName, useSeededRankings, seasons]);
+  }, [playerName, useSeededRankings, seasons, mainCircuitOnly, useIntermediateTeamRating]);
 
   const loadPlayerDetails = async () => {
     try {
@@ -115,6 +122,8 @@ export function PlayerDetails({ playerName, onBack }: PlayerDetailsProps) {
       setError(null);
       const params = new URLSearchParams();
       if (useSeededRankings) params.append('useSeeds', 'true');
+      if (mainCircuitOnly) params.append('mainCircuitOnly', 'true');
+      if (useIntermediateTeamRating) params.append('useIntermediateTeamRating', 'true');
       if (seasons && seasons.length > 0) params.append('seasons', seasons.join(','));
 
       const response = await fetch(`/api/player/${encodeURIComponent(playerName)}?${params.toString()}`);
@@ -145,9 +154,12 @@ export function PlayerDetails({ playerName, onBack }: PlayerDetailsProps) {
   const loadPlayerRankings = async () => {
     try {
       const params = new URLSearchParams();
+      if (mainCircuitOnly) params.append('mainCircuitOnly', 'true');
+      if (useIntermediateTeamRating) params.append('useIntermediateTeamRating', 'true');
       if (seasons && seasons.length > 0) params.append('seasons', seasons.join(','));
 
-      const response = await fetch(`/api/player-rankings?${params.toString()}`);
+      const endpoint = useSeededRankings ? '/api/seeded-player-rankings' : '/api/player-rankings';
+      const response = await fetch(`${endpoint}?${params.toString()}`);
       if (!response.ok) throw new Error('Failed to load player rankings');
       const data: PlayerRanking[] = await response.json();
       const rankMap: Record<string, { rank: number; points: number; confidence: number }> = {};
@@ -167,9 +179,12 @@ export function PlayerDetails({ playerName, onBack }: PlayerDetailsProps) {
   const loadTeamRankings = async () => {
     try {
       const params = new URLSearchParams();
+      if (mainCircuitOnly) params.append('mainCircuitOnly', 'true');
+      if (useIntermediateTeamRating) params.append('useIntermediateTeamRating', 'true');
       if (seasons && seasons.length > 0) params.append('seasons', seasons.join(','));
 
-      const response = await fetch(`/api/team-rankings?${params.toString()}`);
+      const endpoint = useSeededRankings ? '/api/seeded-team-rankings' : '/api/team-rankings';
+      const response = await fetch(`${endpoint}?${params.toString()}`);
       if (!response.ok) throw new Error('Failed to load team rankings');
       const data: TeamRanking[] = await response.json();
       const rankMap: Record<string, { rank: number; points: number; confidence: number }> = {};
@@ -196,9 +211,19 @@ export function PlayerDetails({ playerName, onBack }: PlayerDetailsProps) {
     }
   };
 
+  const loadAllPlayerCountries = async () => {
+    try {
+      const countries = await getPlayerCountries();
+      setPlayerCountries(countries);
+    } catch (err) {
+      console.error('Error loading player countries:', err);
+    }
+  };
+
   const loadComboRankings = async () => {
     try {
       const params = new URLSearchParams();
+      if (mainCircuitOnly) params.append('mainCircuitOnly', 'true');
       if (seasons && seasons.length > 0) params.append('seasons', seasons.join(','));
 
       const response = await fetch(`/api/team-race-rankings?${params.toString()}`);
@@ -290,17 +315,6 @@ export function PlayerDetails({ playerName, onBack }: PlayerDetailsProps) {
     return (b.match_id || '').localeCompare(a.match_id || '');
   }) : [];
 
-  const getRaceBadgeColor = (race: Race | null | undefined) => {
-    if (!race) return 'bg-gray-100 text-gray-600';
-    switch (race) {
-      case 'Terran': return 'bg-blue-100 text-blue-800';
-      case 'Zerg': return 'bg-purple-100 text-purple-800';
-      case 'Protoss': return 'bg-yellow-100 text-yellow-800';
-      case 'Random': return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-600';
-    }
-  };
-
   const chartData = useMemo(() => {
     if (!sortedMatchHistory.length) return [];
 
@@ -312,9 +326,7 @@ export function PlayerDetails({ playerName, onBack }: PlayerDetailsProps) {
 
       // Determine rank
       let rank: number | undefined;
-      // rankBefore comes as string ('-' or number) or number.
-      // processRankings.js: rankBefore = rankMap.get(playerName) || '-'; (rankMap uses 1-based index)
-      const rVal = impact?.rankBefore;
+      const rVal = impact?.rankAfter ?? impact?.rankBefore;
       if (rVal && rVal !== '-') {
         rank = Number(rVal);
       }
@@ -356,7 +368,7 @@ export function PlayerDetails({ playerName, onBack }: PlayerDetailsProps) {
         confidence: impact?.confidence,
         matchId: match.match_id,
         matchNum: 0,
-        tournamentName: match.tournament_slug.replace(/-/g, ' '),
+        tournamentName: formatTournamentName(match.tournament_slug),
         opponent: opponentName
       };
     }).filter(point => point.rating !== 0); // Basic filter to ensure valid points
@@ -399,31 +411,23 @@ export function PlayerDetails({ playerName, onBack }: PlayerDetailsProps) {
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-foreground">{player.name}</h1>
+              <h1 className="text-2xl font-bold text-foreground inline-flex items-center gap-2">
+                <CountryFlag country={playerCountries[player.name]} />
+                {player.name}
+              </h1>
               {playerRace && (
-                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium mt-2 ${getRaceBadgeColor(playerRace)}`}>
-                  {playerRace}
-                </span>
+                <div className="mt-2">
+                  <RaceBadge race={playerRace} showName />
+                </div>
               )}
             </div>
             <div className="flex items-center gap-4">
-              <div className="flex items-center">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={useSeededRankings}
-                    onChange={(e) => setUseSeededRankings(e.target.checked)}
-                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                  />
-                  <span className="text-sm text-muted-foreground">Use Initial Seeds (Average of Pass 1 & 2)</span>
-                </label>
-                <div className="ml-2 group relative">
-                  <span className="cursor-help text-gray-400 text-xs border border-gray-400 rounded-full w-4 h-4 inline-flex items-center justify-center">?</span>
-                  <div className="invisible group-hover:visible absolute top-full right-0 mt-2 w-64 p-2 bg-gray-800 text-white text-xs rounded shadow-lg z-10">
-                    When checked, rankings start from a seed value derived from a preliminary analysis of all matches. Without this, everyone starts at 0.
-                  </div>
-                </div>
-              </div>
+              <RankingFilters
+                showSeeded={true}
+                showMainCircuit={true}
+                showIntermediateTeamRating={true}
+                showConfidence={false}
+              />
               {onBack && (
                 <button
                   onClick={onBack}
@@ -544,6 +548,7 @@ export function PlayerDetails({ playerName, onBack }: PlayerDetailsProps) {
                       team2Rank={team2Rank ? { rank: team2Rank.rank, points: team2Rank.points, confidence: team2Rank.confidence } : null}
                       playerRankings={playerRankingsMap}
                       playerRaces={playerRaces}
+                      playerCountries={playerCountries}
                       highlightPlayers={[playerName]}
                       showWinLoss={true}
                       winLossValue={match.won}

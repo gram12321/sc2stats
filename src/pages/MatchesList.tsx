@@ -3,8 +3,10 @@ import { useRankingSettings } from '../context/RankingSettingsContext';
 import { RankingFilters } from '../components/RankingFilters';
 import { Race } from '../types/tournament';
 import { getPlayerDefaults } from '../lib/playerDefaults';
+import { getPlayerCountries } from '../lib/playerCountries';
 import { MatchHistoryItem } from '../components/MatchHistoryItem';
 import { getRaceAbbr } from '../lib/utils';
+import { formatTournamentName } from '../lib/display';
 
 interface MatchHistory {
   match_id: string;
@@ -72,9 +74,12 @@ interface TeamRanking {
   confidence: number;
 }
 
-interface MatchesListProps { }
+interface MatchesListProps {
+  initialTournament?: string;
+  focusMatchId?: string;
+}
 
-export function MatchesList({ }: MatchesListProps) {
+export function MatchesList({ initialTournament, focusMatchId }: MatchesListProps) {
   const [matches, setMatches] = useState<MatchHistory[]>([]);
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [selectedTournament, setSelectedTournament] = useState<string>('');
@@ -83,11 +88,19 @@ export function MatchesList({ }: MatchesListProps) {
   const [playerRankings, setPlayerRankings] = useState<Record<string, { rank: number; points: number; confidence: number }>>({});
   const [teamRankings, setTeamRankings] = useState<Record<string, { rank: number; points: number; confidence: number }>>({});
   const [playerRaces, setPlayerRaces] = useState<Record<string, Race>>({});
+  const [playerCountries, setPlayerCountries] = useState<Record<string, string>>({});
   const [comboRankings, setComboRankings] = useState<Record<string, { points: number }>>({});
-  const { seasons, useSeededRankings, mainCircuitOnly } = useRankingSettings();
+  const { seasons, useSeededRankings, mainCircuitOnly, useIntermediateTeamRating } = useRankingSettings();
+
+  useEffect(() => {
+    if (initialTournament !== undefined) {
+      setSelectedTournament(initialTournament);
+    }
+  }, [initialTournament]);
 
   useEffect(() => {
     loadPlayerRaces();
+    loadPlayerCountries();
   }, []);
 
   useEffect(() => {
@@ -95,16 +108,29 @@ export function MatchesList({ }: MatchesListProps) {
     loadPlayerRankings();
     loadTeamRankings();
     loadComboRankings();
-  }, [seasons, mainCircuitOnly]);
+  }, [seasons, mainCircuitOnly, useIntermediateTeamRating]);
 
   useEffect(() => {
     loadMatches();
-  }, [selectedTournament, useSeededRankings, seasons, mainCircuitOnly]);
+  }, [selectedTournament, useSeededRankings, seasons, mainCircuitOnly, useIntermediateTeamRating]);
+
+  useEffect(() => {
+    if (!focusMatchId || isLoading || matches.length === 0) return;
+    const focusedMatch = matches.find((match) => match.match_id === focusMatchId);
+    if (!focusedMatch) return;
+
+    const elementId = `match-${focusedMatch.tournament_slug}-${focusedMatch.match_id}`;
+    const element = document.getElementById(elementId);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [focusMatchId, isLoading, matches]);
 
   const loadTournaments = async () => {
     try {
       const params = new URLSearchParams();
       if (mainCircuitOnly) params.append('mainCircuitOnly', 'true');
+      if (useIntermediateTeamRating) params.append('useIntermediateTeamRating', 'true');
       if (seasons && seasons.length > 0) params.append('seasons', seasons.join(','));
 
       const response = await fetch(`/api/tournaments?${params.toString()}`);
@@ -120,6 +146,7 @@ export function MatchesList({ }: MatchesListProps) {
     try {
       const params = new URLSearchParams();
       if (mainCircuitOnly) params.append('mainCircuitOnly', 'true');
+      if (useIntermediateTeamRating) params.append('useIntermediateTeamRating', 'true');
       if (seasons && seasons.length > 0) params.append('seasons', seasons.join(','));
 
       const response = await fetch(`/api/player-rankings?${params.toString()}`);
@@ -172,6 +199,15 @@ export function MatchesList({ }: MatchesListProps) {
     }
   };
 
+  const loadPlayerCountries = async () => {
+    try {
+      const countries = await getPlayerCountries();
+      setPlayerCountries(countries);
+    } catch (err) {
+      console.error('Error loading player countries:', err);
+    }
+  };
+
   const loadComboRankings = async () => {
     try {
       const params = new URLSearchParams();
@@ -206,6 +242,7 @@ export function MatchesList({ }: MatchesListProps) {
       if (selectedTournament) params.append('tournament', selectedTournament);
       if (useSeededRankings) params.append('useSeeds', 'true');
       if (mainCircuitOnly) params.append('mainCircuitOnly', 'true');
+      if (useIntermediateTeamRating) params.append('useIntermediateTeamRating', 'true');
       if (seasons && seasons.length > 0) params.append('seasons', seasons.join(','));
 
       const url = `/api/match-history?${params.toString()}`;
@@ -288,7 +325,7 @@ export function MatchesList({ }: MatchesListProps) {
                 <option value="">All Tournaments</option>
                 {tournaments.map(tournament => (
                   <option key={tournament.slug} value={tournament.slug}>
-                    {tournament.name}
+                    {formatTournamentName(tournament.slug || tournament.name)}
                   </option>
                 ))}
               </select>
@@ -297,6 +334,7 @@ export function MatchesList({ }: MatchesListProps) {
               <RankingFilters
                 showSeeded={true}
                 showMainCircuit={true}
+                showIntermediateTeamRating={true}
                 showConfidence={false}
               />
             </div>
@@ -343,25 +381,31 @@ export function MatchesList({ }: MatchesListProps) {
               });
 
               return (
-                <MatchHistoryItem
+                <div
                   key={`${match.tournament_slug}-${match.match_id}`}
-                  match={match}
-                  team1Rank={team1Rank ? { rank: team1Rank.rank, points: team1Rank.points, confidence: team1Rank.confidence } : null}
-                  team2Rank={team2Rank ? { rank: team2Rank.rank, points: team2Rank.points, confidence: team2Rank.confidence } : null}
-                  playerRankings={playerRankingsMap}
-                  playerRaces={playerRaces}
-                  showRatingBreakdown={true}
-                  highlightPlayers={[]}
-                  showWinLoss={true}
-                  winLossValue={match.team1_score > match.team2_score}
-                  isDrawValue={match.team1_score === match.team2_score}
-                  comboRankings={comboRankings}
-                  extractRaceChanges={extractRaceChanges}
-                  normalizeTeamKey={normalizeTeamKey}
-                  getTeamImpact={getTeamImpact}
-                  getPlayerImpact={getPlayerImpact}
-                  formatDate={formatDate}
-                />
+                  id={`match-${match.tournament_slug}-${match.match_id}`}
+                  className={focusMatchId === match.match_id ? 'ring-2 ring-primary/40 rounded-lg' : ''}
+                >
+                  <MatchHistoryItem
+                    match={match}
+                    team1Rank={team1Rank ? { rank: team1Rank.rank, points: team1Rank.points, confidence: team1Rank.confidence } : null}
+                    team2Rank={team2Rank ? { rank: team2Rank.rank, points: team2Rank.points, confidence: team2Rank.confidence } : null}
+                    playerRankings={playerRankingsMap}
+                    playerRaces={playerRaces}
+                    playerCountries={playerCountries}
+                    showRatingBreakdown={true}
+                    highlightPlayers={[]}
+                    showWinLoss={true}
+                    winLossValue={match.team1_score > match.team2_score}
+                    isDrawValue={match.team1_score === match.team2_score}
+                    comboRankings={comboRankings}
+                    extractRaceChanges={extractRaceChanges}
+                    normalizeTeamKey={normalizeTeamKey}
+                    getTeamImpact={getTeamImpact}
+                    getPlayerImpact={getPlayerImpact}
+                    formatDate={formatDate}
+                  />
+                </div>
               );
             })}
           </div>

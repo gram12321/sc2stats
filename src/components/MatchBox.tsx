@@ -84,18 +84,20 @@ export function MatchBox({ match, onClick, teamRankings }: MatchBoxProps) {
                   ({getRaceAbbr(getRace(match.team1.player2.name, match.team1.player2.race))})
                 </span>
               )}
-              {team1Ranking && (
-                <span className="ml-1 text-xs font-semibold text-blue-600">
-                  ({team1Ranking})
-                </span>
-              )}
             </div>
           </div>
-          {match.team1_score !== null && (
-            <div className="ml-2 text-lg font-bold text-gray-900">
-              {match.team1_score}
-            </div>
-          )}
+          <div className="ml-2 flex flex-col items-end gap-1">
+            {team1Ranking && (
+              <div className="text-[10px] font-semibold text-blue-700 bg-blue-100 px-1.5 py-0.5 rounded whitespace-nowrap">
+                #{team1Ranking}
+              </div>
+            )}
+            {match.team1_score !== null && (
+              <div className="text-lg font-bold text-gray-900">
+                {match.team1_score}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -121,18 +123,20 @@ export function MatchBox({ match, onClick, teamRankings }: MatchBoxProps) {
                   ({getRaceAbbr(getRace(match.team2.player2.name, match.team2.player2.race))})
                 </span>
               )}
-              {team2Ranking && (
-                <span className="ml-1 text-xs font-semibold text-blue-600">
-                  ({team2Ranking})
-                </span>
-              )}
             </div>
           </div>
-          {match.team2_score !== null && (
-            <div className="ml-2 text-lg font-bold text-gray-900">
-              {match.team2_score}
-            </div>
-          )}
+          <div className="ml-2 flex flex-col items-end gap-1">
+            {team2Ranking && (
+              <div className="text-[10px] font-semibold text-blue-700 bg-blue-100 px-1.5 py-0.5 rounded whitespace-nowrap">
+                #{team2Ranking}
+              </div>
+            )}
+            {match.team2_score !== null && (
+              <div className="text-lg font-bold text-gray-900">
+                {match.team2_score}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

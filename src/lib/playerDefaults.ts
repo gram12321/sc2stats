@@ -52,3 +52,23 @@ export async function getPlayerDefault(name: string): Promise<Race | null> {
 export async function clearPlayerDefaults(): Promise<void> {
   await setPlayerDefaults({});
 }
+
+export async function renamePlayerName(fromName: string, toName: string): Promise<{ success: boolean }> {
+  try {
+    const response = await fetch('/api/players/rename', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fromName, toName })
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err?.error || 'Failed to rename player');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error renaming player:', error);
+    throw error;
+  }
+}

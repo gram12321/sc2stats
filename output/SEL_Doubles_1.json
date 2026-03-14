@@ -1,0 +1,573 @@
+{
+  "tournament": {
+    "name": "SEL Doubles #1",
+    "liquipedia_slug": "SEL_Doubles/1",
+    "date": "2026-02-28",
+    "prize_pool": 400,
+    "format": "2v2 Playoffs",
+    "maps": [
+      "Jacob's Summit",
+      "Memecatcher",
+      "New Bed of Chaos",
+      "Reclamation LE",
+      "Rohana",
+      "Rust Bucket",
+      "Team Biodome",
+      "Undercurrent",
+      "Yellowjacket"
+    ],
+    "is_main_circuit": false,
+    "season": 2026
+  },
+  "matches": [
+    {
+      "match_id": "R1M1",
+      "round": "Round of 32",
+      "team1": {
+        "player1": {
+          "name": "KuroiHumor"
+        },
+        "player2": {
+          "name": "蟹阿金"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "OldFninetyone"
+        },
+        "player2": {
+          "name": "Shaxing"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 1,
+      "best_of": 3,
+      "date": null,
+      "games": [],
+      "tournament_slug": "SEL_Doubles/1"
+    },
+    {
+      "match_id": "R1M2",
+      "round": "Round of 32",
+      "team1": {
+        "player1": {
+          "name": "Ezreal"
+        },
+        "player2": {
+          "name": "Icelin"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Harstem"
+        },
+        "player2": {
+          "name": "Lambo"
+        }
+      },
+      "team1_score": 1,
+      "team2_score": 2,
+      "best_of": 3,
+      "date": null,
+      "games": [],
+      "tournament_slug": "SEL_Doubles/1"
+    },
+    {
+      "match_id": "R1M3",
+      "round": "Round of 32",
+      "team1": {
+        "player1": {
+          "name": "myway"
+        },
+        "player2": {
+          "name": "sirunde"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "AlexDeathR"
+        },
+        "player2": {
+          "name": "Pagliacci"
+        }
+      },
+      "team1_score": 1,
+      "team2_score": 2,
+      "best_of": 3,
+      "date": null,
+      "games": [],
+      "tournament_slug": "SEL_Doubles/1"
+    },
+    {
+      "match_id": "R1M4",
+      "round": "Round of 32",
+      "team1": {
+        "player1": {
+          "name": "千年之狐"
+        },
+        "player2": {
+          "name": "南忧"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "CoralViper"
+        },
+        "player2": {
+          "name": "RoXas"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 0,
+      "best_of": 3,
+      "date": null,
+      "games": [],
+      "tournament_slug": "SEL_Doubles/1"
+    },
+    {
+      "match_id": "R2M1",
+      "round": "Round of 16",
+      "team1": {
+        "player1": {
+          "name": "ByuN"
+        },
+        "player2": {
+          "name": "Solar"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "KuroiHumor"
+        },
+        "player2": {
+          "name": "蟹阿金"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 0,
+      "best_of": 3,
+      "date": null,
+      "games": [],
+      "tournament_slug": "SEL_Doubles/1"
+    },
+    {
+      "match_id": "R2M2",
+      "round": "Round of 16",
+      "team1": {
+        "player1": {
+          "name": "Blask"
+        },
+        "player2": {
+          "name": "goblin"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "MANGRUSL"
+        },
+        "player2": {
+          "name": "prome"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 0,
+      "best_of": 3,
+      "date": null,
+      "games": [],
+      "tournament_slug": "SEL_Doubles/1"
+    },
+    {
+      "match_id": "R2M3",
+      "round": "Round of 16",
+      "team1": {
+        "player1": {
+          "name": "Krystianer"
+        },
+        "player2": {
+          "name": "MilkiCow"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Harstem"
+        },
+        "player2": {
+          "name": "Lambo"
+        }
+      },
+      "team1_score": 0,
+      "team2_score": 2,
+      "best_of": 3,
+      "date": null,
+      "games": [],
+      "tournament_slug": "SEL_Doubles/1"
+    },
+    {
+      "match_id": "R2M4",
+      "round": "Round of 16",
+      "team1": {
+        "player1": {
+          "name": "DefMars"
+        },
+        "player2": {
+          "name": "ZaRDieNT"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "IceCream"
+        },
+        "player2": {
+          "name": "Rake"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 0,
+      "best_of": 3,
+      "date": null,
+      "games": [],
+      "tournament_slug": "SEL_Doubles/1"
+    },
+    {
+      "match_id": "R2M5",
+      "round": "Round of 16",
+      "team1": {
+        "player1": {
+          "name": "SKillous"
+        },
+        "player2": {
+          "name": "uThermal"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "AlexDeathR"
+        },
+        "player2": {
+          "name": "Pagliacci"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 0,
+      "best_of": 3,
+      "date": null,
+      "games": [],
+      "tournament_slug": "SEL_Doubles/1"
+    },
+    {
+      "match_id": "R2M6",
+      "round": "Round of 16",
+      "team1": {
+        "player1": {
+          "name": "Brat_OK"
+        },
+        "player2": {
+          "name": "MindelVK"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "ART"
+        },
+        "player2": {
+          "name": "iosup"
+        }
+      },
+      "team1_score": 1,
+      "team2_score": 2,
+      "best_of": 3,
+      "date": null,
+      "games": [],
+      "tournament_slug": "SEL_Doubles/1"
+    },
+    {
+      "match_id": "R2M7",
+      "round": "Round of 16",
+      "team1": {
+        "player1": {
+          "name": "NightMare"
+        },
+        "player2": {
+          "name": "SHIN"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "千年之狐"
+        },
+        "player2": {
+          "name": "南忧"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 0,
+      "best_of": 3,
+      "date": null,
+      "games": [],
+      "tournament_slug": "SEL_Doubles/1"
+    },
+    {
+      "match_id": "R2M8",
+      "round": "Round of 16",
+      "team1": {
+        "player1": {
+          "name": "HonMonO"
+        },
+        "player2": {
+          "name": "threepoint"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "MiniZergUA"
+        },
+        "player2": {
+          "name": "SickNess"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 0,
+      "best_of": 3,
+      "date": null,
+      "games": [],
+      "tournament_slug": "SEL_Doubles/1"
+    },
+    {
+      "match_id": "R3M1",
+      "round": "Quarterfinals",
+      "team1": {
+        "player1": {
+          "name": "ByuN"
+        },
+        "player2": {
+          "name": "Solar"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Blask"
+        },
+        "player2": {
+          "name": "goblin"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 0,
+      "best_of": 3,
+      "date": null,
+      "games": [],
+      "tournament_slug": "SEL_Doubles/1"
+    },
+    {
+      "match_id": "R3M2",
+      "round": "Quarterfinals",
+      "team1": {
+        "player1": {
+          "name": "Harstem"
+        },
+        "player2": {
+          "name": "Lambo"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "DefMars"
+        },
+        "player2": {
+          "name": "ZaRDieNT"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 1,
+      "best_of": 3,
+      "date": null,
+      "games": [],
+      "tournament_slug": "SEL_Doubles/1"
+    },
+    {
+      "match_id": "R3M3",
+      "round": "Quarterfinals",
+      "team1": {
+        "player1": {
+          "name": "SKillous"
+        },
+        "player2": {
+          "name": "uThermal"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "ART"
+        },
+        "player2": {
+          "name": "iosup"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 0,
+      "best_of": 3,
+      "date": null,
+      "games": [],
+      "tournament_slug": "SEL_Doubles/1"
+    },
+    {
+      "match_id": "R3M4",
+      "round": "Quarterfinals",
+      "team1": {
+        "player1": {
+          "name": "NightMare"
+        },
+        "player2": {
+          "name": "SHIN"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "HonMonO"
+        },
+        "player2": {
+          "name": "threepoint"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 0,
+      "best_of": 3,
+      "date": null,
+      "games": [],
+      "tournament_slug": "SEL_Doubles/1"
+    },
+    {
+      "match_id": "R4M1",
+      "round": "Semifinals",
+      "team1": {
+        "player1": {
+          "name": "ByuN"
+        },
+        "player2": {
+          "name": "Solar"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Harstem"
+        },
+        "player2": {
+          "name": "Lambo"
+        }
+      },
+      "team1_score": 3,
+      "team2_score": 2,
+      "best_of": 5,
+      "date": null,
+      "games": [
+        {
+          "map": "Rust Bucket",
+          "winner": 2
+        },
+        {
+          "map": "New Bed of Chaos",
+          "winner": 1
+        },
+        {
+          "map": "Yellowjacket",
+          "winner": 2
+        },
+        {
+          "map": "Undercurrent",
+          "winner": 1
+        },
+        {
+          "map": "Rohana",
+          "winner": 1
+        }
+      ],
+      "tournament_slug": "SEL_Doubles/1"
+    },
+    {
+      "match_id": "R4M2",
+      "round": "Semifinals",
+      "team1": {
+        "player1": {
+          "name": "SKillous"
+        },
+        "player2": {
+          "name": "uThermal"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "NightMare"
+        },
+        "player2": {
+          "name": "SHIN"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 3,
+      "best_of": 3,
+      "date": null,
+      "games": [
+        {
+          "map": "Rohana",
+          "winner": 1
+        },
+        {
+          "map": "Team Biodome",
+          "winner": 2
+        },
+        {
+          "map": "Yellowjacket",
+          "winner": 1
+        },
+        {
+          "map": "Rust Bucket",
+          "winner": 2
+        },
+        {
+          "map": "New Bed of Chaos",
+          "winner": 2
+        }
+      ],
+      "tournament_slug": "SEL_Doubles/1"
+    },
+    {
+      "match_id": "R5M1",
+      "round": "Grand Final",
+      "team1": {
+        "player1": {
+          "name": "ByuN"
+        },
+        "player2": {
+          "name": "Solar"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "NightMare"
+        },
+        "player2": {
+          "name": "SHIN"
+        }
+      },
+      "team1_score": 3,
+      "team2_score": 0,
+      "best_of": 3,
+      "date": null,
+      "games": [
+        {
+          "map": "Yellowjacket",
+          "winner": 1
+        },
+        {
+          "map": "Rohana",
+          "winner": 1
+        },
+        {
+          "map": "Undercurrent",
+          "winner": 1
+        }
+      ],
+      "tournament_slug": "SEL_Doubles/1"
+    }
+  ]
+}

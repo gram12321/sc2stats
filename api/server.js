@@ -12,6 +12,18 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const outputDir = join(__dirname, '..', 'output');
 const playerDefaultsFile = join(outputDir, 'player_defaults.json');
+const playerCountriesFile = join(outputDir, 'player_countries.json');
+const metadataJsonFiles = new Set(['player_defaults.json', 'player_countries.json']);
+
+function isTournamentJsonFile(fileName) {
+  return fileName.endsWith('.json') && !metadataJsonFiles.has(fileName) && !fileName.startsWith('seeded_');
+}
+
+function normalizeCountryCode(country) {
+  if (!country) return null;
+  const normalized = String(country).trim().toUpperCase();
+  return /^[A-Z]{2}$/.test(normalized) ? normalized : null;
+}
 
 const app = express();
 app.use(cors());
@@ -38,7 +50,220 @@ async function loadSeeds() {
   }
 }
 
+function getTeamRatingOptions(req, playerSeeds = null) {
+  const useIntermediateTeamRating = req.query.useIntermediateTeamRating === 'true';
+  const parsedFadeMatches = parseInt(req.query.intermediateFadeMatches, 10);
+  const intermediateFadeMatches = Number.isFinite(parsedFadeMatches) && parsedFadeMatches > 0
+    ? parsedFadeMatches
+    : 20;
+
+  return {
+    useIntermediateTeamRating,
+    intermediateFadeMatches,
+    playerSeeds
+  };
+}
+
 const versionLogPath = join(__dirname, '..', 'docs', 'versionlog.md');
+
+function normalizePlayerNameForSimilarity(name) {
+  return String(name || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '');
+}
+
+function shouldReplacePlayerName(currentName, fromName, toName) {
+  if (typeof currentName !== 'string') return false;
+
+  if (currentName === fromName) {
+    return currentName !== toName;
+  }
+
+  const isWhitespaceVariantMerge = fromName === toName;
+  if (!isWhitespaceVariantMerge) {
+    return false;
+  }
+
+  return currentName !== toName && currentName.trimEnd() === toName;
+}
+
+function extractPlayerCountriesFromTournamentData(tournamentData, target = {}) {
+  if (!tournamentData?.matches || !Array.isArray(tournamentData.matches)) {
+    return target;
+  }
+
+  tournamentData.matches.forEach((match) => {
+    const players = [
+      match?.team1?.player1,
+      match?.team1?.player2,
+      match?.team2?.player1,
+      match?.team2?.player2
+    ];
+
+    players.forEach((player) => {
+      if (!player?.name) return;
+      const code = normalizeCountryCode(player?.country || player?.nation || player?.flag);
+      if (code && !target[player.name]) {
+        target[player.name] = code;
+      }
+    });
+  });
+
+  return target;
+}
+
+async function loadStoredPlayerCountries() {
+  try {
+    const content = await readFile(playerCountriesFile, 'utf-8');
+    const parsed = JSON.parse(content);
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {};
+
+    const normalized = {};
+    Object.entries(parsed).forEach(([name, country]) => {
+      const code = normalizeCountryCode(country);
+      if (code) normalized[name] = code;
+    });
+    return normalized;
+  } catch (err) {
+    if (err.code === 'ENOENT') return {};
+    throw err;
+  }
+}
+
+async function loadScrapedPlayerCountries() {
+  const countries = {};
+  const files = await readdir(outputDir);
+  const tournamentFiles = files.filter(isTournamentJsonFile);
+
+  for (const file of tournamentFiles) {
+    try {
+      const filePath = join(outputDir, file);
+      const content = await readFile(filePath, 'utf-8');
+      const data = JSON.parse(content);
+      extractPlayerCountriesFromTournamentData(data, countries);
+    } catch (err) {
+      console.error(`Error reading ${file} for scraped countries:`, err);
+    }
+  }
+
+  return countries;
+}
+
+function replacePlayerInTournamentData(tournamentData, fromName, toName) {
+  if (!tournamentData?.matches || !Array.isArray(tournamentData.matches)) {
+    return { changed: false, replacements: 0 };
+  }
+
+  let replacements = 0;
+
+  tournamentData.matches.forEach((match) => {
+    const players = [
+      match?.team1?.player1,
+      match?.team1?.player2,
+      match?.team2?.player1,
+      match?.team2?.player2
+    ];
+
+    players.forEach((player) => {
+      if (shouldReplacePlayerName(player?.name, fromName, toName)) {
+        player.name = toName;
+        replacements += 1;
+      }
+    });
+  });
+
+  return { changed: replacements > 0, replacements };
+}
+
+function replacePlayerInSeededPlayerSeeds(data, fromName, toName) {
+  if (!data || typeof data !== 'object' || Array.isArray(data)) {
+    return { changed: false, replacements: 0, updated: data };
+  }
+
+  const updated = { ...data };
+  const sourceKeys = Object.keys(updated).filter((key) => shouldReplacePlayerName(key, fromName, toName));
+
+  if (sourceKeys.length === 0) {
+    return { changed: false, replacements: 0, updated: data };
+  }
+
+  sourceKeys.forEach((sourceKey) => {
+    if (!(toName in updated)) {
+      updated[toName] = updated[sourceKey];
+    }
+    delete updated[sourceKey];
+  });
+
+  return { changed: true, replacements: sourceKeys.length, updated };
+}
+
+function replacePlayerInSeededTeamSeeds(data, fromName, toName) {
+  if (!data || typeof data !== 'object' || Array.isArray(data)) {
+    return { changed: false, replacements: 0, updated: data };
+  }
+
+  let replacements = 0;
+  const updated = {};
+
+  Object.entries(data).forEach(([teamKey, value]) => {
+    const [p1, p2] = teamKey.split('+');
+    if (!p1 || !p2) {
+      updated[teamKey] = value;
+      return;
+    }
+
+    const nextP1 = shouldReplacePlayerName(p1, fromName, toName) ? toName : p1;
+    const nextP2 = shouldReplacePlayerName(p2, fromName, toName) ? toName : p2;
+    if (nextP1 !== p1 || nextP2 !== p2) {
+      replacements += (nextP1 !== p1 ? 1 : 0) + (nextP2 !== p2 ? 1 : 0);
+    }
+
+    const nextKey = [nextP1, nextP2].sort().join('+');
+    if (!(nextKey in updated)) {
+      updated[nextKey] = value;
+    }
+  });
+
+  return { changed: replacements > 0, replacements, updated };
+}
+
+function replacePlayerInSeededPlayerRankings(data, fromName, toName) {
+  if (!Array.isArray(data)) {
+    return { changed: false, replacements: 0, updated: data };
+  }
+
+  let replacements = 0;
+  const updated = data.map((row) => {
+    if (shouldReplacePlayerName(row?.name, fromName, toName)) {
+      replacements += 1;
+      return { ...row, name: toName };
+    }
+    return row;
+  });
+
+  return { changed: replacements > 0, replacements, updated };
+}
+
+function replacePlayerInSeededTeamRankings(data, fromName, toName) {
+  if (!Array.isArray(data)) {
+    return { changed: false, replacements: 0, updated: data };
+  }
+
+  let replacements = 0;
+  const updated = data.map((row) => {
+    const nextPlayer1 = shouldReplacePlayerName(row?.player1, fromName, toName) ? toName : row?.player1;
+    const nextPlayer2 = shouldReplacePlayerName(row?.player2, fromName, toName) ? toName : row?.player2;
+
+    if (nextPlayer1 !== row?.player1 || nextPlayer2 !== row?.player2) {
+      replacements += (nextPlayer1 !== row?.player1 ? 1 : 0) + (nextPlayer2 !== row?.player2 ? 1 : 0);
+      return { ...row, player1: nextPlayer1, player2: nextPlayer2 };
+    }
+
+    return row;
+  });
+
+  return { changed: replacements > 0, replacements, updated };
+}
 
 // Version log (for topbar version + view in app)
 app.get('/api/versionlog', async (req, res) => {
@@ -55,7 +280,7 @@ app.get('/api/versionlog', async (req, res) => {
 app.get('/api/tournaments', async (req, res) => {
   try {
     const files = await readdir(outputDir);
-    const jsonFiles = files.filter(f => f.endsWith('.json') && f !== 'player_defaults.json' && !f.startsWith('seeded_'));
+    const jsonFiles = files.filter(isTournamentJsonFile);
 
     const tournaments = await Promise.all(
       jsonFiles.map(async (file) => {
@@ -153,7 +378,7 @@ app.post('/api/tournaments/:filename', async (req, res) => {
 app.get('/api/players', async (req, res) => {
   try {
     const files = await readdir(outputDir);
-    const jsonFiles = files.filter(f => f.endsWith('.json') && f !== 'player_defaults.json');
+    const jsonFiles = files.filter((file) => file.endsWith('.json') && !metadataJsonFiles.has(file));
 
     const playerSet = new Set();
 
@@ -181,6 +406,247 @@ app.get('/api/players', async (req, res) => {
   } catch (error) {
     console.error('Error getting players:', error);
     res.status(500).json({ error: 'Failed to get players' });
+  }
+});
+
+// Get player match counts across tournaments
+app.get('/api/player-match-counts', async (req, res) => {
+  try {
+    const files = await readdir(outputDir);
+    const jsonFiles = files.filter((file) => file.endsWith('.json') && !metadataJsonFiles.has(file) && !file.startsWith('seeded_'));
+
+    const matchCounts = {};
+
+    const increment = (name) => {
+      if (!name) return;
+      matchCounts[name] = (matchCounts[name] || 0) + 1;
+    };
+
+    for (const file of jsonFiles) {
+      try {
+        const filePath = join(outputDir, file);
+        const content = await readFile(filePath, 'utf-8');
+        const data = JSON.parse(content);
+
+        if (!Array.isArray(data?.matches)) continue;
+
+        data.matches.forEach((match) => {
+          increment(match?.team1?.player1?.name);
+          increment(match?.team1?.player2?.name);
+          increment(match?.team2?.player1?.name);
+          increment(match?.team2?.player2?.name);
+        });
+      } catch (err) {
+        console.error(`Error reading ${file} for player match counts:`, err);
+      }
+    }
+
+    res.json(matchCounts);
+  } catch (error) {
+    console.error('Error getting player match counts:', error);
+    res.status(500).json({ error: 'Failed to get player match counts' });
+  }
+});
+
+// Get teammate history per player across all tournaments
+app.get('/api/player-teammates', async (req, res) => {
+  try {
+    const files = await readdir(outputDir);
+    const jsonFiles = files.filter(isTournamentJsonFile);
+
+    const teammateCounts = new Map();
+
+    const addPair = (playerA, playerB) => {
+      if (!playerA || !playerB || playerA === playerB) return;
+
+      if (!teammateCounts.has(playerA)) {
+        teammateCounts.set(playerA, new Map());
+      }
+
+      const currentCount = teammateCounts.get(playerA).get(playerB) || 0;
+      teammateCounts.get(playerA).set(playerB, currentCount + 1);
+    };
+
+    for (const file of jsonFiles) {
+      try {
+        const filePath = join(outputDir, file);
+        const content = await readFile(filePath, 'utf-8');
+        const data = JSON.parse(content);
+
+        if (!Array.isArray(data?.matches)) continue;
+
+        data.matches.forEach((match) => {
+          const t1p1 = match.team1?.player1?.name;
+          const t1p2 = match.team1?.player2?.name;
+          const t2p1 = match.team2?.player1?.name;
+          const t2p2 = match.team2?.player2?.name;
+
+          addPair(t1p1, t1p2);
+          addPair(t1p2, t1p1);
+          addPair(t2p1, t2p2);
+          addPair(t2p2, t2p1);
+        });
+      } catch (err) {
+        console.error(`Error reading ${file} for teammate history:`, err);
+      }
+    }
+
+    const teammates = {};
+    teammateCounts.forEach((counts, player) => {
+      teammates[player] = Array.from(counts.entries())
+        .sort((a, b) => {
+          if (b[1] !== a[1]) return b[1] - a[1];
+          return a[0].localeCompare(b[0]);
+        })
+        .map(([teammate]) => teammate);
+    });
+
+    res.json({ teammates });
+  } catch (error) {
+    console.error('Error getting player teammate history:', error);
+    res.status(500).json({ error: 'Failed to get player teammate history' });
+  }
+});
+
+app.post('/api/players/rename', async (req, res) => {
+  try {
+    const fromName = String(req.body?.fromName || '');
+    const toName = String(req.body?.toName || '').trim();
+    const fromNameTrimmed = fromName.trim();
+
+    if (!fromNameTrimmed || !toName) {
+      return res.status(400).json({ error: 'Both fromName and toName are required' });
+    }
+
+    const isWhitespaceVariantMerge = fromName === toName;
+
+    const fromNormalized = normalizePlayerNameForSimilarity(fromNameTrimmed);
+    const toNormalized = normalizePlayerNameForSimilarity(toName);
+
+    if (!fromNormalized || !toNormalized) {
+      return res.status(400).json({ error: 'Names must include at least one letter or number' });
+    }
+
+    const files = await readdir(outputDir);
+    const tournamentFiles = files.filter(isTournamentJsonFile);
+
+    let filesUpdated = 0;
+    let replacements = 0;
+
+    for (const file of tournamentFiles) {
+      const filePath = join(outputDir, file);
+      const content = await readFile(filePath, 'utf-8');
+      const data = JSON.parse(content);
+
+      const result = replacePlayerInTournamentData(data, fromName, toName);
+      if (result.changed) {
+        await writeFile(filePath, JSON.stringify(data, null, 2), 'utf-8');
+        filesUpdated += 1;
+        replacements += result.replacements;
+      }
+    }
+
+    let defaultsUpdated = false;
+    try {
+      const defaultsContent = await readFile(playerDefaultsFile, 'utf-8');
+      const defaults = JSON.parse(defaultsContent);
+
+      const defaultSourceKeys = Object.keys(defaults).filter((key) => shouldReplacePlayerName(key, fromName, toName));
+      if (defaultSourceKeys.length > 0) {
+        defaultSourceKeys.forEach((sourceKey) => {
+          if (!Object.prototype.hasOwnProperty.call(defaults, toName)) {
+            defaults[toName] = defaults[sourceKey];
+          }
+          delete defaults[sourceKey];
+        });
+        await writeFile(playerDefaultsFile, JSON.stringify(defaults, null, 2), 'utf-8');
+        defaultsUpdated = true;
+      }
+    } catch (err) {
+      if (err.code !== 'ENOENT') throw err;
+    }
+
+    let countriesUpdated = false;
+    try {
+      const countriesContent = await readFile(playerCountriesFile, 'utf-8');
+      const countries = JSON.parse(countriesContent);
+
+      const countrySourceKeys = Object.keys(countries).filter((key) => shouldReplacePlayerName(key, fromName, toName));
+      if (countrySourceKeys.length > 0) {
+        countrySourceKeys.forEach((sourceKey) => {
+          if (!Object.prototype.hasOwnProperty.call(countries, toName)) {
+            countries[toName] = countries[sourceKey];
+          }
+          delete countries[sourceKey];
+        });
+        await writeFile(playerCountriesFile, JSON.stringify(countries, null, 2), 'utf-8');
+        countriesUpdated = true;
+      }
+    } catch (err) {
+      if (err.code !== 'ENOENT') throw err;
+    }
+
+    const seededUpdaters = [
+      {
+        filename: 'seeded_player_seeds.json',
+        updater: replacePlayerInSeededPlayerSeeds
+      },
+      {
+        filename: 'seeded_team_seeds.json',
+        updater: replacePlayerInSeededTeamSeeds
+      },
+      {
+        filename: 'seeded_player_rankings.json',
+        updater: replacePlayerInSeededPlayerRankings
+      },
+      {
+        filename: 'seeded_team_rankings.json',
+        updater: replacePlayerInSeededTeamRankings
+      }
+    ];
+
+    let seededFilesUpdated = 0;
+    let seededReplacements = 0;
+
+    for (const item of seededUpdaters) {
+      const filePath = join(outputDir, item.filename);
+      try {
+        const content = await readFile(filePath, 'utf-8');
+        const data = JSON.parse(content);
+        const result = item.updater(data, fromName, toName);
+        if (result.changed) {
+          await writeFile(filePath, JSON.stringify(result.updated, null, 2), 'utf-8');
+          seededFilesUpdated += 1;
+          seededReplacements += result.replacements;
+        }
+      } catch (err) {
+        if (err.code !== 'ENOENT') {
+          console.error(`Error updating ${item.filename}:`, err);
+        }
+      }
+    }
+
+    if (replacements === 0 && seededReplacements === 0 && !defaultsUpdated && !countriesUpdated) {
+      if (isWhitespaceVariantMerge) {
+        return res.status(404).json({ error: `No trailing-whitespace variants found for "${toName}"` });
+      }
+      return res.status(404).json({ error: `Player "${fromName}" was not found` });
+    }
+
+    res.json({
+      success: true,
+      fromName,
+      toName,
+      filesUpdated,
+      replacements,
+      defaultsUpdated,
+      countriesUpdated,
+      seededFilesUpdated,
+      seededReplacements
+    });
+  } catch (error) {
+    console.error('Error renaming player:', error);
+    res.status(500).json({ error: 'Failed to rename player' });
   }
 });
 
@@ -258,6 +724,52 @@ app.put('/api/player-defaults/:playerName', async (req, res) => {
   }
 });
 
+// Get player countries (stored overrides + scraped fallbacks)
+app.get('/api/player-countries', async (req, res) => {
+  try {
+    const [stored, scraped] = await Promise.all([
+      loadStoredPlayerCountries(),
+      loadScrapedPlayerCountries()
+    ]);
+
+    // Stored values override scraped defaults
+    res.json({ ...scraped, ...stored });
+  } catch (error) {
+    console.error('Error getting player countries:', error);
+    res.status(500).json({ error: 'Failed to get player countries' });
+  }
+});
+
+// Update single player country
+app.put('/api/player-countries/:playerName', async (req, res) => {
+  try {
+    const playerName = decodeURIComponent(req.params.playerName);
+    const country = normalizeCountryCode(req.body?.country);
+
+    let countries = {};
+    try {
+      const content = await readFile(playerCountriesFile, 'utf-8');
+      countries = JSON.parse(content);
+    } catch (err) {
+      if (err.code !== 'ENOENT') throw err;
+    }
+
+    if (!country) {
+      delete countries[playerName];
+    } else {
+      countries[playerName] = country;
+    }
+
+    await mkdir(outputDir, { recursive: true });
+    await writeFile(playerCountriesFile, JSON.stringify(countries, null, 2), 'utf-8');
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error updating player country:', error);
+    res.status(500).json({ error: 'Failed to update player country' });
+  }
+});
+
 // Get player rankings
 app.get('/api/player-rankings', async (req, res) => {
   try {
@@ -276,11 +788,77 @@ app.get('/api/team-rankings', async (req, res) => {
   try {
     const isMainCircuitOnly = req.query.mainCircuitOnly === 'true';
     const seasons = req.query.seasons ? req.query.seasons.split(',') : null;
-    const { rankings } = await calculateTeamRankings(null, isMainCircuitOnly, seasons);
+    const { rankings } = await calculateTeamRankings(
+      null,
+      isMainCircuitOnly,
+      seasons,
+      getTeamRatingOptions(req)
+    );
     res.json(rankings);
   } catch (error) {
     console.error('Error calculating team rankings:', error);
     res.status(500).json({ error: 'Failed to calculate team rankings' });
+  }
+});
+
+// Get team ranks at tournament context (rank before each team's first scored match in that tournament)
+app.get('/api/tournament-team-rankings/:slug', async (req, res) => {
+  try {
+    const tournamentSlug = decodeURIComponent(req.params.slug);
+    const useSeeds = req.query.useSeeds === 'true';
+    const isMainCircuitOnly = req.query.mainCircuitOnly === 'true';
+    const seasons = req.query.seasons ? req.query.seasons.split(',') : null;
+
+    let teamSeeds = null;
+    let playerSeeds = null;
+    if (useSeeds) {
+      const seeds = await loadSeeds();
+      teamSeeds = seeds.teamSeeds;
+      playerSeeds = seeds.playerSeeds;
+    }
+
+    const { matchHistory } = await calculateTeamRankings(
+      teamSeeds,
+      isMainCircuitOnly,
+      seasons,
+      getTeamRatingOptions(req, playerSeeds)
+    );
+
+    const tournamentMatches = (matchHistory || [])
+      .filter(match => match.tournament_slug === tournamentSlug)
+      .sort((a, b) => {
+        const dateA = new Date(a.match_date || a.tournament_date || 0).getTime();
+        const dateB = new Date(b.match_date || b.tournament_date || 0).getTime();
+        if (dateA !== dateB) return dateA - dateB;
+        return (a.match_id || '').localeCompare(b.match_id || '');
+      });
+
+    const rankMap = {};
+
+    for (const match of tournamentMatches) {
+      const impacts = match.team_impacts || {};
+      for (const [teamKey, impact] of Object.entries(impacts)) {
+        if (rankMap[teamKey] !== undefined) continue;
+
+        const rawRank = impact?.rankBefore;
+        const parsedRank = typeof rawRank === 'number'
+          ? rawRank
+          : parseInt(String(rawRank), 10);
+
+        if (!Number.isNaN(parsedRank) && parsedRank > 0) {
+          rankMap[teamKey] = parsedRank;
+        }
+      }
+    }
+
+    res.json({
+      tournament_slug: tournamentSlug,
+      basis: 'rank-before-first-scored-match',
+      ranks: rankMap
+    });
+  } catch (error) {
+    console.error('Error getting tournament team rankings:', error);
+    res.status(500).json({ error: 'Failed to get tournament team rankings' });
   }
 });
 
@@ -327,11 +905,16 @@ app.get('/api/seeded-team-rankings', async (req, res) => {
     const seededRankingsFile = join(outputDir, 'seeded_team_rankings.json');
     try {
       // Load seeds for recalculation
-      const { teamSeeds } = await loadSeeds();
+      const { teamSeeds, playerSeeds } = await loadSeeds();
 
       // If filtering is needed, recalculate with filters and seeds
       if (isMainCircuitOnly || (seasons && seasons.length > 0)) {
-        const { rankings } = await calculateTeamRankings(teamSeeds, isMainCircuitOnly, seasons);
+        const { rankings } = await calculateTeamRankings(
+          teamSeeds,
+          isMainCircuitOnly,
+          seasons,
+          getTeamRatingOptions(req, playerSeeds)
+        );
         res.json(rankings);
       } else {
         // No filtering, return pre-calculated results
@@ -374,7 +957,12 @@ app.get('/api/race-matchup/:race1/:race2', async (req, res) => {
     const hideRandom = req.query.hideRandom === 'true';
     const seasons = req.query.seasons ? req.query.seasons.split(',') : null;
     const { matchHistory } = await calculateRaceRankings(isMainCircuitOnly, seasons, hideRandom);
-    const { matchHistory: teamMatchHistory } = await calculateTeamRankings(null, isMainCircuitOnly, seasons);
+    const { matchHistory: teamMatchHistory } = await calculateTeamRankings(
+      null,
+      isMainCircuitOnly,
+      seasons,
+      getTeamRatingOptions(req)
+    );
     const { matchHistory: playerMatchHistory } = await calculateRankings(null, isMainCircuitOnly, seasons);
 
     // Create matchup key (e.g., "PvT")
@@ -434,7 +1022,12 @@ app.get('/api/race-combo/:race', async (req, res) => {
     const hideRandom = req.query.hideRandom === 'true';
     const seasons = req.query.seasons ? req.query.seasons.split(',') : null;
     const { matchHistory } = await calculateRaceRankings(isMainCircuitOnly, seasons, hideRandom);
-    const { matchHistory: teamMatchHistory } = await calculateTeamRankings(null, isMainCircuitOnly, seasons);
+    const { matchHistory: teamMatchHistory } = await calculateTeamRankings(
+      null,
+      isMainCircuitOnly,
+      seasons,
+      getTeamRatingOptions(req)
+    );
     const { matchHistory: playerMatchHistory } = await calculateRankings(null, isMainCircuitOnly, seasons);
 
     // Create maps for quick lookup
@@ -483,7 +1076,12 @@ app.get('/api/team-race-rankings', async (req, res) => {
     const hideRandom = req.query.hideRandom === 'true';
     const seasons = req.query.seasons ? req.query.seasons.split(',') : null;
     const { rankings, combinedRankings, matchHistory } = await calculateTeamRaceRankings(isMainCircuitOnly, seasons, hideRandom);
-    const { matchHistory: teamMatchHistory } = await calculateTeamRankings(null, isMainCircuitOnly, seasons);
+    const { matchHistory: teamMatchHistory } = await calculateTeamRankings(
+      null,
+      isMainCircuitOnly,
+      seasons,
+      getTeamRatingOptions(req)
+    );
 
     // Create map of team match history for quick lookup
     const teamMatchMap = new Map();
@@ -519,7 +1117,12 @@ app.get('/api/team-race-matchup/:combo1/:combo2', async (req, res) => {
     const hideRandom = req.query.hideRandom === 'true';
     const seasons = req.query.seasons ? req.query.seasons.split(',') : null;
     const { matchHistory } = await calculateTeamRaceRankings(isMainCircuitOnly, seasons, hideRandom);
-    const { matchHistory: teamMatchHistory } = await calculateTeamRankings(null, isMainCircuitOnly, seasons);
+    const { matchHistory: teamMatchHistory } = await calculateTeamRankings(
+      null,
+      isMainCircuitOnly,
+      seasons,
+      getTeamRatingOptions(req)
+    );
     const { matchHistory: playerMatchHistory } = await calculateRankings(null, isMainCircuitOnly, seasons);
     const { matchHistory: raceMatchHistory } = await calculateRaceRankings(isMainCircuitOnly, seasons, hideRandom);
 
@@ -588,7 +1191,12 @@ app.get('/api/team-race-combo/:combo', async (req, res) => {
     const hideRandom = req.query.hideRandom === 'true';
     const seasons = req.query.seasons ? req.query.seasons.split(',') : null;
     const { matchHistory } = await calculateTeamRaceRankings(isMainCircuitOnly, seasons, hideRandom);
-    const { matchHistory: teamMatchHistory } = await calculateTeamRankings(null, isMainCircuitOnly, seasons);
+    const { matchHistory: teamMatchHistory } = await calculateTeamRankings(
+      null,
+      isMainCircuitOnly,
+      seasons,
+      getTeamRatingOptions(req)
+    );
     const { matchHistory: playerMatchHistory } = await calculateRankings(null, isMainCircuitOnly, seasons);
     const { matchHistory: raceMatchHistory } = await calculateRaceRankings(isMainCircuitOnly, seasons, hideRandom);
 
@@ -675,7 +1283,12 @@ app.get('/api/match-history', async (req, res) => {
     const seasons = req.query.seasons ? req.query.seasons.split(',') : null;
     const hideRandom = req.query.hideRandom === 'true';
     const { rankings, matchHistory } = await calculateRankings(playerSeeds, req.query.mainCircuitOnly === 'true', seasons);
-    const { matchHistory: teamMatchHistory } = await calculateTeamRankings(teamSeeds, req.query.mainCircuitOnly === 'true', seasons);
+    const { matchHistory: teamMatchHistory } = await calculateTeamRankings(
+      teamSeeds,
+      req.query.mainCircuitOnly === 'true',
+      seasons,
+      getTeamRatingOptions(req, playerSeeds)
+    );
     const { matchHistory: raceMatchHistory } = await calculateRaceRankings(req.query.mainCircuitOnly === 'true', seasons, hideRandom);
     const { matchHistory: comboMatchHistory } = await calculateTeamRaceRankings(req.query.mainCircuitOnly === 'true', seasons, hideRandom);
 
@@ -786,7 +1399,12 @@ app.get('/api/player/:playerName', async (req, res) => {
     const seasons = req.query.seasons ? req.query.seasons.split(',') : null;
     const hideRandom = req.query.hideRandom === 'true';
     const { rankings, matchHistory } = await calculateRankings(playerSeeds, req.query.mainCircuitOnly === 'true', seasons);
-    const { matchHistory: teamMatchHistory } = await calculateTeamRankings(teamSeeds, req.query.mainCircuitOnly === 'true', seasons);
+    const { matchHistory: teamMatchHistory } = await calculateTeamRankings(
+      teamSeeds,
+      req.query.mainCircuitOnly === 'true',
+      seasons,
+      getTeamRatingOptions(req, playerSeeds)
+    );
     const { matchHistory: raceMatchHistory } = await calculateRaceRankings(req.query.mainCircuitOnly === 'true', seasons, hideRandom);
     const { matchHistory: comboMatchHistory } = await calculateTeamRaceRankings(req.query.mainCircuitOnly === 'true', seasons, hideRandom);
 
@@ -878,7 +1496,12 @@ app.get('/api/team/:player1/:player2', async (req, res) => {
 
     const seasons = req.query.seasons ? req.query.seasons.split(',') : null;
     const hideRandom = req.query.hideRandom === 'true';
-    const { rankings, matchHistory } = await calculateTeamRankings(teamSeeds, req.query.mainCircuitOnly === 'true', seasons);
+    const { rankings, matchHistory } = await calculateTeamRankings(
+      teamSeeds,
+      req.query.mainCircuitOnly === 'true',
+      seasons,
+      getTeamRatingOptions(req, playerSeeds)
+    );
 
     const team = rankings.find(t =>
       (t.player1 === player1 && t.player2 === player2) ||

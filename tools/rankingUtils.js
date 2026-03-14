@@ -75,6 +75,7 @@ export function sortRankings(rankings, getNameFn = (item) => item.name) {
  * Get numeric round sort order (lower means earlier in tournament).
  * Supports:
  * - Early Round N (before group stage)
+ * - Early Upper/Lower bracket rounds (before group stage, lower after corresponding upper)
  * - Group stage rounds (before main bracket)
  * - Upper/main bracket rounds
  * - Lower/losers rounds (after corresponding upper round)
@@ -95,6 +96,25 @@ export function getRoundSortOrder(round) {
   if (earlyRoundMatch) {
     const roundNum = parseInt(earlyRoundMatch[1], 10);
     return Number.isNaN(roundNum) ? 9999 : roundNum;
+  }
+
+  // Early upper/lower bracket rounds should mirror upper/lower ordering,
+  // but still happen before group stage and main bracket rounds.
+  const earlyUpperRoundMatch = value.match(/^Early\s+(?:Upper|Winners?)\s*(?:Bracket\s*)?(?:Round|R)\s*(\d+)$/i);
+  if (earlyUpperRoundMatch) {
+    const roundNum = parseInt(earlyUpperRoundMatch[1], 10);
+    if (!Number.isNaN(roundNum)) {
+      return 20 + (roundNum * 10);
+    }
+  }
+
+  const earlyLowerRoundMatch = value.match(/^Early\s+(?:Lower|Losers?)\s*(?:Bracket\s*)?(?:Round|R)\s*(\d+)$/i);
+  if (earlyLowerRoundMatch) {
+    const roundNum = parseInt(earlyLowerRoundMatch[1], 10);
+    if (!Number.isNaN(roundNum)) {
+      // After corresponding early upper/winner round.
+      return 25 + (roundNum * 10);
+    }
   }
 
   // Group stage rounds come after early rounds.

@@ -31,6 +31,7 @@ export function RaceMatchupStats({
   matchHistory, 
   playerNames = [], 
   playerRaces,
+  isTeam = false,
   playerRankings = {},
   teamRankings = {},
   normalizeTeamKey = (p1, p2) => [p1, p2].filter(Boolean).sort().join('+'),
@@ -99,15 +100,35 @@ export function RaceMatchupStats({
         const ourAbbr = getRaceAbbr(ourRace);
         const oppAbbr = getRaceAbbr(oppRace);
         if (!ourAbbr || !oppAbbr || ourAbbr === oppAbbr) continue;
-        const impact = raceImpacts[`${ourAbbr}v${oppAbbr}`];
-        if (impact && typeof impact.ratingChange === 'number') {
-          totalDelta += impact.ratingChange;
+        const directKey = `${ourAbbr}v${oppAbbr}`;
+        const reverseKey = `${oppAbbr}v${ourAbbr}`;
+        const directImpact = raceImpacts[directKey];
+        const reverseImpact = raceImpacts[reverseKey];
+
+        if (directImpact && typeof directImpact.ratingChange === 'number') {
+          totalDelta += directImpact.ratingChange;
+          hasImpact = true;
+        } else if (reverseImpact && typeof reverseImpact.ratingChange === 'number') {
+          // reverse impact is from opponent perspective, so invert sign for our perspective
+          totalDelta -= reverseImpact.ratingChange;
           hasImpact = true;
         }
       }
     }
 
     return hasImpact ? totalDelta : null;
+  };
+
+  const getPerspectiveFallbackDelta = (match: any): number | null => {
+    if (isTeam) {
+      if (playerNames.length !== 2) return null;
+      const impact = getTeamImpact(match, playerNames[0], playerNames[1]);
+      return typeof impact?.ratingChange === 'number' ? impact.ratingChange : null;
+    }
+
+    if (playerNames.length !== 1) return null;
+    const impact = getPlayerImpact(match, playerNames[0]);
+    return typeof impact?.ratingChange === 'number' ? impact.ratingChange : null;
   };
 
   const getMatchResult = (match: any, ourTeam: any): { won: boolean; isDraw: boolean } => {
@@ -149,7 +170,7 @@ export function RaceMatchupStats({
       const matchupKey = getOpponentMatchupKey(perspective.opponentTeam);
       if (!matchupKey) return;
       const backendRaceDelta = getBackendRaceImpactDelta(match, perspective.ourTeam, perspective.opponentTeam);
-      if (backendRaceDelta === null) return;
+      const matchupDelta = backendRaceDelta ?? getPerspectiveFallbackDelta(match);
 
       if (!matchupMap.has(matchupKey)) {
         matchupMap.set(matchupKey, { 
@@ -161,7 +182,9 @@ export function RaceMatchupStats({
       }
 
       const stats = matchupMap.get(matchupKey)!;
-      stats.rating += backendRaceDelta;
+      if (matchupDelta !== null) {
+        stats.rating += matchupDelta;
+      }
 
       const { won, isDraw } = getMatchResult(match, perspective.ourTeam);
       if (isDraw) {
@@ -206,8 +229,6 @@ export function RaceMatchupStats({
       if (!perspective) return false;
       const matchupKey = getOpponentMatchupKey(perspective.opponentTeam);
       if (!matchupKey) return false;
-      const backendRaceDelta = getBackendRaceImpactDelta(match, perspective.ourTeam, perspective.opponentTeam);
-      if (backendRaceDelta === null) return false;
       return matchupKey === matchup;
     });
     

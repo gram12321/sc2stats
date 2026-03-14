@@ -18,6 +18,12 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const outputDir = join(__dirname, '..', 'output');
 
+const DEFAULT_TEAM_RATING_OPTIONS = {
+  useIntermediateTeamRating: false,
+  intermediateFadeMatches: 20,
+  playerSeeds: null
+};
+
 /**
  * Normalize team key - sort player names alphabetically to ensure consistent team identification
  */
@@ -26,11 +32,83 @@ function normalizeTeamKey(player1, player2) {
   return players.join('+');
 }
 
+function getAverageOpponentRating(opponentNames, playerStats) {
+  if (opponentNames.length === 0) return 0;
+
+  const ratings = opponentNames
+    .map(name => {
+      const stats = playerStats.get(name);
+      return stats ? stats.points : 0;
+    })
+    .filter(rating => rating !== undefined);
+
+  if (ratings.length === 0) return 0;
+  return ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length;
+}
+
+function getAverageOpponentConfidence(opponentNames, playerStats) {
+  if (opponentNames.length === 0) return 0;
+
+  const confidences = opponentNames
+    .map(name => {
+      const stats = playerStats.get(name);
+      return stats ? (stats.confidence || 0) : 0;
+    })
+    .filter(conf => conf !== undefined);
+
+  if (confidences.length === 0) return 0;
+  return confidences.reduce((sum, conf) => sum + conf, 0) / confidences.length;
+}
+
+function getAverageOpponentMatches(opponentNames, playerStats) {
+  if (opponentNames.length === 0) return 0;
+
+  const matches = opponentNames
+    .map(name => {
+      const stats = playerStats.get(name);
+      return stats ? (stats.matches || 0) : 0;
+    })
+    .filter(count => count !== undefined);
+
+  if (matches.length === 0) return 0;
+  return matches.reduce((sum, count) => sum + count, 0) / matches.length;
+}
+
+function getIntermediateTeamRating(playerNames, playerStats) {
+  const knownPlayerRatings = playerNames
+    .map(name => playerStats.get(name))
+    .filter(stats => stats && (stats.matches > 0 || stats.isSeeded))
+    .map(stats => stats.points)
+    .filter(points => Number.isFinite(points));
+
+  if (knownPlayerRatings.length === 0) {
+    return null;
+  }
+
+  return knownPlayerRatings.reduce((sum, value) => sum + value, 0) / knownPlayerRatings.length;
+}
+
+function getIntermediateBlendWeight(teamMatchCount, fadeMatches) {
+  if (!Number.isFinite(fadeMatches) || fadeMatches <= 0) {
+    return 0;
+  }
+
+  const raw = (fadeMatches - teamMatchCount) / fadeMatches;
+  return Math.max(0, Math.min(1, raw));
+}
+
 /**
  * Calculate team rankings from matches with optional initial seeds
  */
-export function calculateTeamRankingsFromMatches(sortedMatches, seeds = null) {
+export function calculateTeamRankingsFromMatches(sortedMatches, seeds = null, options = {}) {
+  const {
+    useIntermediateTeamRating,
+    intermediateFadeMatches,
+    playerSeeds
+  } = { ...DEFAULT_TEAM_RATING_OPTIONS, ...options };
+
   const teamStats = new Map();
+  const playerStats = new Map();
   const matchHistory = [];
 
   try {
@@ -54,6 +132,17 @@ export function calculateTeamRankingsFromMatches(sortedMatches, seeds = null) {
       // Get normalized player names (sorted alphabetically)
       const team1PlayersSorted = [team1Player1, team1Player2].sort();
       const team2PlayersSorted = [team2Player1, team2Player2].sort();
+
+      // Initialize players if they don't exist yet (used for optional intermediate team rating)
+      for (const playerName of [...team1PlayersSorted, ...team2PlayersSorted]) {
+        if (!playerStats.has(playerName)) {
+          if (playerSeeds && playerSeeds[playerName] !== undefined) {
+            playerStats.set(playerName, initializeStatsWithSeed(playerName, playerSeeds[playerName]));
+          } else {
+            playerStats.set(playerName, initializeStats(playerName));
+          }
+        }
+      }
 
       // Initialize teams if they don't exist yet
       if (!teamStats.has(team1Key)) {
@@ -95,6 +184,31 @@ export function calculateTeamRankingsFromMatches(sortedMatches, seeds = null) {
       const team1Confidence = team1Stats.confidence || 0;
       const team2Confidence = team2Stats.confidence || 0;
 
+      const team1IntermediateRating = useIntermediateTeamRating
+        ? getIntermediateTeamRating(team1PlayersSorted, playerStats)
+        : null;
+      const team2IntermediateRating = useIntermediateTeamRating
+        ? getIntermediateTeamRating(team2PlayersSorted, playerStats)
+        : null;
+
+      const team1BlendWeight = (
+        useIntermediateTeamRating && team1IntermediateRating !== null
+      )
+        ? getIntermediateBlendWeight(team1Stats.matches, intermediateFadeMatches)
+        : 0;
+      const team2BlendWeight = (
+        useIntermediateTeamRating && team2IntermediateRating !== null
+      )
+        ? getIntermediateBlendWeight(team2Stats.matches, intermediateFadeMatches)
+        : 0;
+
+      const team1EffectiveRating = team1BlendWeight > 0
+        ? (team1IntermediateRating * team1BlendWeight) + (team1Rating * (1 - team1BlendWeight))
+        : team1Rating;
+      const team2EffectiveRating = team2BlendWeight > 0
+        ? (team2IntermediateRating * team2BlendWeight) + (team2Rating * (1 - team2BlendWeight))
+        : team2Rating;
+
       // Calculate current rankings to determine rank before match
       const currentRankings = sortRankings(
         Array.from(teamStats.values()),
@@ -113,6 +227,18 @@ export function calculateTeamRankingsFromMatches(sortedMatches, seeds = null) {
       const finalPopulationMean = finalPopulationStats.mean;
       const finalPopulationStdDev = finalPopulationStats.stdDev;
 
+      const playerPopulationStats = calculatePopulationStats(playerStats);
+      const playerPopulationMean = playerPopulationStats.mean;
+      const playerPopulationStdDev = playerPopulationStats.stdDev;
+
+      // Pre-match player-opponent aggregates used for player stat updates
+      const team1AvgOpponentRating = getAverageOpponentRating(team2PlayersSorted, playerStats);
+      const team2AvgOpponentRating = getAverageOpponentRating(team1PlayersSorted, playerStats);
+      const team1AvgOpponentConfidence = getAverageOpponentConfidence(team2PlayersSorted, playerStats);
+      const team2AvgOpponentConfidence = getAverageOpponentConfidence(team1PlayersSorted, playerStats);
+      const team1AvgOpponentMatches = getAverageOpponentMatches(team2PlayersSorted, playerStats);
+      const team2AvgOpponentMatches = getAverageOpponentMatches(team1PlayersSorted, playerStats);
+
       // Determine winner
       const { team1Won, team2Won, isDraw } = determineMatchOutcome(
         match.team1_score,
@@ -124,24 +250,87 @@ export function calculateTeamRankingsFromMatches(sortedMatches, seeds = null) {
         team1Stats,
         team1Won,
         team2Won,
-        team2Rating,
+        team2EffectiveRating,
         finalPopulationStdDev,
         team2Confidence,
-        null,
+        team1EffectiveRating,
         finalPopulationMean,
-        team2Stats.matches
+        team2Stats.matches,
+        {
+          teamScore: match.team1_score,
+          opponentScore: match.team2_score,
+          bestOf: match.best_of
+        }
       );
       const team2Result = updateStatsForMatch(
         team2Stats,
         team2Won,
         team1Won,
-        team1Rating,
+        team1EffectiveRating,
         finalPopulationStdDev,
         team1Confidence,
-        null,
+        team2EffectiveRating,
         finalPopulationMean,
-        team1Stats.matches
+        team1Stats.matches,
+        {
+          teamScore: match.team2_score,
+          opponentScore: match.team1_score,
+          bestOf: match.best_of
+        }
       );
+
+      // Update player stats in parallel model, used only for intermediate team rating calculation
+      for (const playerName of team1PlayersSorted) {
+        const stats = playerStats.get(playerName);
+        updateStatsForMatch(
+          stats,
+          team1Won,
+          team2Won,
+          team1AvgOpponentRating,
+          playerPopulationStdDev,
+          team1AvgOpponentConfidence,
+          null,
+          playerPopulationMean,
+          team1AvgOpponentMatches,
+          {
+            teamScore: match.team1_score,
+            opponentScore: match.team2_score,
+            bestOf: match.best_of
+          }
+        );
+      }
+
+      for (const playerName of team2PlayersSorted) {
+        const stats = playerStats.get(playerName);
+        updateStatsForMatch(
+          stats,
+          team2Won,
+          team1Won,
+          team2AvgOpponentRating,
+          playerPopulationStdDev,
+          team2AvgOpponentConfidence,
+          null,
+          playerPopulationMean,
+          team2AvgOpponentMatches,
+          {
+            teamScore: match.team2_score,
+            opponentScore: match.team1_score,
+            bestOf: match.best_of
+          }
+        );
+      }
+
+      // Calculate rankings after processing this match
+      const updatedRankings = sortRankings(
+        Array.from(teamStats.values()),
+        (team) => `${team.player1}+${team.player2}`
+      );
+      const updatedRankMap = new Map();
+      updatedRankings.forEach((t, index) => updatedRankMap.set(`${t.player1}+${t.player2}`, index + 1));
+      const team1RankAfter = updatedRankMap.get(team1Key) || '-';
+      const team2RankAfter = updatedRankMap.get(team2Key) || '-';
+      const team1RankAfterConfidence = team1Stats.confidence || 0;
+      const team2RankAfterConfidence = team2Stats.confidence || 0;
 
       // Store match history entry
       matchHistory.push({
@@ -165,20 +354,32 @@ export function calculateTeamRankingsFromMatches(sortedMatches, seeds = null) {
             ratingBefore: team1Rating,
             rankBefore: team1RankBefore,
             rankBeforeConfidence: team1RankBeforeConfidence,
+            rankAfter: team1RankAfter,
+            rankAfterConfidence: team1RankAfterConfidence,
             ratingChange: team1Result.ratingChange,
             won: team1Won,
             isDraw: isDraw,
             opponentRating: team2Rating,
+            opponentEffectiveRating: team2EffectiveRating,
+            intermediateTeamRating: team1IntermediateRating,
+            intermediateBlendWeight: team1BlendWeight,
+            effectiveRatingUsed: team1EffectiveRating,
             ...team1Result.calculationDetails
           },
           [team2Key]: {
             ratingBefore: team2Rating,
             rankBefore: team2RankBefore,
             rankBeforeConfidence: team2RankBeforeConfidence,
+            rankAfter: team2RankAfter,
+            rankAfterConfidence: team2RankAfterConfidence,
             ratingChange: team2Result.ratingChange,
             won: team2Won,
             isDraw: isDraw,
             opponentRating: team1Rating,
+            opponentEffectiveRating: team1EffectiveRating,
+            intermediateTeamRating: team2IntermediateRating,
+            intermediateBlendWeight: team2BlendWeight,
+            effectiveRatingUsed: team2EffectiveRating,
             ...team2Result.calculationDetails
           }
         }
@@ -201,13 +402,13 @@ export function calculateTeamRankingsFromMatches(sortedMatches, seeds = null) {
 /**
  * Calculate team rankings (Reads files and calls logic)
  */
-export async function calculateTeamRankings(seeds = null, mainCircuitOnly = false, seasons = null) {
+export async function calculateTeamRankings(seeds = null, mainCircuitOnly = false, seasons = null, options = {}) {
   const allMatches = [];
 
   try {
     // Read all JSON files from output directory
     const files = await readdir(outputDir);
-    const jsonFiles = files.filter(f => f.endsWith('.json') && f !== 'player_defaults.json' && !f.startsWith('seeded_'));
+    const jsonFiles = files.filter(f => f.endsWith('.json') && f !== 'player_defaults.json' && f !== 'player_countries.json' && !f.startsWith('seeded_'));
 
     // Collect all matches with tournament metadata
     for (const file of jsonFiles) {
@@ -295,7 +496,7 @@ export async function calculateTeamRankings(seeds = null, mainCircuitOnly = fals
       return (a.match_id || '').localeCompare(b.match_id || '');
     });
 
-    return calculateTeamRankingsFromMatches(allMatches, seeds);
+    return calculateTeamRankingsFromMatches(allMatches, seeds, options);
 
   } catch (err) {
     console.error('Error calculating team rankings:', err);

@@ -10,6 +10,7 @@ import { MatchesList } from './pages/MatchesList';
 import { PlayerDetails } from './pages/PlayerDetails';
 import { TeamDetails } from './pages/TeamDetails';
 import { Info } from './pages/Info';
+import { Highlights } from './pages/Highlights';
 import { Header } from './components/Header';
 
 type View =
@@ -20,6 +21,7 @@ type View =
   | 'race-rankings'
   | 'team-race-rankings'
   | 'matches'
+  | 'highlights'
   | 'player-details'
   | 'team-details'
   | 'info';
@@ -29,12 +31,23 @@ interface NavigationState {
   playerName?: string;
   teamPlayer1?: string;
   teamPlayer2?: string;
+  matchTournamentSlug?: string;
+  matchId?: string;
 }
 
 export function App() {
   const [navState, setNavState] = useState<NavigationState>({ view: 'tournaments' });
 
-  const navigate = (view: View, params?: { playerName?: string; teamPlayer1?: string; teamPlayer2?: string }) => {
+  const navigate = (
+    view: View,
+    params?: {
+      playerName?: string;
+      teamPlayer1?: string;
+      teamPlayer2?: string;
+      matchTournamentSlug?: string;
+      matchId?: string;
+    }
+  ) => {
     setNavState({ view, ...params });
   };
 
@@ -60,7 +73,19 @@ export function App() {
     }
 
     if (navState.view === 'matches') {
-      return <MatchesList />;
+      return <MatchesList initialTournament={navState.matchTournamentSlug} focusMatchId={navState.matchId} />;
+    }
+
+    if (navState.view === 'highlights') {
+      return (
+        <Highlights
+          onNavigateToMatch={(tournamentSlug, matchId) =>
+            navigate('matches', { matchTournamentSlug: tournamentSlug, matchId })
+          }
+          onNavigateToPlayer={(name) => navigate('player-details', { playerName: name })}
+          onNavigateToTeam={(p1, p2) => navigate('team-details', { teamPlayer1: p1, teamPlayer2: p2 })}
+        />
+      );
     }
 
     if (navState.view === 'player-details' && navState.playerName) {
@@ -79,7 +104,7 @@ export function App() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground font-sans antialiased selection:bg-primary/20 selection:text-primary">
+    <div className="min-h-screen bg-background text-[15px] text-foreground font-sans antialiased selection:bg-primary/20 selection:text-primary">
       <RankingSettingsProvider>
         <Header onNavigate={(view) => navigate(view as View)} currentView={navState.view} />
         <main className="container max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">

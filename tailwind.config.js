@@ -47,6 +47,11 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        race: {
+          terran: "hsl(var(--race-terran))",
+          protoss: "hsl(var(--race-protoss))",
+          zerg: "hsl(var(--race-zerg))",
+        },
       },
       borderRadius: {
         lg: `var(--radius)`,

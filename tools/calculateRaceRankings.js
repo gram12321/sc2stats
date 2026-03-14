@@ -128,7 +128,7 @@ export async function calculateRaceRankings(mainCircuitOnly = false, seasons = n
 
     // Read all JSON files from output directory
     const files = await readdir(outputDir);
-    const jsonFiles = files.filter(f => f.endsWith('.json') && f !== 'player_defaults.json');
+    const jsonFiles = files.filter(f => f.endsWith('.json') && f !== 'player_defaults.json' && f !== 'player_countries.json');
     console.log(`Found ${jsonFiles.length} tournament JSON files`);
 
     // Collect all matches with tournament metadata
@@ -316,6 +316,11 @@ export async function calculateRaceRankings(mainCircuitOnly = false, seasons = n
         }
       }
 
+      // Rank snapshot before applying updates for this match
+      const beforeRankings = sortRankings(Array.from(raceStats.values()));
+      const beforeRankMap = new Map();
+      beforeRankings.forEach((r, index) => beforeRankMap.set(`${r.race1}v${r.race2}`, index + 1));
+
       // Track which matchup pairs we've already processed (to avoid double-processing in mirrors)
       const processedPairs = new Set();
 
@@ -384,7 +389,12 @@ export async function calculateRaceRankings(mainCircuitOnly = false, seasons = n
               inverseConfidenceBefore, // opponentConfidence
               matchupRatingBefore, // Use PvT's rating BEFORE update (explicit)
               populationMean, // Population mean (for first-match logic, though explicit rating takes precedence)
-              inverseMatchesBefore
+              inverseMatchesBefore,
+              {
+                teamScore: match.team1_score,
+                opponentScore: match.team2_score,
+                bestOf: match.best_of
+              }
             );
 
             // Update TvP: compare its BEFORE rating against PvT's BEFORE rating
@@ -398,12 +408,19 @@ export async function calculateRaceRankings(mainCircuitOnly = false, seasons = n
               matchupConfidenceBefore, // opponentConfidence
               inverseRatingBefore, // Use TvP's rating BEFORE update (explicit)
               populationMean, // Population mean (for first-match logic, though explicit rating takes precedence)
-              matchupMatchesBefore
+              matchupMatchesBefore,
+              {
+                teamScore: match.team2_score,
+                opponentScore: match.team1_score,
+                bestOf: match.best_of
+              }
             );
 
             // Track impact
             raceImpacts.set(matchupKey, {
               ratingBefore: matchupRatingBefore,
+              rankBefore: beforeRankMap.get(matchupKey) || '-',
+              rankBeforeConfidence: matchupConfidenceBefore,
               ratingChange: matchupResult.ratingChange,
               won: matchupWon,
               isDraw: isDraw,
@@ -414,6 +431,17 @@ export async function calculateRaceRankings(mainCircuitOnly = false, seasons = n
             });
           }
         }
+      }
+
+      // Rank snapshot after applying all updates for this match
+      const afterRankings = sortRankings(Array.from(raceStats.values()));
+      const afterRankMap = new Map();
+      afterRankings.forEach((r, index) => afterRankMap.set(`${r.race1}v${r.race2}`, index + 1));
+
+      for (const [matchupKey, impact] of raceImpacts.entries()) {
+        const updatedStats = raceStats.get(matchupKey);
+        impact.rankAfter = afterRankMap.get(matchupKey) || '-';
+        impact.rankAfterConfidence = updatedStats?.confidence || 0;
       }
 
       // Get player races for display

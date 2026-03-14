@@ -57,7 +57,7 @@ function getPlayerRace(player, playerDefaults = {}) {
  */
 async function loadTournamentFiles() {
   const files = await readdir(outputDir);
-  const jsonFiles = files.filter(f => f.endsWith('.json') && f !== 'player_defaults.json');
+  const jsonFiles = files.filter(f => f.endsWith('.json') && f !== 'player_defaults.json' && f !== 'player_countries.json');
 
   const tournaments = [];
 
@@ -337,7 +337,12 @@ function calculateRankingsFromMatches(sortedMatches, seeds = null, playerDefault
         team1AvgOpponentConfidence,
         null,
         finalPopulationMean,
-        team1AvgOpponentMatches
+        team1AvgOpponentMatches,
+        {
+          teamScore: match.team1_score,
+          opponentScore: match.team2_score,
+          bestOf: match.best_of
+        }
       );
       playerImpacts.set(playerName, {
         ratingBefore,
@@ -366,7 +371,12 @@ function calculateRankingsFromMatches(sortedMatches, seeds = null, playerDefault
         team2AvgOpponentConfidence,
         null,
         finalPopulationMean,
-        team2AvgOpponentMatches
+        team2AvgOpponentMatches,
+        {
+          teamScore: match.team2_score,
+          opponentScore: match.team1_score,
+          bestOf: match.best_of
+        }
       );
       playerImpacts.set(playerName, {
         ratingBefore,
@@ -378,6 +388,18 @@ function calculateRankingsFromMatches(sortedMatches, seeds = null, playerDefault
         opponentRating: team2AvgOpponentRating,
         ...result.calculationDetails
       });
+    }
+
+    // Calculate rankings after processing this match
+    const updatedRankings = sortRankings(Array.from(playerStats.values()));
+    const updatedRankMap = new Map();
+    updatedRankings.forEach((p, index) => updatedRankMap.set(p.name, index + 1));
+
+    // Enrich impacts with post-match rank context
+    for (const [playerName, impact] of playerImpacts.entries()) {
+      const updatedStats = playerStats.get(playerName);
+      impact.rankAfter = updatedRankMap.get(playerName) || '-';
+      impact.rankAfterConfidence = updatedStats?.confidence || 0;
     }
 
     // Store match history entry
