@@ -142,19 +142,18 @@ function getFullRaceNames(combo) {
  * @param {boolean} hideRandom - Whether to exclude Random race matchups from calculations
  * @returns {Promise<Object>} Object with rankings and matchHistory
  */
-export async function calculateTeamRaceRankings(mainCircuitOnly = false, seasons = null, hideRandom = false) {
+export async function calculateTeamRaceRankings(mainCircuitOnly = false, seasons = null, hideRandom = false, options = {}) {
   const teamRaceStats = new Map(); // Key: matchup (e.g., "PT vs ZZ"), Value: stats object
   const allMatches = [];
+  let includedTournamentCount = 0;
 
   try {
     // Load player defaults first
     const playerDefaults = await loadPlayerDefaults();
-    console.log(`Loaded ${Object.keys(playerDefaults).length} player defaults`);
 
     // Read all JSON files from output directory
     const files = await readdir(outputDir);
     const jsonFiles = files.filter(f => f.endsWith('.json') && f !== 'player_defaults.json' && f !== 'player_countries.json');
-    console.log(`Found ${jsonFiles.length} tournament JSON files`);
 
     // Collect all matches with tournament metadata
     for (const file of jsonFiles) {
@@ -193,6 +192,8 @@ export async function calculateTeamRaceRankings(mainCircuitOnly = false, seasons
         if (mainCircuitOnly && !isMainCircuit) {
           continue;
         }
+
+        includedTournamentCount++;
 
         const tournamentDate = data.tournament?.date || null;
 
@@ -245,7 +246,6 @@ export async function calculateTeamRaceRankings(mainCircuitOnly = false, seasons
     // Process matches in chronological order
     const matchHistory = [];
 
-    console.log(`Processing ${allMatches.length} matches`);
     let matchesWithRaces = 0;
     let matchesWithoutRaces = 0;
     let matchesSkippedRandom = 0;
@@ -608,14 +608,23 @@ export async function calculateTeamRaceRankings(mainCircuitOnly = false, seasons
     // Convert combined stats to array and sort
     const combinedRankings = sortRankings(Array.from(combinedStats.values()));
 
-    console.log(`Matches with races: ${matchesWithRaces}, without races: ${matchesWithoutRaces}`);
-    if (hideRandom && matchesSkippedRandom > 0) {
-      console.log(`Matches skipped (Random races): ${matchesSkippedRandom}`);
-    }
-    console.log(`Found ${rankings.length} team race matchup combinations`);
-    console.log(`Found ${combinedRankings.length} combined team race statistics`);
-
-    return { rankings, combinedRankings, matchHistory };
+    return {
+      rankings,
+      combinedRankings,
+      matchHistory,
+      summary: {
+        matchesProcessed: allMatches.length,
+        matchesWithRaces,
+        matchesWithoutRaces,
+        matchesSkippedRandom,
+        matchupCount: rankings.length,
+        combinedStatsCount: combinedRankings.length,
+        tournamentsIncluded: includedTournamentCount,
+        playerDefaultsLoaded: Object.keys(playerDefaults).length,
+        hideRandom,
+        logLevel: options?.logLevel || 'silent'
+      }
+    };
   } catch (error) {
     console.error('Error calculating team race rankings:', error);
     throw error;

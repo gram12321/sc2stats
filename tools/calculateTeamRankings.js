@@ -110,6 +110,7 @@ export function calculateTeamRankingsFromMatches(sortedMatches, seeds = null, op
   const teamStats = new Map();
   const playerStats = new Map();
   const matchHistory = [];
+  const seededTeamsUsed = new Set();
 
   try {
     // Process matches in chronological order
@@ -151,7 +152,7 @@ export function calculateTeamRankingsFromMatches(sortedMatches, seeds = null, op
             player1: team1PlayersSorted[0],
             player2: team1PlayersSorted[1]
           }));
-          console.log(`Seeded team ${team1Key} with ${seeds[team1Key]}`);
+          seededTeamsUsed.add(team1Key);
         } else {
           teamStats.set(team1Key, initializeStats(team1Key, {
             player1: team1PlayersSorted[0],
@@ -166,6 +167,7 @@ export function calculateTeamRankingsFromMatches(sortedMatches, seeds = null, op
             player1: team2PlayersSorted[0],
             player2: team2PlayersSorted[1]
           }));
+          seededTeamsUsed.add(team2Key);
         } else {
           teamStats.set(team2Key, initializeStats(team2Key, {
             player1: team2PlayersSorted[0],
@@ -392,7 +394,15 @@ export function calculateTeamRankingsFromMatches(sortedMatches, seeds = null, op
       (team) => `${team.player1}+${team.player2}`
     );
 
-    return { rankings, matchHistory };
+    return {
+      rankings,
+      matchHistory,
+      summary: {
+        matchesProcessed: sortedMatches.length,
+        teamsRanked: rankings.length,
+        seededTeamsUsed: seededTeamsUsed.size
+      }
+    };
   } catch (error) {
     console.error('Error calculating team rankings:', error);
     throw error;
@@ -496,7 +506,15 @@ export async function calculateTeamRankings(seeds = null, mainCircuitOnly = fals
       return (a.match_id || '').localeCompare(b.match_id || '');
     });
 
-    return calculateTeamRankingsFromMatches(allMatches, seeds, options);
+    const result = calculateTeamRankingsFromMatches(allMatches, seeds, options);
+
+    return {
+      ...result,
+      summary: {
+        ...result.summary,
+        tournamentsIncluded: new Set(allMatches.map(match => match.tournamentSlug)).size
+      }
+    };
 
   } catch (err) {
     console.error('Error calculating team rankings:', err);

@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { Race } from '../types/tournament';
 import { getPlayerDefaults, setPlayerDefault, clearPlayerDefaults, renamePlayerName } from '../lib/playerDefaults';
 import { getPlayerCountries, setPlayerCountry } from '../lib/playerCountries';
-import { countryCodeToFlagEmoji, normalizeCountryCode } from '../lib/country';
+import { normalizeCountryCode } from '../lib/country';
 import { CountryFlag } from '../components/ui/CountryFlag';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
@@ -591,7 +591,7 @@ export function PlayerManager({ }: PlayerManagerProps) {
                                     <option value="">Common</option>
                                     {COMMON_COUNTRY_CODES.map((code) => (
                                       <option key={code} value={code}>
-                                        {countryCodeToFlagEmoji(code)} {code}
+                                        {code}
                                       </option>
                                     ))}
                                   </select>
@@ -609,7 +609,7 @@ export function PlayerManager({ }: PlayerManagerProps) {
                                     maxLength={2}
                                     className="h-8 w-16 uppercase text-sm"
                                   />
-                                  <CountryFlag country={row.country} showCode className="text-foreground" />
+                                  <CountryFlag country={row.country} className="text-foreground" />
                                 </div>
                               </TableCell>
                               <TableCell className="p-2">

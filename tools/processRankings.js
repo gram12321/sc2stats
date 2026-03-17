@@ -258,6 +258,7 @@ function getAverageOpponentMatches(opponentNames, playerStats) {
 function calculateRankingsFromMatches(sortedMatches, seeds = null, playerDefaults = {}) {
   const playerStats = new Map();
   const matchHistory = [];
+  const seededPlayersUsed = new Set();
 
   const getRaceAbbr = (race) => {
     if (!race) return null;
@@ -293,6 +294,7 @@ function calculateRankingsFromMatches(sortedMatches, seeds = null, playerDefault
       if (!playerStats.has(playerName)) {
         if (seeds && seeds[playerName] !== undefined) {
           playerStats.set(playerName, initializeStatsWithSeed(playerName, seeds[playerName]));
+          seededPlayersUsed.add(playerName);
         } else {
           playerStats.set(playerName, initializeStats(playerName, {}));
         }
@@ -430,7 +432,16 @@ function calculateRankingsFromMatches(sortedMatches, seeds = null, playerDefault
   // Convert to array and sort using shared sorting function
   const rankings = sortRankings(Array.from(playerStats.values()));
 
-  return { rankings, matchHistory };
+  return {
+    rankings,
+    matchHistory,
+    summary: {
+      matchesProcessed: sortedMatches.length,
+      playersRanked: rankings.length,
+      seededPlayersUsed: seededPlayersUsed.size,
+      playerDefaultsLoaded: Object.keys(playerDefaults).length
+    }
+  };
 }
 
 /**
@@ -439,7 +450,7 @@ function calculateRankingsFromMatches(sortedMatches, seeds = null, playerDefault
  * 
  * @returns {Promise<Object>} Object with rankings and matchHistory
  */
-export async function calculateRankings(seeds = null, mainCircuitOnly = false, seasons = null) {
+export async function calculateRankings(seeds = null, mainCircuitOnly = false, seasons = null, options = {}) {
   try {
     // Load player defaults first
     const playerDefaults = await loadPlayerDefaults();
@@ -454,7 +465,16 @@ export async function calculateRankings(seeds = null, mainCircuitOnly = false, s
     const sortedMatches = sortAllMatches(allMatches);
 
     // Calculate rankings from sorted matches
-    return calculateRankingsFromMatches(sortedMatches, seeds, playerDefaults);
+    const result = calculateRankingsFromMatches(sortedMatches, seeds, playerDefaults);
+
+    return {
+      ...result,
+      summary: {
+        ...result.summary,
+        tournamentsIncluded: new Set(sortedMatches.map(match => match.tournamentSlug)).size,
+        logLevel: options?.logLevel || 'silent'
+      }
+    };
   } catch (error) {
     console.error('Error calculating rankings:', error);
     throw error;

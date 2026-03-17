@@ -64,6 +64,160 @@ function getTeamRatingOptions(req, playerSeeds = null) {
   };
 }
 
+function formatSeasonsForLog(seasons) {
+  return seasons && seasons.length > 0 ? seasons.join(',') : 'all';
+}
+
+function formatSeedSummary(playerSeeds, teamSeeds) {
+  if (!playerSeeds && !teamSeeds) {
+    return 'seeds:off';
+  }
+
+  const playerCount = playerSeeds ? Object.keys(playerSeeds).length : 0;
+  const teamCount = teamSeeds ? Object.keys(teamSeeds).length : 0;
+  return `seeds:on(p:${playerCount},t:${teamCount})`;
+}
+
+function formatPlayerSummary(summary) {
+  if (!summary) return null;
+
+  const seededPart = summary.seededPlayersUsed ? `, seeded:${summary.seededPlayersUsed}` : '';
+  return `players ${summary.playersRanked} from ${summary.matchesProcessed} matches in ${summary.tournamentsIncluded} tournaments${seededPart}`;
+}
+
+function formatTeamSummary(summary) {
+  if (!summary) return null;
+
+  const seededPart = summary.seededTeamsUsed ? `, seeded:${summary.seededTeamsUsed}` : '';
+  return `teams ${summary.teamsRanked} from ${summary.matchesProcessed} matches in ${summary.tournamentsIncluded} tournaments${seededPart}`;
+}
+
+function shouldSuppressApiLog(req, res) {
+  if (req.path === '/api/versionlog' && res.statusCode === 304) {
+    return true;
+  }
+
+  const quietMetadataPaths = new Set([
+    '/api/tournaments',
+    '/api/player-defaults',
+    '/api/player-countries'
+  ]);
+
+  return res.statusCode === 304 && quietMetadataPaths.has(req.path);
+}
+
+async function readJsonObjectCount(filePath) {
+  try {
+    const content = await readFile(filePath, 'utf-8');
+    const parsed = JSON.parse(content);
+    if (!parsed || typeof parsed !== 'object') return 0;
+    return Array.isArray(parsed) ? parsed.length : Object.keys(parsed).length;
+  } catch (err) {
+    if (err.code === 'ENOENT') return 0;
+    throw err;
+  }
+}
+
+async function buildStartupSnapshot() {
+  const files = await readdir(outputDir);
+  const tournamentFiles = files.filter(isTournamentJsonFile);
+
+  let totalMatches = 0;
+  for (const file of tournamentFiles) {
+    try {
+      const filePath = join(outputDir, file);
+      const content = await readFile(filePath, 'utf-8');
+      const data = JSON.parse(content);
+      totalMatches += Array.isArray(data?.matches) ? data.matches.length : 0;
+    } catch {
+      // Ignore malformed files in startup snapshot; request handlers still log detailed errors.
+    }
+  }
+
+  const [playerDefaultsCount, playerCountriesCount, seededPlayersCount, seededTeamsCount] = await Promise.all([
+    readJsonObjectCount(playerDefaultsFile),
+    readJsonObjectCount(playerCountriesFile),
+    readJsonObjectCount(join(outputDir, 'seeded_player_rankings.json')),
+    readJsonObjectCount(join(outputDir, 'seeded_team_rankings.json'))
+  ]);
+
+  return {
+    tournaments: tournamentFiles.length,
+    totalMatches,
+    playerDefaultsCount,
+    playerCountriesCount,
+    seededPlayersCount,
+    seededTeamsCount
+  };
+}
+
+function formatRaceSummary(summary, label = 'race') {
+  if (!summary) return null;
+
+  const parts = [
+    `${label} usable:${summary.matchesWithRaces}/${summary.matchesProcessed}`,
+    `missing:${summary.matchesWithoutRaces}`
+  ];
+
+  if (summary.matchesSkippedRandom > 0) {
+    parts.push(`random-skip:${summary.matchesSkippedRandom}`);
+  }
+
+  parts.push(`matchups:${summary.matchupCount}`);
+  parts.push(`combined:${summary.combinedStatsCount}`);
+
+  return parts.join(', ');
+}
+
+function formatFilterSummary({ mainCircuitOnly, seasons, hideRandom, useSeeds, teamOptions }) {
+  const parts = [
+    `circuit:${mainCircuitOnly ? 'main' : 'all'}`,
+    `seasons:${formatSeasonsForLog(seasons)}`
+  ];
+
+  if (typeof hideRandom === 'boolean') {
+    parts.push(`random:${hideRandom ? 'hidden' : 'shown'}`);
+  }
+
+  if (typeof useSeeds === 'boolean') {
+    parts.push(`seeds:${useSeeds ? 'on' : 'off'}`);
+  }
+
+  if (teamOptions?.useIntermediateTeamRating) {
+    parts.push(`team-blend:${teamOptions.intermediateFadeMatches}`);
+  }
+
+  return parts.join(', ');
+}
+
+function logApiSummary(req, _startedAt, details = []) {
+  req._apiSummaryLogged = true;
+  req._apiLogDetails = details.filter(Boolean);
+}
+
+app.use((req, res, next) => {
+  if (!req.path.startsWith('/api/')) {
+    next();
+    return;
+  }
+
+  const startedAt = Date.now();
+
+  res.on('finish', () => {
+    if (shouldSuppressApiLog(req, res)) {
+      return;
+    }
+
+    const durationMs = Date.now() - startedAt;
+    const path = req.originalUrl.split('?')[0];
+    const details = req._apiSummaryLogged ? (req._apiLogDetails || []) : [];
+    const suffix = details.length > 0 ? ` | ${details.join(' | ')}` : '';
+    console.log(`[api] ${req.method} ${path} ${res.statusCode} ${durationMs}ms${suffix}`);
+  });
+
+  next();
+});
+
 const versionLogPath = join(__dirname, '..', 'docs', 'versionlog.md');
 
 function normalizePlayerNameForSimilarity(name) {
@@ -278,6 +432,7 @@ app.get('/api/versionlog', async (req, res) => {
 
 // List all JSON files in output directory
 app.get('/api/tournaments', async (req, res) => {
+  const startedAt = Date.now();
   try {
     const files = await readdir(outputDir);
     const jsonFiles = files.filter(isTournamentJsonFile);
@@ -324,6 +479,14 @@ app.get('/api/tournaments', async (req, res) => {
 
       return true;
     });
+
+    logApiSummary(req, startedAt, [
+      formatFilterSummary({
+        mainCircuitOnly: isMainCircuitOnly,
+        seasons
+      }),
+      `tournaments:${filteredTournaments.length}`
+    ]);
 
     res.json(filteredTournaments);
   } catch (error) {
@@ -652,14 +815,17 @@ app.post('/api/players/rename', async (req, res) => {
 
 // Get player defaults
 app.get('/api/player-defaults', async (req, res) => {
+  const startedAt = Date.now();
   try {
     try {
       const content = await readFile(playerDefaultsFile, 'utf-8');
       const defaults = JSON.parse(content);
+      logApiSummary(req, startedAt, [`defaults:${Object.keys(defaults).length}`]);
       res.json(defaults);
     } catch (err) {
       // File doesn't exist yet, return empty object
       if (err.code === 'ENOENT') {
+        logApiSummary(req, startedAt, ['defaults:0']);
         res.json({});
       } else {
         throw err;
@@ -726,6 +892,7 @@ app.put('/api/player-defaults/:playerName', async (req, res) => {
 
 // Get player countries (stored overrides + scraped fallbacks)
 app.get('/api/player-countries', async (req, res) => {
+  const startedAt = Date.now();
   try {
     const [stored, scraped] = await Promise.all([
       loadStoredPlayerCountries(),
@@ -733,7 +900,12 @@ app.get('/api/player-countries', async (req, res) => {
     ]);
 
     // Stored values override scraped defaults
-    res.json({ ...scraped, ...stored });
+    const merged = { ...scraped, ...stored };
+    logApiSummary(req, startedAt, [
+      `countries:${Object.keys(merged).length}`,
+      `overrides:${Object.keys(stored).length}`
+    ]);
+    res.json(merged);
   } catch (error) {
     console.error('Error getting player countries:', error);
     res.status(500).json({ error: 'Failed to get player countries' });
@@ -772,10 +944,15 @@ app.put('/api/player-countries/:playerName', async (req, res) => {
 
 // Get player rankings
 app.get('/api/player-rankings', async (req, res) => {
+  const startedAt = Date.now();
   try {
     const isMainCircuitOnly = req.query.mainCircuitOnly === 'true';
     const seasons = req.query.seasons ? req.query.seasons.split(',') : null;
-    const { rankings } = await calculateRankings(null, isMainCircuitOnly, seasons);
+    const { rankings, summary } = await calculateRankings(null, isMainCircuitOnly, seasons);
+    logApiSummary(req, startedAt, [
+      formatFilterSummary({ mainCircuitOnly: isMainCircuitOnly, seasons }),
+      formatPlayerSummary(summary)
+    ]);
     res.json(rankings);
   } catch (error) {
     console.error('Error calculating player rankings:', error);
@@ -785,15 +962,21 @@ app.get('/api/player-rankings', async (req, res) => {
 
 // Get team rankings
 app.get('/api/team-rankings', async (req, res) => {
+  const startedAt = Date.now();
   try {
     const isMainCircuitOnly = req.query.mainCircuitOnly === 'true';
     const seasons = req.query.seasons ? req.query.seasons.split(',') : null;
-    const { rankings } = await calculateTeamRankings(
+    const teamOptions = getTeamRatingOptions(req);
+    const { rankings, summary } = await calculateTeamRankings(
       null,
       isMainCircuitOnly,
       seasons,
-      getTeamRatingOptions(req)
+      teamOptions
     );
+    logApiSummary(req, startedAt, [
+      formatFilterSummary({ mainCircuitOnly: isMainCircuitOnly, seasons, teamOptions }),
+      formatTeamSummary(summary)
+    ]);
     res.json(rankings);
   } catch (error) {
     console.error('Error calculating team rankings:', error);
@@ -864,6 +1047,7 @@ app.get('/api/tournament-team-rankings/:slug', async (req, res) => {
 
 // Get seeded player rankings (from three-pass seeding process)
 app.get('/api/seeded-player-rankings', async (req, res) => {
+  const startedAt = Date.now();
   try {
     const isMainCircuitOnly = req.query.mainCircuitOnly === 'true';
     const seasons = req.query.seasons ? req.query.seasons.split(',') : null;
@@ -875,12 +1059,21 @@ app.get('/api/seeded-player-rankings', async (req, res) => {
 
       // If filtering is needed, recalculate with filters and seeds
       if (isMainCircuitOnly || (seasons && seasons.length > 0)) {
-        const { rankings } = await calculateRankings(playerSeeds, isMainCircuitOnly, seasons);
+        const { rankings, summary } = await calculateRankings(playerSeeds, isMainCircuitOnly, seasons);
+        logApiSummary(req, startedAt, [
+          formatFilterSummary({ mainCircuitOnly: isMainCircuitOnly, seasons, useSeeds: true }),
+          'source:recalculated-seeded',
+          formatPlayerSummary(summary)
+        ]);
         res.json(rankings);
       } else {
         // No filtering, return pre-calculated results
         const content = await readFile(seededRankingsFile, 'utf-8');
         const rankings = JSON.parse(content);
+        logApiSummary(req, startedAt, [
+          'source:seeded-file',
+          `players:${rankings.length}`
+        ]);
         res.json(rankings);
       }
     } catch (fileError) {
@@ -898,6 +1091,7 @@ app.get('/api/seeded-player-rankings', async (req, res) => {
 
 // Get seeded team rankings (from three-pass seeding process)
 app.get('/api/seeded-team-rankings', async (req, res) => {
+  const startedAt = Date.now();
   try {
     const isMainCircuitOnly = req.query.mainCircuitOnly === 'true';
     const seasons = req.query.seasons ? req.query.seasons.split(',') : null;
@@ -909,17 +1103,27 @@ app.get('/api/seeded-team-rankings', async (req, res) => {
 
       // If filtering is needed, recalculate with filters and seeds
       if (isMainCircuitOnly || (seasons && seasons.length > 0)) {
-        const { rankings } = await calculateTeamRankings(
+        const teamOptions = getTeamRatingOptions(req, playerSeeds);
+        const { rankings, summary } = await calculateTeamRankings(
           teamSeeds,
           isMainCircuitOnly,
           seasons,
-          getTeamRatingOptions(req, playerSeeds)
+          teamOptions
         );
+        logApiSummary(req, startedAt, [
+          formatFilterSummary({ mainCircuitOnly: isMainCircuitOnly, seasons, useSeeds: true, teamOptions }),
+          'source:recalculated-seeded',
+          formatTeamSummary(summary)
+        ]);
         res.json(rankings);
       } else {
         // No filtering, return pre-calculated results
         const content = await readFile(seededRankingsFile, 'utf-8');
         const rankings = JSON.parse(content);
+        logApiSummary(req, startedAt, [
+          'source:seeded-file',
+          `teams:${rankings.length}`
+        ]);
         res.json(rankings);
       }
     } catch (fileError) {
@@ -937,11 +1141,16 @@ app.get('/api/seeded-team-rankings', async (req, res) => {
 
 // Get race rankings
 app.get('/api/race-rankings', async (req, res) => {
+  const startedAt = Date.now();
   try {
     const isMainCircuitOnly = req.query.mainCircuitOnly === 'true';
     const hideRandom = req.query.hideRandom === 'true';
     const seasons = req.query.seasons ? req.query.seasons.split(',') : null;
-    const { rankings, combinedRankings, matchHistory } = await calculateRaceRankings(isMainCircuitOnly, seasons, hideRandom);
+    const { rankings, combinedRankings, matchHistory, summary } = await calculateRaceRankings(isMainCircuitOnly, seasons, hideRandom);
+    logApiSummary(req, startedAt, [
+      formatFilterSummary({ mainCircuitOnly: isMainCircuitOnly, seasons, hideRandom }),
+      formatRaceSummary(summary)
+    ]);
     res.json({ rankings, combinedRankings, matchHistory });
   } catch (error) {
     console.error('Error calculating race rankings:', error);
@@ -1071,11 +1280,12 @@ app.get('/api/race-combo/:race', async (req, res) => {
 });
 
 app.get('/api/team-race-rankings', async (req, res) => {
+  const startedAt = Date.now();
   try {
     const isMainCircuitOnly = req.query.mainCircuitOnly === 'true';
     const hideRandom = req.query.hideRandom === 'true';
     const seasons = req.query.seasons ? req.query.seasons.split(',') : null;
-    const { rankings, combinedRankings, matchHistory } = await calculateTeamRaceRankings(isMainCircuitOnly, seasons, hideRandom);
+    const { rankings, combinedRankings, matchHistory, summary } = await calculateTeamRaceRankings(isMainCircuitOnly, seasons, hideRandom);
     const { matchHistory: teamMatchHistory } = await calculateTeamRankings(
       null,
       isMainCircuitOnly,
@@ -1102,6 +1312,11 @@ app.get('/api/team-race-rankings', async (req, res) => {
         team_impacts: teamMatch?.team_impacts
       };
     });
+
+    logApiSummary(req, startedAt, [
+      formatFilterSummary({ mainCircuitOnly: isMainCircuitOnly, seasons, hideRandom }),
+      formatRaceSummary(summary, 'team-race')
+    ]);
 
     res.json({ rankings, combinedRankings, matchHistory: mergedMatchHistory });
   } catch (error) {
@@ -1266,6 +1481,7 @@ app.get('/api/rankings', async (req, res) => {
 
 // Get match history with ranking impacts
 app.get('/api/match-history', async (req, res) => {
+  const startedAt = Date.now();
   try {
     const { player, team, tournament, useSeeds } = req.query;
 
@@ -1273,24 +1489,24 @@ app.get('/api/match-history', async (req, res) => {
     let teamSeeds = null;
 
     if (useSeeds === 'true') {
-      console.log('API: useSeeds=true requested');
       const seeds = await loadSeeds();
       playerSeeds = seeds.playerSeeds;
       teamSeeds = seeds.teamSeeds;
-      console.log(`API: Loaded seeds - Players: ${playerSeeds ? Object.keys(playerSeeds).length : 0}, Teams: ${teamSeeds ? Object.keys(teamSeeds).length : 0}`);
     }
 
     const seasons = req.query.seasons ? req.query.seasons.split(',') : null;
     const hideRandom = req.query.hideRandom === 'true';
-    const { rankings, matchHistory } = await calculateRankings(playerSeeds, req.query.mainCircuitOnly === 'true', seasons);
-    const { matchHistory: teamMatchHistory } = await calculateTeamRankings(
+    const mainCircuitOnly = req.query.mainCircuitOnly === 'true';
+    const teamOptions = getTeamRatingOptions(req, playerSeeds);
+    const { rankings, matchHistory, summary: playerSummary } = await calculateRankings(playerSeeds, mainCircuitOnly, seasons);
+    const { matchHistory: teamMatchHistory, summary: teamSummary } = await calculateTeamRankings(
       teamSeeds,
-      req.query.mainCircuitOnly === 'true',
+      mainCircuitOnly,
       seasons,
-      getTeamRatingOptions(req, playerSeeds)
+      teamOptions
     );
-    const { matchHistory: raceMatchHistory } = await calculateRaceRankings(req.query.mainCircuitOnly === 'true', seasons, hideRandom);
-    const { matchHistory: comboMatchHistory } = await calculateTeamRaceRankings(req.query.mainCircuitOnly === 'true', seasons, hideRandom);
+    const { matchHistory: raceMatchHistory, summary: raceSummary } = await calculateRaceRankings(mainCircuitOnly, seasons, hideRandom);
+    const { matchHistory: comboMatchHistory, summary: comboSummary } = await calculateTeamRaceRankings(mainCircuitOnly, seasons, hideRandom);
 
     // Create a map of team match history by match_id for quick lookup
     const teamMatchMap = new Map();
@@ -1374,6 +1590,19 @@ app.get('/api/match-history', async (req, res) => {
       return (b.match_id || '').localeCompare(a.match_id || '');
     });
 
+    logApiSummary(req, startedAt, [
+      formatFilterSummary({ mainCircuitOnly, seasons, hideRandom, useSeeds: useSeeds === 'true', teamOptions }),
+      formatSeedSummary(playerSeeds, teamSeeds),
+      player ? `player:${player}` : null,
+      team ? `team:${team}` : null,
+      tournament ? `tournament:${tournament}` : null,
+      `returned:${filteredHistory.length}`,
+      formatPlayerSummary(playerSummary),
+      formatTeamSummary(teamSummary),
+      formatRaceSummary(raceSummary),
+      formatRaceSummary(comboSummary, 'team-race')
+    ]);
+
     res.json(filteredHistory);
   } catch (error) {
     console.error('Error getting match history:', error);
@@ -1383,6 +1612,7 @@ app.get('/api/match-history', async (req, res) => {
 
 // Get player details with match history
 app.get('/api/player/:playerName', async (req, res) => {
+  const startedAt = Date.now();
   try {
     const playerName = decodeURIComponent(req.params.playerName);
     const { useSeeds } = req.query;
@@ -1398,15 +1628,17 @@ app.get('/api/player/:playerName', async (req, res) => {
 
     const seasons = req.query.seasons ? req.query.seasons.split(',') : null;
     const hideRandom = req.query.hideRandom === 'true';
-    const { rankings, matchHistory } = await calculateRankings(playerSeeds, req.query.mainCircuitOnly === 'true', seasons);
-    const { matchHistory: teamMatchHistory } = await calculateTeamRankings(
+    const mainCircuitOnly = req.query.mainCircuitOnly === 'true';
+    const teamOptions = getTeamRatingOptions(req, playerSeeds);
+    const { rankings, matchHistory, summary: playerSummary } = await calculateRankings(playerSeeds, mainCircuitOnly, seasons);
+    const { matchHistory: teamMatchHistory, summary: teamSummary } = await calculateTeamRankings(
       teamSeeds,
-      req.query.mainCircuitOnly === 'true',
+      mainCircuitOnly,
       seasons,
-      getTeamRatingOptions(req, playerSeeds)
+      teamOptions
     );
-    const { matchHistory: raceMatchHistory } = await calculateRaceRankings(req.query.mainCircuitOnly === 'true', seasons, hideRandom);
-    const { matchHistory: comboMatchHistory } = await calculateTeamRaceRankings(req.query.mainCircuitOnly === 'true', seasons, hideRandom);
+    const { matchHistory: raceMatchHistory, summary: raceSummary } = await calculateRaceRankings(mainCircuitOnly, seasons, hideRandom);
+    const { matchHistory: comboMatchHistory, summary: comboSummary } = await calculateTeamRaceRankings(mainCircuitOnly, seasons, hideRandom);
 
     const player = rankings.find(p => p.name === playerName);
     if (!player) {
@@ -1467,10 +1699,23 @@ app.get('/api/player/:playerName', async (req, res) => {
       };
     });
 
-    res.json({
+    const response = {
       ...player,
       matchHistory: playerMatches
-    });
+    };
+
+    logApiSummary(req, startedAt, [
+      formatFilterSummary({ mainCircuitOnly, seasons, hideRandom, useSeeds: useSeeds === 'true', teamOptions }),
+      formatSeedSummary(playerSeeds, teamSeeds),
+      `player:${playerName}`,
+      `returned:${playerMatches.length}`,
+      formatPlayerSummary(playerSummary),
+      formatTeamSummary(teamSummary),
+      formatRaceSummary(raceSummary),
+      formatRaceSummary(comboSummary, 'team-race')
+    ]);
+
+    res.json(response);
   } catch (error) {
     console.error('Error getting player details:', error);
     res.status(500).json({ error: 'Failed to get player details' });
@@ -1479,6 +1724,7 @@ app.get('/api/player/:playerName', async (req, res) => {
 
 // Get team details with match history
 app.get('/api/team/:player1/:player2', async (req, res) => {
+  const startedAt = Date.now();
   try {
     const player1 = decodeURIComponent(req.params.player1);
     const player2 = decodeURIComponent(req.params.player2);
@@ -1496,11 +1742,13 @@ app.get('/api/team/:player1/:player2', async (req, res) => {
 
     const seasons = req.query.seasons ? req.query.seasons.split(',') : null;
     const hideRandom = req.query.hideRandom === 'true';
-    const { rankings, matchHistory } = await calculateTeamRankings(
+    const mainCircuitOnly = req.query.mainCircuitOnly === 'true';
+    const teamOptions = getTeamRatingOptions(req, playerSeeds);
+    const { rankings, matchHistory, summary: teamSummary } = await calculateTeamRankings(
       teamSeeds,
-      req.query.mainCircuitOnly === 'true',
+      mainCircuitOnly,
       seasons,
-      getTeamRatingOptions(req, playerSeeds)
+      teamOptions
     );
 
     const team = rankings.find(t =>
@@ -1513,9 +1761,9 @@ app.get('/api/team/:player1/:player2', async (req, res) => {
     }
 
     // Get team's match history
-    const { matchHistory: playerMatchHistory } = await calculateRankings(playerSeeds, req.query.mainCircuitOnly === 'true', seasons);
-    const { matchHistory: raceMatchHistory } = await calculateRaceRankings(req.query.mainCircuitOnly === 'true', seasons, hideRandom);
-    const { matchHistory: comboMatchHistory } = await calculateTeamRaceRankings(req.query.mainCircuitOnly === 'true', seasons, hideRandom);
+    const { matchHistory: playerMatchHistory, summary: playerSummary } = await calculateRankings(playerSeeds, mainCircuitOnly, seasons);
+    const { matchHistory: raceMatchHistory, summary: raceSummary } = await calculateRaceRankings(mainCircuitOnly, seasons, hideRandom);
+    const { matchHistory: comboMatchHistory, summary: comboSummary } = await calculateTeamRaceRankings(mainCircuitOnly, seasons, hideRandom);
     const playerMatchMap = new Map();
     if (playerMatchHistory) {
       playerMatchHistory.forEach(match => {
@@ -1567,10 +1815,23 @@ app.get('/api/team/:player1/:player2', async (req, res) => {
       };
     });
 
-    res.json({
+    const response = {
       ...team,
       matchHistory: teamMatches
-    });
+    };
+
+    logApiSummary(req, startedAt, [
+      formatFilterSummary({ mainCircuitOnly, seasons, hideRandom, useSeeds: useSeeds === 'true', teamOptions }),
+      formatSeedSummary(playerSeeds, teamSeeds),
+      `team:${teamKey}`,
+      `returned:${teamMatches.length}`,
+      formatTeamSummary(teamSummary),
+      formatPlayerSummary(playerSummary),
+      formatRaceSummary(raceSummary),
+      formatRaceSummary(comboSummary, 'team-race')
+    ]);
+
+    res.json(response);
   } catch (error) {
     console.error('Error getting team details:', error);
     res.status(500).json({ error: 'Failed to get team details' });
@@ -1583,7 +1844,18 @@ export default app;
 // Only listen if run directly
 if (process.env.NODE_ENV !== 'production') {
   const PORT = process.env.PORT || 3002;
-  app.listen(PORT, () => {
+  app.listen(PORT, async () => {
     console.log(`API server running on http://localhost:${PORT}`);
+    try {
+      const snapshot = await buildStartupSnapshot();
+      console.log(
+        `[startup] tournaments:${snapshot.tournaments} | matches:${snapshot.totalMatches} | ` +
+        `defaults:${snapshot.playerDefaultsCount} | countries:${snapshot.playerCountriesCount} | ` +
+        `seeded-players:${snapshot.seededPlayersCount} | seeded-teams:${snapshot.seededTeamsCount}`
+      );
+      console.log('[startup] quiet logs: versionlog 304 and cached metadata 304 responses are suppressed');
+    } catch (error) {
+      console.error('Error building startup snapshot:', error);
+    }
   });
 }
