@@ -9,7 +9,9 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
-    "count-recorded-maps": "node tools/countRecordedMaps.js"
+    "count-recorded-maps": "node tools/countRecordedMaps.js",
+    "scrape-tournament": "node tools/scraper.js",
+    "enrich-map-data": "node tools/enrichMapData.js"
   },
   "dependencies": {
     "@radix-ui/react-checkbox": "^1.3.3",

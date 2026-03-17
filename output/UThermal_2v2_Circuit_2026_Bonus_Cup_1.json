@@ -355,7 +355,12 @@
       "team2_score": null,
       "best_of": 3,
       "date": "2026-01-17 15:00",
-      "games": [],
+      "games": [
+        {
+          "map": "Yellowjacket",
+          "winner": 1
+        }
+      ],
       "tournament_slug": "UThermal_2v2_Circuit/2026/Bonus_Cup/1"
     },
     {

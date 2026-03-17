@@ -163,6 +163,60 @@ function extractNestedTemplate(text, startPos) {
   return start !== -1 && end !== -1 ? text.substring(start, end) : null;
 }
 
+function getTemplateParam(templateText, key) {
+  const regex = new RegExp(`\\|${key}\\s*=\\s*([^|\\}]+)`, 'i');
+  const match = templateText.match(regex);
+  return match ? match[1].trim() : null;
+}
+
+function parseMapTemplate(mapContent) {
+  const mapName = getTemplateParam(mapContent, 'map');
+  const winnerRaw = getTemplateParam(mapContent, 'winner');
+  const normalizedWinner = winnerRaw ? winnerRaw.trim().toLowerCase() : null;
+  const winner = normalizedWinner && /^[12]$/.test(normalizedWinner)
+    ? parseInt(normalizedWinner, 10)
+    : null;
+
+  return {
+    map: mapName ? mapName.trim() : null,
+    winner,
+    skipped: normalizedWinner === 'skip'
+  };
+}
+
+function extractMatchGames(matchText, maxMaps = 10) {
+  const games = [];
+
+  for (let i = 1; i <= maxMaps; i++) {
+    const mapPattern = new RegExp(`\\|map${i}\\s*=\\s*\\{\\{Map`, 'i');
+    const mapPos = matchText.search(mapPattern);
+
+    if (mapPos === -1) {
+      break;
+    }
+
+    const mapStart = matchText.indexOf('{{Map', mapPos);
+    if (mapStart === -1) {
+      continue;
+    }
+
+    const mapContent = extractNestedTemplate(matchText, mapStart);
+    if (!mapContent) {
+      continue;
+    }
+
+    const parsedMap = parseMapTemplate(mapContent);
+    if (parsedMap.map && parsedMap.winner !== null) {
+      games.push({
+        map: parsedMap.map,
+        winner: parsedMap.winner
+      });
+    }
+  }
+
+  return games;
+}
+
 /**
  * Parse match from Match template
  */
@@ -198,19 +252,7 @@ function parseMatch(matchText, round, matchId) {
     : null;
 
   // Extract games/maps
-  const games = [];
-  for (let i = 1; i <= 10; i++) {
-    const mapPattern = new RegExp(`\\|map${i}\\s*=\\s*\\{\\{Map\\|map=([^|]+)\\|winner=(\\d+)\\}\\}`, 'i');
-    const mapMatch = matchText.match(mapPattern);
-    if (mapMatch) {
-      games.push({
-        map: mapMatch[1].trim(),
-        winner: parseInt(mapMatch[2])
-      });
-    } else {
-      break;
-    }
-  }
+    const games = extractMatchGames(matchText, 10);
 
   // Calculate scores from games if not directly available
   let finalTeam1Score = team1Score;
@@ -452,8 +494,7 @@ function parseShowMatches(wikitext, tournamentSlug) {
       const t1p2 = getVal('t1p2');
       const t2p1 = getVal('t2p1');
       const t2p2 = getVal('t2p2');
-      const mapName = getVal('map');
-      const winner = getVal('winner');
+      const parsedMap = parseMapTemplate(mapContent);
       const subgroup = getVal('subgroup') || '1';
 
       if (!t1p1 || !t1p2 || !t2p1 || !t2p2) continue;
@@ -477,10 +518,10 @@ function parseShowMatches(wikitext, tournamentSlug) {
         };
       }
 
-      if (mapName && winner) {
+      if (parsedMap.map && parsedMap.winner !== null) {
         mapGroups[groupId].games.push({
-          map: mapName,
-          winner: parseInt(winner)
+          map: parsedMap.map,
+          winner: parsedMap.winner
         });
       }
     }
@@ -511,7 +552,7 @@ function parseShowMatches(wikitext, tournamentSlug) {
 /**
  * Main scraper function
  */
-async function scrapeTournament(url) {
+export async function scrapeTournament(url) {
   console.log(`🔍 Scraping: ${url}`);
 
   const pageTitle = extractPageTitle(url);
@@ -589,4 +630,6 @@ async function main() {
   }
 }
 
-main();
+if (process.argv[1] === __filename) {
+  main();
+}

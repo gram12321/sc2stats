@@ -47,7 +47,12 @@
       "team2_score": 0,
       "best_of": 3,
       "date": "2026-03-01 18:15",
-      "games": [],
+      "games": [
+        {
+          "map": "Undercurrent",
+          "winner": 1
+        }
+      ],
       "tournament_slug": "UThermal_2v2_Circuit/2026/3"
     },
     {
@@ -103,7 +108,12 @@
       "team2_score": 1,
       "best_of": 3,
       "date": "2026-03-01 18:10",
-      "games": [],
+      "games": [
+        {
+          "map": "Yellowjacket",
+          "winner": 1
+        }
+      ],
       "tournament_slug": "UThermal_2v2_Circuit/2026/3"
     },
     {

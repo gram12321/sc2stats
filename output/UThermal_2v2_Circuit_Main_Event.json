@@ -133,7 +133,28 @@
       "team2_score": 2,
       "best_of": 3,
       "date": "2025-08-16 20:40",
-      "games": [],
+      "games": [
+        {
+          "map": "Undercurrent",
+          "winner": 1
+        },
+        {
+          "map": "Reclamation LE",
+          "winner": 2
+        },
+        {
+          "map": "Emerald City",
+          "winner": 2
+        },
+        {
+          "map": "Yellowjacket",
+          "winner": 1
+        },
+        {
+          "map": "Arctic Flowers",
+          "winner": 1
+        }
+      ],
       "tournament_slug": "UThermal_2v2_Circuit/Main_Event"
     },
     {
@@ -460,7 +481,16 @@
       "team2_score": 2,
       "best_of": 3,
       "date": "2025-08-08 17:45",
-      "games": [],
+      "games": [
+        {
+          "map": "Reclamation LE",
+          "winner": 2
+        },
+        {
+          "map": "Undercurrent",
+          "winner": 2
+        }
+      ],
       "tournament_slug": "UThermal_2v2_Circuit/Main_Event"
     },
     {
@@ -1218,7 +1248,16 @@
       "team2_score": 0,
       "best_of": 3,
       "date": "2025-08-08 21:20",
-      "games": [],
+      "games": [
+        {
+          "map": "Yellowjacket",
+          "winner": 1
+        },
+        {
+          "map": "Emerald City",
+          "winner": 1
+        }
+      ],
       "tournament_slug": "UThermal_2v2_Circuit/Main_Event"
     },
     {
@@ -1637,7 +1676,16 @@
       "team2_score": null,
       "best_of": 3,
       "date": "2025-08-10 21:35",
-      "games": [],
+      "games": [
+        {
+          "map": "Emerald City",
+          "winner": 1
+        },
+        {
+          "map": "Arctic Flowers",
+          "winner": 1
+        }
+      ],
       "tournament_slug": "UThermal_2v2_Circuit/Main_Event"
     }
   ]
