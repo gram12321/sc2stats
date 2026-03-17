@@ -11,6 +11,7 @@ import { PlayerDetails } from './pages/PlayerDetails';
 import { TeamDetails } from './pages/TeamDetails';
 import { Info } from './pages/Info';
 import { Highlights } from './pages/Highlights';
+import { MapData } from './pages/MapData';
 import { Header } from './components/Header';
 
 type View =
@@ -21,6 +22,7 @@ type View =
   | 'race-rankings'
   | 'team-race-rankings'
   | 'matches'
+  | 'map-data'
   | 'highlights'
   | 'player-details'
   | 'team-details'
@@ -74,6 +76,10 @@ export function App() {
 
     if (navState.view === 'matches') {
       return <MatchesList initialTournament={navState.matchTournamentSlug} focusMatchId={navState.matchId} />;
+    }
+
+    if (navState.view === 'map-data') {
+      return <MapData />;
     }
 
     if (navState.view === 'highlights') {

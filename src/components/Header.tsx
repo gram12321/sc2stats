@@ -1,11 +1,11 @@
 import { useMemo, useState, useEffect } from 'react';
-import { Trophy, Users, Swords, Info, LayoutDashboard, Crown, Medal, Flag, Sparkles } from 'lucide-react';
+import { Trophy, Users, Swords, Info, LayoutDashboard, Crown, Medal, Flag, Sparkles, Map } from 'lucide-react';
 import { Button } from './ui/button';
 import { cn } from '../lib/utils';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from './ui/sheet';
 
 interface HeaderProps {
-      onNavigate: (view: 'tournaments' | 'players' | 'player-rankings' | 'team-rankings' | 'race-rankings' | 'team-race-rankings' | 'matches' | 'highlights' | 'info') => void;
+      onNavigate: (view: 'tournaments' | 'players' | 'player-rankings' | 'team-rankings' | 'race-rankings' | 'team-race-rankings' | 'matches' | 'map-data' | 'highlights' | 'info') => void;
       currentView: string;
 }
 
@@ -73,6 +73,7 @@ export function Header({ onNavigate, currentView }: HeaderProps) {
                               <NavButton view="team-race-rankings" icon={Flag} label="Team Races" />
                               <NavButton view="players" icon={Users} label="Manage" />
                               <NavButton view="matches" icon={Swords} label="Matches" />
+                              <NavButton view="map-data" icon={Map} label="Maps" />
                               <NavButton view="highlights" icon={Sparkles} label="Highlights" />
                               <NavButton view="info" icon={Info} label="Info" />
                               <button

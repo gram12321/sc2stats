@@ -7,6 +7,7 @@ import { calculateRankings } from '../tools/processRankings.js';
 import { calculateTeamRankings } from '../tools/calculateTeamRankings.js';
 import { calculateRaceRankings } from '../tools/calculateRaceRankings.js';
 import { calculateTeamRaceRankings } from '../tools/calculateTeamRaceRankings.js';
+import { summarizeMapRecording } from '../tools/mapRecordingSummary.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -303,6 +304,26 @@ async function loadScrapedPlayerCountries() {
   return countries;
 }
 
+async function loadAllTournamentData() {
+  const files = await readdir(outputDir);
+  const tournamentFiles = files.filter(isTournamentJsonFile);
+  const tournaments = [];
+
+  for (const file of tournamentFiles) {
+    try {
+      const content = await readFile(join(outputDir, file), 'utf-8');
+      const data = JSON.parse(content);
+      if (Array.isArray(data?.matches)) {
+        tournaments.push(data);
+      }
+    } catch (err) {
+      console.error(`Error reading ${file} for map recording summary:`, err);
+    }
+  }
+
+  return tournaments;
+}
+
 function replacePlayerInTournamentData(tournamentData, fromName, toName) {
   if (!tournamentData?.matches || !Array.isArray(tournamentData.matches)) {
     return { changed: false, replacements: 0 };
@@ -427,6 +448,23 @@ app.get('/api/versionlog', async (req, res) => {
   } catch (err) {
     console.error('Error reading version log:', err);
     res.status(500).send('Version log unavailable.');
+  }
+});
+
+app.get('/api/map-recording-summary', async (req, res) => {
+  try {
+    const tournaments = await loadAllTournamentData();
+    const summary = summarizeMapRecording(tournaments);
+    logApiSummary(req, Date.now(), [
+      `matches:${summary.totalMatchesScanned}`,
+      `non-early:${summary.includedNonEarlyMatches}`,
+      `mapped:${summary.matchesWithRecordedMapDataNonEarly}`,
+      `maps:${summary.recordedMapEntriesNonEarly}`
+    ]);
+    res.json(summary);
+  } catch (err) {
+    console.error('Error building map recording summary:', err);
+    res.status(500).json({ error: 'Failed to build map recording summary' });
   }
 });
 
