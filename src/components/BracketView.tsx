@@ -729,17 +729,44 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
   const { upperBracketRounds, lowerBracketRounds } = useMemo(() => {
     const uniqueRounds = Array.from(new Set(bracketMatches.map(m => m.round)));
 
-    // Define round order for upper bracket (single-elimination or upper bracket of double-elimination)
-    const upperBracketOrder = [
-      'Round of 32',
-      'Round of 16',
-      'Upper Bracket Quarterfinals',
-      'Quarterfinals',
-      'Upper Bracket Semifinals',
-      'Semifinals',
-      'Upper Bracket Final',
-      'Grand Final'
-    ];
+    const getUpperRoundSortKey = (round: string): number => {
+      const roundOfMatch = round.match(/^Round of\s+(\d+)$/i);
+      if (roundOfMatch) {
+        const bracketSize = parseInt(roundOfMatch[1], 10);
+        if (!Number.isNaN(bracketSize)) {
+          const roundOfOrderMap: Record<number, number> = {
+            128: 10,
+            64: 20,
+            32: 30,
+            16: 40,
+            8: 50,
+            4: 60,
+            2: 70
+          };
+
+          return roundOfOrderMap[bracketSize] ?? 80;
+        }
+      }
+
+      const genericRoundMatch = round.match(/^Round\s+(\d+)$/i);
+      if (genericRoundMatch) {
+        const roundNum = parseInt(genericRoundMatch[1], 10);
+        if (!Number.isNaN(roundNum)) {
+          return 100 + roundNum;
+        }
+      }
+
+      const roundOrderMap: Record<string, number> = {
+        'Upper Bracket Quarterfinals': 300,
+        Quarterfinals: 310,
+        'Upper Bracket Semifinals': 400,
+        Semifinals: 410,
+        'Upper Bracket Final': 500,
+        'Grand Final': 600
+      };
+
+      return roundOrderMap[round] ?? 900;
+    };
 
     // Define round order for lower bracket
     const lowerBracketOrder = [
@@ -763,11 +790,9 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
 
     // Sort upper bracket rounds
     const sortedUpper = upperRounds.sort((a, b) => {
-      const aIndex = upperBracketOrder.indexOf(a);
-      const bIndex = upperBracketOrder.indexOf(b);
-      if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
-      if (aIndex !== -1) return -1;
-      if (bIndex !== -1) return 1;
+      const aKey = getUpperRoundSortKey(a);
+      const bKey = getUpperRoundSortKey(b);
+      if (aKey !== bKey) return aKey - bKey;
       return a.localeCompare(b);
     });
 

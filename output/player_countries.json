@@ -3,7 +3,6 @@
   "Shameless": "RU",
   "uThermal": "NL",
   "GgMaChine": "RU",
-  "goblin": "CR",
   "Elazer": "PL",
   "ShoWTimE": "DE",
   "MaxPax": "DK",
@@ -35,5 +34,6 @@
   "Fjant": "SE",
   "SpeCial": "MX",
   "NightMare": "KR",
-  "Zoun": "KR"
+  "Zoun": "KR",
+  "goblin": "HR"
 }
