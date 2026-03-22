@@ -51,6 +51,181 @@ Use this exact structure for each entry:
 
 ---
 
+## Version 1.003 - Bonus Cup 6 data, Round X bracket sorting
+**Date:** 2026-03-22 | **Commit(s):** db86e796a8923144b622e97c0ffffc21c3e25862 | **Stats:** +480 / -19
+
+### Summary
+- Added Bonus Cup 6 tournament data with semifinal and grand final map records.
+- Bracket view now sorts upper bracket rounds from parsed `Round of X`, generic `Round N`, and named finals instead of relying on a fixed hardcoded list.
+- Player metadata was updated for new defaults and corrected country data.
+
+### Changes
+- **NEW FILE:** `output/UThermal_2v2_Circuit_2026_Bonus_Cup_6.json` (434 lines) - Bonus Cup 6 bracket, scores, and late-round map data.
+- `src/components/BracketView.tsx` - Replaced the hardcoded upper-bracket order with `getUpperRoundSortKey()`, so `Round 1`, `Round 2`, `Round of 16`, and named finals render in stable bracket order.
+- `output/player_countries.json` - Corrected `goblin` country code from `CR` to `HR`.
+- `output/player_defaults.json` - Added `MaxMor` and corrected/added `LetaleX`.
+
+### Notes
+- This fixes bracket rendering for events that use `Round N` naming instead of only `Round of X` or named bracket rounds.
+
+---
+
+## Version 1.0025 / 1.0025a - Map data page, shared summary, enrichment tool
+**Date:** 2026-03-17 | **Commit(s):** e99032e3de814641940ffa72f89d7189cf179091, 0016c1295b1dacd36ede69bf6bfae8138161ee54 | **Stats:** +843 / -154
+
+### Summary
+- Added a Map Data page and API that report map-entry coverage using played maps from valid scores while excluding early rounds from the primary coverage metrics.
+- Refactored map counting into a shared summary module and added a map-only enrichment script that merges newly scraped `games` data back into existing tournament JSON.
+- Scraper now parses nested `{{Map}}` templates and exports `scrapeTournament()` for reuse by enrichment tooling.
+
+### Changes
+- **NEW FILE:** `src/pages/MapData.tsx` (246 lines) - Map coverage dashboard with aggregate counters, coverage percentages, and per-map counts.
+- `api/server.js` - Added `/api/map-recording-summary`; loads all tournament JSON and returns `summarizeMapRecording(...)`.
+- **NEW FILE:** `tools/mapRecordingSummary.js` (131 lines) - Shared summary logic for map counts, early-round exclusion, score validation, and coverage percentages.
+- `tools/countRecordedMaps.js` - Reworked to call the shared summary module instead of duplicating counting logic inline.
+- **NEW FILE:** `tools/enrichMapData.js` (261 lines) - Dry-run/write CLI that matches existing matches to scraped output and fills or appends `games` plus tournament map pools.
+- `tools/scraper.js` - Added `parseMapTemplate()`, `extractMatchGames()`, and exported `scrapeTournament(url)` so map enrichment can reuse the scraper.
+- `package.json`, `src/App.tsx`, `src/components/Header.tsx` - Added `scrape-tournament` / `enrich-map-data` scripts and a `Maps` view in the app shell.
+
+### Notes
+- Coverage is measured against played maps from valid scorelines, not against maximum possible best-of slots.
+
+---
+
+## Version 1.0024 series - Bonus Cup 5 data, quieter API logs
+**Date:** 2026-03-17 | **Commit(s):** 119afd5d4b0f51b8375809e75e3bf83a79d276c9, 8a681ad113bc8752631fa6a600dad70a87471924 | **Stats:** +1085 / -75
+
+### Summary
+- Added Bonus Cup 5 data and new player defaults for the event.
+- Server logging now emits structured per-endpoint summaries instead of noisy ad hoc console output, and common `304` metadata requests are suppressed.
+- Added a CLI summary for recorded map coverage that later feeds the map-data work.
+
+### Changes
+- **NEW FILE:** `output/UThermal_2v2_Circuit_2026_Bonus_Cup_5.json` (451 lines) - Bonus Cup 5 bracket with semifinal and grand final map records.
+- `output/player_defaults.json` - Added `iba`, `sebesdes`, and `shinobu`.
+- `api/server.js` - Added request middleware, quiet-path suppression, startup snapshot helpers, and summary logging for tournaments, rankings, match history, and player/team detail endpoints.
+- `tools/countRecordedMaps.js` - Added CLI reporting for match-level map coverage, valid-score map coverage, and per-map counts.
+- `output/player_countries.json` - Expanded stored country overrides used by the UI/API country pipeline.
+
+### Notes
+- The logging pass changes observability only; it does not change ranking math.
+
+---
+
+## Version 1.0023 / 1.0022 - Country metadata, calibration toggle, intermediate team rating
+**Date:** 2026-03-04 | **Commit(s):** cc7630905dcb8f98f028e8a705775aec404d1852, d28a4c6d2ae12351949db6e4e3c0b6fbf620b8de | **Stats:** +1739 / -662
+
+### Summary
+- Added country metadata support plus reusable flag/race UI components across rankings, match history, highlights, and team views.
+- Added prediction calibration controls and an optional intermediate team rating blend for early team matches.
+- Rebuilt Player Manager around match counts, missing-data triage, country editing, and persisted intermediate-team filters.
+
+### Changes
+- `api/server.js` - Added `player_countries.json` support, `/api/player-countries`, `/api/player-match-counts`, and threaded `useIntermediateTeamRating` plus `playerSeeds` through team-related endpoints.
+- `tools/rankingCalculations.js` - Added `setPredictionCalibration()`, `getPredictionCalibrationSettings()`, `calibrateWinProbability()`, and `rawExpectedWin` in calculation details; default calibration temperature is `1.4`.
+- `tools/calculateTeamRankings.js` - Added per-player shadow stats, `intermediateTeamRating`, blend weights, and `effectiveRatingUsed` for early team matches when the option is enabled.
+- **NEW FILE:** `src/lib/display.ts` (158 lines) - Tournament-name formatting plus shared race-display helpers.
+- **NEW FILE:** `src/components/ui/CountryFlag.tsx` (20 lines) - Reusable country flag component for rankings, match history, and detail views.
+- **NEW FILE:** `src/components/ui/RaceBadge.tsx` (36 lines) - Reusable race badge component with shared tone/icon handling.
+- `src/pages/PlayerManager.tsx` - Replaced the old defaults-only screen with a table-driven manager for race defaults, ISO country codes, match counts, missing-data filters, and rename/merge suggestions.
+- `src/components/RankingFilters.tsx`, `src/context/RankingSettingsContext.tsx`, `src/pages/Highlights.tsx`, `src/pages/TeamRankings.tsx`, `src/pages/TeamDetails.tsx` - Added persisted `Intermediate Team Rating` toggle and passed it to affected views.
+- `src/index.css`, `tailwind.config.js`, `src/pages/PlayerRankings.tsx`, `src/pages/TeamRankings.tsx`, `src/pages/MatchesList.tsx`, `src/pages/TeamDetails.tsx` - Refreshed the light theme and switched core tables/cards to formatted event names, flags, and race badges.
+- `docs/aligulac-comparison.md` - Added calibration-toggle notes and the default temperature for A/B testing.
+
+### Notes
+- Intermediate team rating only affects team calculations when the toggle is enabled; player and race models stay direct.
+
+---
+
+## Version 1.0021 / 1.0020 - Highlights page and peak records
+**Date:** 2026-03-04 | **Commit(s):** 1cfc95c430221cae49b00eab16d33351f27db830, 1644e55e31f0797f5a5df81d7656d38990385317 | **Stats:** +1514 / -591
+
+### Summary
+- Added a Highlights section with upset/expected/gain/scoreline cards plus peak-rating tables for players, teams, races, and combos.
+- Navigation can deep-link from highlights into matches, player details, and team details.
+- Info and docs were expanded to explain highlight eligibility and supporting ranking-analysis context.
+
+### Changes
+- **NEW FILE:** `src/pages/Highlights.tsx` (490 lines) - Initial Highlights view with biggest-upset, most-expected, rating-gain, lopsided-score, and peak-rating tables; later refined in `1.0021` with sorting, formatted event names, and race-badge presentation.
+- `src/App.tsx`, `src/components/Header.tsx` - Added Highlights route/button and navigation hooks from highlight actions into `matches`, `player-details`, and `team-details`.
+- `src/pages/MatchesList.tsx` - Added `initialTournament` and `focusMatchId` support so highlight actions can open the relevant match context directly.
+- `src/pages/Info.tsx` - Added FAQ copy for Random eligibility in peak highlights and for interpreting expected series scorelines.
+- **NEW FILE:** `docs/aligulac-comparison.md` (172 lines) - Notes comparing the project's ranking model to Aligulac.
+- **REMOVED:** `tools/compareChurn.js` - Temporary churn-analysis helper removed after the comparison work moved into docs/UI.
+- **REMOVED:** `tools/debug_wikitext.js` - Temporary bracket-debug helper removed after the March parser/view work stabilized.
+
+### Notes
+- Highlights are filter-sensitive, so visible upset/peak records change with seeds, circuit filters, seasons, and later the intermediate-team toggle.
+
+---
+
+## Version 1.0019 / 0.0018 series - Scoreline weighting, tooltip overhaul, race fallbacks
+**Date:** 2026-03-04 | **Commit(s):** e31a11a4ae93444a9fb5e24c91b2d38b6d096f18, 0358045fc7ad59a2a2463af05a525a02d97c99b3, 5ae9d9b2737c2e103fb3d00627bb5e97480d6345, f19ab15252662b25ddbfd0306ae9e2add8f3e0e6, ef888e30f90e569150594309c5eeb773f46933fc | **Stats:** +2295 / -202
+
+### Summary
+- Rating changes now blend series result with scoreline margin, and tooltips expose the two-term breakdown, expected series outcomes, and factor details.
+- Rename handling and match creation normalize trailing-whitespace variants, preventing duplicate player names from accidental spaces.
+- Race matchup stats now handle reverse matchup keys and fall back to team/player deltas when backend race impacts are missing; more early results were also added to tournament data.
+
+### Changes
+- `tools/rankingCalculations.js` - Added scoreline-share weighting and exposed `matchK`, `scoreK`, `matchRatingChange`, `scoreRatingChange`, score weights, reliability multipliers, and expected/actual score-share details.
+- `src/components/MatchHistoryItem.tsx` - Tooltip now shows collapsible calculation sections, expected series scorelines, factor details, and total change as `Match term + Scoreline term`.
+- `src/components/ui/tooltip.tsx` - Tooltip became interactive, keyboard-closable, and resilient to resize/scroll changes via separate open/close timers and observers.
+- `api/server.js`, `src/components/BracketView.tsx` - Player rename path and new-match entry sanitize trailing whitespace so whitespace variants can be merged or avoided.
+- `src/components/RaceMatchupStats.tsx` - Reverse-key race impacts are inverted correctly; missing backend race deltas fall back to team/player impact so team statistics still populate.
+- `src/lib/utils.ts`, `src/pages/TeamDetails.tsx`, `src/pages/TeamRaceRankings.tsx` - Shared `getRoundSortOrder()` now drives early upper/lower round sorting in UI views.
+- `output/UThermal_2v2_Circuit_2.json`, `output/UThermal_2v2_Circuit_3.json`, `output/UThermal_2v2_Circuit_4.json` - Added early-round results and more recorded score/map data.
+
+### Notes
+- Re-running rankings after this batch changes numbers because scoreline margin now contributes to rating changes.
+
+---
+
+## Version 1.0012 / 0.0012a-0.0016a - March data, bracket overhaul, rename tooling
+**Date:** 2026-03-04 | **Commit(s):** 8b294178a298484e2e009a5805bff3c90933b8ab, e696af26df2f6d42c6027e74f9b15fa3946e4c4b, 4ce0146b651199f45456189d068634edbc61726d, 6bb3ac855215437c640a19122e1411a2f354acf7, 9ca1331e2ab97a542e5f19ed49ef5fd0138909ba, d93ec9f2b3db302141fa25b5e40c19bed22b39c3, c0dea18988a2d52bbbb164c6e92d2883edf51985, aa2ec4215f0cbceb2f0b6c2435cf909dcf1de8c4 | **Stats:** +6709 / -1823
+
+### Summary
+- Added March main-circuit and SEL Doubles data, then enriched `UThermal_2v2_Circuit_2026_3.json` with main-circuit metadata, races, scores, and early-round results.
+- Bracket parser/view/editor now understand upper/lower bracket labels from Liquipedia comments, render early rounds as connected mini-brackets, show tournament-context team ranks, and suggest teammates from tournament/history data.
+- Match history and detail views now show post-match rank snapshots, and player rename tooling propagates changes across tournament/default/seeded files.
+
+### Changes
+- **NEW FILE:** `output/UThermal_2v2_Circuit_2026_3.json` (458 lines) - March 2026 circuit event; later commits fill scores, races, main-circuit metadata, and early rounds.
+- **NEW FILE:** `output/SEL_Doubles_1.json` (573 lines) - SEL Doubles tournament data.
+- `output/player_defaults.json` - Expanded defaults for March and SEL players.
+- `tools/scraper.js` - Uses bracket section comments to map matches to `Upper Bracket Quarterfinals`, `Lower Bracket Final`, and related labels instead of only generic `Round of X`.
+- `src/components/BracketView.tsx` - Added stacked upper/lower bracket rendering, early-round section types (`standard`, `upper`, `lower`), bracket connectors/drop markers, tournament-context team ranks, entrant swapping, round creation by type, and teammate-priority suggestions.
+- `src/components/MatchBox.tsx` - Moved the team-rank badge into a dedicated right-side chip and cleaned score/rank layout.
+- `api/server.js` - Added `/api/tournament-team-rankings/:slug`, `/api/players/rename`, and `/api/player-teammates`; rename updates tournament JSON, defaults, and seeded ranking/seed files.
+- `tools/processRankings.js`, `tools/calculateTeamRankings.js`, `tools/calculateRaceRankings.js` - Recorded `rankAfter` / `rankAfterConfidence` snapshots for player/team/race impacts.
+- `src/components/MatchHistoryItem.tsx`, `src/pages/PlayerDetails.tsx`, `src/pages/TeamDetails.tsx`, `src/lib/playerDefaults.ts`, `src/pages/PlayerManager.tsx` - UI now prefers post-match rank display and adds rename/merge controls with similar-name detection.
+- `tools/rankingUtils.js` - `getRoundSortOrder()` learned `Early Upper Bracket Round N` and `Early Lower Bracket Round N`.
+
+### Notes
+- This batch changes both bracket visualization and historical ranking context; match cards/details can now show before/after rank movement rather than only pre-match state.
+
+---
+
+## Version 1.0011a - Version log endpoint, header sheet, Circuit 1 early rounds
+**Date:** 2026-02-23 | **Commit(s):** 1975f0cd6762b4d2ec7d3384f0dbe99e98385413 | **Stats:** +1278 / -43
+
+### Summary
+- Header now reads the repository version log through an API endpoint, displays the latest version tag, and opens the full log in a side sheet.
+- Added early-round data to `UThermal_2v2_Circuit_1.json` and expanded defaults for players appearing there.
+- Replaced the older version-log instructions with the current evidence-based format used in this file.
+
+### Changes
+- `api/server.js` - Added `/api/versionlog` plain-text endpoint.
+- `src/components/Header.tsx` - Fetches the version log, extracts the top `## Version ...` tag, and shows the full log in a `Sheet`.
+- `docs/versionlog.md` - Replaced the earlier AI-agent guidance with the current evidence rules, required entry format, and ordering instructions.
+- `output/UThermal_2v2_Circuit_1.json` - Added a large Early Round 1 / Early Round 2 block for Circuit 1.
+- `output/player_defaults.json` - Added `RotterdaM`, `Pie`, `Coucoute`, `Molten`, `Bumbz`, and `Taruviel`.
+
+### Notes
+- The version log became a user-facing in-app surface in this commit, not just a docs file.
+
+---
+
 ## Version 1.0011 - Newness K, confidence dampening, vs-new-team protection
 **Date:** 2026-02-22 | **Commit(s):** 75ee5b0ae094ca78dc07d6c473f57b5002f11471 | **Stats:** +372 / -91
 
