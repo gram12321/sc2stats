@@ -103,6 +103,9 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
     games: []
   });
   const { useSeededRankings, mainCircuitOnly, seasons } = useRankingSettings();
+  const tournamentMapPool = (tournamentData.tournament.maps || [])
+    .map((mapName) => String(mapName || '').trim())
+    .filter(Boolean);
 
   const tournamentTeammates = useMemo(() => {
     const teammateCounts = new Map<string, Map<string, number>>();
@@ -935,6 +938,12 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
                 )}
                 <span>{tournamentData.matches.length} matches</span>
               </div>
+              {tournamentMapPool.length > 0 && (
+                <div className="mt-2 text-sm text-gray-600">
+                  <span className="font-medium text-gray-700">Map Pool:</span>{' '}
+                  <span>{tournamentMapPool.join(', ')}</span>
+                </div>
+              )}
               <div className="flex items-center gap-4 mt-2">
                 <label className="flex items-center gap-2 cursor-pointer bg-gray-50 px-3 py-1 rounded border border-gray-200 hover:bg-gray-100">
                   <input

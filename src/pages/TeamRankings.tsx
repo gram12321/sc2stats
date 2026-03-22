@@ -5,6 +5,7 @@ import { Race } from '../types/tournament';
 import { getPlayerDefaults } from '../lib/playerDefaults';
 import { getPlayerCountries } from '../lib/playerCountries';
 import { formatRankingPoints } from '../lib/utils';
+import { getIntermediateTeamBlendWeight } from '../lib/intermediateTeamRating';
 import {
   Table,
   TableBody,
@@ -16,6 +17,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Input } from '../components/ui/input';
 import { RaceBadge } from '../components/ui/RaceBadge';
+import { Tooltip } from '../components/ui/tooltip';
 import {
   Search,
   ArrowUpDown,
@@ -39,6 +41,7 @@ interface TeamRanking {
   losses: number;
   points: number;
   confidence?: number;
+  intermediateBlendWeight?: number;
 }
 
 interface PlayerRanking {
@@ -226,6 +229,16 @@ export function TeamRankings({ onNavigateToTeam }: TeamRankingsProps) {
     return { ...team, displayRank: rank };
   });
 
+  const getTeamIntermediateBlend = (team: TeamRanking) => {
+    if (!useIntermediateTeamRating) return 0;
+
+    const apiBlendWeight = typeof team.intermediateBlendWeight === 'number'
+      ? team.intermediateBlendWeight
+      : getIntermediateTeamBlendWeight(team.matches);
+
+    return Math.max(0, Math.min(1, apiBlendWeight));
+  };
+
   const SortIcon = ({ column }: { column: keyof TeamRanking | 'rank' | 'player1' }) => {
     if (sortColumn !== column) return <ArrowUpDown className="ml-1 h-3 w-3 text-muted-foreground" />;
     return sortDirection === 'asc'
@@ -361,6 +374,9 @@ export function TeamRankings({ onNavigateToTeam }: TeamRankingsProps) {
                       const player1Race = playerRaces[team.player1];
                       const player2Race = playerRaces[team.player2];
                       const isPositive = team.points > 0;
+                      const intermediateBlend = getTeamIntermediateBlend(team);
+                      const hasIntermediateBlend = intermediateBlend > 0;
+                      const intermediatePlayerShare = Math.round(intermediateBlend * 100);
 
                       return (
                         <TableRow key={`${team.player1}+${team.player2}`} className="hover:bg-muted/30 border-border/50">
@@ -428,13 +444,31 @@ export function TeamRankings({ onNavigateToTeam }: TeamRankingsProps) {
                           <TableCell className="text-center font-medium text-rose-500 dark:text-rose-400">{team.losses}</TableCell>
 
                           <TableCell className="text-center">
-                            <span className={cn(
-                              "font-bold font-mono tracking-tight",
-                              isPositive ? "text-emerald-500 dark:text-emerald-400" :
-                                team.points < 0 ? "text-rose-500 dark:text-rose-400" : "text-muted-foreground"
-                            )}>
-                              {isPositive ? '+' : ''}{formatRankingPoints(team.points)}
-                            </span>
+                            <div className="inline-flex items-center justify-center">
+                              <span className={cn(
+                                "font-bold font-mono tracking-tight",
+                                isPositive ? "text-emerald-500 dark:text-emerald-400" :
+                                  team.points < 0 ? "text-rose-500 dark:text-rose-400" : "text-muted-foreground"
+                              )}>
+                                {isPositive ? '+' : ''}{formatRankingPoints(team.points)}
+                              </span>
+                              {hasIntermediateBlend && (
+                                <Tooltip
+                                  content={
+                                    <div className="space-y-1">
+                                      <div className="font-semibold">Intermediate Team Rating Active</div>
+                                      <div className="text-xs text-muted-foreground">
+                                        {intermediatePlayerShare}% player-derived + {100 - intermediatePlayerShare}% direct team rating.
+                                      </div>
+                                    </div>
+                                  }
+                                >
+                                  <span className="ml-1 cursor-help rounded border border-amber-400/60 bg-amber-100 px-1 text-[10px] font-semibold text-amber-800">
+                                    ITR
+                                  </span>
+                                </Tooltip>
+                              )}
+                            </div>
                           </TableCell>
 
                           <TableCell className="text-center">

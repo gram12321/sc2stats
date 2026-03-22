@@ -220,6 +220,106 @@ app.use((req, res, next) => {
 });
 
 const versionLogPath = join(__dirname, '..', 'docs', 'versionlog.md');
+const FOOTER_SUMMARY_TTL_MS = 60 * 1000;
+let footerSummaryCache = {
+  data: null,
+  expiresAt: 0
+};
+
+function extractAppVersionFromLog(versionLogContent) {
+  if (!versionLogContent) return 'v0.0.0';
+  const match = versionLogContent.match(/^##\s+Version\s+([0-9a-zA-Z.\-]+)\s+-/m);
+  return match ? `v${match[1]}` : 'v0.0.0';
+}
+
+function getTournamentDateMs(tournament) {
+  if (!tournament?.date) return null;
+  const parsed = new Date(tournament.date).getTime();
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function shouldPromoteLatestTournament(current, candidate) {
+  if (!candidate) return false;
+  if (!current) return true;
+
+  const currentDate = getTournamentDateMs(current);
+  const candidateDate = getTournamentDateMs(candidate);
+
+  if (candidateDate !== null && currentDate === null) return true;
+  if (candidateDate === null && currentDate !== null) return false;
+  if (candidateDate !== null && currentDate !== null) return candidateDate > currentDate;
+
+  return false;
+}
+
+async function buildFooterSummary() {
+  const [files, versionLogContent] = await Promise.all([
+    readdir(outputDir),
+    readFile(versionLogPath, 'utf-8').catch(() => '')
+  ]);
+
+  const tournamentFiles = files.filter(isTournamentJsonFile);
+  const playerSet = new Set();
+  let latestTournament = null;
+  let tournamentsCount = 0;
+
+  for (const file of tournamentFiles) {
+    try {
+      const filePath = join(outputDir, file);
+      const content = await readFile(filePath, 'utf-8');
+      const data = JSON.parse(content);
+
+      tournamentsCount += 1;
+
+      const candidateLatest = {
+        name: data?.tournament?.name || file.replace('.json', ''),
+        date: data?.tournament?.date || null
+      };
+      if (shouldPromoteLatestTournament(latestTournament, candidateLatest)) {
+        latestTournament = candidateLatest;
+      }
+
+      const matches = Array.isArray(data?.matches) ? data.matches : [];
+      matches.forEach((match) => {
+        const names = [
+          match?.team1?.player1?.name,
+          match?.team1?.player2?.name,
+          match?.team2?.player1?.name,
+          match?.team2?.player2?.name
+        ];
+
+        names.forEach((name) => {
+          if (typeof name === 'string' && name.trim()) {
+            playerSet.add(name);
+          }
+        });
+      });
+    } catch {
+      // Skip malformed files for footer summary.
+    }
+  }
+
+  return {
+    appVersion: extractAppVersionFromLog(versionLogContent),
+    rankedPlayersCount: playerSet.size,
+    tournamentsCount,
+    latestTournament
+  };
+}
+
+async function getFooterSummary() {
+  if (footerSummaryCache.data && Date.now() < footerSummaryCache.expiresAt) {
+    return footerSummaryCache.data;
+  }
+
+  const summary = await buildFooterSummary();
+  footerSummaryCache = {
+    data: summary,
+    expiresAt: Date.now() + FOOTER_SUMMARY_TTL_MS
+  };
+
+  return summary;
+}
 
 function normalizePlayerNameForSimilarity(name) {
   return String(name || '')
@@ -440,7 +540,7 @@ function replacePlayerInSeededTeamRankings(data, fromName, toName) {
   return { changed: replacements > 0, replacements, updated };
 }
 
-// Version log (for topbar version + view in app)
+// Version log (displayed in footer modal)
 app.get('/api/versionlog', async (req, res) => {
   try {
     const content = await readFile(versionLogPath, 'utf-8');
@@ -448,6 +548,24 @@ app.get('/api/versionlog', async (req, res) => {
   } catch (err) {
     console.error('Error reading version log:', err);
     res.status(500).send('Version log unavailable.');
+  }
+});
+
+app.get('/api/footer-summary', async (req, res) => {
+  const startedAt = Date.now();
+
+  try {
+    const summary = await getFooterSummary();
+    logApiSummary(req, startedAt, [
+      `version:${summary.appVersion}`,
+      `players:${summary.rankedPlayersCount}`,
+      `tournaments:${summary.tournamentsCount}`,
+      summary.latestTournament?.name ? `latest:${summary.latestTournament.name}` : null
+    ]);
+    res.json(summary);
+  } catch (err) {
+    console.error('Error building footer summary:', err);
+    res.status(500).json({ error: 'Failed to build footer summary' });
   }
 });
 
@@ -1138,10 +1256,13 @@ app.get('/api/seeded-team-rankings', async (req, res) => {
     try {
       // Load seeds for recalculation
       const { teamSeeds, playerSeeds } = await loadSeeds();
+      const teamOptions = getTeamRatingOptions(req, playerSeeds);
+      const requiresRecalculation = isMainCircuitOnly
+        || (seasons && seasons.length > 0)
+        || teamOptions.useIntermediateTeamRating;
 
-      // If filtering is needed, recalculate with filters and seeds
-      if (isMainCircuitOnly || (seasons && seasons.length > 0)) {
-        const teamOptions = getTeamRatingOptions(req, playerSeeds);
+      // If filtering or intermediate team rating is needed, recalculate with filters and seeds
+      if (requiresRecalculation) {
         const { rankings, summary } = await calculateTeamRankings(
           teamSeeds,
           isMainCircuitOnly,

@@ -11,6 +11,13 @@ interface MatchBoxProps {
 
 export function MatchBox({ match, onClick, teamRankings }: MatchBoxProps) {
   const [defaults, setDefaults] = useState<Record<string, Race>>({});
+  const [mapsExpanded, setMapsExpanded] = useState(false);
+  const recordedGames = match.games
+    .map((game) => ({
+      map: String(game?.map || '').trim(),
+      winner: game?.winner
+    }))
+    .filter((game) => game.map);
 
   useEffect(() => {
     // Load all defaults once (more efficient than individual calls)
@@ -39,6 +46,10 @@ export function MatchBox({ match, onClick, teamRankings }: MatchBoxProps) {
     
     loadDefaults();
   }, [match]);
+
+  useEffect(() => {
+    setMapsExpanded(false);
+  }, [match.match_id]);
   
   // Get race from match or default
   const getRace = (playerName: string, matchRace?: Race): Race | null => {
@@ -63,7 +74,7 @@ export function MatchBox({ match, onClick, teamRankings }: MatchBoxProps) {
   return (
     <div
       onClick={onClick}
-      className="bg-white border border-gray-300 rounded cursor-pointer hover:border-blue-500 hover:shadow-md transition-all min-w-[200px]"
+      className="w-[230px] bg-white border border-gray-300 rounded cursor-pointer hover:border-blue-500 hover:shadow-md transition-all"
     >
       {/* Team 1 */}
       <div className={`px-3 py-2 ${team1Won ? 'bg-blue-50 font-semibold' : ''}`}>
@@ -139,6 +150,64 @@ export function MatchBox({ match, onClick, teamRankings }: MatchBoxProps) {
           </div>
         </div>
       </div>
+
+      {recordedGames.length > 0 && (
+        <>
+          <div className="h-px bg-gray-300"></div>
+          <div className="px-3 py-2 bg-gray-50">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setMapsExpanded((prev) => !prev);
+              }}
+              className="w-full flex items-center justify-between text-left text-[10px] font-semibold uppercase tracking-wide text-gray-500 hover:text-gray-700"
+              aria-expanded={mapsExpanded}
+              aria-label={`${mapsExpanded ? 'Collapse' : 'Expand'} maps`}
+            >
+              <span>Maps ({recordedGames.length})</span>
+              <span className="text-[11px]">{mapsExpanded ? '-' : '+'}</span>
+            </button>
+            {mapsExpanded && (
+              <div className="mt-1 space-y-1">
+                {recordedGames.map((game, index) => {
+                  const team1WonMap = game.winner === 1;
+                  const team2WonMap = game.winner === 2;
+                  return (
+                    <div key={`${match.match_id}-map-${index}`} className="grid grid-cols-[16px_1fr_16px] items-center gap-1">
+                      <span
+                        className={`text-[10px] text-center rounded px-0.5 ${
+                          team1WonMap
+                            ? 'bg-green-100 text-green-700'
+                            : team2WonMap
+                              ? 'bg-red-100 text-red-700'
+                              : 'bg-gray-100 text-gray-500'
+                        }`}
+                      >
+                        {team1WonMap ? 'W' : team2WonMap ? 'L' : '-'}
+                      </span>
+                      <span className="text-[11px] text-gray-700 truncate text-center" title={game.map}>
+                        {game.map}
+                      </span>
+                      <span
+                        className={`text-[10px] text-center rounded px-0.5 ${
+                          team2WonMap
+                            ? 'bg-green-100 text-green-700'
+                            : team1WonMap
+                              ? 'bg-red-100 text-red-700'
+                              : 'bg-gray-100 text-gray-500'
+                        }`}
+                      >
+                        {team2WonMap ? 'W' : team1WonMap ? 'L' : '-'}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 }

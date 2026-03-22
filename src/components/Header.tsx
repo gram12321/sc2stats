@@ -1,111 +1,122 @@
-import { useMemo, useState, useEffect } from 'react';
-import { Trophy, Users, Swords, Info, LayoutDashboard, Crown, Medal, Flag, Sparkles, Map } from 'lucide-react';
+import { Trophy, Settings, Info, LayoutDashboard, Crown, Users, Swords, Map, Sparkles, Medal, Flag } from 'lucide-react';
 import { Button } from './ui/button';
 import { cn } from '../lib/utils';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from './ui/sheet';
+
+export type Section = 'circuit' | 'rankings' | 'manage' | 'info';
+export type HeaderNavView =
+  | 'tournaments'
+  | 'matches'
+  | 'map-data'
+  | 'highlights'
+  | 'player-rankings'
+  | 'team-rankings'
+  | 'race-rankings'
+  | 'team-race-rankings'
+  | 'players'
+  | 'info'
+  | 'player-details'
+  | 'team-details';
 
 interface HeaderProps {
-      onNavigate: (view: 'tournaments' | 'players' | 'player-rankings' | 'team-rankings' | 'race-rankings' | 'team-race-rankings' | 'matches' | 'map-data' | 'highlights' | 'info') => void;
-      currentView: string;
+  onNavigateSection: (section: Section) => void;
+  onNavigateView: (view: HeaderNavView) => void;
+  currentSection: Section;
+  currentView: HeaderNavView;
 }
 
-export function Header({ onNavigate, currentView }: HeaderProps) {
-      const [versionLogOpen, setVersionLogOpen] = useState(false);
-      const [versionLogRaw, setVersionLogRaw] = useState<string | null>(null);
+const sectionItems = [
+  { section: 'circuit' as Section, icon: LayoutDashboard, label: 'Circuit' },
+  { section: 'rankings' as Section, icon: Crown, label: 'Rankings' },
+  { section: 'manage' as Section, icon: Settings, label: 'Manage' },
+  { section: 'info' as Section, icon: Info, label: 'Info' }
+];
 
-      useEffect(() => {
-            fetch('/api/versionlog')
-                  .then((r) => (r.ok ? r.text() : Promise.reject(new Error('Failed to load'))))
-                  .then(setVersionLogRaw)
-                  .catch(() => setVersionLogRaw(''));
-      }, []);
+const lowerRowItems: Record<Section, { view: HeaderNavView; icon: any; label: string }[]> = {
+  circuit: [
+    { view: 'tournaments', icon: LayoutDashboard, label: 'Tournaments' },
+    { view: 'matches', icon: Swords, label: 'Matches' },
+    { view: 'map-data', icon: Map, label: 'Maps' },
+    { view: 'highlights', icon: Sparkles, label: 'Highlights' }
+  ],
+  rankings: [
+    { view: 'player-rankings', icon: Crown, label: 'Player' },
+    { view: 'team-rankings', icon: Users, label: 'Team' },
+    { view: 'race-rankings', icon: Medal, label: 'Race' },
+    { view: 'team-race-rankings', icon: Flag, label: 'Team Race' }
+  ],
+  manage: [
+    { view: 'players', icon: Users, label: 'Player Manager' }
+  ],
+  info: [
+    { view: 'info', icon: Info, label: 'System Info' }
+  ]
+};
 
-      // Extract latest version from first "## Version X - title" in versionlog
-      const appVersion = useMemo(() => {
-            if (!versionLogRaw) return 'v0.0.0';
-            try {
-                  const match = versionLogRaw.match(/^##\s+Version\s+([0-9a-zA-Z\.\-]+)\s+-/m);
-                  return match ? `v${match[1]}` : 'v0.0.0';
-            } catch {
-                  return 'v0.0.0';
-            }
-      }, [versionLogRaw]);
+export function Header({ onNavigateSection, onNavigateView, currentSection, currentView }: HeaderProps) {
+  const isSectionActive = (section: Section) => currentSection === section;
+  const isLowerActive = (view: HeaderNavView) => {
+    if (currentView === view) return true;
+    if (view === 'player-rankings' && currentView === 'player-details') return true;
+    if (view === 'team-rankings' && currentView === 'team-details') return true;
+    return false;
+  };
 
-      const isActive = (view: string) => currentView === view;
+  return (
+    <div className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="container mx-auto max-w-7xl px-4 py-2 sm:px-8">
+        <div className="relative flex items-start justify-center">
+          <div
+            className="absolute left-0 top-1 hidden cursor-pointer items-center space-x-2 transition-opacity hover:opacity-80 md:flex"
+            onClick={() => onNavigateSection('circuit')}
+          >
+            <div className="rounded-lg bg-primary/10 p-1">
+              <Trophy className="h-6 w-6 text-primary" />
+            </div>
+            <div className="flex flex-col">
+              <span className="hidden text-lg font-bold tracking-tight xl:inline-block">SC2 Stats</span>
+              <span className="text-[10px] uppercase leading-none tracking-widest text-muted-foreground">Pro Circuit</span>
+            </div>
+          </div>
 
-      const NavButton = ({ view, icon: Icon, label }: { view: string, icon: any, label: string }) => (
-            <Button
-                  variant={isActive(view) ? "default" : "ghost"}
+          <div className="flex min-w-0 flex-col items-center gap-1">
+            <div className="flex flex-wrap items-center justify-center gap-1">
+              {sectionItems.map(({ section, icon: Icon, label }) => (
+                <Button
+                  key={section}
+                  variant={isSectionActive(section) ? 'default' : 'ghost'}
                   size="sm"
-                  onClick={() => onNavigate(view as any)}
+                  onClick={() => onNavigateSection(section)}
                   className={cn(
-                        "gap-2 transition-all duration-200",
-                        isActive(view) ? "shadow-md shadow-primary/20" : "hover:bg-accent hover:text-accent-foreground"
+                    'shrink-0 gap-2 px-3 transition-all duration-200',
+                    isSectionActive(section) ? 'shadow-md shadow-primary/20' : 'hover:bg-accent hover:text-accent-foreground'
                   )}
-            >
+                >
                   <Icon className="h-4 w-4" />
-                  <span className="hidden sm:inline">{label}</span>
-            </Button>
-      );
-
-      return (
-            <>
-            <div className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-                  <div className="container flex h-16 max-w-7xl items-center justify-between px-4 sm:px-8 mx-auto">
-                        <div
-                              className="mr-4 hidden md:flex cursor-pointer items-center space-x-2 transition-opacity hover:opacity-80"
-                              onClick={() => onNavigate('tournaments')}
-                        >
-                              <div className="rounded-lg bg-primary/10 p-1">
-                                    <Trophy className="h-6 w-6 text-primary" />
-                              </div>
-                              <div className="flex flex-col">
-                                    <span className="hidden font-bold sm:inline-block text-lg tracking-tight">SC2 Stats</span>
-                                    <span className="text-[10px] text-muted-foreground uppercase tracking-widest leading-none">Pro Circuit</span>
-                              </div>
-                        </div>
-
-                        <div className="flex flex-1 items-center justify-center md:justify-end gap-1 overflow-x-auto scrollbar-hide py-2 md:py-0">
-                              <NavButton view="tournaments" icon={LayoutDashboard} label="Tournaments" />
-                              <NavButton view="player-rankings" icon={Crown} label="Rankings" />
-                              <NavButton view="team-rankings" icon={Users} label="Teams" />
-                              <NavButton view="race-rankings" icon={Medal} label="Races" />
-                              <NavButton view="team-race-rankings" icon={Flag} label="Team Races" />
-                              <NavButton view="players" icon={Users} label="Manage" />
-                              <NavButton view="matches" icon={Swords} label="Matches" />
-                              <NavButton view="map-data" icon={Map} label="Maps" />
-                              <NavButton view="highlights" icon={Sparkles} label="Highlights" />
-                              <NavButton view="info" icon={Info} label="Info" />
-                              <button
-                                    type="button"
-                                    onClick={() => setVersionLogOpen(true)}
-                                    className="shrink-0 text-xs text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded hover:bg-accent"
-                                    title="View version log"
-                              >
-                                    {appVersion}
-                              </button>
-                        </div>
-                  </div>
+                  <span>{label}</span>
+                </Button>
+              ))}
             </div>
 
-            <Sheet open={versionLogOpen} onOpenChange={setVersionLogOpen}>
-                  <SheetContent side="right" className="w-full sm:max-w-2xl overflow-hidden flex flex-col p-0">
-                        <SheetHeader className="border-b px-6 py-4 shrink-0">
-                              <SheetTitle>Version log</SheetTitle>
-                        </SheetHeader>
-                        <div className="flex-1 overflow-auto px-6 py-4">
-                              {versionLogRaw === null ? (
-                                    <p className="text-muted-foreground text-sm">Loading…</p>
-                              ) : versionLogRaw === '' ? (
-                                    <p className="text-muted-foreground text-sm">Version log unavailable.</p>
-                              ) : (
-                                    <pre className="text-xs text-foreground whitespace-pre-wrap font-sans break-words">
-                                          {versionLogRaw}
-                                    </pre>
-                              )}
-                        </div>
-                  </SheetContent>
-            </Sheet>
-      </>
-      );
+            <div className="flex w-fit max-w-full flex-wrap items-center justify-center gap-1 rounded-lg bg-muted/60 p-1">
+            {lowerRowItems[currentSection].map(({ view, icon: Icon, label }) => (
+              <Button
+                key={view}
+                variant={isLowerActive(view) ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => onNavigateView(view)}
+                className={cn(
+                  'gap-2',
+                  isLowerActive(view) ? 'shadow-sm shadow-primary/20' : 'hover:bg-accent hover:text-accent-foreground'
+                )}
+              >
+                <Icon className="h-4 w-4" />
+                <span>{label}</span>
+              </Button>
+            ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }

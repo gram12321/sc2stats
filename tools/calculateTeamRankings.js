@@ -394,12 +394,34 @@ export function calculateTeamRankingsFromMatches(sortedMatches, seeds = null, op
       (team) => `${team.player1}+${team.player2}`
     );
 
+    const rankingsWithIntermediateMetadata = rankings.map((team) => {
+      if (!useIntermediateTeamRating) {
+        return {
+          ...team,
+          intermediateTeamRating: null,
+          intermediateBlendWeight: 0
+        };
+      }
+
+      const teamPlayers = [team.player1, team.player2].filter(Boolean).sort();
+      const intermediateTeamRating = getIntermediateTeamRating(teamPlayers, playerStats);
+      const intermediateBlendWeight = intermediateTeamRating !== null
+        ? getIntermediateBlendWeight(team.matches, intermediateFadeMatches)
+        : 0;
+
+      return {
+        ...team,
+        intermediateTeamRating,
+        intermediateBlendWeight
+      };
+    });
+
     return {
-      rankings,
+      rankings: rankingsWithIntermediateMetadata,
       matchHistory,
       summary: {
         matchesProcessed: sortedMatches.length,
-        teamsRanked: rankings.length,
+        teamsRanked: rankingsWithIntermediateMetadata.length,
         seededTeamsUsed: seededTeamsUsed.size
       }
     };

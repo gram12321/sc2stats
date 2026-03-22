@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useRankingSettings } from '../context/RankingSettingsContext';
 import { formatRankingPoints, getRaceAbbr, getRoundSortOrder } from '../lib/utils';
+import { getIntermediateTeamBlendWeight } from '../lib/intermediateTeamRating';
 import { formatTournamentName } from '../lib/display';
 import { Race } from '../types/tournament';
 import { getPlayerDefaults } from '../lib/playerDefaults';
@@ -10,6 +11,7 @@ import { RatingChart } from '../components/RatingChart';
 import { RaceMatchupStats } from '../components/RaceMatchupStats';
 import { RankingFilters } from '../components/RankingFilters';
 import { CountryFlag } from '../components/ui/CountryFlag';
+import { Tooltip } from '../components/ui/tooltip';
 
 interface TeamMatch {
   match_id: string;
@@ -84,6 +86,7 @@ interface TeamDetails {
   draws?: number;
   points: number;
   confidence: number;
+  intermediateBlendWeight?: number;
   matchHistory: TeamMatch[];
 }
 
@@ -396,6 +399,15 @@ export function TeamDetails({ player1, player2, onBack }: TeamDetailsProps) {
     );
   }
 
+  const intermediateBlendWeight = useIntermediateTeamRating
+    ? (
+      typeof team.intermediateBlendWeight === 'number'
+        ? Math.max(0, Math.min(1, team.intermediateBlendWeight))
+        : getIntermediateTeamBlendWeight(team.matches)
+    )
+    : 0;
+  const intermediatePlayerShare = Math.round(intermediateBlendWeight * 100);
+
   return (
     <div className="min-h-screen bg-background">
       <div className="bg-card border-b border-border shadow-sm">
@@ -452,7 +464,25 @@ export function TeamDetails({ player1, player2, onBack }: TeamDetailsProps) {
             </div>
           )}
           <div className="bg-card rounded-lg border border-border p-4">
-            <div className="text-sm text-muted-foreground">Ranking Points</div>
+            <div className="text-sm text-muted-foreground inline-flex items-center gap-1">
+              <span>Ranking Points</span>
+              {intermediateBlendWeight > 0 && (
+                <Tooltip
+                  content={
+                    <div className="space-y-1">
+                      <div className="font-semibold">Intermediate Team Rating Active</div>
+                      <div className="text-xs text-muted-foreground">
+                        {intermediatePlayerShare}% player-derived + {100 - intermediatePlayerShare}% direct team rating.
+                      </div>
+                    </div>
+                  }
+                >
+                  <span className="cursor-help rounded border border-amber-400/60 bg-amber-100 px-1 text-[10px] font-semibold text-amber-800">
+                    ITR
+                  </span>
+                </Tooltip>
+              )}
+            </div>
             <div className={`text-2xl font-bold ${team.points > 0 ? 'text-green-600' : team.points < 0 ? 'text-red-600' : 'text-muted-foreground'}`}>
               {team.points > 0 ? '+' : ''}{formatRankingPoints(team.points)}
             </div>

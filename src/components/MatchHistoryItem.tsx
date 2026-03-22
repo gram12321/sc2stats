@@ -36,6 +36,10 @@ interface PlayerImpact {
   scoreK?: number;
   seriesScoreMultiplier?: number;
   scoreReliabilityMultiplier?: number;
+  intermediateTeamRating?: number | null;
+  intermediateBlendWeight?: number;
+  effectiveRatingUsed?: number;
+  opponentEffectiveRating?: number;
 }
 
 interface TeamImpact {
@@ -68,6 +72,10 @@ interface TeamImpact {
   scoreK?: number;
   seriesScoreMultiplier?: number;
   scoreReliabilityMultiplier?: number;
+  intermediateTeamRating?: number | null;
+  intermediateBlendWeight?: number;
+  effectiveRatingUsed?: number;
+  opponentEffectiveRating?: number;
 }
 
 interface MatchData {
@@ -275,7 +283,11 @@ function getRatingChangeTooltip(
     scoreWeight,
     scoreK,
     seriesScoreMultiplier,
-    scoreReliabilityMultiplier
+    scoreReliabilityMultiplier,
+    intermediateTeamRating,
+    intermediateBlendWeight,
+    effectiveRatingUsed,
+    opponentEffectiveRating
   } = impact;
 
   if (expectedWin === undefined || adjustedK === undefined) {
@@ -327,6 +339,26 @@ function getRatingChangeTooltip(
       : 0);
   const expectedSeriesOutcomes = getExpectedSeriesOutcomes(expectedWin, bestOf, mapsPlayed);
   const calculation = `${adjustedK.toFixed(1)} × (${actualResult} - ${expectedWin.toFixed(3)}) = ${formatRankingPoints(ratingChange)}`;
+  const isTeamContext = type === 'team' && !isCombo;
+  const normalizedIntermediateBlendWeight = (isTeamContext && typeof intermediateBlendWeight === 'number')
+    ? Math.max(0, Math.min(1, intermediateBlendWeight))
+    : 0;
+  const intermediatePlayerShare = Math.round(normalizedIntermediateBlendWeight * 100);
+  const hasIntermediateSource = isTeamContext && Number.isFinite(intermediateTeamRating as number);
+  const subjectIntermediateSourceRating = hasIntermediateSource ? Number(intermediateTeamRating) : null;
+  const subjectEffectiveRatingUsed = (isTeamContext && Number.isFinite(effectiveRatingUsed as number))
+    ? Number(effectiveRatingUsed)
+    : ratingBefore;
+  const opponentEffectiveRatingUsed = (isTeamContext && Number.isFinite(opponentEffectiveRating as number))
+    ? Number(opponentEffectiveRating)
+    : opponentRating;
+  const predictionUsedIntermediateRatings = isTeamContext && (
+    Math.abs(subjectEffectiveRatingUsed - ratingBefore) > 0.001 ||
+    Math.abs(opponentEffectiveRatingUsed - opponentRating) > 0.001
+  );
+  const showTeamNoIntermediateNote = isTeamContext && !predictionUsedIntermediateRatings;
+  const showPlayerOrRaceNoIntermediateNote = type === 'player' || type === 'race';
+  const showComboNoIntermediateNote = type === 'team' && isCombo;
 
   return (
     <div className="text-left space-y-1 max-w-xs text-foreground">
@@ -358,14 +390,61 @@ function getRatingChangeTooltip(
             <div className="text-blue-400 font-medium">{subjectName}:</div>
             <div className="text-right">{formatRankingPoints(ratingBefore)}</div>
 
+            {predictionUsedIntermediateRatings && (
+              <>
+                {subjectIntermediateSourceRating !== null && (
+                  <>
+                    <div className="text-amber-600 font-medium">{subjectName} ITR source:</div>
+                    <div className="text-right">{formatRankingPoints(subjectIntermediateSourceRating)}</div>
+                  </>
+                )}
+                <div className="text-amber-600 font-medium">{subjectName} effective:</div>
+                <div className="text-right">{formatRankingPoints(subjectEffectiveRatingUsed)}</div>
+              </>
+            )}
+
             <div className="text-red-400 font-medium">{opponentName}:</div>
             <div className="text-right">{formatRankingPoints(opponentRating)}</div>
+
+            {predictionUsedIntermediateRatings && (
+              <>
+                <div className="text-amber-600 font-medium">{opponentName} effective:</div>
+                <div className="text-right">{formatRankingPoints(opponentEffectiveRatingUsed)}</div>
+              </>
+            )}
+          </div>
+        )}
+
+        {predictionUsedIntermediateRatings && (
+          <div className="text-[10px] text-amber-700 italic pt-1 border-t border-border mt-1">
+            ITR blend active for this team: {intermediatePlayerShare}% player-derived + {100 - intermediatePlayerShare}% direct team rating.
+          </div>
+        )}
+        {showTeamNoIntermediateNote && (
+          <div className="text-[10px] text-muted-foreground italic pt-1 border-t border-border mt-1">
+            Team impact uses direct team ratings in this match (no active ITR blend).
+          </div>
+        )}
+        {showPlayerOrRaceNoIntermediateNote && (
+          <div className="text-[10px] text-muted-foreground italic pt-1 border-t border-border mt-1">
+            ITR applies to Team Impact only; this {type} impact uses direct ratings.
+          </div>
+        )}
+        {showComboNoIntermediateNote && (
+          <div className="text-[10px] text-muted-foreground italic pt-1 border-t border-border mt-1">
+            Team combo impacts use direct combo ratings (ITR is not applied).
           </div>
         )}
 
         <div className="pt-1 border-t border-border mt-1">
           <div><span className="text-muted-foreground">Expected Win:</span> {expectedWinPercent}% ({expectedWin.toFixed(3)})</div>
           <div><span className="text-muted-foreground">Actual Result:</span> {isDraw ? 'Draw' : (won ? 'Win' : 'Loss')} ({actualResult})</div>
+          {predictionUsedIntermediateRatings && (
+            <div className="text-amber-700">
+              <span className="text-muted-foreground">Prediction Inputs:</span>{' '}
+              {formatRankingPoints(subjectEffectiveRatingUsed)} vs {formatRankingPoints(opponentEffectiveRatingUsed)} (effective ratings)
+            </div>
+          )}
           <div className="text-muted-foreground italic">
             Performance: {isDraw && expectedWin >= 0.4 && expectedWin <= 0.6 ? 'Met expectations' :
               (actualResult > expectedWin ? 'Outperformed' : 'Underperformed')} by {Math.abs(actualResult - expectedWin).toFixed(3)}
@@ -415,6 +494,23 @@ function getRatingChangeTooltip(
                         New vs New: protection is moderated so both ratings can calibrate early.
                       </div>
                     )}
+                  </div>
+                )}
+                {predictionUsedIntermediateRatings && (
+                  <div className="text-[10px] text-muted-foreground bg-amber-100/70 px-1.5 py-1 rounded border border-amber-300 space-y-0.5">
+                    <div><span className="font-semibold">0) ITR effective ratings</span> (used for prediction)</div>
+                    {subjectIntermediateSourceRating !== null ? (
+                      <div className="font-mono">
+                        {subjectName} effective = {subjectIntermediateSourceRating.toFixed(3)} × {normalizedIntermediateBlendWeight.toFixed(3)} + {ratingBefore.toFixed(3)} × {(1 - normalizedIntermediateBlendWeight).toFixed(3)} = {subjectEffectiveRatingUsed.toFixed(3)}
+                      </div>
+                    ) : (
+                      <div className="font-mono">
+                        {subjectName} effective = {subjectEffectiveRatingUsed.toFixed(3)} (no self blend)
+                      </div>
+                    )}
+                    <div className="font-mono">
+                      {opponentName} effective = {opponentEffectiveRatingUsed.toFixed(3)} (raw {opponentRating.toFixed(3)})
+                    </div>
                   </div>
                 )}
                 <div className="text-[10px] text-muted-foreground bg-muted/50 px-1.5 py-1 rounded border border-border space-y-0.5">
@@ -585,6 +681,10 @@ export function MatchHistoryItem({
 
   const team1Impact = getTeamImpact(match, team1Data.player1, team1Data.player2);
   const team2Impact = getTeamImpact(match, team2Data.player1, team2Data.player2);
+  const team1IntermediateBlendWeight = Math.max(0, Math.min(1, team1Impact?.intermediateBlendWeight || 0));
+  const team2IntermediateBlendWeight = Math.max(0, Math.min(1, team2Impact?.intermediateBlendWeight || 0));
+  const team1IntermediatePlayerShare = Math.round(team1IntermediateBlendWeight * 100);
+  const team2IntermediatePlayerShare = Math.round(team2IntermediateBlendWeight * 100);
 
   const parseRank = (val: number | string | undefined): number | undefined => {
     if (val === undefined) return undefined;
@@ -689,6 +789,22 @@ export function MatchHistoryItem({
               )}>
                 {Math.round(displayTeam1Rank.afterConfidence || 0)}%
               </span>
+              {team1IntermediateBlendWeight > 0 && (
+                <Tooltip
+                  content={
+                    <div className="space-y-1">
+                      <div className="font-semibold">Intermediate Team Rating Active</div>
+                      <div className="text-xs text-muted-foreground">
+                        {team1IntermediatePlayerShare}% player-derived + {100 - team1IntermediatePlayerShare}% direct team rating.
+                      </div>
+                    </div>
+                  }
+                >
+                  <span className="ml-1 cursor-help rounded border border-amber-400/60 bg-amber-100 px-1 text-[10px] font-semibold text-amber-800">
+                    ITR
+                  </span>
+                </Tooltip>
+              )}
               {team1Impact && (
                 <Tooltip content={getRatingChangeTooltip(team1Impact, team1Players.join('+'), team2Players.join('+'), 'team')}>
                   <span className={cn("font-bold cursor-help ml-1", team1Impact.ratingChange >= 0 ? "text-emerald-500" : "text-rose-500")}>
@@ -776,6 +892,22 @@ export function MatchHistoryItem({
               )}>
                 {Math.round(displayTeam2Rank.afterConfidence || 0)}%
               </span>
+              {team2IntermediateBlendWeight > 0 && (
+                <Tooltip
+                  content={
+                    <div className="space-y-1">
+                      <div className="font-semibold">Intermediate Team Rating Active</div>
+                      <div className="text-xs text-muted-foreground">
+                        {team2IntermediatePlayerShare}% player-derived + {100 - team2IntermediatePlayerShare}% direct team rating.
+                      </div>
+                    </div>
+                  }
+                >
+                  <span className="cursor-help rounded border border-amber-400/60 bg-amber-100 px-1 text-[10px] font-semibold text-amber-800">
+                    ITR
+                  </span>
+                </Tooltip>
+              )}
               <span className="font-bold text-foreground">
                 {displayTeam2Rank.beforeRank && displayTeam2Rank.afterRank && displayTeam2Rank.beforeRank !== displayTeam2Rank.afterRank
                   ? `T#${displayTeam2Rank.beforeRank}→#${displayTeam2Rank.afterRank}`
@@ -798,6 +930,11 @@ export function MatchHistoryItem({
                   <Tooltip content={getRatingChangeTooltip(team1Impact, team1Players.join('+'), team2Players.join('+'), 'team')}>
                     <span className={cn("flex items-center gap-1 cursor-help hover:underline", team1Impact.ratingChange >= 0 ? "text-emerald-500" : "text-rose-500")}>
                       <span>{team1Players.join('+')}</span>
+                      {typeof team1Impact.intermediateBlendWeight === 'number' && team1Impact.intermediateBlendWeight > 0 && (
+                        <span className="rounded border border-amber-400/60 bg-amber-100 px-1 text-[10px] font-semibold text-amber-800 no-underline">
+                          ITR {Math.round(Math.max(0, Math.min(1, team1Impact.intermediateBlendWeight)) * 100)}%
+                        </span>
+                      )}
                       <span className="font-mono font-bold">{team1Impact.ratingChange >= 0 ? '+' : ''}{formatRankingPoints(team1Impact.ratingChange)}</span>
                     </span>
                   </Tooltip>
@@ -806,6 +943,11 @@ export function MatchHistoryItem({
                   <Tooltip content={getRatingChangeTooltip(team2Impact, team2Players.join('+'), team1Players.join('+'), 'team')}>
                     <span className={cn("flex items-center gap-1 cursor-help hover:underline", team2Impact.ratingChange >= 0 ? "text-emerald-500" : "text-rose-500")}>
                       <span>{team2Players.join('+')}</span>
+                      {typeof team2Impact.intermediateBlendWeight === 'number' && team2Impact.intermediateBlendWeight > 0 && (
+                        <span className="rounded border border-amber-400/60 bg-amber-100 px-1 text-[10px] font-semibold text-amber-800 no-underline">
+                          ITR {Math.round(Math.max(0, Math.min(1, team2Impact.intermediateBlendWeight)) * 100)}%
+                        </span>
+                      )}
                       <span className="font-mono font-bold">{team2Impact.ratingChange >= 0 ? '+' : ''}{formatRankingPoints(team2Impact.ratingChange)}</span>
                     </span>
                   </Tooltip>

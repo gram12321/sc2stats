@@ -12,7 +12,8 @@ import { TeamDetails } from './pages/TeamDetails';
 import { Info } from './pages/Info';
 import { Highlights } from './pages/Highlights';
 import { MapData } from './pages/MapData';
-import { Header } from './components/Header';
+import { Header, type HeaderNavView, type Section } from './components/Header';
+import { Footer } from './components/Footer';
 
 type View =
   | 'tournaments'
@@ -28,6 +29,9 @@ type View =
   | 'team-details'
   | 'info';
 
+type CircuitView = 'tournaments' | 'matches' | 'map-data' | 'highlights';
+type RankingsView = 'player-rankings' | 'team-rankings' | 'race-rankings' | 'team-race-rankings';
+
 interface NavigationState {
   view: View;
   playerName?: string;
@@ -39,6 +43,9 @@ interface NavigationState {
 
 export function App() {
   const [navState, setNavState] = useState<NavigationState>({ view: 'tournaments' });
+
+  const circuitViews: CircuitView[] = ['tournaments', 'matches', 'map-data', 'highlights'];
+  const rankingsViews: RankingsView[] = ['player-rankings', 'team-rankings', 'race-rankings', 'team-race-rankings'];
 
   const navigate = (
     view: View,
@@ -53,36 +60,30 @@ export function App() {
     setNavState({ view, ...params });
   };
 
-  const renderContent = () => {
-    if (navState.view === 'players') {
-      return <PlayerManager />;
-    }
+  const navigateSection = (section: Section) => {
+    if (section === 'circuit') navigate('tournaments');
+    if (section === 'rankings') navigate('player-rankings');
+    if (section === 'manage') navigate('players');
+    if (section === 'info') navigate('info');
+  };
 
-    if (navState.view === 'player-rankings') {
-      return <PlayerRankings onNavigateToPlayer={(name) => navigate('player-details', { playerName: name })} />;
-    }
+  const currentSection: Section = (() => {
+    if (circuitViews.includes(navState.view as CircuitView)) return 'circuit';
+    if (rankingsViews.includes(navState.view as RankingsView) || navState.view === 'player-details' || navState.view === 'team-details') return 'rankings';
+    if (navState.view === 'players') return 'manage';
+    return 'info';
+  })();
 
-    if (navState.view === 'team-rankings') {
-      return <TeamRankings onNavigateToTeam={(p1, p2) => navigate('team-details', { teamPlayer1: p1, teamPlayer2: p2 })} />;
-    }
-
-    if (navState.view === 'race-rankings') {
-      return <RaceRankings />;
-    }
-
-    if (navState.view === 'team-race-rankings') {
-      return <TeamRaceRankings />;
-    }
-
-    if (navState.view === 'matches') {
+  const renderCircuitContent = (view: CircuitView) => {
+    if (view === 'matches') {
       return <MatchesList initialTournament={navState.matchTournamentSlug} focusMatchId={navState.matchId} />;
     }
 
-    if (navState.view === 'map-data') {
+    if (view === 'map-data') {
       return <MapData />;
     }
 
-    if (navState.view === 'highlights') {
+    if (view === 'highlights') {
       return (
         <Highlights
           onNavigateToMatch={(tournamentSlug, matchId) =>
@@ -94,6 +95,26 @@ export function App() {
       );
     }
 
+    return <TournamentEditor />;
+  };
+
+  const renderRankingsContent = (view: RankingsView) => {
+    if (view === 'team-rankings') {
+      return <TeamRankings onNavigateToTeam={(p1, p2) => navigate('team-details', { teamPlayer1: p1, teamPlayer2: p2 })} />;
+    }
+
+    if (view === 'race-rankings') {
+      return <RaceRankings />;
+    }
+
+    if (view === 'team-race-rankings') {
+      return <TeamRaceRankings />;
+    }
+
+    return <PlayerRankings onNavigateToPlayer={(name) => navigate('player-details', { playerName: name })} />;
+  };
+
+  const renderContent = () => {
     if (navState.view === 'player-details' && navState.playerName) {
       return <PlayerDetails playerName={navState.playerName} onBack={() => navigate('player-rankings')} />;
     }
@@ -102,20 +123,38 @@ export function App() {
       return <TeamDetails player1={navState.teamPlayer1} player2={navState.teamPlayer2} onBack={() => navigate('team-rankings')} />;
     }
 
+    if (rankingsViews.includes(navState.view as RankingsView)) {
+      return renderRankingsContent(navState.view as RankingsView);
+    }
+
+    if (circuitViews.includes(navState.view as CircuitView)) {
+      return renderCircuitContent(navState.view as CircuitView);
+    }
+
+    if (navState.view === 'players') {
+      return <PlayerManager />;
+    }
+
     if (navState.view === 'info') {
       return <Info />;
     }
 
-    return <TournamentEditor />;
+    return <Info />;
   };
 
   return (
-    <div className="min-h-screen bg-background text-[15px] text-foreground font-sans antialiased selection:bg-primary/20 selection:text-primary">
+    <div className="flex min-h-screen flex-col bg-background text-[15px] text-foreground font-sans antialiased selection:bg-primary/20 selection:text-primary">
       <RankingSettingsProvider>
-        <Header onNavigate={(view) => navigate(view as View)} currentView={navState.view} />
-        <main className="container max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        <Header
+          onNavigateSection={navigateSection}
+          onNavigateView={(view) => navigate(view as View)}
+          currentSection={currentSection}
+          currentView={navState.view as HeaderNavView}
+        />
+        <main className="container mx-auto max-w-7xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
           {renderContent()}
         </main>
+        <Footer />
       </RankingSettingsProvider>
     </div>
   );
