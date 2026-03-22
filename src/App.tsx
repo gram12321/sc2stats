@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { RankingSettingsProvider } from './context/RankingSettingsContext';
 import { TournamentEditor } from './pages/TournamentEditor';
 import { PlayerManager } from './pages/PlayerManager';
@@ -29,7 +29,7 @@ type View =
   | 'team-details'
   | 'info';
 
-type CircuitView = 'tournaments' | 'matches' | 'map-data' | 'highlights';
+type CircuitView = 'tournaments' | 'matches' | 'map-data';
 type RankingsView = 'player-rankings' | 'team-rankings' | 'race-rankings' | 'team-race-rankings';
 
 interface NavigationState {
@@ -43,8 +43,13 @@ interface NavigationState {
 
 export function App() {
   const [navState, setNavState] = useState<NavigationState>({ view: 'tournaments' });
+  const isLocalManageAllowed = useMemo(() => {
+    if (typeof window === 'undefined') return false;
+    const host = window.location.hostname.toLowerCase();
+    return host === 'localhost' || host === '127.0.0.1' || host === '::1';
+  }, []);
 
-  const circuitViews: CircuitView[] = ['tournaments', 'matches', 'map-data', 'highlights'];
+  const circuitViews: CircuitView[] = ['tournaments', 'matches', 'map-data'];
   const rankingsViews: RankingsView[] = ['player-rankings', 'team-rankings', 'race-rankings', 'team-race-rankings'];
 
   const navigate = (
@@ -57,20 +62,22 @@ export function App() {
       matchId?: string;
     }
   ) => {
+    if (view === 'players' && !isLocalManageAllowed) {
+      setNavState({ view: 'info' });
+      return;
+    }
     setNavState({ view, ...params });
   };
 
   const navigateSection = (section: Section) => {
     if (section === 'circuit') navigate('tournaments');
     if (section === 'rankings') navigate('player-rankings');
-    if (section === 'manage') navigate('players');
     if (section === 'info') navigate('info');
   };
 
   const currentSection: Section = (() => {
     if (circuitViews.includes(navState.view as CircuitView)) return 'circuit';
     if (rankingsViews.includes(navState.view as RankingsView) || navState.view === 'player-details' || navState.view === 'team-details') return 'rankings';
-    if (navState.view === 'players') return 'manage';
     return 'info';
   })();
 
@@ -81,18 +88,6 @@ export function App() {
 
     if (view === 'map-data') {
       return <MapData />;
-    }
-
-    if (view === 'highlights') {
-      return (
-        <Highlights
-          onNavigateToMatch={(tournamentSlug, matchId) =>
-            navigate('matches', { matchTournamentSlug: tournamentSlug, matchId })
-          }
-          onNavigateToPlayer={(name) => navigate('player-details', { playerName: name })}
-          onNavigateToTeam={(p1, p2) => navigate('team-details', { teamPlayer1: p1, teamPlayer2: p2 })}
-        />
-      );
     }
 
     return <TournamentEditor />;
@@ -131,7 +126,29 @@ export function App() {
       return renderCircuitContent(navState.view as CircuitView);
     }
 
+    if (navState.view === 'highlights') {
+      return (
+        <Highlights
+          onNavigateToMatch={(tournamentSlug, matchId) =>
+            navigate('matches', { matchTournamentSlug: tournamentSlug, matchId })
+          }
+          onNavigateToPlayer={(name) => navigate('player-details', { playerName: name })}
+          onNavigateToTeam={(p1, p2) => navigate('team-details', { teamPlayer1: p1, teamPlayer2: p2 })}
+        />
+      );
+    }
+
     if (navState.view === 'players') {
+      if (!isLocalManageAllowed) {
+        return (
+          <div className="rounded-lg border border-border bg-card p-6 text-card-foreground">
+            <h2 className="text-lg font-semibold">Manage Is Localhost Only</h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              The Manage page is only available when running the app on localhost.
+            </p>
+          </div>
+        );
+      }
       return <PlayerManager />;
     }
 
@@ -154,7 +171,7 @@ export function App() {
         <main className="container mx-auto max-w-7xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
           {renderContent()}
         </main>
-        <Footer />
+        <Footer onNavigateManage={() => navigate('players')} />
       </RankingSettingsProvider>
     </div>
   );

@@ -13,11 +13,20 @@ interface FooterSummary {
   latestTournament: TournamentSummary | null;
 }
 
-export function Footer() {
+interface FooterProps {
+  onNavigateManage?: () => void;
+}
+
+export function Footer({ onNavigateManage }: FooterProps) {
   const [versionLogOpen, setVersionLogOpen] = useState(false);
   const [versionLogRaw, setVersionLogRaw] = useState<string | null>(null);
   const [isLoadingVersionLog, setIsLoadingVersionLog] = useState(false);
   const [summary, setSummary] = useState<FooterSummary | null>(null);
+  const isLocalAdmin = useMemo(() => {
+    if (typeof window === 'undefined') return false;
+    const host = window.location.hostname.toLowerCase();
+    return host === 'localhost' || host === '127.0.0.1' || host === '::1';
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -100,6 +109,16 @@ export function Footer() {
               Latest: {latestTournament ? latestTournament.name : '--'}
               {latestTournament?.date ? ` (${latestTournament.date})` : ''}
             </span>
+            {isLocalAdmin && onNavigateManage && (
+              <button
+                type="button"
+                onClick={onNavigateManage}
+                className="rounded border border-border px-2 py-0.5 text-foreground hover:bg-accent"
+                title="Open Manage"
+              >
+                Manage
+              </button>
+            )}
           </div>
         </div>
       </footer>

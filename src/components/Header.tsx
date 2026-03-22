@@ -1,8 +1,8 @@
-import { Trophy, Settings, Info, LayoutDashboard, Crown, Users, Swords, Map, Sparkles, Medal, Flag } from 'lucide-react';
+import { Trophy, Info, LayoutDashboard, Crown, Users, Swords, Map, Sparkles, Medal, Flag } from 'lucide-react';
 import { Button } from './ui/button';
 import { cn } from '../lib/utils';
 
-export type Section = 'circuit' | 'rankings' | 'manage' | 'info';
+export type Section = 'circuit' | 'rankings' | 'info';
 export type HeaderNavView =
   | 'tournaments'
   | 'matches'
@@ -25,18 +25,16 @@ interface HeaderProps {
 }
 
 const sectionItems = [
-  { section: 'circuit' as Section, icon: LayoutDashboard, label: 'Circuit' },
+  { section: 'circuit' as Section, icon: LayoutDashboard, label: 'Results' },
   { section: 'rankings' as Section, icon: Crown, label: 'Rankings' },
-  { section: 'manage' as Section, icon: Settings, label: 'Manage' },
-  { section: 'info' as Section, icon: Info, label: 'Info' }
+  { section: 'info' as Section, icon: Info, label: 'Stats & Info' }
 ];
 
 const lowerRowItems: Record<Section, { view: HeaderNavView; icon: any; label: string }[]> = {
   circuit: [
     { view: 'tournaments', icon: LayoutDashboard, label: 'Tournaments' },
     { view: 'matches', icon: Swords, label: 'Matches' },
-    { view: 'map-data', icon: Map, label: 'Maps' },
-    { view: 'highlights', icon: Sparkles, label: 'Highlights' }
+    { view: 'map-data', icon: Map, label: 'Maps' }
   ],
   rankings: [
     { view: 'player-rankings', icon: Crown, label: 'Player' },
@@ -44,11 +42,9 @@ const lowerRowItems: Record<Section, { view: HeaderNavView; icon: any; label: st
     { view: 'race-rankings', icon: Medal, label: 'Race' },
     { view: 'team-race-rankings', icon: Flag, label: 'Team Race' }
   ],
-  manage: [
-    { view: 'players', icon: Users, label: 'Player Manager' }
-  ],
   info: [
-    { view: 'info', icon: Info, label: 'System Info' }
+    { view: 'info', icon: Info, label: 'Info' },
+    { view: 'highlights', icon: Sparkles, label: 'Highlights' }
   ]
 };
 

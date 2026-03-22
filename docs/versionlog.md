@@ -51,6 +51,31 @@ Use this exact structure for each entry:
 
 ---
 
+## Version 1.004 - Section navigation, footer summary, bracket maps, ITR visibility
+**Date:** 2026-03-23 | **Commit(s):** 37ce89faf4d7b64d38d8fc27b1fe8ec2f1bed46e | **Stats:** +758 / -137
+
+### Summary
+- App navigation was reorganized into section-based Circuit/Rankings/Manage/Info rows, and the version log moved into a new footer summary panel.
+- Bracket UI now shows tournament map pools plus expandable recorded map lists on each match card.
+- Intermediate Team Rating (ITR) metadata is now exposed in team rankings, team details, and team-impact tooltips, including the effective ratings used for prediction.
+
+### Changes
+- `src/App.tsx` - Added section-aware routing (`circuit`, `rankings`, `manage`, `info`), split circuit/ranking render paths, and mounted the new footer.
+- `src/components/Header.tsx` - Replaced the flat all-views nav with a two-level section/view navigation model; detail pages map back to their parent ranking tabs.
+- **NEW FILE:** `src/components/Footer.tsx` (127 lines) - Footer summary bar with app version, ranked-player count, tournament count, latest tournament, and a lazy-loaded version-log sheet.
+- `api/server.js` - Added cached `/api/footer-summary`; `seeded-team-rankings` now recalculates when `useIntermediateTeamRating=true`, even without season/circuit filters.
+- `src/components/BracketView.tsx` - Shows the current tournament map pool above the bracket when maps are available.
+- `src/components/MatchBox.tsx` - Added expandable recorded-map rows (`Maps (N)`) with per-map win/loss markers for each team.
+- `src/components/MatchHistoryItem.tsx` - Team impact tooltips now show ITR blend percentages, effective ratings used for win-probability input, and explicit notes when player/race/combo views use direct ratings instead of ITR.
+- **NEW FILE:** `src/lib/intermediateTeamRating.ts` (17 lines) - Shared blend-weight helper for client-side ITR display.
+- `src/pages/TeamDetails.tsx`, `src/pages/TeamRankings.tsx` - Added ITR badges/tooltips next to ranking points using API-provided or derived blend weights.
+- `tools/calculateTeamRankings.js` - Ranking output now includes `intermediateTeamRating` and `intermediateBlendWeight` metadata for each team row.
+
+### Notes
+- This commit makes the ITR toggle visible in the UI, but the underlying team-blend calculation itself was introduced in the earlier `1.0023` work.
+
+---
+
 ## Version 1.003 - Bonus Cup 6 data, Round X bracket sorting
 **Date:** 2026-03-22 | **Commit(s):** db86e796a8923144b622e97c0ffffc21c3e25862 | **Stats:** +480 / -19
 
