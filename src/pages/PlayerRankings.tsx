@@ -215,14 +215,14 @@ export function PlayerRankings({ onNavigateToPlayer }: PlayerRankingsProps) {
     const absChange = Math.abs(rankChange);
 
     if (rankChange > 0) {
-      return `Moved up ${absChange} rank${absChange === 1 ? '' : 's'} since last update (${previousRank} → ${currentRank}).`;
+      return `Moved up ${absChange} rank${absChange === 1 ? '' : 's'} since the latest tournament (${previousRank} → ${currentRank}).`;
     }
 
     if (rankChange < 0) {
-      return `Moved down ${absChange} rank${absChange === 1 ? '' : 's'} since last update (${previousRank} → ${currentRank}).`;
+      return `Moved down ${absChange} rank${absChange === 1 ? '' : 's'} since the latest tournament (${previousRank} → ${currentRank}).`;
     }
 
-    return `No rank change since last update (#${currentRank}).`;
+    return `No rank change since the latest tournament (#${currentRank}).`;
   };
 
   return (

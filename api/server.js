@@ -195,88 +195,215 @@ function normalizeTeamKey(player1, player2) {
   return [player1, player2].filter(Boolean).sort().join('+');
 }
 
-function parseRankValue(rawRank) {
-  if (typeof rawRank === 'number' && Number.isFinite(rawRank) && rawRank > 0) {
-    return rawRank;
+function parseDateValue(rawDate) {
+  if (!rawDate) return null;
+  const timestamp = new Date(rawDate).getTime();
+  return Number.isFinite(timestamp) ? timestamp : null;
+}
+
+function getLatestTournamentSlugFromHistory(matchHistory) {
+  const history = Array.isArray(matchHistory) ? matchHistory : [];
+  const tournamentTimestamps = new Map();
+
+  for (const match of history) {
+    const tournamentSlug = match?.tournament_slug;
+    if (!tournamentSlug) continue;
+
+    const tournamentTimestamp = parseDateValue(match?.tournament_date) ?? parseDateValue(match?.match_date);
+    if (tournamentTimestamp === null) continue;
+
+    const existingTimestamp = tournamentTimestamps.get(tournamentSlug);
+    if (existingTimestamp === undefined || tournamentTimestamp > existingTimestamp) {
+      tournamentTimestamps.set(tournamentSlug, tournamentTimestamp);
+    }
   }
 
-  const parsed = parseInt(String(rawRank), 10);
-  if (Number.isFinite(parsed) && parsed > 0) {
-    return parsed;
+  let latestTournamentSlug = null;
+  let latestTimestamp = -Infinity;
+
+  for (const [slug, timestamp] of tournamentTimestamps.entries()) {
+    if (timestamp > latestTimestamp) {
+      latestTimestamp = timestamp;
+      latestTournamentSlug = slug;
+    }
   }
 
-  return null;
+  return latestTournamentSlug;
+}
+
+function createZeroStatDelta() {
+  return {
+    points: 0,
+    matches: 0,
+    wins: 0,
+    losses: 0,
+    draws: 0
+  };
+}
+
+function buildPlayerDeltasForTournament(matchHistory, tournamentSlug) {
+  const history = Array.isArray(matchHistory) ? matchHistory : [];
+  const deltasByPlayer = new Map();
+
+  if (!tournamentSlug) return deltasByPlayer;
+
+  for (const match of history) {
+    if (match?.tournament_slug !== tournamentSlug) continue;
+
+    const impacts = match?.player_impacts || {};
+    for (const [playerName, impact] of Object.entries(impacts)) {
+      if (!deltasByPlayer.has(playerName)) {
+        deltasByPlayer.set(playerName, createZeroStatDelta());
+      }
+
+      const deltas = deltasByPlayer.get(playerName);
+      const ratingChange = Number(impact?.ratingChange) || 0;
+      const isDraw = impact?.isDraw === true;
+      const won = impact?.won === true;
+
+      deltas.points += ratingChange;
+      deltas.matches += 1;
+      if (isDraw) {
+        deltas.draws += 1;
+      } else if (won) {
+        deltas.wins += 1;
+      } else {
+        deltas.losses += 1;
+      }
+    }
+  }
+
+  return deltasByPlayer;
+}
+
+function buildTeamDeltasForTournament(matchHistory, tournamentSlug) {
+  const history = Array.isArray(matchHistory) ? matchHistory : [];
+  const deltasByTeam = new Map();
+
+  if (!tournamentSlug) return deltasByTeam;
+
+  for (const match of history) {
+    if (match?.tournament_slug !== tournamentSlug) continue;
+
+    const impacts = match?.team_impacts || {};
+    for (const [teamKey, impact] of Object.entries(impacts)) {
+      if (!deltasByTeam.has(teamKey)) {
+        deltasByTeam.set(teamKey, createZeroStatDelta());
+      }
+
+      const deltas = deltasByTeam.get(teamKey);
+      const ratingChange = Number(impact?.ratingChange) || 0;
+      const isDraw = impact?.isDraw === true;
+      const won = impact?.won === true;
+
+      deltas.points += ratingChange;
+      deltas.matches += 1;
+      if (isDraw) {
+        deltas.draws += 1;
+      } else if (won) {
+        deltas.wins += 1;
+      } else {
+        deltas.losses += 1;
+      }
+    }
+  }
+
+  return deltasByTeam;
+}
+
+function createBaselineRankMap(rankings, getEntityKey, deltasByEntity) {
+  const baselineRows = (Array.isArray(rankings) ? rankings : []).map((row) => {
+    const entityKey = String(getEntityKey(row) || '');
+    const deltas = deltasByEntity.get(entityKey) || createZeroStatDelta();
+
+    return {
+      entityKey,
+      points: (Number(row?.points) || 0) - deltas.points,
+      wins: Math.max(0, (Number(row?.wins) || 0) - deltas.wins),
+      losses: Math.max(0, (Number(row?.losses) || 0) - deltas.losses),
+      draws: Math.max(0, (Number(row?.draws) || 0) - deltas.draws),
+      matches: Math.max(0, (Number(row?.matches) || 0) - deltas.matches)
+    };
+  });
+
+  baselineRows.sort((a, b) => {
+    if (b.points !== a.points) return b.points - a.points;
+    if (b.wins !== a.wins) return b.wins - a.wins;
+    return a.entityKey.localeCompare(b.entityKey);
+  });
+
+  const baselineRankByEntity = new Map();
+  baselineRows.forEach((row, index) => baselineRankByEntity.set(row.entityKey, index + 1));
+  return baselineRankByEntity;
 }
 
 function rankingRowsContainMovement(rankings) {
   return Array.isArray(rankings)
     && rankings.length > 0
-    && rankings.every((row) => row && Object.prototype.hasOwnProperty.call(row, 'rankChange'));
+    && rankings.every((row) => (
+      row
+      && Object.prototype.hasOwnProperty.call(row, 'rankChange')
+      && row.movementBasis === 'latest-tournament'
+    ));
 }
 
 function withPlayerRankMovement(rankings, matchHistory) {
-  const previousRankByPlayer = new Map();
   const history = Array.isArray(matchHistory) ? matchHistory : [];
-
-  for (let i = history.length - 1; i >= 0; i -= 1) {
-    const impacts = history[i]?.player_impacts || {};
-    for (const [playerName, impact] of Object.entries(impacts)) {
-      if (previousRankByPlayer.has(playerName)) continue;
-      const previousRank = parseRankValue(impact?.rankBefore);
-      if (previousRank !== null) {
-        previousRankByPlayer.set(playerName, previousRank);
-      }
-    }
-  }
+  const latestTournamentSlug = getLatestTournamentSlugFromHistory(history);
+  const deltasByPlayer = buildPlayerDeltasForTournament(history, latestTournamentSlug);
+  const baselineRankByPlayer = createBaselineRankMap(
+    rankings,
+    (row) => row?.name,
+    deltasByPlayer
+  );
 
   return (Array.isArray(rankings) ? rankings : []).map((player, index) => {
     const currentRank = index + 1;
-    const previousRank = previousRankByPlayer.get(player.name) ?? null;
-    const rankChange = previousRank === null ? null : (previousRank - currentRank);
-    const rankDirection = rankChange === null
-      ? 'unknown'
-      : (rankChange > 0 ? 'up' : (rankChange < 0 ? 'down' : 'same'));
+    const previousRank = baselineRankByPlayer.has(player.name)
+      ? baselineRankByPlayer.get(player.name)
+      : currentRank;
+    const rankChange = previousRank - currentRank;
+    const rankDirection = rankChange > 0 ? 'up' : (rankChange < 0 ? 'down' : 'same');
 
     return {
       ...player,
       currentRank,
       previousRank,
       rankChange,
-      rankDirection
+      rankDirection,
+      movementBasis: 'latest-tournament',
+      movementTournamentSlug: latestTournamentSlug
     };
   });
 }
 
 function withTeamRankMovement(rankings, matchHistory) {
-  const previousRankByTeam = new Map();
   const history = Array.isArray(matchHistory) ? matchHistory : [];
-
-  for (let i = history.length - 1; i >= 0; i -= 1) {
-    const impacts = history[i]?.team_impacts || {};
-    for (const [teamKey, impact] of Object.entries(impacts)) {
-      if (previousRankByTeam.has(teamKey)) continue;
-      const previousRank = parseRankValue(impact?.rankBefore);
-      if (previousRank !== null) {
-        previousRankByTeam.set(teamKey, previousRank);
-      }
-    }
-  }
+  const latestTournamentSlug = getLatestTournamentSlugFromHistory(history);
+  const deltasByTeam = buildTeamDeltasForTournament(history, latestTournamentSlug);
+  const baselineRankByTeam = createBaselineRankMap(
+    rankings,
+    (row) => normalizeTeamKey(row?.player1, row?.player2),
+    deltasByTeam
+  );
 
   return (Array.isArray(rankings) ? rankings : []).map((team, index) => {
     const currentRank = index + 1;
     const teamKey = normalizeTeamKey(team.player1, team.player2);
-    const previousRank = previousRankByTeam.get(teamKey) ?? null;
-    const rankChange = previousRank === null ? null : (previousRank - currentRank);
-    const rankDirection = rankChange === null
-      ? 'unknown'
-      : (rankChange > 0 ? 'up' : (rankChange < 0 ? 'down' : 'same'));
+    const previousRank = baselineRankByTeam.has(teamKey)
+      ? baselineRankByTeam.get(teamKey)
+      : currentRank;
+    const rankChange = previousRank - currentRank;
+    const rankDirection = rankChange > 0 ? 'up' : (rankChange < 0 ? 'down' : 'same');
 
     return {
       ...team,
       currentRank,
       previousRank,
       rankChange,
-      rankDirection
+      rankDirection,
+      movementBasis: 'latest-tournament',
+      movementTournamentSlug: latestTournamentSlug
     };
   });
 }
