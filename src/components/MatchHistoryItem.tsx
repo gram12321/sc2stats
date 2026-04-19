@@ -712,6 +712,8 @@ export function MatchHistoryItem({
 
   const displayTeam1Rank = resolveTeamRank(shouldSwap ? team2Rank : team1Rank, team1Impact);
   const displayTeam2Rank = resolveTeamRank(shouldSwap ? team1Rank : team2Rank, team2Impact);
+  const team1PointsAfter = team1Impact ? team1Impact.ratingBefore + team1Impact.ratingChange : null;
+  const team2PointsAfter = team2Impact ? team2Impact.ratingBefore + team2Impact.ratingChange : null;
 
   const team1Players = [team1Data.player1, team1Data.player2].filter(Boolean);
   const team2Players = [team2Data.player1, team2Data.player2].filter(Boolean);
@@ -773,22 +775,32 @@ export function MatchHistoryItem({
       <div className="flex items-center gap-2 text-sm">
         {/* Team 1 */}
         <div className={cn("flex-1 flex items-center gap-2 min-w-0", team1Won && "font-semibold text-foreground")}>
-          {displayTeam1Rank && (
+          {(displayTeam1Rank || team1Impact) && (
             <div className={cn(
               "flex items-center gap-1 shrink-0 px-1.5 py-0.5 rounded border text-xs",
               isTeam1Highlighted ? "bg-primary/10 border-primary/30" : "bg-muted/50 border-border"
             )}>
-              <span className="font-bold text-foreground">
-                {displayTeam1Rank.beforeRank && displayTeam1Rank.afterRank && displayTeam1Rank.beforeRank !== displayTeam1Rank.afterRank
-                  ? `T#${displayTeam1Rank.beforeRank}→#${displayTeam1Rank.afterRank}`
-                  : `T#${displayTeam1Rank.afterRank || displayTeam1Rank.beforeRank}`}
-              </span>
-              <span className={cn(
-                "font-semibold",
-                (displayTeam1Rank.afterConfidence || 0) >= 70 ? "text-primary" : (displayTeam1Rank.afterConfidence || 0) >= 40 ? "text-yellow-500" : "text-muted-foreground"
-              )}>
-                {Math.round(displayTeam1Rank.afterConfidence || 0)}%
-              </span>
+              {displayTeam1Rank ? (
+                <>
+                  <span className="font-bold text-foreground">
+                    {displayTeam1Rank.beforeRank && displayTeam1Rank.afterRank && displayTeam1Rank.beforeRank !== displayTeam1Rank.afterRank
+                      ? `T#${displayTeam1Rank.beforeRank}→#${displayTeam1Rank.afterRank}`
+                      : `T#${displayTeam1Rank.afterRank || displayTeam1Rank.beforeRank}`}
+                  </span>
+                  <span className={cn(
+                    "font-semibold",
+                    (displayTeam1Rank.afterConfidence || 0) >= 70 ? "text-primary" : (displayTeam1Rank.afterConfidence || 0) >= 40 ? "text-yellow-500" : "text-muted-foreground"
+                  )}>
+                    {Math.round(displayTeam1Rank.afterConfidence || 0)}%
+                  </span>
+                </>
+              ) : (
+                team1PointsAfter !== null && (
+                  <span className="font-bold text-foreground">
+                    T{formatRankingPoints(team1PointsAfter)}
+                  </span>
+                )
+              )}
               {team1IntermediateBlendWeight > 0 && (
                 <Tooltip
                   content={
@@ -874,7 +886,7 @@ export function MatchHistoryItem({
               );
             })}
           </div>
-          {displayTeam2Rank && (
+          {(displayTeam2Rank || team2Impact) && (
             <div className={cn(
               "flex items-center gap-1 shrink-0 px-1.5 py-0.5 rounded border text-xs flex-row-reverse",
               isTeam2Highlighted ? "bg-primary/10 border-primary/30" : "bg-muted/50 border-border"
@@ -886,12 +898,14 @@ export function MatchHistoryItem({
                   </span>
                 </Tooltip>
               )}
-              <span className={cn(
-                "font-semibold",
-                (displayTeam2Rank.afterConfidence || 0) >= 70 ? "text-primary" : (displayTeam2Rank.afterConfidence || 0) >= 40 ? "text-yellow-500" : "text-muted-foreground"
-              )}>
-                {Math.round(displayTeam2Rank.afterConfidence || 0)}%
-              </span>
+              {displayTeam2Rank && (
+                <span className={cn(
+                  "font-semibold",
+                  (displayTeam2Rank.afterConfidence || 0) >= 70 ? "text-primary" : (displayTeam2Rank.afterConfidence || 0) >= 40 ? "text-yellow-500" : "text-muted-foreground"
+                )}>
+                  {Math.round(displayTeam2Rank.afterConfidence || 0)}%
+                </span>
+              )}
               {team2IntermediateBlendWeight > 0 && (
                 <Tooltip
                   content={
@@ -908,11 +922,19 @@ export function MatchHistoryItem({
                   </span>
                 </Tooltip>
               )}
-              <span className="font-bold text-foreground">
-                {displayTeam2Rank.beforeRank && displayTeam2Rank.afterRank && displayTeam2Rank.beforeRank !== displayTeam2Rank.afterRank
-                  ? `T#${displayTeam2Rank.beforeRank}→#${displayTeam2Rank.afterRank}`
-                  : `T#${displayTeam2Rank.afterRank || displayTeam2Rank.beforeRank}`}
-              </span>
+              {displayTeam2Rank ? (
+                <span className="font-bold text-foreground">
+                  {displayTeam2Rank.beforeRank && displayTeam2Rank.afterRank && displayTeam2Rank.beforeRank !== displayTeam2Rank.afterRank
+                    ? `T#${displayTeam2Rank.beforeRank}→#${displayTeam2Rank.afterRank}`
+                    : `T#${displayTeam2Rank.afterRank || displayTeam2Rank.beforeRank}`}
+                </span>
+              ) : (
+                team2PointsAfter !== null && (
+                  <span className="font-bold text-foreground">
+                    T{formatRankingPoints(team2PointsAfter)}
+                  </span>
+                )
+              )}
             </div>
           )}
         </div>
@@ -922,14 +944,19 @@ export function MatchHistoryItem({
       {showRatingBreakdown && (
         <div className="mt-2 pt-2 border-t border-border/50 flex flex-col gap-1 text-[11px] text-muted-foreground">
           {/* Teams Breakdown */}
-          {((displayTeam1Rank && team1Impact) || (displayTeam2Rank && team2Impact)) && (
+          {(team1Impact || team2Impact) && (
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground/60 mr-2">Team Impact:</span>
               <div className="flex items-center gap-3">
-                {displayTeam1Rank && team1Impact && (
+                {team1Impact && (
                   <Tooltip content={getRatingChangeTooltip(team1Impact, team1Players.join('+'), team2Players.join('+'), 'team')}>
                     <span className={cn("flex items-center gap-1 cursor-help hover:underline", team1Impact.ratingChange >= 0 ? "text-emerald-500" : "text-rose-500")}>
                       <span>{team1Players.join('+')}</span>
+                      {team1PointsAfter !== null && (
+                        <span className="font-mono text-foreground/70 no-underline">
+                          T{formatRankingPoints(team1PointsAfter)}
+                        </span>
+                      )}
                       {typeof team1Impact.intermediateBlendWeight === 'number' && team1Impact.intermediateBlendWeight > 0 && (
                         <span className="rounded border border-amber-400/60 bg-amber-100 px-1 text-[10px] font-semibold text-amber-800 no-underline">
                           ITR {Math.round(Math.max(0, Math.min(1, team1Impact.intermediateBlendWeight)) * 100)}%
@@ -939,10 +966,15 @@ export function MatchHistoryItem({
                     </span>
                   </Tooltip>
                 )}
-                {displayTeam2Rank && team2Impact && (
+                {team2Impact && (
                   <Tooltip content={getRatingChangeTooltip(team2Impact, team2Players.join('+'), team1Players.join('+'), 'team')}>
                     <span className={cn("flex items-center gap-1 cursor-help hover:underline", team2Impact.ratingChange >= 0 ? "text-emerald-500" : "text-rose-500")}>
                       <span>{team2Players.join('+')}</span>
+                      {team2PointsAfter !== null && (
+                        <span className="font-mono text-foreground/70 no-underline">
+                          T{formatRankingPoints(team2PointsAfter)}
+                        </span>
+                      )}
                       {typeof team2Impact.intermediateBlendWeight === 'number' && team2Impact.intermediateBlendWeight > 0 && (
                         <span className="rounded border border-amber-400/60 bg-amber-100 px-1 text-[10px] font-semibold text-amber-800 no-underline">
                           ITR {Math.round(Math.max(0, Math.min(1, team2Impact.intermediateBlendWeight)) * 100)}%

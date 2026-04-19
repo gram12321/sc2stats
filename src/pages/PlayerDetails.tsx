@@ -387,7 +387,7 @@ export function PlayerDetails({ playerName, onBack }: PlayerDetailsProps) {
   const chartData = useMemo(() => {
     if (!chronologicalMatchHistory.length) return [];
 
-    return chronologicalMatchHistory.map(match => {
+    const dataPoints = chronologicalMatchHistory.map(match => {
       const impact = getPlayerImpact(match, player?.name || '');
 
       // Determine rank
@@ -438,7 +438,37 @@ export function PlayerDetails({ playerName, onBack }: PlayerDetailsProps) {
         opponent: opponentName
       };
     }).filter(point => point.rating !== 0); // Basic filter to ensure valid points
-  }, [chronologicalMatchHistory, player, playerIsRankedMap, playerRankPrefixCounts, playerRankListSize]);
+
+    const currentPlayerRank = player?.name ? playerRankings[player.name]?.rank : null;
+    const currentRatingValue = Number.isFinite(player?.points) ? Number(player?.points ?? NaN) : null;
+
+    if (
+      dataPoints.length > 0
+      && typeof currentPlayerRank === 'number'
+      && currentRatingValue !== null
+    ) {
+      const lastPoint = dataPoints[dataPoints.length - 1];
+      const lastRank = typeof lastPoint.rank === 'number' ? lastPoint.rank : null;
+      const shouldAppendCurrentSnapshot = lastRank === null || lastRank !== currentPlayerRank;
+
+      if (shouldAppendCurrentSnapshot) {
+        dataPoints.push({
+          ...lastPoint,
+          date: new Date().toISOString(),
+          dateLabel: 'Current',
+          rating: currentRatingValue,
+          rank: currentPlayerRank,
+          confidence: typeof player?.confidence === 'number' ? player.confidence : lastPoint.confidence,
+          confidenceRange: undefined,
+          matchId: `${lastPoint.matchId}-current`,
+          tournamentName: 'Current global ranking',
+          opponent: ''
+        });
+      }
+    }
+
+    return dataPoints;
+  }, [chronologicalMatchHistory, player, playerIsRankedMap, playerRankPrefixCounts, playerRankListSize, playerRankings, player?.points, player?.confidence]);
 
   if (isLoading) {
     return (
@@ -470,6 +500,8 @@ export function PlayerDetails({ playerName, onBack }: PlayerDetailsProps) {
       </div>
     );
   }
+
+  const currentPlayerRank = playerRankings[player.name]?.rank;
 
   return (
     <div className="min-h-screen bg-background">
@@ -538,6 +570,12 @@ export function PlayerDetails({ playerName, onBack }: PlayerDetailsProps) {
             <div className="text-sm text-muted-foreground">Confidence</div>
             <div className={`text-2xl font-bold ${(player.confidence || 0) >= 70 ? 'text-blue-600' : (player.confidence || 0) >= 40 ? 'text-yellow-600' : 'text-muted-foreground'}`}>
               {Math.round(player.confidence || 0)}%
+            </div>
+          </div>
+          <div className="bg-card rounded-lg border border-border p-4">
+            <div className="text-sm text-muted-foreground">Current Rank</div>
+            <div className="text-2xl font-bold text-foreground">
+              {currentPlayerRank ? `#${currentPlayerRank}` : '—'}
             </div>
           </div>
         </div>

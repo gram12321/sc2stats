@@ -425,8 +425,37 @@ export function TeamDetails({ player1, player2, onBack }: TeamDetailsProps) {
       };
     }).filter(d => d.rating !== 0);
 
+    const currentTeamRank = getTeamRank(player1, player2);
+    const currentRankValue = currentTeamRank?.rank;
+    const currentRatingValue = Number.isFinite(team?.points) ? Number(team?.points ?? NaN) : null;
+
+    if (
+      dataPoints.length > 0
+      && typeof currentRankValue === 'number'
+      && currentRatingValue !== null
+    ) {
+      const lastPoint = dataPoints[dataPoints.length - 1];
+      const lastRank = typeof lastPoint.rank === 'number' ? lastPoint.rank : null;
+      const shouldAppendCurrentSnapshot = lastRank === null || lastRank !== currentRankValue;
+
+      if (shouldAppendCurrentSnapshot) {
+        dataPoints.push({
+          ...lastPoint,
+          date: new Date().toISOString(),
+          dateLabel: 'Current',
+          rating: currentRatingValue,
+          rank: currentRankValue,
+          confidence: typeof team?.confidence === 'number' ? team.confidence : lastPoint.confidence,
+          confidenceRange: undefined,
+          matchId: `${lastPoint.matchId}-current`,
+          tournamentName: 'Current global ranking',
+          opponent: ''
+        });
+      }
+    }
+
     return dataPoints;
-  }, [chronologicalMatchHistory, player1, player2, teamIsRankedMap, teamRankPrefixCounts, teamRankListSize]);
+  }, [chronologicalMatchHistory, player1, player2, teamIsRankedMap, teamRankPrefixCounts, teamRankListSize, teamRankings, team?.points, team?.confidence]);
 
   if (isLoading) {
     return (
@@ -467,6 +496,7 @@ export function TeamDetails({ player1, player2, onBack }: TeamDetailsProps) {
     )
     : 0;
   const intermediatePlayerShare = Math.round(intermediateBlendWeight * 100);
+  const currentTeamRank = getTeamRank(team.player1, team.player2);
 
   return (
     <div className="min-h-screen bg-background">
@@ -551,6 +581,12 @@ export function TeamDetails({ player1, player2, onBack }: TeamDetailsProps) {
             <div className="text-sm text-muted-foreground">Confidence</div>
             <div className={`text-2xl font-bold ${(team.confidence || 0) >= 70 ? 'text-blue-600' : (team.confidence || 0) >= 40 ? 'text-yellow-600' : 'text-muted-foreground'}`}>
               {Math.round(team.confidence || 0)}%
+            </div>
+          </div>
+          <div className="bg-card rounded-lg border border-border p-4">
+            <div className="text-sm text-muted-foreground">Current Rank</div>
+            <div className="text-2xl font-bold text-foreground">
+              {currentTeamRank?.rank ? `#${currentTeamRank.rank}` : '—'}
             </div>
           </div>
         </div>
