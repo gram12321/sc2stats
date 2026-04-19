@@ -219,6 +219,16 @@ export function getRoundSortOrder(round) {
     }
   }
 
+  // Generic numbered rounds for tournaments that label stages as "Round 1", "Round 2", etc.
+  // These should happen before canonical playoff labels like Quarterfinals/Semifinals.
+  const genericRoundMatch = value.match(/^(?:round|r)\s*(\d+)$/i);
+  if (genericRoundMatch) {
+    const roundNum = parseInt(genericRoundMatch[1], 10);
+    if (!Number.isNaN(roundNum)) {
+      return 900 + roundNum;
+    }
+  }
+
   // "Round of 16", "Ro16", etc. Larger bracket size happens earlier.
   const roundOfMatch = value.match(/^(?:Round of|Ro)\s*(\d+)$/i);
   if (roundOfMatch) {
@@ -236,11 +246,34 @@ export function getRoundSortOrder(round) {
     if (normalized.includes('final')) return 995.5;
   }
 
+  // Upper/winners variants of canonical playoff rounds.
+  if (normalized.includes('upper') || normalized.includes('winner')) {
+    if (normalized.includes('quarter')) return 993;
+    if (normalized.includes('semi')) return 994;
+    if (normalized.includes('final')) return 995;
+  }
+
+  // Generic playoff label (no explicit stage info).
+  if (/^playoffs?$/i.test(value)) {
+    return 990;
+  }
+
+  // Optional show matches should sort after the main bracket.
+  const showMatchSet = value.match(/^Show Match\s*\(Set\s*(\d+)\)$/i);
+  if (showMatchSet) {
+    const setNum = parseInt(showMatchSet[1], 10);
+    if (!Number.isNaN(setNum)) {
+      return 2000 + setNum;
+    }
+  }
+
   const fixedRounds = {
     Quarterfinals: 993,
     Semifinals: 994,
     Final: 995,
-    'Grand Final': 996
+    Finals: 995,
+    'Grand Final': 996,
+    'Grand Finals': 996
   };
 
   return fixedRounds[value] ?? 9999;

@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useRankingSettings } from '../context/RankingSettingsContext';
-import { formatRankingPoints, getRaceAbbr, getRoundSortOrder } from '../lib/utils';
+import { formatRankingPoints, getRaceAbbr } from '../lib/utils';
 import { getIntermediateTeamBlendWeight } from '../lib/intermediateTeamRating';
 import { formatTournamentName } from '../lib/display';
 import { Race } from '../types/tournament';
@@ -102,6 +102,12 @@ export function TeamDetails({ player1, player2, onBack }: TeamDetailsProps) {
   const [error, setError] = useState<string | null>(null);
   const [playerRankings, setPlayerRankings] = useState<Record<string, { rank: number; points: number; confidence: number }>>({});
   const [teamRankings, setTeamRankings] = useState<Record<string, { rank: number; points: number; confidence: number }>>({});
+  const [playerRankPrefixCounts, setPlayerRankPrefixCounts] = useState<number[]>([0]);
+  const [playerRankListSize, setPlayerRankListSize] = useState(0);
+  const [playerIsRankedMap, setPlayerIsRankedMap] = useState<Record<string, boolean>>({});
+  const [teamRankPrefixCounts, setTeamRankPrefixCounts] = useState<number[]>([0]);
+  const [teamRankListSize, setTeamRankListSize] = useState(0);
+  const [teamIsRankedMap, setTeamIsRankedMap] = useState<Record<string, boolean>>({});
   const [playerRaces, setPlayerRaces] = useState<Record<string, Race>>({});
   const [playerCountries, setPlayerCountries] = useState<Record<string, string>>({});
   const [comboRankings, setComboRankings] = useState<Record<string, { points: number }>>({});
@@ -154,14 +160,32 @@ export function TeamDetails({ player1, player2, onBack }: TeamDetailsProps) {
       const response = await fetch(`${endpoint}?${params.toString()}`);
       if (!response.ok) throw new Error('Failed to load player rankings');
       const data: PlayerRanking[] = await response.json();
+      const averageConfidence = data.length > 0
+        ? data.reduce((sum, row) => sum + (row.confidence || 0), 0) / data.length
+        : 0;
+
+      const prefixCounts = [0];
       const rankMap: Record<string, { rank: number; points: number; confidence: number }> = {};
-      data.forEach((player, index) => {
-        rankMap[player.name] = {
-          rank: index + 1,
-          points: player.points,
-          confidence: player.confidence || 0
+      const rankedByName: Record<string, boolean> = {};
+
+      data.forEach((row, index) => {
+        const confidence = row.confidence || 0;
+        const isRanked = confidence >= averageConfidence;
+        rankedByName[row.name] = isRanked;
+        prefixCounts[index + 1] = prefixCounts[index] + (isRanked ? 1 : 0);
+
+        if (!isRanked) return;
+
+        rankMap[row.name] = {
+          rank: prefixCounts[index + 1],
+          points: row.points,
+          confidence
         };
       });
+
+      setPlayerRankPrefixCounts(prefixCounts);
+      setPlayerRankListSize(data.length);
+      setPlayerIsRankedMap(rankedByName);
       setPlayerRankings(rankMap);
     } catch (err) {
       console.error('Error loading player rankings:', err);
@@ -179,15 +203,33 @@ export function TeamDetails({ player1, player2, onBack }: TeamDetailsProps) {
       const response = await fetch(`${endpoint}?${params.toString()}`);
       if (!response.ok) throw new Error('Failed to load team rankings');
       const data: TeamRanking[] = await response.json();
+      const averageConfidence = data.length > 0
+        ? data.reduce((sum, row) => sum + (row.confidence || 0), 0) / data.length
+        : 0;
+
+      const prefixCounts = [0];
       const rankMap: Record<string, { rank: number; points: number; confidence: number }> = {};
-      data.forEach((teamRank, index) => {
-        const teamKey = normalizeTeamKey(teamRank.player1, teamRank.player2);
+      const rankedByTeamKey: Record<string, boolean> = {};
+
+      data.forEach((teamRow, index) => {
+        const teamKey = normalizeTeamKey(teamRow.player1, teamRow.player2);
+        const confidence = teamRow.confidence || 0;
+        const isRanked = confidence >= averageConfidence;
+        rankedByTeamKey[teamKey] = isRanked;
+        prefixCounts[index + 1] = prefixCounts[index] + (isRanked ? 1 : 0);
+
+        if (!isRanked) return;
+
         rankMap[teamKey] = {
-          rank: index + 1,
-          points: teamRank.points,
-          confidence: teamRank.confidence || 0
+          rank: prefixCounts[index + 1],
+          points: teamRow.points,
+          confidence
         };
       });
+
+      setTeamRankPrefixCounts(prefixCounts);
+      setTeamRankListSize(data.length);
+      setTeamIsRankedMap(rankedByTeamKey);
       setTeamRankings(rankMap);
     } catch (err) {
       console.error('Error loading team rankings:', err);
@@ -238,6 +280,19 @@ export function TeamDetails({ player1, player2, onBack }: TeamDetailsProps) {
     return [p1, p2].filter(Boolean).sort().join('+');
   };
 
+  const convertAbsoluteRankToDisplay = (
+    rawRank: number | string | undefined,
+    prefixCounts: number[],
+    listSize: number
+  ): number | undefined => {
+    if (rawRank === undefined || rawRank === null) return undefined;
+    const parsed = typeof rawRank === 'number' ? rawRank : parseInt(String(rawRank), 10);
+    if (!Number.isFinite(parsed) || parsed < 1 || listSize < 1) return undefined;
+    const clamped = Math.min(Math.floor(parsed), listSize);
+    const displayRank = prefixCounts[clamped] ?? 0;
+    return displayRank > 0 ? displayRank : undefined;
+  };
+
   const getTeamRank = (p1: string, p2: string) => {
     const teamKey = normalizeTeamKey(p1, p2);
     return teamRankings[teamKey] || null;
@@ -246,11 +301,41 @@ export function TeamDetails({ player1, player2, onBack }: TeamDetailsProps) {
   const getTeamImpact = (match: any, p1: string, p2: string) => {
     if (!match.team_impacts) return null;
     const teamKey = normalizeTeamKey(p1, p2);
-    return match.team_impacts[teamKey] || null;
+    const impact = match.team_impacts[teamKey];
+    if (!impact) return null;
+
+    if (!teamIsRankedMap[teamKey]) {
+      return {
+        ...impact,
+        rankBefore: undefined,
+        rankAfter: undefined
+      };
+    }
+
+    return {
+      ...impact,
+      rankBefore: convertAbsoluteRankToDisplay(impact.rankBefore, teamRankPrefixCounts, teamRankListSize),
+      rankAfter: convertAbsoluteRankToDisplay(impact.rankAfter, teamRankPrefixCounts, teamRankListSize)
+    };
   };
 
   const getPlayerImpact = (match: any, playerName: string) => {
-    return match.player_impacts?.[playerName] || null;
+    const impact = match.player_impacts?.[playerName];
+    if (!impact) return null;
+
+    if (!playerIsRankedMap[playerName]) {
+      return {
+        ...impact,
+        rankBefore: undefined,
+        rankAfter: undefined
+      };
+    }
+
+    return {
+      ...impact,
+      rankBefore: convertAbsoluteRankToDisplay(impact.rankBefore, playerRankPrefixCounts, playerRankListSize),
+      rankAfter: convertAbsoluteRankToDisplay(impact.rankAfter, playerRankPrefixCounts, playerRankListSize)
+    };
   };
 
   const formatDate = (dateStr: string | null) => {
@@ -285,43 +370,16 @@ export function TeamDetails({ player1, player2, onBack }: TeamDetailsProps) {
     return raceChanges.length > 0 ? raceChanges : null;
   };
 
-  // Sort match history by newest first
-  const sortedMatchHistory = team?.matchHistory ? [...team.matchHistory].sort((a, b) => {
-    // First by tournament date (newest first)
-    if (a.tournament_date && b.tournament_date) {
-      const dateA = new Date(a.tournament_date);
-      const dateB = new Date(b.tournament_date);
-      if (dateA.getTime() !== dateB.getTime()) {
-        return dateB.getTime() - dateA.getTime();
-      }
-    }
-    // Then by match date (newest first)
-    if (a.match_date && b.match_date) {
-      const dateA = new Date(a.match_date);
-      const dateB = new Date(b.match_date);
-      if (dateA.getTime() !== dateB.getTime()) {
-        return dateB.getTime() - dateA.getTime();
-      }
-    }
-
-    // Then by round order (higher round first = newest first)
-    const roundA = getRoundSortOrder(a.round);
-    const roundB = getRoundSortOrder(b.round);
-    if (roundA !== roundB) {
-      return roundB - roundA;
-    }
-
-    // Finally by match_id (reverse)
-    return (b.match_id || '').localeCompare(a.match_id || '');
-  }) : [];
+  // Backend returns team.matchHistory in chronological processing order (oldest -> newest).
+  const chronologicalMatchHistory = team?.matchHistory ? [...team.matchHistory] : [];
+  const sortedMatchHistory = chronologicalMatchHistory.length > 0
+    ? [...chronologicalMatchHistory].reverse()
+    : [];
 
   const chartData = useMemo(() => {
-    if (!sortedMatchHistory.length) return [];
-
-    const chronoMatches = [...sortedMatchHistory].reverse();
+    if (!chronologicalMatchHistory.length) return [];
     const myTeamKey = normalizeTeamKey(player1, player2);
-
-    return chronoMatches.map(match => {
+    const dataPoints = chronologicalMatchHistory.map(match => {
       const impact = getTeamImpact(match, player1, player2);
 
       // Determine rank
@@ -366,7 +424,9 @@ export function TeamDetails({ player1, player2, onBack }: TeamDetailsProps) {
         opponent: opponentName
       };
     }).filter(d => d.rating !== 0);
-  }, [sortedMatchHistory, player1, player2]);
+
+    return dataPoints;
+  }, [chronologicalMatchHistory, player1, player2, teamIsRankedMap, teamRankPrefixCounts, teamRankListSize]);
 
   if (isLoading) {
     return (

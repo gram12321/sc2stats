@@ -51,6 +51,7 @@ interface TeamRanking {
 interface PlayerRanking {
   name: string;
   points: number;
+  confidence?: number;
 }
 
 interface TeamRankingsProps {
@@ -134,9 +135,17 @@ export function TeamRankings({ onNavigateToTeam }: TeamRankingsProps) {
       const response = await fetch(`/api/player-rankings?${queryParams.toString()}`);
       if (!response.ok) throw new Error('Failed to load player rankings');
       const data: PlayerRanking[] = await response.json();
+      const averageConfidence = data.length > 0
+        ? data.reduce((sum, row) => sum + (row.confidence || 0), 0) / data.length
+        : 0;
       const rankMap: Record<string, number> = {};
-      data.forEach((player, index) => {
-        rankMap[player.name] = index + 1;
+      let rankedCounter = 0;
+
+      data.forEach((player) => {
+        const confidence = player.confidence || 0;
+        if (confidence < averageConfidence) return;
+        rankedCounter += 1;
+        rankMap[player.name] = rankedCounter;
       });
       setPlayerRankings(rankMap);
     } catch (err) {
