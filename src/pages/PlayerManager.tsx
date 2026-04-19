@@ -39,8 +39,19 @@ interface SimilarNamePair {
   nameB: string;
 }
 
+interface DeterministicMergeGroup {
+  normalizedKey: string;
+  canonicalName: string;
+  sourceNames: string[];
+  reason: string;
+  totalSourceMatches: number;
+}
+
 const normalizeNameForSimilarity = (name: string) =>
   name.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+const normalizeNameForDeterministicMerge = (name: string) =>
+  String(name || '').trim().toLowerCase();
 
 const levenshteinDistance = (a: string, b: string): number => {
   if (a === b) return 0;
@@ -103,6 +114,9 @@ export function PlayerManager({ }: PlayerManagerProps) {
   const [isRenaming, setIsRenaming] = useState(false);
   const [renameFeedback, setRenameFeedback] = useState<string | null>(null);
   const [renameError, setRenameError] = useState<string | null>(null);
+  const [isApplyingDeterministicMerges, setIsApplyingDeterministicMerges] = useState(false);
+  const [deterministicFeedback, setDeterministicFeedback] = useState<string | null>(null);
+  const [deterministicError, setDeterministicError] = useState<string | null>(null);
   const [countryDrafts, setCountryDrafts] = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -166,6 +180,15 @@ export function PlayerManager({ }: PlayerManagerProps) {
     } catch (err) {
       console.error('Error loading countries:', err);
     }
+  };
+
+  const refreshPlayerManagerData = async () => {
+    await Promise.all([
+      loadPlayers(),
+      loadMatchCounts(),
+      loadDefaults(),
+      loadCountries()
+    ]);
   };
 
   const handleRaceChange = async (playerName: string, race: Race) => {
@@ -355,12 +378,163 @@ export function PlayerManager({ }: PlayerManagerProps) {
     return pairs.slice(0, 25);
   }, [players]);
 
+  const deterministicMergeGroups = useMemo<DeterministicMergeGroup[]>(() => {
+    const groupedByNormalized = new Map<string, string[]>();
+
+    players.forEach((name) => {
+      const normalized = normalizeNameForDeterministicMerge(name);
+      if (!normalized) return;
+
+      if (!groupedByNormalized.has(normalized)) {
+        groupedByNormalized.set(normalized, []);
+      }
+
+      groupedByNormalized.get(normalized)!.push(name);
+    });
+
+    const selectCanonicalName = (names: string[]) => {
+      const scored = names.map((name) => ({
+        name,
+        hasRaceDefault: defaults[name] !== undefined ? 1 : 0,
+        hasCountry: normalizeCountryCode(countries[name]) ? 1 : 0,
+        matches: matchCounts[name] || 0,
+        hasTrimmedBoundary: name === name.trim() ? 1 : 0
+      }));
+
+      scored.sort((a, b) => {
+        if (b.hasRaceDefault !== a.hasRaceDefault) return b.hasRaceDefault - a.hasRaceDefault;
+        if (b.hasCountry !== a.hasCountry) return b.hasCountry - a.hasCountry;
+        if (b.matches !== a.matches) return b.matches - a.matches;
+        if (b.hasTrimmedBoundary !== a.hasTrimmedBoundary) return b.hasTrimmedBoundary - a.hasTrimmedBoundary;
+        return a.name.localeCompare(b.name);
+      });
+
+      return scored[0]?.name ?? names[0];
+    };
+
+    const groups: DeterministicMergeGroup[] = [];
+
+    groupedByNormalized.forEach((rawNames, normalizedKey) => {
+      const uniqueNames = Array.from(new Set(rawNames));
+      if (uniqueNames.length < 2) return;
+
+      const canonicalName = selectCanonicalName(uniqueNames);
+      const sourceNames = uniqueNames.filter((name) => name !== canonicalName);
+      if (sourceNames.length === 0) return;
+
+      const canonicalHasRace = defaults[canonicalName] !== undefined;
+      const canonicalHasCountry = !!normalizeCountryCode(countries[canonicalName]);
+      const totalSourceMatches = sourceNames.reduce((sum, name) => sum + (matchCounts[name] || 0), 0);
+
+      let reason = 'Canonical selected by highest match count';
+      if (canonicalHasRace) {
+        reason = 'Canonical has an existing race default';
+      } else if (canonicalHasCountry) {
+        reason = 'Canonical has an existing country flag';
+      }
+
+      groups.push({
+        normalizedKey,
+        canonicalName,
+        sourceNames: sourceNames.sort((a, b) => a.localeCompare(b)),
+        reason,
+        totalSourceMatches
+      });
+    });
+
+    return groups.sort((a, b) => {
+      if (b.totalSourceMatches !== a.totalSourceMatches) {
+        return b.totalSourceMatches - a.totalSourceMatches;
+      }
+      return a.canonicalName.localeCompare(b.canonicalName);
+    });
+  }, [players, defaults, countries, matchCounts]);
+
+  const applyDeterministicMergeGroup = async (group: DeterministicMergeGroup) => {
+    setRenameFeedback(null);
+    setRenameError(null);
+    setDeterministicFeedback(null);
+    setDeterministicError(null);
+
+    const sourceList = group.sourceNames.join(', ');
+    const confirmed = window.confirm(
+      `Merge ${sourceList} into "${group.canonicalName}"?\n\nOnly case/trim variants are merged.`
+    );
+
+    if (!confirmed) return;
+
+    setIsApplyingDeterministicMerges(true);
+    try {
+      for (const sourceName of group.sourceNames) {
+        await renamePlayerName(sourceName, group.canonicalName);
+      }
+
+      await refreshPlayerManagerData();
+      setDeterministicFeedback(`Merged ${group.sourceNames.length} name variant(s) into "${group.canonicalName}".`);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to apply deterministic merge';
+      setDeterministicError(message);
+    } finally {
+      setIsApplyingDeterministicMerges(false);
+    }
+  };
+
+  const applyAllDeterministicMerges = async () => {
+    if (deterministicMergeGroups.length === 0) return;
+
+    setRenameFeedback(null);
+    setRenameError(null);
+    setDeterministicFeedback(null);
+    setDeterministicError(null);
+
+    const totalMerges = deterministicMergeGroups.reduce((sum, group) => sum + group.sourceNames.length, 0);
+
+    const confirmed = window.confirm(
+      `Apply ${totalMerges} deterministic merge(s) across ${deterministicMergeGroups.length} group(s)?\n\nOnly case/trim variants are merged.`
+    );
+
+    if (!confirmed) return;
+
+    setIsApplyingDeterministicMerges(true);
+    try {
+      let successCount = 0;
+      const failures: string[] = [];
+
+      for (const group of deterministicMergeGroups) {
+        for (const sourceName of group.sourceNames) {
+          try {
+            await renamePlayerName(sourceName, group.canonicalName);
+            successCount += 1;
+          } catch (err) {
+            const message = err instanceof Error ? err.message : 'Unknown error';
+            failures.push(`${sourceName} → ${group.canonicalName} (${message})`);
+          }
+        }
+      }
+
+      await refreshPlayerManagerData();
+
+      if (failures.length === 0) {
+        setDeterministicFeedback(`Applied ${successCount} deterministic merge(s).`);
+      } else {
+        setDeterministicFeedback(`Applied ${successCount} deterministic merge(s) with ${failures.length} failure(s).`);
+        const shown = failures.slice(0, 3).join(' | ');
+        const remaining = failures.length > 3 ? ` (+${failures.length - 3} more)` : '';
+        setDeterministicError(`${shown}${remaining}`);
+      }
+    } finally {
+      setIsApplyingDeterministicMerges(false);
+    }
+  };
+
   const handleRenamePlayer = async () => {
     const fromName = renameFrom;
     const toName = renameTo.trim();
 
     setRenameFeedback(null);
     setRenameError(null);
+    setDeterministicFeedback(null);
+    setDeterministicError(null);
 
     if (!fromName || !toName) {
       setRenameError('Please select a player and provide a new name.');
@@ -399,7 +573,7 @@ export function PlayerManager({ }: PlayerManagerProps) {
     setIsRenaming(true);
     try {
       await renamePlayerName(fromName, toName);
-      await Promise.all([loadPlayers(), loadDefaults(), loadCountries()]);
+      await refreshPlayerManagerData();
       setRenameFeedback(`Renamed "${fromName}" to "${toName}" successfully.`);
       setRenameTo('');
     } catch (err) {
@@ -415,6 +589,8 @@ export function PlayerManager({ }: PlayerManagerProps) {
     setRenameTo(toName);
     setRenameFeedback(null);
     setRenameError(null);
+    setDeterministicFeedback(null);
+    setDeterministicError(null);
   };
 
   const statusButtonClass = (active: boolean) =>
@@ -658,7 +834,7 @@ export function PlayerManager({ }: PlayerManagerProps) {
 
                 <button
                   onClick={handleRenamePlayer}
-                  disabled={isRenaming || !renameFrom || !renameTo.trim()}
+                  disabled={isRenaming || isApplyingDeterministicMerges || !renameFrom || !renameTo.trim()}
                   className="px-4 py-2 rounded-md bg-blue-600 text-white text-sm hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isRenaming ? 'Renaming...' : 'Rename Player'}
@@ -676,6 +852,74 @@ export function PlayerManager({ }: PlayerManagerProps) {
                   {renameError}
                 </div>
               )}
+
+              <div className="space-y-2 border border-emerald-200 bg-emerald-50 rounded-md p-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="text-xs font-medium text-emerald-900">
+                    Deterministic case/trim merges ({deterministicMergeGroups.length})
+                  </div>
+                  <button
+                    onClick={applyAllDeterministicMerges}
+                    disabled={isApplyingDeterministicMerges || isRenaming || deterministicMergeGroups.length === 0}
+                    className="text-xs px-2 py-1 rounded border border-emerald-400 text-emerald-800 hover:bg-emerald-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isApplyingDeterministicMerges ? 'Applying...' : 'Apply All Safe Merges'}
+                  </button>
+                </div>
+                <p className="text-[11px] text-emerald-900/90">
+                  Only merges names that are identical after trim + lowercase. No fuzzy matching is used.
+                </p>
+
+                {deterministicFeedback && (
+                  <div className="text-sm text-emerald-700 bg-white border border-emerald-200 rounded-md px-3 py-2">
+                    {deterministicFeedback}
+                  </div>
+                )}
+
+                {deterministicError && (
+                  <div className="text-sm text-red-700 bg-white border border-red-200 rounded-md px-3 py-2">
+                    {deterministicError}
+                  </div>
+                )}
+
+                {deterministicMergeGroups.length === 0 ? (
+                  <div className="text-xs text-emerald-900/80">No deterministic case/trim duplicates found.</div>
+                ) : (
+                  <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
+                    {deterministicMergeGroups.map((group) => (
+                      <div
+                        key={`${group.normalizedKey}-${group.canonicalName}`}
+                        className="rounded border border-emerald-200 bg-white px-3 py-2 space-y-1"
+                      >
+                        <div className="flex items-center justify-between gap-3 text-xs">
+                          <span className="text-gray-800">
+                            {group.sourceNames.join(', ')} {'->'} {group.canonicalName}
+                          </span>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => prefillRenameFromSuggestion(group.sourceNames[0] || group.canonicalName, group.canonicalName)}
+                              className="text-blue-700 hover:text-blue-900 underline disabled:opacity-50 disabled:cursor-not-allowed"
+                              disabled={isApplyingDeterministicMerges || isRenaming}
+                            >
+                              Review
+                            </button>
+                            <button
+                              onClick={() => applyDeterministicMergeGroup(group)}
+                              className="text-emerald-700 hover:text-emerald-900 underline disabled:opacity-50 disabled:cursor-not-allowed"
+                              disabled={isApplyingDeterministicMerges || isRenaming}
+                            >
+                              Apply Group
+                            </button>
+                          </div>
+                        </div>
+                        <div className="text-[11px] text-gray-600">
+                          {group.reason}. Source matches: {group.totalSourceMatches}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
 
               <div>
                 <div className="text-xs font-medium text-gray-700 mb-2">

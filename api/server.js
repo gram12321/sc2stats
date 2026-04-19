@@ -191,6 +191,96 @@ function formatFilterSummary({ mainCircuitOnly, seasons, hideRandom, useSeeds, t
   return parts.join(', ');
 }
 
+function normalizeTeamKey(player1, player2) {
+  return [player1, player2].filter(Boolean).sort().join('+');
+}
+
+function parseRankValue(rawRank) {
+  if (typeof rawRank === 'number' && Number.isFinite(rawRank) && rawRank > 0) {
+    return rawRank;
+  }
+
+  const parsed = parseInt(String(rawRank), 10);
+  if (Number.isFinite(parsed) && parsed > 0) {
+    return parsed;
+  }
+
+  return null;
+}
+
+function rankingRowsContainMovement(rankings) {
+  return Array.isArray(rankings)
+    && rankings.length > 0
+    && rankings.every((row) => row && Object.prototype.hasOwnProperty.call(row, 'rankChange'));
+}
+
+function withPlayerRankMovement(rankings, matchHistory) {
+  const previousRankByPlayer = new Map();
+  const history = Array.isArray(matchHistory) ? matchHistory : [];
+
+  for (let i = history.length - 1; i >= 0; i -= 1) {
+    const impacts = history[i]?.player_impacts || {};
+    for (const [playerName, impact] of Object.entries(impacts)) {
+      if (previousRankByPlayer.has(playerName)) continue;
+      const previousRank = parseRankValue(impact?.rankBefore);
+      if (previousRank !== null) {
+        previousRankByPlayer.set(playerName, previousRank);
+      }
+    }
+  }
+
+  return (Array.isArray(rankings) ? rankings : []).map((player, index) => {
+    const currentRank = index + 1;
+    const previousRank = previousRankByPlayer.get(player.name) ?? null;
+    const rankChange = previousRank === null ? null : (previousRank - currentRank);
+    const rankDirection = rankChange === null
+      ? 'unknown'
+      : (rankChange > 0 ? 'up' : (rankChange < 0 ? 'down' : 'same'));
+
+    return {
+      ...player,
+      currentRank,
+      previousRank,
+      rankChange,
+      rankDirection
+    };
+  });
+}
+
+function withTeamRankMovement(rankings, matchHistory) {
+  const previousRankByTeam = new Map();
+  const history = Array.isArray(matchHistory) ? matchHistory : [];
+
+  for (let i = history.length - 1; i >= 0; i -= 1) {
+    const impacts = history[i]?.team_impacts || {};
+    for (const [teamKey, impact] of Object.entries(impacts)) {
+      if (previousRankByTeam.has(teamKey)) continue;
+      const previousRank = parseRankValue(impact?.rankBefore);
+      if (previousRank !== null) {
+        previousRankByTeam.set(teamKey, previousRank);
+      }
+    }
+  }
+
+  return (Array.isArray(rankings) ? rankings : []).map((team, index) => {
+    const currentRank = index + 1;
+    const teamKey = normalizeTeamKey(team.player1, team.player2);
+    const previousRank = previousRankByTeam.get(teamKey) ?? null;
+    const rankChange = previousRank === null ? null : (previousRank - currentRank);
+    const rankDirection = rankChange === null
+      ? 'unknown'
+      : (rankChange > 0 ? 'up' : (rankChange < 0 ? 'down' : 'same'));
+
+    return {
+      ...team,
+      currentRank,
+      previousRank,
+      rankChange,
+      rankDirection
+    };
+  });
+}
+
 function logApiSummary(req, _startedAt, details = []) {
   req._apiSummaryLogged = true;
   req._apiLogDetails = details.filter(Boolean);
@@ -1104,12 +1194,13 @@ app.get('/api/player-rankings', async (req, res) => {
   try {
     const isMainCircuitOnly = req.query.mainCircuitOnly === 'true';
     const seasons = req.query.seasons ? req.query.seasons.split(',') : null;
-    const { rankings, summary } = await calculateRankings(null, isMainCircuitOnly, seasons);
+    const { rankings, matchHistory, summary } = await calculateRankings(null, isMainCircuitOnly, seasons);
+    const rankingsWithMovement = withPlayerRankMovement(rankings, matchHistory);
     logApiSummary(req, startedAt, [
       formatFilterSummary({ mainCircuitOnly: isMainCircuitOnly, seasons }),
       formatPlayerSummary(summary)
     ]);
-    res.json(rankings);
+    res.json(rankingsWithMovement);
   } catch (error) {
     console.error('Error calculating player rankings:', error);
     res.status(500).json({ error: 'Failed to calculate player rankings' });
@@ -1123,17 +1214,18 @@ app.get('/api/team-rankings', async (req, res) => {
     const isMainCircuitOnly = req.query.mainCircuitOnly === 'true';
     const seasons = req.query.seasons ? req.query.seasons.split(',') : null;
     const teamOptions = getTeamRatingOptions(req);
-    const { rankings, summary } = await calculateTeamRankings(
+    const { rankings, matchHistory, summary } = await calculateTeamRankings(
       null,
       isMainCircuitOnly,
       seasons,
       teamOptions
     );
+    const rankingsWithMovement = withTeamRankMovement(rankings, matchHistory);
     logApiSummary(req, startedAt, [
       formatFilterSummary({ mainCircuitOnly: isMainCircuitOnly, seasons, teamOptions }),
       formatTeamSummary(summary)
     ]);
-    res.json(rankings);
+    res.json(rankingsWithMovement);
   } catch (error) {
     console.error('Error calculating team rankings:', error);
     res.status(500).json({ error: 'Failed to calculate team rankings' });
@@ -1215,22 +1307,40 @@ app.get('/api/seeded-player-rankings', async (req, res) => {
 
       // If filtering is needed, recalculate with filters and seeds
       if (isMainCircuitOnly || (seasons && seasons.length > 0)) {
-        const { rankings, summary } = await calculateRankings(playerSeeds, isMainCircuitOnly, seasons);
+        const { rankings, matchHistory, summary } = await calculateRankings(playerSeeds, isMainCircuitOnly, seasons);
+        const rankingsWithMovement = withPlayerRankMovement(rankings, matchHistory);
         logApiSummary(req, startedAt, [
           formatFilterSummary({ mainCircuitOnly: isMainCircuitOnly, seasons, useSeeds: true }),
           'source:recalculated-seeded',
           formatPlayerSummary(summary)
         ]);
-        res.json(rankings);
+        res.json(rankingsWithMovement);
       } else {
         // No filtering, return pre-calculated results
         const content = await readFile(seededRankingsFile, 'utf-8');
         const rankings = JSON.parse(content);
+
+        if (rankingRowsContainMovement(rankings)) {
+          logApiSummary(req, startedAt, [
+            'source:seeded-file',
+            `players:${rankings.length}`
+          ]);
+          res.json(rankings);
+          return;
+        }
+
+        const {
+          rankings: recalculatedRankings,
+          matchHistory,
+          summary
+        } = await calculateRankings(playerSeeds, false, null);
+        const rankingsWithMovement = withPlayerRankMovement(recalculatedRankings, matchHistory);
+
         logApiSummary(req, startedAt, [
-          'source:seeded-file',
-          `players:${rankings.length}`
+          'source:seeded-file+recalculated-movement',
+          formatPlayerSummary(summary)
         ]);
-        res.json(rankings);
+        res.json(rankingsWithMovement);
       }
     } catch (fileError) {
       if (fileError.code === 'ENOENT') {
@@ -1263,27 +1373,45 @@ app.get('/api/seeded-team-rankings', async (req, res) => {
 
       // If filtering or intermediate team rating is needed, recalculate with filters and seeds
       if (requiresRecalculation) {
-        const { rankings, summary } = await calculateTeamRankings(
+        const { rankings, matchHistory, summary } = await calculateTeamRankings(
           teamSeeds,
           isMainCircuitOnly,
           seasons,
           teamOptions
         );
+        const rankingsWithMovement = withTeamRankMovement(rankings, matchHistory);
         logApiSummary(req, startedAt, [
           formatFilterSummary({ mainCircuitOnly: isMainCircuitOnly, seasons, useSeeds: true, teamOptions }),
           'source:recalculated-seeded',
           formatTeamSummary(summary)
         ]);
-        res.json(rankings);
+        res.json(rankingsWithMovement);
       } else {
         // No filtering, return pre-calculated results
         const content = await readFile(seededRankingsFile, 'utf-8');
         const rankings = JSON.parse(content);
+
+        if (rankingRowsContainMovement(rankings)) {
+          logApiSummary(req, startedAt, [
+            'source:seeded-file',
+            `teams:${rankings.length}`
+          ]);
+          res.json(rankings);
+          return;
+        }
+
+        const {
+          rankings: recalculatedRankings,
+          matchHistory,
+          summary
+        } = await calculateTeamRankings(teamSeeds, false, null, teamOptions);
+        const rankingsWithMovement = withTeamRankMovement(recalculatedRankings, matchHistory);
+
         logApiSummary(req, startedAt, [
-          'source:seeded-file',
-          `teams:${rankings.length}`
+          'source:seeded-file+recalculated-movement',
+          formatTeamSummary(summary)
         ]);
-        res.json(rankings);
+        res.json(rankingsWithMovement);
       }
     } catch (fileError) {
       if (fileError.code === 'ENOENT') {

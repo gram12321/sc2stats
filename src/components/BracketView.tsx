@@ -3,6 +3,7 @@ import { TournamentData, Match } from '../types/tournament';
 import { MatchBox } from './MatchBox';
 import { MatchEditor } from './MatchEditor';
 import { useRankingSettings } from '../context/RankingSettingsContext';
+import { getPlayerCountries } from '../lib/playerCountries';
 
 type EarlyRoundType = 'standard' | 'upper' | 'lower';
 
@@ -86,6 +87,7 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [teamRankings, setTeamRankings] = useState<Record<string, number>>({});
+  const [playerCountries, setPlayerCountries] = useState<Record<string, string>>({});
   const [allPlayers, setAllPlayers] = useState<string[]>([]);
   const [historicalTeammates, setHistoricalTeammates] = useState<Record<string, string[]>>({});
   const [isAddingMatch, setIsAddingMatch] = useState(false);
@@ -270,10 +272,20 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
         console.error('Error loading historical teammates:', err);
       }
     };
+
+    const loadPlayerCountries = async () => {
+      try {
+        const countries = await getPlayerCountries();
+        setPlayerCountries(countries);
+      } catch (err) {
+        console.error('Error loading player countries:', err);
+      }
+    };
     
     loadTeamRankings();
     loadPlayers();
     loadHistoricalTeammates();
+    loadPlayerCountries();
   }, [tournamentData.tournament.liquipedia_slug, useSeededRankings, mainCircuitOnly, seasons]);
 
   // Update effect to handle prop changes and auto-detection
@@ -1301,6 +1313,7 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
                                   <MatchBox
                                     match={displayMatch}
                                     teamRankings={teamRankings}
+                                    playerCountries={playerCountries}
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       setSelectedMatch(match);
@@ -1376,6 +1389,7 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
                         key={match.match_id}
                         match={match}
                         teamRankings={teamRankings}
+                        playerCountries={playerCountries}
                         onClick={(e) => {
                           e.stopPropagation();
                           setSelectedMatch(match);
@@ -1427,6 +1441,7 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
                                 <MatchBox
                                   match={match}
                                   teamRankings={teamRankings}
+                                  playerCountries={playerCountries}
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     setSelectedMatch(match);
@@ -1484,6 +1499,7 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
                               <MatchBox
                                 match={displayMatch}
                                 teamRankings={teamRankings}
+                                playerCountries={playerCountries}
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   setSelectedMatch(match);
@@ -1517,6 +1533,7 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
                         <MatchBox
                           match={match}
                           teamRankings={teamRankings}
+                          playerCountries={playerCountries}
                           onClick={(e) => {
                             e.stopPropagation();
                             setSelectedMatch(match);
@@ -1551,6 +1568,7 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
                           <MatchBox
                             match={match}
                             teamRankings={teamRankings}
+                            playerCountries={playerCountries}
                             onClick={(e) => {
                               e.stopPropagation();
                               setSelectedMatch(match);

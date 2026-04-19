@@ -72,6 +72,79 @@ export function sortRankings(rankings, getNameFn = (item) => item.name) {
 }
 
 /**
+ * Build a deterministic player-name normalizer.
+ *
+ * This only merges names when they are the same after:
+ * 1) trimming surrounding whitespace, and
+ * 2) lowercasing
+ *
+ * No fuzzy matching is performed.
+ *
+ * @param {Array<string>} canonicalNames - Explicit canonical names (for casing preference)
+ * @returns {(name: string|null|undefined) => string|null|undefined}
+ */
+export function createDeterministicPlayerNameNormalizer(canonicalNames = []) {
+  const canonicalByLower = new Map();
+
+  for (const rawName of canonicalNames || []) {
+    if (typeof rawName !== 'string') continue;
+    const trimmed = rawName.trim();
+    if (!trimmed) continue;
+    const lower = trimmed.toLowerCase();
+    if (!canonicalByLower.has(lower)) {
+      canonicalByLower.set(lower, trimmed);
+    }
+  }
+
+  return (rawName) => {
+    if (rawName === null || rawName === undefined) return rawName;
+    if (typeof rawName !== 'string') return rawName;
+
+    const trimmed = rawName.trim();
+    if (!trimmed) return trimmed;
+
+    const lower = trimmed.toLowerCase();
+    const canonical = canonicalByLower.get(lower);
+    return canonical || trimmed;
+  };
+}
+
+/**
+ * Return a shallow-normalized match where each player name goes through a normalizer.
+ *
+ * @param {Object} match - Match object
+ * @param {(name: string|null|undefined) => string|null|undefined} normalizePlayerName
+ * @returns {Object} Normalized match object
+ */
+export function normalizeMatchPlayerNames(match, normalizePlayerName) {
+  if (!match || typeof match !== 'object') return match;
+  if (typeof normalizePlayerName !== 'function') return match;
+
+  const normalizePlayer = (player) => {
+    if (!player || typeof player !== 'object') return player;
+    return {
+      ...player,
+      name: normalizePlayerName(player.name)
+    };
+  };
+
+  const normalizeTeam = (team) => {
+    if (!team || typeof team !== 'object') return team;
+    return {
+      ...team,
+      player1: normalizePlayer(team.player1),
+      player2: normalizePlayer(team.player2)
+    };
+  };
+
+  return {
+    ...match,
+    team1: normalizeTeam(match.team1),
+    team2: normalizeTeam(match.team2)
+  };
+}
+
+/**
  * Get numeric round sort order (lower means earlier in tournament).
  * Supports:
  * - Early Round N (before group stage)

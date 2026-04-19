@@ -69,6 +69,13 @@ function extractMonth(segment?: string): number | null {
   return month;
 }
 
+function extractSequenceNumber(segment?: string): number | null {
+  if (!segment || !/^\d+$/.test(segment)) return null;
+  const value = Number(segment);
+  if (!Number.isFinite(value) || value < 1) return null;
+  return value;
+}
+
 export function formatTournamentName(rawSlug: string | null | undefined): string {
   if (!rawSlug) return 'Unknown Event';
 
@@ -76,7 +83,7 @@ export function formatTournamentName(rawSlug: string | null | undefined): string
   if (!cleaned) return 'Unknown Event';
 
   const slashParts = cleaned.split('/').filter(Boolean);
-  const [basePartRaw = '', secondPartRaw, thirdPartRaw] = slashParts;
+  const [basePartRaw = '', secondPartRaw, thirdPartRaw, fourthPartRaw] = slashParts;
 
   if (slashParts.length >= 2) {
     const baseName = resolveBaseName(basePartRaw);
@@ -88,11 +95,29 @@ export function formatTournamentName(rawSlug: string | null | undefined): string
     }
 
     if (year && thirdPartRaw) {
+      const sequence = extractSequenceNumber(fourthPartRaw);
+      if (sequence !== null) {
+        return `${baseName} ${titleizeSlugPart(thirdPartRaw)} #${sequence} ${year}`;
+      }
       return `${baseName} ${titleizeSlugPart(thirdPartRaw)} ${year}`;
     }
 
     if (year) {
       return `${baseName} ${year}`;
+    }
+
+    const trailingSequence = extractSequenceNumber(thirdPartRaw);
+    if (secondPartRaw && trailingSequence !== null) {
+      return `${baseName} ${titleizeSlugPart(secondPartRaw)} #${trailingSequence}`;
+    }
+
+    const secondSequence = extractSequenceNumber(secondPartRaw);
+    if (secondSequence !== null) {
+      return `${baseName} #${secondSequence}`;
+    }
+
+    if (secondPartRaw) {
+      return `${baseName} ${titleizeSlugPart(secondPartRaw)}`;
     }
   }
 

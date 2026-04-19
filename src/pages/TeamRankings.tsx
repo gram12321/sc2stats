@@ -42,6 +42,10 @@ interface TeamRanking {
   points: number;
   confidence?: number;
   intermediateBlendWeight?: number;
+  currentRank?: number;
+  previousRank?: number | null;
+  rankChange?: number | null;
+  rankDirection?: 'up' | 'down' | 'same' | 'unknown';
 }
 
 interface PlayerRanking {
@@ -208,25 +212,57 @@ export function TeamRankings({ onNavigateToTeam }: TeamRankingsProps) {
     return aName.localeCompare(bName);
   });
 
+  const absoluteRankByTeamKey = new Map<string, number>(
+    pointsSortedRankings.map((team, index) => [`${team.player1}+${team.player2}`, index + 1])
+  );
+
+  const qualifiedPrefixCounts = pointsSortedRankings.reduce<number[]>(
+    (prefix, team, index) => {
+      const qualifies = (team.confidence || 0) >= confidenceThreshold ? 1 : 0;
+      prefix[index + 1] = prefix[index] + qualifies;
+      return prefix;
+    },
+    [0]
+  );
+
+  const getDisplayRankFromAbsoluteRank = (absoluteRank: number | null | undefined): number | null => {
+    if (!absoluteRank || absoluteRank < 1) return null;
+    const clamped = Math.min(absoluteRank, pointsSortedRankings.length);
+    const displayRank = qualifiedPrefixCounts[clamped] ?? 0;
+    return displayRank > 0 ? displayRank : null;
+  };
+
   const rankedRankings = sortedRankings.map((team) => {
     const teamConfidence = team.confidence || 0;
     const meetsThreshold = teamConfidence >= confidenceThreshold;
 
     if (!filterLowConfidence && !meetsThreshold) {
-      return { ...team, displayRank: null };
+      return {
+        ...team,
+        displayRank: null,
+        displayPreviousRank: null,
+        displayRankChange: null
+      };
     }
 
-    const pointsIndex = pointsSortedRankings.findIndex(t =>
-      t.player1 === team.player1 && t.player2 === team.player2
-    );
-    let rank = 1;
-    for (let i = 0; i < pointsIndex; i++) {
-      const prevConfidence = pointsSortedRankings[i].confidence || 0;
-      if (prevConfidence >= confidenceThreshold) {
-        rank++;
-      }
-    }
-    return { ...team, displayRank: rank };
+    const teamKey = `${team.player1}+${team.player2}`;
+    const currentAbsoluteRank = typeof team.currentRank === 'number'
+      ? team.currentRank
+      : (absoluteRankByTeamKey.get(teamKey) ?? null);
+    const currentDisplayRank = getDisplayRankFromAbsoluteRank(currentAbsoluteRank);
+
+    const previousAbsoluteRank = typeof team.previousRank === 'number' ? team.previousRank : null;
+    const previousDisplayRank = getDisplayRankFromAbsoluteRank(previousAbsoluteRank);
+    const displayRankChange = (currentDisplayRank !== null && previousDisplayRank !== null)
+      ? previousDisplayRank - currentDisplayRank
+      : null;
+
+    return {
+      ...team,
+      displayRank: currentDisplayRank,
+      displayPreviousRank: previousDisplayRank,
+      displayRankChange
+    };
   });
 
   const getTeamIntermediateBlend = (team: TeamRanking) => {
@@ -244,6 +280,20 @@ export function TeamRankings({ onNavigateToTeam }: TeamRankingsProps) {
     return sortDirection === 'asc'
       ? <ArrowUp className="ml-1 h-3 w-3 text-primary" />
       : <ArrowDown className="ml-1 h-3 w-3 text-primary" />;
+  };
+
+  const getRankChangeTooltip = (rankChange: number, previousRank: number | null, currentRank: number) => {
+    const absChange = Math.abs(rankChange);
+
+    if (rankChange > 0) {
+      return `Moved up ${absChange} rank${absChange === 1 ? '' : 's'} since last update (${previousRank} → ${currentRank}).`;
+    }
+
+    if (rankChange < 0) {
+      return `Moved down ${absChange} rank${absChange === 1 ? '' : 's'} since last update (${previousRank} → ${currentRank}).`;
+    }
+
+    return `No rank change since last update (#${currentRank}).`;
   };
 
   return (
@@ -374,6 +424,13 @@ export function TeamRankings({ onNavigateToTeam }: TeamRankingsProps) {
                       const player1Race = playerRaces[team.player1];
                       const player2Race = playerRaces[team.player2];
                       const isPositive = team.points > 0;
+                      const rankChange = typeof team.displayRankChange === 'number' ? team.displayRankChange : null;
+                      const currentRank = typeof displayRank === 'number' ? displayRank : null;
+                      const previousRank = typeof team.displayPreviousRank === 'number' ? team.displayPreviousRank : null;
+                      const rankChangeTooltip = rankChange !== null
+                        && currentRank !== null
+                        ? getRankChangeTooltip(rankChange, previousRank, currentRank)
+                        : null;
                       const intermediateBlend = getTeamIntermediateBlend(team);
                       const hasIntermediateBlend = intermediateBlend > 0;
                       const intermediatePlayerShare = Math.round(intermediateBlend * 100);
@@ -393,6 +450,25 @@ export function TeamRankings({ onNavigateToTeam }: TeamRankingsProps) {
                                   {displayRank <= 3 ? <Crown className="h-3 w-3" /> : displayRank}
                                 </span>
                               ) : <Minus className="h-3 w-3 text-muted-foreground/30" />}
+                              {rankChange !== null && currentRank !== null && (
+                                <Tooltip content={<span className="text-xs">{rankChangeTooltip}</span>} side="top">
+                                  <span
+                                    className={cn(
+                                      'inline-flex cursor-help items-center gap-0.5 text-[10px] font-semibold',
+                                      rankChange > 0
+                                        ? 'text-emerald-500 dark:text-emerald-400'
+                                        : rankChange < 0
+                                          ? 'text-rose-500 dark:text-rose-400'
+                                          : 'text-muted-foreground'
+                                    )}
+                                  >
+                                    {rankChange > 0 && <ArrowUp className="h-3 w-3" />}
+                                    {rankChange < 0 && <ArrowDown className="h-3 w-3" />}
+                                    {rankChange === 0 && <Minus className="h-3 w-3" />}
+                                    {Math.abs(rankChange)}
+                                  </span>
+                                </Tooltip>
+                              )}
                             </div>
                           </TableCell>
 

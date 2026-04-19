@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Input } from '../components/ui/input';
 import { RaceBadge } from '../components/ui/RaceBadge';
+import { Tooltip } from '../components/ui/tooltip';
 import { Search, ArrowUpDown, ArrowUp, ArrowDown, Loader2, Trophy, Users, Target, Minus, Swords, Crown } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { CountryFlag } from '../components/ui/CountryFlag';
@@ -20,6 +21,10 @@ interface PlayerRanking {
   losses: number;
   points: number;
   confidence?: number;
+  currentRank?: number;
+  previousRank?: number | null;
+  rankChange?: number | null;
+  rankDirection?: 'up' | 'down' | 'same' | 'unknown';
 }
 
 interface PlayerRankingsProps {
@@ -147,23 +152,56 @@ export function PlayerRankings({ onNavigateToPlayer }: PlayerRankingsProps) {
     return a.name.localeCompare(b.name);
   });
 
+  const absoluteRankByName = new Map(
+    pointsSortedRankings.map((player, index) => [player.name, index + 1] as const)
+  );
+
+  const qualifiedPrefixCounts = pointsSortedRankings.reduce<number[]>(
+    (prefix, player, index) => {
+      const qualifies = (player.confidence || 0) >= confidenceThreshold ? 1 : 0;
+      prefix[index + 1] = prefix[index] + qualifies;
+      return prefix;
+    },
+    [0]
+  );
+
+  const getDisplayRankFromAbsoluteRank = (absoluteRank: number | null | undefined): number | null => {
+    if (!absoluteRank || absoluteRank < 1) return null;
+    const clamped = Math.min(absoluteRank, pointsSortedRankings.length);
+    const displayRank = qualifiedPrefixCounts[clamped] ?? 0;
+    return displayRank > 0 ? displayRank : null;
+  };
+
   const rankedRankings = sortedRankings.map((player) => {
     const playerConfidence = player.confidence || 0;
     const meetsThreshold = playerConfidence >= confidenceThreshold;
 
     if (!filterLowConfidence && !meetsThreshold) {
-      return { ...player, displayRank: null };
+      return {
+        ...player,
+        displayRank: null,
+        displayPreviousRank: null,
+        displayRankChange: null
+      };
     }
 
-    const pointsIndex = pointsSortedRankings.findIndex(p => p.name === player.name);
-    let rank = 1;
-    for (let i = 0; i < pointsIndex; i++) {
-      const prevConfidence = pointsSortedRankings[i].confidence || 0;
-      if (prevConfidence >= confidenceThreshold) {
-        rank++;
-      }
-    }
-    return { ...player, displayRank: rank };
+    const currentAbsoluteRank = typeof player.currentRank === 'number'
+      ? player.currentRank
+      : (absoluteRankByName.get(player.name) ?? null);
+    const currentDisplayRank = getDisplayRankFromAbsoluteRank(currentAbsoluteRank);
+
+    const previousAbsoluteRank = typeof player.previousRank === 'number' ? player.previousRank : null;
+    const previousDisplayRank = getDisplayRankFromAbsoluteRank(previousAbsoluteRank);
+    const displayRankChange = (currentDisplayRank !== null && previousDisplayRank !== null)
+      ? previousDisplayRank - currentDisplayRank
+      : null;
+
+    return {
+      ...player,
+      displayRank: currentDisplayRank,
+      displayPreviousRank: previousDisplayRank,
+      displayRankChange
+    };
   });
 
   const SortIcon = ({ column }: { column: keyof PlayerRanking | 'rank' }) => {
@@ -171,6 +209,20 @@ export function PlayerRankings({ onNavigateToPlayer }: PlayerRankingsProps) {
     return sortDirection === 'asc'
       ? <ArrowUp className="ml-1 h-3 w-3 text-primary" />
       : <ArrowDown className="ml-1 h-3 w-3 text-primary" />;
+  };
+
+  const getRankChangeTooltip = (rankChange: number, previousRank: number | null, currentRank: number) => {
+    const absChange = Math.abs(rankChange);
+
+    if (rankChange > 0) {
+      return `Moved up ${absChange} rank${absChange === 1 ? '' : 's'} since last update (${previousRank} → ${currentRank}).`;
+    }
+
+    if (rankChange < 0) {
+      return `Moved down ${absChange} rank${absChange === 1 ? '' : 's'} since last update (${previousRank} → ${currentRank}).`;
+    }
+
+    return `No rank change since last update (#${currentRank}).`;
   };
 
   return (
@@ -305,6 +357,13 @@ export function PlayerRankings({ onNavigateToPlayer }: PlayerRankingsProps) {
                       const displayRank = player.displayRank;
                       const race = playerRaces[player.name];
                       const isPositive = player.points > 0;
+                      const rankChange = typeof player.displayRankChange === 'number' ? player.displayRankChange : null;
+                      const currentRank = typeof displayRank === 'number' ? displayRank : null;
+                      const previousRank = typeof player.displayPreviousRank === 'number' ? player.displayPreviousRank : null;
+                      const rankChangeTooltip = rankChange !== null
+                        && currentRank !== null
+                        ? getRankChangeTooltip(rankChange, previousRank, currentRank)
+                        : null;
 
                       return (
                         <TableRow key={player.name} className="hover:bg-muted/30 border-border/50">
@@ -321,6 +380,25 @@ export function PlayerRankings({ onNavigateToPlayer }: PlayerRankingsProps) {
                                   {displayRank <= 3 ? <Crown className="h-3 w-3" /> : displayRank}
                                 </span>
                               ) : <Minus className="h-3 w-3 text-muted-foreground/30" />}
+                              {rankChange !== null && currentRank !== null && (
+                                <Tooltip content={<span className="text-xs">{rankChangeTooltip}</span>} side="top">
+                                  <span
+                                    className={cn(
+                                      'inline-flex cursor-help items-center gap-0.5 text-[10px] font-semibold',
+                                      rankChange > 0
+                                        ? 'text-emerald-500 dark:text-emerald-400'
+                                        : rankChange < 0
+                                          ? 'text-rose-500 dark:text-rose-400'
+                                          : 'text-muted-foreground'
+                                    )}
+                                  >
+                                    {rankChange > 0 && <ArrowUp className="h-3 w-3" />}
+                                    {rankChange < 0 && <ArrowDown className="h-3 w-3" />}
+                                    {rankChange === 0 && <Minus className="h-3 w-3" />}
+                                    {Math.abs(rankChange)}
+                                  </span>
+                                </Tooltip>
+                              )}
                             </div>
                           </TableCell>
 

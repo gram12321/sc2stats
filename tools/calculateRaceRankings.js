@@ -10,7 +10,9 @@ import {
   hasValidScores,
   initializeStats,
   sortRankings,
-  getRoundSortOrder
+  getRoundSortOrder,
+  createDeterministicPlayerNameNormalizer,
+  normalizeMatchPlayerNames
 } from './rankingUtils.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -125,6 +127,7 @@ export async function calculateRaceRankings(mainCircuitOnly = false, seasons = n
   try {
     // Load player defaults first
     const playerDefaults = await loadPlayerDefaults();
+    const normalizePlayerName = createDeterministicPlayerNameNormalizer(Object.keys(playerDefaults));
 
     // Read all JSON files from output directory
     const files = await readdir(outputDir);
@@ -175,8 +178,9 @@ export async function calculateRaceRankings(mainCircuitOnly = false, seasons = n
         // Add tournament date and slug to each match for sorting
         for (const match of data.matches) {
           if (hasValidScores(match)) {
+            const normalizedMatch = normalizeMatchPlayerNames(match, normalizePlayerName);
             allMatches.push({
-              ...match,
+              ...normalizedMatch,
               tournamentDate,
               tournamentSlug: data.tournament?.liquipedia_slug || file
             });

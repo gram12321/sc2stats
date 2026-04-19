@@ -28,12 +28,28 @@ import {
   hasValidScores,
   initializeStats,
   sortRankings,
-  getRoundSortOrder
+  getRoundSortOrder,
+  createDeterministicPlayerNameNormalizer,
+  normalizeMatchPlayerNames
 } from './rankingUtils.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const outputDir = join(__dirname, '..', 'output');
+const playerDefaultsFile = join(outputDir, 'player_defaults.json');
+
+async function loadPlayerDefaults() {
+  try {
+    const content = await readFile(playerDefaultsFile, 'utf-8');
+    return JSON.parse(content);
+  } catch (err) {
+    if (err.code === 'ENOENT') {
+      return {};
+    }
+    console.error('Error loading player defaults:', err);
+    return {};
+  }
+}
 
 /**
  * Load and parse all tournament JSON files from the output directory
@@ -64,7 +80,7 @@ async function loadTournamentFiles() {
 /**
  * Collect and enrich matches from tournament data
  */
-function collectMatchesFromTournaments(tournaments) {
+function collectMatchesFromTournaments(tournaments, normalizePlayerName = null) {
   const allMatches = [];
 
   for (const tournament of tournaments) {
@@ -73,8 +89,9 @@ function collectMatchesFromTournaments(tournaments) {
 
     for (const match of tournament.matches) {
       if (hasValidScores(match)) {
+        const normalizedMatch = normalizeMatchPlayerNames(match, normalizePlayerName);
         allMatches.push({
-          ...match,
+          ...normalizedMatch,
           tournamentDate,
           tournamentSlug: tournamentSlug || tournament.tournament?.name || 'unknown'
         });
@@ -577,9 +594,11 @@ async function main() {
   try {
     console.log('Loading tournament data...');
     const tournaments = await loadTournamentFiles();
+    const playerDefaults = await loadPlayerDefaults();
+    const normalizePlayerName = createDeterministicPlayerNameNormalizer(Object.keys(playerDefaults));
     console.log(`Loaded ${tournaments.length} tournament files`);
 
-    const allMatches = collectMatchesFromTournaments(tournaments);
+    const allMatches = collectMatchesFromTournaments(tournaments, normalizePlayerName);
     console.log(`Collected ${allMatches.length} valid matches`);
 
     if (allMatches.length === 0) {

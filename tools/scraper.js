@@ -70,12 +70,80 @@ function parseTournament(wikitext, pageTitle) {
   if (!infoboxText) return null;
 
   const infobox = infoboxText.replace(/^\{\{Infobox league\s*/i, '').replace(/\}\}$/, '');
+  const subPageName = (pageTitle.includes('/') ? pageTitle.split('/').pop() : pageTitle)?.replace(/_/g, ' ');
+
+  const normalizeValue = (value) => value
+    .replace(/\{\{\s*SUBPAGENAME\s*\}\}/gi, subPageName || '')
+    .replace(/\{\{\s*PAGENAME\s*\}\}/gi, pageTitle.replace(/_/g, ' '))
+    .replace(/\[\[([^|\]]+)\|([^\]]+)\]\]/g, '$2')
+    .replace(/\[\[([^\]]+)\]\]/g, '$1')
+    .replace(/\{\{[^{}]*\}\}/g, '')
+    .replace(/<br\s*\/?>/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 
   const getValue = (key) => {
-    const regex = new RegExp(`(?:^|\\n)\\|\\|?${key}\\s*=\\s*([^|\\n}]+)`, 'im');
-    const match = infobox.match(regex);
+    const keyRegex = new RegExp(`(?:^|\\n)\\|\\|?${key}\\s*=\\s*`, 'i');
+    const match = keyRegex.exec(infobox);
     if (!match) return null;
-    return match[1].replace(/\{\{[^}]+\}\}/g, '').replace(/<br\s*\/?>/gi, ' ').trim();
+
+    let i = match.index + match[0].length;
+    let value = '';
+    let templateDepth = 0;
+    let linkDepth = 0;
+
+    while (i < infobox.length) {
+      const twoChars = infobox.substring(i, i + 2);
+
+      if (twoChars === '{{') {
+        templateDepth++;
+        value += twoChars;
+        i += 2;
+        continue;
+      }
+
+      if (twoChars === '}}' && templateDepth > 0) {
+        templateDepth--;
+        value += twoChars;
+        i += 2;
+        continue;
+      }
+
+      if (twoChars === '[[') {
+        linkDepth++;
+        value += twoChars;
+        i += 2;
+        continue;
+      }
+
+      if (twoChars === ']]' && linkDepth > 0) {
+        linkDepth--;
+        value += twoChars;
+        i += 2;
+        continue;
+      }
+
+      if (infobox[i] === '\n' && templateDepth === 0 && linkDepth === 0 && infobox[i + 1] === '|') {
+        break;
+      }
+
+      if (infobox[i] === '|' && templateDepth === 0 && linkDepth === 0) {
+        const rest = infobox.slice(i + 1);
+        if (/^\|?[a-z0-9_]+\s*=/i.test(rest)) {
+          break;
+        }
+      }
+
+      if (infobox[i] === '\n' && templateDepth === 0 && linkDepth === 0 && infobox[i + 1] === '}') {
+        break;
+      }
+
+      value += infobox[i];
+      i++;
+    }
+
+    const normalized = normalizeValue(value);
+    return normalized || null;
   };
 
   const maps = [];
@@ -85,12 +153,17 @@ function parseTournament(wikitext, pageTitle) {
     else break;
   }
 
+  const name = getValue('name');
+  const date = getValue('date');
+  const prizePoolRaw = getValue('prizepool');
+  const format = getValue('format');
+
   return {
-    name: getValue('name') || pageTitle,
+    name: name || pageTitle.replace(/_/g, ' '),
     liquipedia_slug: pageTitle,
-    date: getValue('date') || null,
-    prize_pool: getValue('prizepool') ? parseInt(getValue('prizepool')) : null,
-    format: getValue('format')?.replace(/<br\s*\/?>/gi, ' ') || null,
+    date: date || null,
+    prize_pool: prizePoolRaw ? parseInt(prizePoolRaw, 10) : null,
+    format: format || null,
     maps: maps.filter(m => m)
   };
 }

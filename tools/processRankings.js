@@ -7,7 +7,9 @@ import {
   hasValidScores,
   initializeStats,
   sortRankings,
-  getRoundSortOrder
+  getRoundSortOrder,
+  createDeterministicPlayerNameNormalizer,
+  normalizeMatchPlayerNames
 } from './rankingUtils.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -89,7 +91,7 @@ async function loadTournamentFiles() {
  * @param {Array} seasons - Array of allowed seasons (strings like "2025")
  * @returns {Array} Array of enriched match objects
  */
-function collectMatchesFromTournaments(tournaments, mainCircuitOnly = false, seasons = null) {
+function collectMatchesFromTournaments(tournaments, mainCircuitOnly = false, seasons = null, normalizePlayerName = null) {
   const allMatches = [];
 
   for (const tournament of tournaments) {
@@ -129,8 +131,9 @@ function collectMatchesFromTournaments(tournaments, mainCircuitOnly = false, sea
 
     for (const match of tournament.matches) {
       if (hasValidScores(match)) {
+        const normalizedMatch = normalizeMatchPlayerNames(match, normalizePlayerName);
         allMatches.push({
-          ...match,
+          ...normalizedMatch,
           tournamentDate,
           tournamentSlug: tournamentSlug || tournament.tournament?.name || 'unknown'
         });
@@ -454,12 +457,13 @@ export async function calculateRankings(seeds = null, mainCircuitOnly = false, s
   try {
     // Load player defaults first
     const playerDefaults = await loadPlayerDefaults();
+    const normalizePlayerName = createDeterministicPlayerNameNormalizer(Object.keys(playerDefaults));
     
     // Load tournament files
     const tournaments = await loadTournamentFiles();
 
     // Collect matches from tournaments
-    const allMatches = collectMatchesFromTournaments(tournaments, mainCircuitOnly, seasons);
+    const allMatches = collectMatchesFromTournaments(tournaments, mainCircuitOnly, seasons, normalizePlayerName);
 
     // Sort matches chronologically
     const sortedMatches = sortAllMatches(allMatches);

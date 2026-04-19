@@ -32,7 +32,6 @@
   "trigger": "Protoss",
   "uThermal": "Terran",
   "Harstem": "Protoss",
-  "HeroMarine": "Terran",
   "Lambo": "Zerg",
   "Tiger": "Protoss",
   "Serral": "Zerg",
@@ -152,7 +151,6 @@
   "Molten": "Protoss",
   "Bumbz": "Protoss",
   "Taruviel": "Protoss",
-  "iba": "Zerg",
   "sebesdes": "Protoss",
   "shinobu": "Zerg",
   "KuroiHumor": "Zerg",
@@ -176,9 +174,14 @@
   "SunSet": "Zerg",
   "AlexeiStukov": "Zerg",
   "Coral": "Terran",
-  "LateleX": "Protoss",
   "NightMare": "Protoss",
   "CalfToWin": "Protoss",
   "MaxMor": "Protoss",
-  "LetaleX": "Protoss"
+  "LetaleX": "Protoss",
+  "XIEAJ": "Protoss",
+  "Classic": "Protoss",
+  "Ateshi": "Terran",
+  "dancingpants": "Zerg",
+  "ReBellioN": "Protoss",
+  "Koht": "Zerg"
 }

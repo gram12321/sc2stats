@@ -11,12 +11,28 @@ import {
   hasValidScores,
   initializeStats,
   sortRankings,
-  getRoundSortOrder
+  getRoundSortOrder,
+  createDeterministicPlayerNameNormalizer,
+  normalizeMatchPlayerNames
 } from './rankingUtils.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const outputDir = join(__dirname, '..', 'output');
+const playerDefaultsFile = join(outputDir, 'player_defaults.json');
+
+async function loadPlayerDefaults() {
+  try {
+    const content = await readFile(playerDefaultsFile, 'utf-8');
+    return JSON.parse(content);
+  } catch (err) {
+    if (err.code === 'ENOENT') {
+      return {};
+    }
+    console.error('Error loading player defaults:', err);
+    return {};
+  }
+}
 
 const DEFAULT_TEAM_RATING_OPTIONS = {
   useIntermediateTeamRating: false,
@@ -438,6 +454,9 @@ export async function calculateTeamRankings(seeds = null, mainCircuitOnly = fals
   const allMatches = [];
 
   try {
+    const playerDefaults = await loadPlayerDefaults();
+    const normalizePlayerName = createDeterministicPlayerNameNormalizer(Object.keys(playerDefaults));
+
     // Read all JSON files from output directory
     const files = await readdir(outputDir);
     const jsonFiles = files.filter(f => f.endsWith('.json') && f !== 'player_defaults.json' && f !== 'player_countries.json' && !f.startsWith('seeded_'));
@@ -485,8 +504,9 @@ export async function calculateTeamRankings(seeds = null, mainCircuitOnly = fals
         // Add tournament date and slug to each match for sorting
         for (const match of data.matches) {
           if (hasValidScores(match)) {
+            const normalizedMatch = normalizeMatchPlayerNames(match, normalizePlayerName);
             allMatches.push({
-              ...match,
+              ...normalizedMatch,
               tournamentDate,
               tournamentSlug: data.tournament?.liquipedia_slug || file
             });
@@ -534,7 +554,8 @@ export async function calculateTeamRankings(seeds = null, mainCircuitOnly = fals
       ...result,
       summary: {
         ...result.summary,
-        tournamentsIncluded: new Set(allMatches.map(match => match.tournamentSlug)).size
+        tournamentsIncluded: new Set(allMatches.map(match => match.tournamentSlug)).size,
+        playerDefaultsLoaded: Object.keys(playerDefaults).length
       }
     };
 
