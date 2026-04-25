@@ -14,6 +14,7 @@ import {
   createDeterministicPlayerNameNormalizer,
   normalizeMatchPlayerNames
 } from './rankingUtils.js';
+import { getRaceAbbr } from './raceUtils.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -65,16 +66,8 @@ function getPlayerRace(player, playerDefaults = {}) {
 function getRaceMatchupKey(race1, race2) {
   if (!race1 || !race2) return null;
 
-  // Race abbreviations
-  const raceAbbr = {
-    'Protoss': 'P',
-    'Terran': 'T',
-    'Zerg': 'Z',
-    'Random': 'R'
-  };
-
-  const abbr1 = raceAbbr[race1] || race1;
-  const abbr2 = raceAbbr[race2] || race2;
+  const abbr1 = getRaceAbbr(race1);
+  const abbr2 = getRaceAbbr(race2);
 
   // Directional: PvT is different from TvP
   return `${abbr1}v${abbr2}`;
@@ -443,18 +436,6 @@ export async function calculateRaceRankings(mainCircuitOnly = false, seasons = n
         impact.rankAfterConfidence = updatedStats?.confidence || 0;
       }
 
-      // Get player races for display
-      const getRaceAbbr = (race) => {
-        if (!race) return null;
-        const raceAbbr = {
-          'Protoss': 'P',
-          'Terran': 'T',
-          'Zerg': 'Z',
-          'Random': 'R'
-        };
-        return raceAbbr[race] || race[0];
-      };
-
       // Store match history entry
       matchHistory.push({
         match_id: match.match_id,
@@ -484,17 +465,10 @@ export async function calculateRaceRankings(mainCircuitOnly = false, seasons = n
 
     // Calculate combined race statistics (TvX, ZvX, PvX)
     const combinedStats = new Map();
-    const raceAbbr = {
-      'Protoss': 'P',
-      'Terran': 'T',
-      'Zerg': 'Z',
-      'Random': 'R'
-    };
-
     // Aggregate all matchups for each race
     for (const matchup of rankings) {
       const race1 = matchup.race1;
-      const raceAbbr1 = raceAbbr[race1];
+      const raceAbbr1 = getRaceAbbr(race1);
 
       const combinedKey = `${raceAbbr1}vX`;
 

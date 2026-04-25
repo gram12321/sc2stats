@@ -17,6 +17,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Input } from '../components/ui/input';
 import { RaceBadge } from '../components/ui/RaceBadge';
 import { Button } from '../components/ui/button';
+import { Tooltip } from '../components/ui/tooltip';
 import {
   Search,
   ArrowUpDown,
@@ -39,6 +40,9 @@ interface RaceRanking {
   losses: number;
   draws?: number;
   points: number;
+  previousPoints?: number;
+  pointChange?: number;
+  pointDirection?: 'up' | 'down' | 'same';
 }
 
 interface RaceRankingsProps { }
@@ -348,6 +352,53 @@ export function RaceRankings({ }: RaceRankingsProps) {
       : <ArrowDown className="ml-1 h-3 w-3 text-primary" />;
   };
 
+  const getPointChangeTooltip = (pointChange: number, previousPoints: number | null, currentPoints: number) => {
+    const absChange = Math.abs(pointChange);
+    const previousLabel = previousPoints !== null ? formatRankingPoints(previousPoints) : 'unknown';
+    const currentLabel = formatRankingPoints(currentPoints);
+
+    if (pointChange > 0) {
+      return `Gained ${formatRankingPoints(absChange)} points since the latest tournament (${previousLabel} to ${currentLabel}).`;
+    }
+
+    if (pointChange < 0) {
+      return `Lost ${formatRankingPoints(absChange)} points since the latest tournament (${previousLabel} to ${currentLabel}).`;
+    }
+
+    return `No point change since the latest tournament (${currentLabel}).`;
+  };
+
+  const renderPointChange = (matchup: RaceRanking) => {
+    if (typeof matchup.pointChange !== 'number') return null;
+
+    const pointChange = matchup.pointChange;
+    const tooltip = getPointChangeTooltip(
+      pointChange,
+      typeof matchup.previousPoints === 'number' ? matchup.previousPoints : null,
+      matchup.points
+    );
+
+    return (
+      <Tooltip content={<span className="text-xs">{tooltip}</span>} side="top">
+        <span
+          className={cn(
+            'inline-flex cursor-help items-center gap-0.5 text-[10px] font-semibold',
+            pointChange > 0
+              ? 'text-emerald-500 dark:text-emerald-400'
+              : pointChange < 0
+                ? 'text-rose-500 dark:text-rose-400'
+                : 'text-muted-foreground'
+          )}
+        >
+          {pointChange > 0 && <ArrowUp className="h-3 w-3" />}
+          {pointChange < 0 && <ArrowDown className="h-3 w-3" />}
+          {pointChange === 0 && <Minus className="h-3 w-3" />}
+          {formatRankingPoints(Math.abs(pointChange))}
+        </span>
+      </Tooltip>
+    );
+  };
+
   const renderTableHeaders = (isCombined: boolean) => (
     <TableRow className="hover:bg-transparent border-border/50">
       <TableHead className="w-[80px] cursor-pointer" onClick={() => handleSort('rank', isCombined)}>
@@ -456,9 +507,12 @@ export function RaceRankings({ }: RaceRankingsProps) {
                       <TableCell className="text-center text-rose-500">{matchup.losses}</TableCell>
                       <TableCell className="text-center text-muted-foreground">{matchup.draws || 0}</TableCell>
                       <TableCell className="text-center font-mono font-bold">
-                        <span className={matchup.points > 0 ? "text-emerald-500" : matchup.points < 0 ? "text-rose-500" : "text-muted-foreground"}>
-                          {matchup.points > 0 ? '+' : ''}{formatRankingPoints(matchup.points)}
-                        </span>
+                        <div className="flex items-center justify-center gap-2">
+                          <span className={matchup.points > 0 ? "text-emerald-500" : matchup.points < 0 ? "text-rose-500" : "text-muted-foreground"}>
+                            {matchup.points > 0 ? '+' : ''}{formatRankingPoints(matchup.points)}
+                          </span>
+                          {renderPointChange(matchup)}
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -515,9 +569,12 @@ export function RaceRankings({ }: RaceRankingsProps) {
                       <TableCell className="text-center text-rose-500">{matchup.losses}</TableCell>
                       <TableCell className="text-center text-muted-foreground">{matchup.draws || 0}</TableCell>
                       <TableCell className="text-center font-mono font-bold">
-                        <span className={matchup.points > 0 ? "text-emerald-500" : matchup.points < 0 ? "text-rose-500" : "text-muted-foreground"}>
-                          {matchup.points > 0 ? '+' : ''}{formatRankingPoints(matchup.points)}
-                        </span>
+                        <div className="flex items-center justify-center gap-2">
+                          <span className={matchup.points > 0 ? "text-emerald-500" : matchup.points < 0 ? "text-rose-500" : "text-muted-foreground"}>
+                            {matchup.points > 0 ? '+' : ''}{formatRankingPoints(matchup.points)}
+                          </span>
+                          {renderPointChange(matchup)}
+                        </div>
                       </TableCell>
                     </TableRow>
                   );

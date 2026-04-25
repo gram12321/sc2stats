@@ -8,6 +8,7 @@ import { calculateTeamRankings } from '../tools/calculateTeamRankings.js';
 import { calculateRaceRankings } from '../tools/calculateRaceRankings.js';
 import { calculateTeamRaceRankings } from '../tools/calculateTeamRaceRankings.js';
 import { summarizeMapRecording } from '../tools/mapRecordingSummary.js';
+import { getRaceAbbr } from '../tools/raceUtils.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -311,6 +312,99 @@ function buildTeamDeltasForTournament(matchHistory, tournamentSlug) {
   return deltasByTeam;
 }
 
+function buildRacePointDeltasForTournament(matchHistory, tournamentSlug) {
+  const history = Array.isArray(matchHistory) ? matchHistory : [];
+  const deltasByRace = new Map();
+  const deltasByCombinedRace = new Map();
+  const getCombinedRaceKey = (race) => `${getRaceAbbr(race)}vX`;
+
+  if (!tournamentSlug) {
+    return { deltasByRace, deltasByCombinedRace };
+  }
+
+  for (const match of history) {
+    if (match?.tournament_slug !== tournamentSlug) continue;
+
+    const impacts = match?.race_impacts || {};
+    for (const [matchupKey, impact] of Object.entries(impacts)) {
+      const ratingChange = Number(impact?.ratingChange) || 0;
+      const race1 = impact?.race1;
+      const race2 = impact?.race2;
+
+      deltasByRace.set(
+        matchupKey,
+        (deltasByRace.get(matchupKey) || 0) + ratingChange
+      );
+
+      if (race1) {
+        const combinedKey = getCombinedRaceKey(race1);
+        deltasByCombinedRace.set(
+          combinedKey,
+          (deltasByCombinedRace.get(combinedKey) || 0) + ratingChange
+        );
+      }
+
+      if (race1 && race2) {
+        const inverseKey = `${getRaceAbbr(race2)}v${getRaceAbbr(race1)}`;
+        if (!Object.prototype.hasOwnProperty.call(impacts, inverseKey)) {
+          deltasByRace.set(
+            inverseKey,
+            (deltasByRace.get(inverseKey) || 0) - ratingChange
+          );
+
+          const combinedKey = getCombinedRaceKey(race2);
+          deltasByCombinedRace.set(
+            combinedKey,
+            (deltasByCombinedRace.get(combinedKey) || 0) - ratingChange
+          );
+        }
+      }
+    }
+  }
+
+  return { deltasByRace, deltasByCombinedRace };
+}
+
+function buildTeamRacePointDeltasForTournament(matchHistory, tournamentSlug) {
+  const history = Array.isArray(matchHistory) ? matchHistory : [];
+  const deltasByMatchup = new Map();
+  const deltasByCombinedCombo = new Map();
+
+  if (!tournamentSlug) {
+    return { deltasByMatchup, deltasByCombinedCombo };
+  }
+
+  for (const match of history) {
+    if (match?.tournament_slug !== tournamentSlug) continue;
+
+    const impacts = match?.combo_impacts || {};
+    const impactedCombos = Object.keys(impacts);
+
+    for (const combo of impactedCombos) {
+      const ratingChange = Number(impacts[combo]?.ratingChange) || 0;
+      deltasByCombinedCombo.set(
+        combo,
+        (deltasByCombinedCombo.get(combo) || 0) + ratingChange
+      );
+    }
+
+    if (impactedCombos.length < 2) continue;
+
+    const [comboA, comboB] = impactedCombos;
+    const matchupKey = [comboA, comboB].sort().join(' vs ');
+    const delta = (Number(impacts[comboA]?.ratingChange) || 0)
+      - (Number(impacts[comboB]?.ratingChange) || 0);
+    const orientedDelta = comboA < comboB ? delta : -delta;
+
+    deltasByMatchup.set(
+      matchupKey,
+      (deltasByMatchup.get(matchupKey) || 0) + orientedDelta
+    );
+  }
+
+  return { deltasByMatchup, deltasByCombinedCombo };
+}
+
 function createBaselineRankMap(rankings, getEntityKey, deltasByEntity) {
   const baselineRows = (Array.isArray(rankings) ? rankings : []).map((row) => {
     const entityKey = String(getEntityKey(row) || '');
@@ -406,6 +500,86 @@ function withTeamRankMovement(rankings, matchHistory) {
       movementTournamentSlug: latestTournamentSlug
     };
   });
+}
+
+function withPointMovement(rankings, matchHistory, getEntityKey, deltasByEntity) {
+  const latestTournamentSlug = getLatestTournamentSlugFromHistory(matchHistory);
+
+  return (Array.isArray(rankings) ? rankings : []).map((row) => {
+    const entityKey = String(getEntityKey(row) || '');
+    const pointChange = Number(deltasByEntity.get(entityKey)) || 0;
+    const currentPoints = Number(row?.points) || 0;
+    const previousPoints = currentPoints - pointChange;
+    const pointDirection = pointChange > 0 ? 'up' : (pointChange < 0 ? 'down' : 'same');
+
+    return {
+      ...row,
+      previousPoints,
+      pointChange,
+      pointDirection,
+      movementBasis: 'latest-tournament',
+      movementTournamentSlug: latestTournamentSlug
+    };
+  });
+}
+
+function withRacePointMovement(rankings, combinedRankings, matchHistory) {
+  const history = Array.isArray(matchHistory) ? matchHistory : [];
+  const latestTournamentSlug = getLatestTournamentSlugFromHistory(history);
+  const { deltasByRace, deltasByCombinedRace } = buildRacePointDeltasForTournament(
+    history,
+    latestTournamentSlug
+  );
+
+  return {
+    rankings: withPointMovement(rankings, history, (row) => row?.name, deltasByRace),
+    combinedRankings: withPointMovement(
+      combinedRankings,
+      history,
+      (row) => row?.name,
+      deltasByCombinedRace
+    )
+  };
+}
+
+function withTeamRacePointMovement(rankings, combinedRankings, matchHistory) {
+  const history = Array.isArray(matchHistory) ? matchHistory : [];
+  const latestTournamentSlug = getLatestTournamentSlugFromHistory(history);
+  const { deltasByMatchup, deltasByCombinedCombo } = buildTeamRacePointDeltasForTournament(
+    history,
+    latestTournamentSlug
+  );
+  const matchupKey = (row) => [row?.combo1, row?.combo2].filter(Boolean).sort().join(' vs ');
+
+  const rankingsWithMovement = withPointMovement(
+    rankings,
+    history,
+    matchupKey,
+    deltasByMatchup
+  ).map((row) => {
+    const sortedCombos = [row?.combo1, row?.combo2].filter(Boolean).sort();
+    const storedDelta = Number(deltasByMatchup.get(sortedCombos.join(' vs '))) || 0;
+    const pointChange = row.combo1 === sortedCombos[0] ? storedDelta : -storedDelta;
+    const previousPoints = (Number(row?.points) || 0) - pointChange;
+    const pointDirection = pointChange > 0 ? 'up' : (pointChange < 0 ? 'down' : 'same');
+
+    return {
+      ...row,
+      previousPoints,
+      pointChange,
+      pointDirection
+    };
+  });
+
+  return {
+    rankings: rankingsWithMovement,
+    combinedRankings: withPointMovement(
+      combinedRankings,
+      history,
+      (row) => row?.combo1,
+      deltasByCombinedCombo
+    )
+  };
 }
 
 function logApiSummary(req, _startedAt, details = []) {
@@ -1561,11 +1735,12 @@ app.get('/api/race-rankings', async (req, res) => {
     const hideRandom = req.query.hideRandom === 'true';
     const seasons = req.query.seasons ? req.query.seasons.split(',') : null;
     const { rankings, combinedRankings, matchHistory, summary } = await calculateRaceRankings(isMainCircuitOnly, seasons, hideRandom);
+    const rankingsWithMovement = withRacePointMovement(rankings, combinedRankings, matchHistory);
     logApiSummary(req, startedAt, [
       formatFilterSummary({ mainCircuitOnly: isMainCircuitOnly, seasons, hideRandom }),
       formatRaceSummary(summary)
     ]);
-    res.json({ rankings, combinedRankings, matchHistory });
+    res.json({ ...rankingsWithMovement, matchHistory });
   } catch (error) {
     console.error('Error calculating race rankings:', error);
     res.status(500).json({ error: 'Failed to calculate race rankings' });
@@ -1589,14 +1764,8 @@ app.get('/api/race-matchup/:race1/:race2', async (req, res) => {
     const { matchHistory: playerMatchHistory } = await calculateRankings(null, isMainCircuitOnly, seasons);
 
     // Create matchup key (e.g., "PvT")
-    const raceAbbr = {
-      'Protoss': 'P',
-      'Terran': 'T',
-      'Zerg': 'Z',
-      'Random': 'R'
-    };
-    const abbr1 = raceAbbr[race1] || race1[0];
-    const abbr2 = raceAbbr[race2] || race2[0];
+    const abbr1 = getRaceAbbr(race1);
+    const abbr2 = getRaceAbbr(race2);
     const matchupKey = `${abbr1}v${abbr2}`;
 
     // Create maps for quick lookup
@@ -1726,13 +1895,14 @@ app.get('/api/team-race-rankings', async (req, res) => {
         team_impacts: teamMatch?.team_impacts
       };
     });
+    const rankingsWithMovement = withTeamRacePointMovement(rankings, combinedRankings, mergedMatchHistory);
 
     logApiSummary(req, startedAt, [
       formatFilterSummary({ mainCircuitOnly: isMainCircuitOnly, seasons, hideRandom }),
       formatRaceSummary(summary, 'team-race')
     ]);
 
-    res.json({ rankings, combinedRankings, matchHistory: mergedMatchHistory });
+    res.json({ ...rankingsWithMovement, matchHistory: mergedMatchHistory });
   } catch (error) {
     console.error('Error calculating team race rankings:', error);
     res.status(500).json({ error: 'Failed to calculate team race rankings' });

@@ -11,6 +11,7 @@ import {
   createDeterministicPlayerNameNormalizer,
   normalizeMatchPlayerNames
 } from './rankingUtils.js';
+import { getRaceAbbr } from './raceUtils.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -262,17 +263,6 @@ function calculateRankingsFromMatches(sortedMatches, seeds = null, playerDefault
   const playerStats = new Map();
   const matchHistory = [];
   const seededPlayersUsed = new Set();
-
-  const getRaceAbbr = (race) => {
-    if (!race) return null;
-    const raceAbbr = {
-      'Protoss': 'P',
-      'Terran': 'T',
-      'Zerg': 'Z',
-      'Random': 'R'
-    };
-    return raceAbbr[race] || race[0];
-  };
 
   for (const match of sortedMatches) {
     // Determine winner

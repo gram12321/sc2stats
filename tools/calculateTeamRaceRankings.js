@@ -14,6 +14,7 @@ import {
   createDeterministicPlayerNameNormalizer,
   normalizeMatchPlayerNames
 } from './rankingUtils.js';
+import { getRaceAbbr } from './raceUtils.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -85,16 +86,8 @@ function getTeamRaces(team, playerDefaults = {}) {
 function normalizeTeamRaceCombo(race1, race2) {
   if (!race1 || !race2) return null;
 
-  // Race abbreviations
-  const raceAbbr = {
-    'Protoss': 'P',
-    'Terran': 'T',
-    'Zerg': 'Z',
-    'Random': 'R'
-  };
-
-  const abbr1 = raceAbbr[race1] || race1;
-  const abbr2 = raceAbbr[race2] || race2;
+  const abbr1 = getRaceAbbr(race1);
+  const abbr2 = getRaceAbbr(race2);
 
   // Sort alphabetically to normalize (PT = TP)
   const sorted = [abbr1, abbr2].sort();
@@ -455,18 +448,6 @@ export async function calculateTeamRaceRankings(mainCircuitOnly = false, seasons
       const team2Stats = (team2Combo === combo1)
         ? { ratingBefore: combo1RatingBefore, result: combo1Result, won: combo1Won, isDraw: isDraw, opponentRating: combo2RatingBefore }
         : { ratingBefore: combo2RatingBefore, result: combo2Result, won: combo1Lost, isDraw: isDraw, opponentRating: combo1RatingBefore };
-
-      // Get player races for display
-      const getRaceAbbr = (race) => {
-        if (!race) return null;
-        const raceAbbr = {
-          'Protoss': 'P',
-          'Terran': 'T',
-          'Zerg': 'Z',
-          'Random': 'R'
-        };
-        return raceAbbr[race] || race[0];
-      };
 
       // Store match history entry
       matchHistory.push({

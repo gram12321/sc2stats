@@ -5,6 +5,8 @@ import { formatRankingPoints, getRoundSortOrder } from '../lib/utils';
 import { Race } from '../types/tournament';
 import { getPlayerDefaults } from '../lib/playerDefaults';
 import { MatchHistoryItem } from '../components/MatchHistoryItem';
+import { Tooltip } from '../components/ui/tooltip';
+import { ArrowDown, ArrowUp, Minus } from 'lucide-react';
 
 
 interface TeamRaceRanking {
@@ -20,6 +22,9 @@ interface TeamRaceRanking {
   losses: number; // losses for combo1 (wins for combo2)
   draws?: number;
   points: number; // net points for combo1
+  previousPoints?: number;
+  pointChange?: number;
+  pointDirection?: 'up' | 'down' | 'same';
 }
 
 interface TeamRaceRankingsProps { }
@@ -404,6 +409,51 @@ export function TeamRaceRankings({ }: TeamRaceRankingsProps) {
     }
   };
 
+  const getPointChangeTooltip = (pointChange: number, previousPoints: number | null, currentPoints: number) => {
+    const absChange = Math.abs(pointChange);
+    const previousLabel = previousPoints !== null ? formatRankingPoints(previousPoints) : 'unknown';
+    const currentLabel = formatRankingPoints(currentPoints);
+
+    if (pointChange > 0) {
+      return `Gained ${formatRankingPoints(absChange)} points since the latest tournament (${previousLabel} to ${currentLabel}).`;
+    }
+
+    if (pointChange < 0) {
+      return `Lost ${formatRankingPoints(absChange)} points since the latest tournament (${previousLabel} to ${currentLabel}).`;
+    }
+
+    return `No point change since the latest tournament (${currentLabel}).`;
+  };
+
+  const renderPointChange = (matchup: TeamRaceRanking) => {
+    if (typeof matchup.pointChange !== 'number') return null;
+
+    const pointChange = matchup.pointChange;
+    const tooltip = getPointChangeTooltip(
+      pointChange,
+      typeof matchup.previousPoints === 'number' ? matchup.previousPoints : null,
+      matchup.points
+    );
+
+    return (
+      <Tooltip content={<span className="text-xs">{tooltip}</span>} side="top">
+        <span
+          className={`inline-flex cursor-help items-center gap-0.5 text-[10px] font-semibold ${pointChange > 0
+            ? 'text-green-600'
+            : pointChange < 0
+              ? 'text-red-600'
+              : 'text-gray-500'
+            }`}
+        >
+          {pointChange > 0 && <ArrowUp className="h-3 w-3" />}
+          {pointChange < 0 && <ArrowDown className="h-3 w-3" />}
+          {pointChange === 0 && <Minus className="h-3 w-3" />}
+          {formatRankingPoints(Math.abs(pointChange))}
+        </span>
+      </Tooltip>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto p-6">
@@ -606,16 +656,19 @@ export function TeamRaceRankings({ }: TeamRaceRankingsProps) {
                             </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-center">
-                            <span
-                              className={`text-sm font-bold ${matchup.points > 0
-                                ? 'text-green-600'
-                                : matchup.points < 0
-                                  ? 'text-red-600'
-                                  : 'text-gray-600'
-                                }`}
-                            >
-                              {matchup.points > 0 ? '+' : ''}{formatRankingPoints(matchup.points)}
-                            </span>
+                            <div className="flex items-center justify-center gap-2">
+                              <span
+                                className={`text-sm font-bold ${matchup.points > 0
+                                  ? 'text-green-600'
+                                  : matchup.points < 0
+                                    ? 'text-red-600'
+                                    : 'text-gray-600'
+                                  }`}
+                              >
+                                {matchup.points > 0 ? '+' : ''}{formatRankingPoints(matchup.points)}
+                              </span>
+                              {renderPointChange(matchup)}
+                            </div>
                           </td>
                         </tr>
                       ))}
@@ -774,16 +827,19 @@ export function TeamRaceRankings({ }: TeamRaceRankingsProps) {
                               </span>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-center">
-                              <span
-                                className={`text-sm font-bold ${matchup.points > 0
-                                  ? 'text-green-600'
-                                  : matchup.points < 0
-                                    ? 'text-red-600'
-                                    : 'text-gray-600'
-                                  }`}
-                              >
-                                {matchup.points > 0 ? '+' : ''}{formatRankingPoints(matchup.points)}
-                              </span>
+                              <div className="flex items-center justify-center gap-2">
+                                <span
+                                  className={`text-sm font-bold ${matchup.points > 0
+                                    ? 'text-green-600'
+                                    : matchup.points < 0
+                                      ? 'text-red-600'
+                                      : 'text-gray-600'
+                                    }`}
+                                >
+                                  {matchup.points > 0 ? '+' : ''}{formatRankingPoints(matchup.points)}
+                                </span>
+                                {renderPointChange(matchup)}
+                              </div>
                             </td>
                           </tr>
                         );
