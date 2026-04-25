@@ -92,7 +92,7 @@ export function Info({}: InfoProps) {
               <h3 className="font-bold text-gray-900 mb-2">Adjusted K (3 Layers)</h3>
               <div className="bg-gray-50 p-4 rounded-md space-y-2">
                 <div><strong>Adjusted K = Base K * Confidence Multiplier * Opponent-Newness Multiplier</strong></div>
-                <div><strong>Base K schedule:</strong> matches 1-2 = 80, 3-4 = 60, 5-8 = 50, then <code>min(50, 32 + 100/matches)</code>.</div>
+                <div><strong>Base K schedule:</strong> matches 1-2 = 80, 3-4 = 60, 5-8 = 50, then <code>min(50, 24 + 100/matches)</code>.</div>
                 <div><strong>Confidence multiplier:</strong> uses combined confidence of both sides (0.90x at 0%, 1.00x at 50%, 1.10x at 100%).</div>
                 <div>
                   <strong>Opponent-newness protection:</strong> strongest versus very new opponents, then fades with opponent match count.

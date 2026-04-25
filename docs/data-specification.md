@@ -203,9 +203,9 @@ The ranking engine uses:
 
 1. **Newness K-factor (base K)**:
    - Matches 1-2: `K = 80`
-   - Matches 3-4: `K = 40`
+   - Matches 3-4: `K = 60`
    - Matches 5-8: `K = 50`
-   - Matches 9+: `K = min(50, 32 + 100/matches)`
+   - Matches 9+: `K = min(50, 24 + 100/matches)`
 
 2. **Confidence multiplier (combined confidence of both opponents)**:
    - 0% combined confidence -> `0.90x`

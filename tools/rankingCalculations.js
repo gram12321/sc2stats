@@ -14,7 +14,7 @@
  * - Matches 1-2: K = 80 (initial placement)
  * - Matches 3-4: K = 60 (early damping)
  * - Matches 5-8: K = 50 (confirmation period)
- * - Matches 9+: Adaptive K = 32 + (100 / matches), capped at 50
+ * - Matches 9+: Adaptive K = 24 + (100 / matches), capped at 50
  * 
  * @param {number} matchCount - Number of matches played
  * @returns {number} K-factor for rating calculations
@@ -22,20 +22,19 @@
 export function getNewnessKFactor(matchCount) {
   // Zig-Zag approach for tournament realism
   // Matches 1-2: High impact for initial placement (e.g. Ro16)
-  if (matchCount <= 2) return 80;
+  if (matchCount <= 2) return 60;
 
   // Matches 3-4: Dampened impact for deep tournament run
   // Prevents double bonus of "High K" + "Beating Top Seed"
-  if (matchCount <= 4) return 60;
+  if (matchCount <= 4) return 40;
 
   // Matches 5-8: Confirmation tournament (2nd event)
   // Higher again to allow movement now that they've settled slightly
-  if (matchCount <= 8) return 50;
+  if (matchCount <= 8) return 25;
 
-  // Adaptive Decay for long term
-  // Starts around 43 (at match 9) and decays towards 32
-  // Formula: Base 32 + (Bonus / Matches)
-  const adaptiveK = 32 + (100 / matchCount);
+  // Established-phase dampening.
+  // Starts around 35 at match 9 and decays towards 24 while preserving early volatility.
+  const adaptiveK = 18 + (100 / matchCount);
   return Math.min(50, adaptiveK);
 }
 
