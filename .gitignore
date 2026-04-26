@@ -63,3 +63,5 @@ coverage
 # Output directories
 *.json.backup
 output/*_scenario_report.json
+output/*_prediction_quality_report.json
+output/prediction_quality_report.json

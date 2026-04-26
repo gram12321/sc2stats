@@ -51,6 +51,97 @@ Use this exact structure for each entry:
 
 ---
 
+## Version 1.007 - Established ranking dampening and K scenario analysis
+**Date:** 2026-04-26 | **Commit(s):** 6a9c0177d6ca6df38e14b6079fa50bd5762fcaca | **Stats:** +284 / -13
+
+### Summary
+- Reduced the live newness K schedule so established rankings, and especially later-match entities, move less sharply.
+- Added a base-K scenario analysis CLI for comparing dampening candidates across match counts, confidence levels, series lengths, expected-win bands, and close/sweep result shapes.
+- Updated K-factor documentation and ignored generated scenario-report JSON artifacts.
+
+### Changes
+- `.gitignore` - Ignores generated `output/*_scenario_report.json` analysis files.
+- `package.json` - Added the `analyze-base-k` script.
+- `docs/data-specification.md`, `src/pages/Info.tsx` - Updated public K-factor explanation text for the established-phase formula, though these docs still need a follow-up pass to match the live `18 + 100/matches` implementation exactly.
+- **NEW FILE:** `tools/analyzeBaseKScenarios.js` (270 lines) - CLI scenario matrix for comparing baseline and candidate established K schedules.
+- `tools/rankingCalculations.js` - Changed `getNewnessKFactor()` to lower K values: matches 1-2 now return `60`, matches 3-4 return `40`, matches 5-8 return `25`, and matches 9+ use `min(50, 18 + 100/matches)`.
+
+### Notes
+- This is a balancing change: it intentionally reduces volatility for entities with established match history while preserving a higher-provisional phase.
+- Follow-up: `tools/rankingCalculations.js` comments, `docs/data-specification.md`, and `src/pages/Info.tsx` still describe older/24-based K values in places; the live implementation now returns `60`, `40`, `25`, then `min(50, 18 + 100/matches)`.
+
+---
+
+## Version 1.006 - Bonus Cup 8 data and race point movement
+**Date:** 2026-04-25 | **Commit(s):** 37c5948ee165022d8681189dfbc7cc54dcd65b7c | **Stats:** +776 / -101
+
+### Summary
+- Added Bonus Cup 8 tournament data with bracket scorelines and the event map pool.
+- Race and Team Race rankings now expose latest-tournament point movement alongside current points.
+- Backend race abbreviation logic was centralized for race, team-race, and matchup endpoints.
+
+### Changes
+- `api/server.js` - Added latest-tournament point-delta builders for race and team-race rankings, returning `previousPoints`, `pointChange`, `pointDirection`, and movement metadata in API responses.
+- **NEW FILE:** `output/UThermal_2v2_Circuit_2026_Bonus_Cup_8.json` (425 lines) - Bonus Cup 8 bracket, scorelines, teams, and map pool.
+- `output/player_countries.json`, `output/player_defaults.json` - Added country/race metadata for newly covered Bonus Cup 8 players.
+- `src/pages/RaceRankings.tsx`, `src/pages/TeamRaceRankings.tsx` - Added tooltip-backed point-change indicators next to current race and team-race points.
+- `tools/calculateRaceRankings.js`, `tools/calculateTeamRaceRankings.js`, `tools/processRankings.js` - Replaced duplicated local race abbreviation maps with a shared helper.
+- **NEW FILE:** `tools/raceUtils.js` (16 lines) - Shared backend race abbreviation helper.
+
+### Notes
+- Point movement is calculated against the latest tournament found in match history, not against an arbitrary previous page load.
+
+---
+
+## Version 1.005 series - April event data, rank movement, deterministic name cleanup
+**Date:** 2026-04-19 | **Commit(s):** 02d16a742b92aa64e1b64b3e95e8f40b673a210b, 70bdf60a59f0ee12113fa67b3fc906c3b57bd3eb, 62ba30e2f80b071af8e494c705d69e908c280af4, 7af378bb6eaace225104a4b1da49cc67354cf1f0 | **Stats:** +3883 / -195
+
+### Summary
+- Added April tournament coverage for SEL Doubles 2, uThermal 2v2 Circuit April 2026, and Bonus Cup 7, plus refreshed player defaults, countries, and seeded outputs.
+- Player and Team rankings now show rank movement based on the latest tournament, with detail pages converting absolute ranks into confidence-filtered display ranks.
+- Ranking processors now normalize deterministic case/trim player-name variants, and Player Manager can apply those safe merges.
+
+### Changes
+- `api/server.js` - Added latest-tournament rank-movement helpers for player/team ranking endpoints and seeded ranking endpoints, including fallback recalculation when cached seeded rows do not include movement metadata.
+- **NEW FILE:** `output/SEL_Doubles_2.json` (467 lines) - SEL Doubles 2 tournament bracket, scorelines, teams, and map pool.
+- **NEW FILE:** `output/UThermal_2v2_Circuit_2026_4.json` (1518 lines) - uThermal 2v2 Circuit April 2026 bracket with dated matches and recorded map data.
+- **NEW FILE:** `output/UThermal_2v2_Circuit_2026_Bonus_Cup_7.json` (491 lines) - Bonus Cup 7 bracket, scorelines, teams, and map pool.
+- `output/UThermal_2v2_Circuit_2026_2.json`, `output/UThermal_2v2_Circuit_2026_3.json`, `output/UThermal_2v2_Circuit_2026_Bonus_Cup_5.json`, `output/seeded_player_rankings.json`, `output/seeded_team_rankings.json` - Corrected deterministic player-name variants such as `LateleX` to `LetaleX` and `iba` to `Iba`.
+- `output/player_countries.json`, `output/player_defaults.json` - Added metadata for April event players and removed stale duplicate/default entries.
+- `src/components/BracketView.tsx`, `src/components/MatchBox.tsx` - Loaded player countries into bracket view and displayed flags beside match-card player names.
+- `src/pages/PlayerManager.tsx` - Added deterministic case/trim merge detection, per-group apply, apply-all, refresh handling, and merge feedback.
+- `src/pages/PlayerRankings.tsx`, `src/pages/TeamRankings.tsx` - Added display-rank movement indicators and tooltips that respect the confidence-filtered visible rank list.
+- `src/pages/PlayerDetails.tsx`, `src/pages/TeamDetails.tsx` - Preserved backend chronological match order for charts, converted absolute impact ranks to display ranks, hid ranks for low-confidence entities, and appended current-rank snapshots when needed.
+- `src/components/MatchHistoryItem.tsx` - Shows post-match team points when a display rank is not available and includes those points in team-impact breakdowns.
+- `src/lib/display.ts` - Improved tournament-name formatting for slash-based sequence slugs such as `SEL_Doubles/2` and `Bonus_Cup/7`.
+- `tools/rankingUtils.js` - Added deterministic player-name normalizers and expanded `getRoundSortOrder()` for generic rounds, upper/winner rounds, playoff labels, finals variants, and show matches.
+- `tools/processRankings.js`, `tools/calculateTeamRankings.js`, `tools/calculateRaceRankings.js`, `tools/calculateTeamRaceRankings.js`, `tools/runSeededRankings.js` - Applied deterministic player-name normalization before ranking calculations.
+- `tools/scraper.js` - Hardened infobox field parsing for nested templates, wiki links, `SUBPAGENAME`/`PAGENAME`, multiline values, and normalized tournament metadata extraction.
+
+### Notes
+- The rank movement patches changed the baseline from "last impact rank" to a reconstructed pre-latest-tournament ranking, so arrows describe the latest event's effect.
+
+---
+
+## Version 1.004a - Local Manage access and navigation cleanup
+**Date:** 2026-03-23 | **Commit(s):** f78ebc74a1b5d3f57e463378bd1c538cc8c58013 | **Stats:** +374 / -311
+
+### Summary
+- The public header was simplified by moving Manage access out of the main section navigation.
+- Player Manager access is now localhost-only, with a footer Manage button shown only in local admin contexts.
+- Highlights moved under the Stats & Info area, and the Info page was rewritten around current system behavior.
+
+### Changes
+- `src/App.tsx` - Added localhost detection for the Manage route, redirects non-local Manage navigation to Info, renders a local-only Manage message when needed, and passes a Manage navigation callback to the footer.
+- `src/components/Header.tsx` - Renamed `Circuit` to `Results`, renamed `Info` to `Stats & Info`, removed the Manage section, and moved Highlights into the Info lower row.
+- `src/components/Footer.tsx` - Added a localhost-only Manage button wired through the app-level navigation callback.
+- `src/pages/Info.tsx` - Replaced the previous Info copy with a fuller system overview, ranking category descriptions, technical implementation notes, and FAQ content.
+
+### Notes
+- This keeps editing/management UI available during local development while removing it from normal public navigation.
+
+---
+
 ## Version 1.004 - Section navigation, footer summary, bracket maps, ITR visibility
 **Date:** 2026-03-23 | **Commit(s):** 37ce89faf4d7b64d38d8fc27b1fe8ec2f1bed46e | **Stats:** +758 / -137
 

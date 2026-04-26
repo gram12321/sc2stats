@@ -12,6 +12,7 @@ import { TeamDetails } from './pages/TeamDetails';
 import { Info } from './pages/Info';
 import { Highlights } from './pages/Highlights';
 import { MapData } from './pages/MapData';
+import { PredictionQuality } from './pages/PredictionQuality';
 import { Header, type HeaderNavView, type Section } from './components/Header';
 import { Footer } from './components/Footer';
 
@@ -25,6 +26,7 @@ type View =
   | 'matches'
   | 'map-data'
   | 'highlights'
+  | 'prediction-quality'
   | 'player-details'
   | 'team-details'
   | 'info';
@@ -136,6 +138,10 @@ export function App() {
           onNavigateToTeam={(p1, p2) => navigate('team-details', { teamPlayer1: p1, teamPlayer2: p2 })}
         />
       );
+    }
+
+    if (navState.view === 'prediction-quality') {
+      return <PredictionQuality />;
     }
 
     if (navState.view === 'players') {

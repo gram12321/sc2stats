@@ -1,4 +1,4 @@
-import { Trophy, Info, LayoutDashboard, Crown, Users, Swords, Map, Sparkles, Medal, Flag } from 'lucide-react';
+import { Trophy, Info, LayoutDashboard, Crown, Users, Swords, Map, Sparkles, Medal, Flag, Target } from 'lucide-react';
 import { Button } from './ui/button';
 import { cn } from '../lib/utils';
 
@@ -8,6 +8,7 @@ export type HeaderNavView =
   | 'matches'
   | 'map-data'
   | 'highlights'
+  | 'prediction-quality'
   | 'player-rankings'
   | 'team-rankings'
   | 'race-rankings'
@@ -44,6 +45,7 @@ const lowerRowItems: Record<Section, { view: HeaderNavView; icon: any; label: st
   ],
   info: [
     { view: 'info', icon: Info, label: 'Info' },
+    { view: 'prediction-quality', icon: Target, label: 'Predictions' },
     { view: 'highlights', icon: Sparkles, label: 'Highlights' }
   ]
 };

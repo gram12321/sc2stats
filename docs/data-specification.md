@@ -216,3 +216,29 @@ The ranking engine uses:
    - Uses opponent match count only (applies on both wins and losses).
    - Strongest for opponent matches 0-4, then tapers.
    - **Exception**: if both sides are very new (`<=4` matches), protection is moderated so both sides can still calibrate.
+
+## Prediction Quality Analysis
+
+Run:
+
+```bash
+npm run analyze-prediction-quality
+```
+
+The script reuses the existing chronological team-ranking pass and scores the pre-match `expectedWin` values stored in `team_impacts`. It reports broad calibration buckets, average predicted favorite probability, actual favorite win rate, calibration gap, Brier score, log loss, and breakdowns by best-of length, team maturity, pre-match confidence, and prediction source.
+
+In breakdown rows, `Predicted` is the average favorite win probability in that group, `Actual` is how often those favorites really won, and `Gap` is `Actual - Predicted` in percentage points (`pp`).
+
+The app page also includes a Settings Impact table. It keeps the current settings as the baseline and compares nearby variants such as seed on/off, ITR on/off, main-circuit scope, and season scope. `dBrier` and `dAbs gap` are deltas from the current settings; negative values are better.
+
+Useful options:
+
+```bash
+node tools/analyzePredictionQuality.js --main-circuit-only
+node tools/analyzePredictionQuality.js --season=2026
+node tools/analyzePredictionQuality.js --use-seeds
+node tools/analyzePredictionQuality.js --use-intermediate-team-rating
+node tools/analyzePredictionQuality.js --write-json
+```
+
+Exact 50/50 predictions are included in probability-error metrics but excluded from favorite-side calibration rows because there is no meaningful favorite in those matches.

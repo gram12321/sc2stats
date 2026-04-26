@@ -7,6 +7,7 @@ import { calculateRankings } from '../tools/processRankings.js';
 import { calculateTeamRankings } from '../tools/calculateTeamRankings.js';
 import { calculateRaceRankings } from '../tools/calculateRaceRankings.js';
 import { calculateTeamRaceRankings } from '../tools/calculateTeamRaceRankings.js';
+import { analyzePredictionQuality } from '../tools/analyzePredictionQuality.js';
 import { summarizeMapRecording } from '../tools/mapRecordingSummary.js';
 import { getRaceAbbr } from '../tools/raceUtils.js';
 
@@ -974,6 +975,37 @@ app.get('/api/map-recording-summary', async (req, res) => {
   } catch (err) {
     console.error('Error building map recording summary:', err);
     res.status(500).json({ error: 'Failed to build map recording summary' });
+  }
+});
+
+app.get('/api/prediction-quality', async (req, res) => {
+  const startedAt = Date.now();
+
+  try {
+    const useSeeds = req.query.useSeeds === 'true';
+    const mainCircuitOnly = req.query.mainCircuitOnly === 'true';
+    const seasons = req.query.seasons ? req.query.seasons.split(',') : null;
+    const teamOptions = getTeamRatingOptions(req);
+
+    const report = await analyzePredictionQuality({
+      useSeeds,
+      mainCircuitOnly,
+      seasons,
+      useIntermediateTeamRating: teamOptions.useIntermediateTeamRating,
+      intermediateFadeMatches: teamOptions.intermediateFadeMatches
+    });
+
+    logApiSummary(req, startedAt, [
+      formatFilterSummary({ mainCircuitOnly, seasons, useSeeds, teamOptions }),
+      `matches:${report.overall.matches}`,
+      `brier:${Number(report.overall.brierScore || 0).toFixed(4)}`,
+      `fav:${((report.overall.favoriteAccuracy || 0) * 100).toFixed(1)}%`
+    ]);
+
+    res.json(report);
+  } catch (err) {
+    console.error('Error building prediction quality report:', err);
+    res.status(500).json({ error: 'Failed to build prediction quality report' });
   }
 });
 

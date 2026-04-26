@@ -12,7 +12,8 @@
     "count-recorded-maps": "node tools/countRecordedMaps.js",
     "scrape-tournament": "node tools/scraper.js",
     "enrich-map-data": "node tools/enrichMapData.js",
-    "analyze-base-k": "node tools/analyzeBaseKScenarios.js"
+    "analyze-base-k": "node tools/analyzeBaseKScenarios.js",
+    "analyze-prediction-quality": "node tools/analyzePredictionQuality.js"
   },
   "dependencies": {
     "@radix-ui/react-checkbox": "^1.3.3",
