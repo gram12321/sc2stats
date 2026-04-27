@@ -90,7 +90,7 @@ function getAverageOpponentMatches(opponentNames, playerStats) {
   return matches.reduce((sum, count) => sum + count, 0) / matches.length;
 }
 
-function getIntermediateTeamRating(playerNames, playerStats) {
+export function getIntermediateTeamRating(playerNames, playerStats) {
   const knownPlayerRatings = playerNames
     .map(name => playerStats.get(name))
     .filter(stats => stats && (stats.matches > 0 || stats.isSeeded))
@@ -104,7 +104,7 @@ function getIntermediateTeamRating(playerNames, playerStats) {
   return knownPlayerRatings.reduce((sum, value) => sum + value, 0) / knownPlayerRatings.length;
 }
 
-function getIntermediateBlendWeight(teamMatchCount, fadeMatches) {
+export function getIntermediateBlendWeight(teamMatchCount, fadeMatches) {
   if (!Number.isFinite(fadeMatches) || fadeMatches <= 0) {
     return 0;
   }
@@ -431,9 +431,11 @@ export function calculateTeamRankingsFromMatches(sortedMatches, seeds = null, op
         intermediateBlendWeight
       };
     });
+    const intermediatePlayerRankings = sortRankings(Array.from(playerStats.values()));
 
     return {
       rankings: rankingsWithIntermediateMetadata,
+      intermediatePlayerRankings,
       matchHistory,
       summary: {
         matchesProcessed: sortedMatches.length,

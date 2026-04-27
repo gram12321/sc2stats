@@ -49,13 +49,15 @@ You need to run two servers:
 ```bash
 npm run api
 ```
-This starts the API server on `http://localhost:3001` that serves tournament JSON files.
+This starts the API server on `http://localhost:3002` and serves tournament JSON files.
 
 2. **Frontend Dev Server** (in another terminal):
 ```bash
 npm run dev
 ```
 This starts the Vite dev server (usually on `http://localhost:5173`).
+
+By default, Vite proxies `/api` requests to `http://localhost:3002`. If you run the API on a different `PORT`, update the proxy target in `vite.config.ts` to match.
 
 ### Scraper
 ```bash

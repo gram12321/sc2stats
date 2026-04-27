@@ -231,6 +231,13 @@ In breakdown rows, `Predicted` is the average favorite win probability in that g
 
 The app page also includes a Settings Impact table. It keeps the current settings as the baseline and compares nearby variants such as seed on/off, ITR on/off, main-circuit scope, and season scope. `dBrier` and `dAbs gap` are deltas from the current settings; negative values are better.
 
+The same page now includes a Match Predictor tool. It lets you choose two ranked teams and a best-of length, then returns:
+- calibrated team win probabilities,
+- effective/direct rating inputs used for the prediction,
+- and expected series scoreline probabilities.
+
+The predictor uses the active ranking filters (seeds, circuit scope, seasons, and ITR) so results stay consistent with the current ranking context.
+
 Useful options:
 
 ```bash

@@ -14,6 +14,7 @@ import { Badge } from '../components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
 import { Tooltip } from '../components/ui/tooltip';
+import { MatchPredictorPanel } from '../components/MatchPredictorPanel';
 import { useRankingSettings } from '../context/RankingSettingsContext';
 import { formatTournamentName } from '../lib/display';
 import { cn } from '../lib/utils';
@@ -713,10 +714,11 @@ export function PredictionQuality() {
         />
       </div>
 
-      <SettingsImpactTable
-        rows={settingsImpactRows}
-        isLoading={isSettingsImpactLoading}
-        error={settingsImpactError}
+      <MatchPredictorPanel
+        useSeededRankings={useSeededRankings}
+        mainCircuitOnly={mainCircuitOnly}
+        useIntermediateTeamRating={useIntermediateTeamRating}
+        seasons={seasons}
       />
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
@@ -841,6 +843,12 @@ export function PredictionQuality() {
           </div>
         </CardContent>
       </Card>
+
+      <SettingsImpactTable
+        rows={settingsImpactRows}
+        isLoading={isSettingsImpactLoading}
+        error={settingsImpactError}
+      />
     </div>
   );
 }

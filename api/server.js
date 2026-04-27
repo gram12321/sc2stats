@@ -4,10 +4,19 @@ import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import cors from 'cors';
 import { calculateRankings } from '../tools/processRankings.js';
-import { calculateTeamRankings } from '../tools/calculateTeamRankings.js';
+import {
+  calculateTeamRankings,
+  getIntermediateBlendWeight,
+  getIntermediateTeamRating
+} from '../tools/calculateTeamRankings.js';
 import { calculateRaceRankings } from '../tools/calculateRaceRankings.js';
 import { calculateTeamRaceRankings } from '../tools/calculateTeamRaceRankings.js';
 import { analyzePredictionQuality } from '../tools/analyzePredictionQuality.js';
+import {
+  calculatePopulationStats,
+  predictWinProbability,
+  calibrateWinProbability
+} from '../tools/rankingCalculations.js';
 import { summarizeMapRecording } from '../tools/mapRecordingSummary.js';
 import { getRaceAbbr } from '../tools/raceUtils.js';
 
@@ -195,6 +204,176 @@ function formatFilterSummary({ mainCircuitOnly, seasons, hideRandom, useSeeds, t
 
 function normalizeTeamKey(player1, player2) {
   return [player1, player2].filter(Boolean).sort().join('+');
+}
+
+function resolveCanonicalPlayerName(rawName, playerByLowerName) {
+  if (typeof rawName !== 'string') return null;
+  const trimmed = rawName.trim();
+  if (!trimmed) return null;
+  return playerByLowerName.get(trimmed.toLowerCase()) || trimmed;
+}
+
+function parseCanonicalTeamKey(rawKey, playerByLowerName) {
+  if (typeof rawKey !== 'string' || !rawKey.trim()) return null;
+  const parts = rawKey
+    .split('+')
+    .map((part) => resolveCanonicalPlayerName(part, playerByLowerName))
+    .filter(Boolean);
+
+  if (parts.length !== 2 || parts[0] === parts[1]) return null;
+  return normalizeTeamKey(parts[0], parts[1]);
+}
+
+function parseBestOf(rawBestOf, fallback = 3) {
+  const parsed = parseInt(rawBestOf, 10);
+  if (!Number.isFinite(parsed) || parsed <= 0) return fallback;
+  return parsed;
+}
+
+function clampProbability(value) {
+  return Math.min(0.999999, Math.max(0.000001, value));
+}
+
+function resolveEffectiveTeamRating(team) {
+  const directRating = Number(team?.points) || 0;
+  const blendWeightRaw = Number(team?.intermediateBlendWeight);
+  const blendWeight = Number.isFinite(blendWeightRaw)
+    ? Math.max(0, Math.min(1, blendWeightRaw))
+    : 0;
+  const intermediateTeamRatingRaw = Number(team?.intermediateTeamRating);
+  const intermediateTeamRating = Number.isFinite(intermediateTeamRatingRaw)
+    ? intermediateTeamRatingRaw
+    : null;
+
+  const effectiveRating = (
+    intermediateTeamRating !== null && blendWeight > 0
+  )
+    ? (intermediateTeamRating * blendWeight) + (directRating * (1 - blendWeight))
+    : directRating;
+
+  return {
+    directRating,
+    effectiveRating,
+    intermediateTeamRating,
+    intermediateBlendWeight: blendWeight
+  };
+}
+
+function getAverageNumber(values) {
+  const finiteValues = values.filter((value) => Number.isFinite(value));
+  if (finiteValues.length === 0) return null;
+  return finiteValues.reduce((sum, value) => sum + value, 0) / finiteValues.length;
+}
+
+function buildPredictionTeam(teamKey, existingTeam, playerByName, teamOptions) {
+  if (existingTeam) {
+    const rating = resolveEffectiveTeamRating(existingTeam);
+    return {
+      key: teamKey,
+      player1: existingTeam.player1,
+      player2: existingTeam.player2,
+      matches: existingTeam.matches,
+      wins: existingTeam.wins,
+      losses: existingTeam.losses,
+      draws: existingTeam.draws,
+      confidence: existingTeam.confidence,
+      source: 'team-rating',
+      isExistingTeam: true,
+      playerRatingsUsed: 0,
+      ...rating
+    };
+  }
+
+  const players = teamKey.split('+');
+  const playerRows = players.map((player) => playerByName.get(player));
+  const missingPlayers = players.filter((player, index) => !playerRows[index]);
+
+  if (missingPlayers.length > 0) {
+    return {
+      error: `Unknown player(s): ${missingPlayers.join(', ')}`,
+      missingPlayers
+    };
+  }
+
+  const playerConfidences = playerRows.map((player) => Number(player.confidence));
+  const playerMatches = playerRows.map((player) => Number(player.matches));
+  const intermediateTeamRating = getIntermediateTeamRating(players, playerByName);
+  const directRating = 0;
+  const intermediateBlendWeight = (
+    teamOptions.useIntermediateTeamRating && intermediateTeamRating !== null
+  )
+    ? getIntermediateBlendWeight(0, teamOptions.intermediateFadeMatches)
+    : 0;
+
+  return {
+    key: teamKey,
+    player1: players[0],
+    player2: players[1],
+    matches: 0,
+    wins: 0,
+    losses: 0,
+    draws: 0,
+    confidence: getAverageNumber(playerConfidences) || 0,
+    directRating,
+    effectiveRating: intermediateBlendWeight > 0 ? intermediateTeamRating : directRating,
+    intermediateTeamRating,
+    intermediateBlendWeight,
+    source: 'player-average',
+    isExistingTeam: false,
+    playerRatingsUsed: playerRows.length,
+    playerMatches: playerMatches.map((value) => Number.isFinite(value) ? value : 0)
+  };
+}
+
+function getCombination(n, k) {
+  if (k < 0 || k > n) return 0;
+  if (k === 0 || k === n) return 1;
+  const reducedK = Math.min(k, n - k);
+  let result = 1;
+  for (let i = 1; i <= reducedK; i++) {
+    result = (result * (n - reducedK + i)) / i;
+  }
+  return result;
+}
+
+function getExpectedSeriesOutcomes(team1WinProbability, bestOf) {
+  if (!Number.isFinite(bestOf) || bestOf <= 0) {
+    return [];
+  }
+
+  const p = clampProbability(team1WinProbability);
+  const q = 1 - p;
+  const winsNeeded = Math.floor(bestOf / 2) + 1;
+  const outcomes = [];
+
+  for (let losses = 0; losses < winsNeeded; losses++) {
+    const ways = getCombination((winsNeeded - 1) + losses, losses);
+    const probability = ways * Math.pow(p, winsNeeded) * Math.pow(q, losses);
+    outcomes.push({
+      scoreline: `${winsNeeded}-${losses}`,
+      team1WinsSeries: true,
+      probability
+    });
+  }
+
+  for (let wins = winsNeeded - 1; wins >= 0; wins--) {
+    const ways = getCombination((winsNeeded - 1) + wins, wins);
+    const probability = ways * Math.pow(q, winsNeeded) * Math.pow(p, wins);
+    outcomes.push({
+      scoreline: `${wins}-${winsNeeded}`,
+      team1WinsSeries: false,
+      probability
+    });
+  }
+
+  const total = outcomes.reduce((sum, row) => sum + row.probability, 0) || 1;
+
+  return outcomes
+    .map((row) => ({
+      ...row,
+      probability: row.probability / total
+    }))
+    .sort((a, b) => b.probability - a.probability);
 }
 
 function parseDateValue(rawDate) {
@@ -1009,6 +1188,121 @@ app.get('/api/prediction-quality', async (req, res) => {
   }
 });
 
+app.get('/api/match-predict', async (req, res) => {
+  const startedAt = Date.now();
+
+  try {
+    const useSeeds = req.query.useSeeds === 'true';
+    const mainCircuitOnly = req.query.mainCircuitOnly === 'true';
+    const seasons = req.query.seasons ? req.query.seasons.split(',') : null;
+    const bestOf = parseBestOf(req.query.bestOf, 3);
+
+    let playerSeeds = null;
+    let teamSeeds = null;
+    if (useSeeds) {
+      const seeds = await loadSeeds();
+      playerSeeds = seeds.playerSeeds;
+      teamSeeds = seeds.teamSeeds;
+    }
+
+    const teamOptions = getTeamRatingOptions(req, playerSeeds);
+    const { rankings, summary, intermediatePlayerRankings } = await calculateTeamRankings(
+      teamSeeds,
+      mainCircuitOnly,
+      seasons,
+      teamOptions
+    );
+
+    const playerByName = new Map((intermediatePlayerRankings || []).map((row) => [row.name, row]));
+    const playerByLowerName = new Map(
+      (intermediatePlayerRankings || []).map((row) => [String(row.name).toLowerCase(), row.name])
+    );
+    const team1Key = parseCanonicalTeamKey(req.query.team1Key, playerByLowerName);
+    const team2Key = parseCanonicalTeamKey(req.query.team2Key, playerByLowerName);
+
+    if (!team1Key || !team2Key) {
+      return res.status(400).json({ error: 'Both teams require two different player names in "PlayerA+PlayerB" format.' });
+    }
+
+    if (team1Key === team2Key) {
+      return res.status(400).json({ error: 'Choose two different teams to run a prediction.' });
+    }
+
+    const teamByKey = new Map(
+      (rankings || []).map((row) => [normalizeTeamKey(row.player1, row.player2), row])
+    );
+
+    const team1 = buildPredictionTeam(team1Key, teamByKey.get(team1Key), playerByName, teamOptions);
+    const team2 = buildPredictionTeam(team2Key, teamByKey.get(team2Key), playerByName, teamOptions);
+    const missingPlayers = [
+      ...(team1.missingPlayers || []),
+      ...(team2.missingPlayers || [])
+    ];
+
+    if (missingPlayers.length > 0) {
+      return res.status(404).json({
+        error: 'New teams can be predicted when both players are known in the current filtered ranking scope.',
+        missingPlayers: Array.from(new Set(missingPlayers))
+      });
+    }
+
+    const populationStats = calculatePopulationStats(rankings || []);
+    const rawExpectedWinTeam1 = predictWinProbability(
+      team1.effectiveRating,
+      team2.effectiveRating,
+      populationStats.stdDev
+    );
+    const expectedWinTeam1 = calibrateWinProbability(rawExpectedWinTeam1);
+    const expectedWinTeam2 = 1 - expectedWinTeam1;
+    const seriesOutcomes = getExpectedSeriesOutcomes(expectedWinTeam1, bestOf);
+
+    logApiSummary(req, startedAt, [
+      formatFilterSummary({ mainCircuitOnly, seasons, useSeeds, teamOptions }),
+      `bestOf:${bestOf}`,
+      `team1:${team1Key}`,
+      `team2:${team2Key}`,
+      `expected:${(expectedWinTeam1 * 100).toFixed(1)}%`,
+      formatTeamSummary(summary)
+    ]);
+
+    res.json({
+      generatedAt: new Date().toISOString(),
+      input: {
+        team1Key,
+        team2Key,
+        bestOf
+      },
+      settings: {
+        useSeeds,
+        mainCircuitOnly,
+        seasons: seasons || 'all',
+        useIntermediateTeamRating: teamOptions.useIntermediateTeamRating,
+        intermediateFadeMatches: teamOptions.intermediateFadeMatches
+      },
+      population: {
+        mean: populationStats.mean,
+        stdDev: populationStats.stdDev
+      },
+      prediction: {
+        rawExpectedWinTeam1,
+        expectedWinTeam1,
+        expectedWinTeam2,
+        favorite: expectedWinTeam1 >= expectedWinTeam2 ? 'team1' : 'team2'
+      },
+      team1: {
+        ...team1
+      },
+      team2: {
+        ...team2
+      },
+      seriesOutcomes
+    });
+  } catch (err) {
+    console.error('Error building match prediction:', err);
+    res.status(500).json({ error: 'Failed to build match prediction' });
+  }
+});
+
 // List all JSON files in output directory
 app.get('/api/tournaments', async (req, res) => {
   const startedAt = Date.now();
@@ -1193,6 +1487,8 @@ app.get('/api/player-match-counts', async (req, res) => {
 // Get teammate history per player across all tournaments
 app.get('/api/player-teammates', async (req, res) => {
   try {
+    const mainCircuitOnly = req.query.mainCircuitOnly === 'true';
+    const seasons = req.query.seasons ? req.query.seasons.split(',') : null;
     const files = await readdir(outputDir);
     const jsonFiles = files.filter(isTournamentJsonFile);
 
@@ -1216,6 +1512,27 @@ app.get('/api/player-teammates', async (req, res) => {
         const data = JSON.parse(content);
 
         if (!Array.isArray(data?.matches)) continue;
+
+        let season = data.tournament?.season;
+        if (season === undefined && data.tournament?.date) {
+          const year = new Date(data.tournament.date).getFullYear();
+          if (!Number.isNaN(year)) {
+            season = String(year);
+          }
+        }
+        season = season?.toString();
+
+        if (seasons && seasons.length > 0 && (!season || !seasons.includes(season))) {
+          continue;
+        }
+
+        const isMainCircuit = data.tournament?.is_main_circuit ||
+          file.toLowerCase().startsWith('utermal_2v2_circuit') ||
+          file.toLowerCase().startsWith('uthermal_2v2_circuit');
+
+        if (mainCircuitOnly && !isMainCircuit) {
+          continue;
+        }
 
         data.matches.forEach((match) => {
           const t1p1 = match.team1?.player1?.name;
@@ -2460,7 +2777,7 @@ export default app;
 // Only listen if run directly
 if (process.env.NODE_ENV !== 'production') {
   const PORT = process.env.PORT || 3002;
-  app.listen(PORT, async () => {
+  const server = app.listen(PORT, async () => {
     console.log(`API server running on http://localhost:${PORT}`);
     try {
       const snapshot = await buildStartupSnapshot();
@@ -2473,5 +2790,15 @@ if (process.env.NODE_ENV !== 'production') {
     } catch (error) {
       console.error('Error building startup snapshot:', error);
     }
+  });
+
+  server.once('error', (error) => {
+    if (error?.code === 'EADDRINUSE') {
+      console.error(`Port ${PORT} is already in use. Set PORT to use a different port.`);
+    } else {
+      console.error('Failed to start API server:', error);
+    }
+
+    process.exit(1);
   });
 }
