@@ -175,13 +175,17 @@ function formatRaceSummary(summary, label = 'race') {
     parts.push(`random-skip:${summary.matchesSkippedRandom}`);
   }
 
+  if (summary.matchesSkippedMirror > 0) {
+    parts.push(`mirror-skip:${summary.matchesSkippedMirror}`);
+  }
+
   parts.push(`matchups:${summary.matchupCount}`);
   parts.push(`combined:${summary.combinedStatsCount}`);
 
   return parts.join(', ');
 }
 
-function formatFilterSummary({ mainCircuitOnly, seasons, hideRandom, useSeeds, teamOptions }) {
+function formatFilterSummary({ mainCircuitOnly, seasons, hideRandom, hideMirror, useSeeds, teamOptions }) {
   const parts = [
     `circuit:${mainCircuitOnly ? 'main' : 'all'}`,
     `seasons:${formatSeasonsForLog(seasons)}`
@@ -189,6 +193,10 @@ function formatFilterSummary({ mainCircuitOnly, seasons, hideRandom, useSeeds, t
 
   if (typeof hideRandom === 'boolean') {
     parts.push(`random:${hideRandom ? 'hidden' : 'shown'}`);
+  }
+
+  if (typeof hideMirror === 'boolean') {
+    parts.push(`mirror:${hideMirror ? 'hidden' : 'shown'}`);
   }
 
   if (typeof useSeeds === 'boolean') {
@@ -2216,8 +2224,9 @@ app.get('/api/team-race-rankings', async (req, res) => {
   try {
     const isMainCircuitOnly = req.query.mainCircuitOnly === 'true';
     const hideRandom = req.query.hideRandom === 'true';
+    const hideMirror = req.query.hideMirror === 'true';
     const seasons = req.query.seasons ? req.query.seasons.split(',') : null;
-    const { rankings, combinedRankings, matchHistory, summary } = await calculateTeamRaceRankings(isMainCircuitOnly, seasons, hideRandom);
+    const { rankings, combinedRankings, matchHistory, summary } = await calculateTeamRaceRankings(isMainCircuitOnly, seasons, hideRandom, hideMirror);
     const { matchHistory: teamMatchHistory } = await calculateTeamRankings(
       null,
       isMainCircuitOnly,
@@ -2247,7 +2256,7 @@ app.get('/api/team-race-rankings', async (req, res) => {
     const rankingsWithMovement = withTeamRacePointMovement(rankings, combinedRankings, mergedMatchHistory);
 
     logApiSummary(req, startedAt, [
-      formatFilterSummary({ mainCircuitOnly: isMainCircuitOnly, seasons, hideRandom }),
+      formatFilterSummary({ mainCircuitOnly: isMainCircuitOnly, seasons, hideRandom, hideMirror }),
       formatRaceSummary(summary, 'team-race')
     ]);
 
@@ -2263,8 +2272,9 @@ app.get('/api/team-race-matchup/:combo1/:combo2', async (req, res) => {
     const { combo1, combo2 } = req.params;
     const isMainCircuitOnly = req.query.mainCircuitOnly === 'true';
     const hideRandom = req.query.hideRandom === 'true';
+    const hideMirror = req.query.hideMirror === 'true';
     const seasons = req.query.seasons ? req.query.seasons.split(',') : null;
-    const { matchHistory } = await calculateTeamRaceRankings(isMainCircuitOnly, seasons, hideRandom);
+    const { matchHistory } = await calculateTeamRaceRankings(isMainCircuitOnly, seasons, hideRandom, hideMirror);
     const { matchHistory: teamMatchHistory } = await calculateTeamRankings(
       null,
       isMainCircuitOnly,
@@ -2337,8 +2347,9 @@ app.get('/api/team-race-combo/:combo', async (req, res) => {
     const { combo } = req.params;
     const isMainCircuitOnly = req.query.mainCircuitOnly === 'true';
     const hideRandom = req.query.hideRandom === 'true';
+    const hideMirror = req.query.hideMirror === 'true';
     const seasons = req.query.seasons ? req.query.seasons.split(',') : null;
-    const { matchHistory } = await calculateTeamRaceRankings(isMainCircuitOnly, seasons, hideRandom);
+    const { matchHistory } = await calculateTeamRaceRankings(isMainCircuitOnly, seasons, hideRandom, hideMirror);
     const { matchHistory: teamMatchHistory } = await calculateTeamRankings(
       null,
       isMainCircuitOnly,

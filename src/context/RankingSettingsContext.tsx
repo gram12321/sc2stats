@@ -11,6 +11,8 @@ interface RankingSettingsContextType {
       setUseIntermediateTeamRating: (value: boolean) => void;
       hideRandom: boolean;
       setHideRandom: (value: boolean) => void;
+      hideMirror: boolean;
+      setHideMirror: (value: boolean) => void;
       seasons: string[];
       setSeasons: (value: string[]) => void;
 }
@@ -23,6 +25,7 @@ const STORAGE_KEYS = {
       MAIN_CIRCUIT_ONLY: 'sc2stats_main_circuit_only',
       USE_INTERMEDIATE_TEAM_RATING: 'sc2stats_use_intermediate_team_rating',
       HIDE_RANDOM: 'sc2stats_hide_random',
+      HIDE_MIRROR: 'sc2stats_hide_mirror',
       SEASONS: 'sc2stats_seasons',
 };
 
@@ -32,6 +35,7 @@ export function RankingSettingsProvider({ children }: { children: ReactNode }) {
       const [mainCircuitOnly, setMainCircuitOnlyState] = useState(true);
       const [useIntermediateTeamRating, setUseIntermediateTeamRatingState] = useState(true);
       const [hideRandom, setHideRandomState] = useState(true);
+      const [hideMirror, setHideMirrorState] = useState(false);
       const [seasons, setSeasonsState] = useState<string[]>(['2025', '2026']);
 
       // Load settings from localStorage on mount
@@ -50,6 +54,9 @@ export function RankingSettingsProvider({ children }: { children: ReactNode }) {
 
             const savedHideRandom = localStorage.getItem(STORAGE_KEYS.HIDE_RANDOM);
             if (savedHideRandom !== null) setHideRandomState(savedHideRandom === 'true');
+
+            const savedHideMirror = localStorage.getItem(STORAGE_KEYS.HIDE_MIRROR);
+            if (savedHideMirror !== null) setHideMirrorState(savedHideMirror === 'true');
 
             const savedSeasons = localStorage.getItem(STORAGE_KEYS.SEASONS);
             if (savedSeasons !== null) {
@@ -86,6 +93,11 @@ export function RankingSettingsProvider({ children }: { children: ReactNode }) {
             localStorage.setItem(STORAGE_KEYS.HIDE_RANDOM, String(value));
       };
 
+      const setHideMirror = (value: boolean) => {
+            setHideMirrorState(value);
+            localStorage.setItem(STORAGE_KEYS.HIDE_MIRROR, String(value));
+      };
+
       const setSeasons = (value: string[]) => {
             setSeasonsState(value);
             localStorage.setItem(STORAGE_KEYS.SEASONS, JSON.stringify(value));
@@ -104,6 +116,8 @@ export function RankingSettingsProvider({ children }: { children: ReactNode }) {
                         setUseIntermediateTeamRating,
                         hideRandom,
                         setHideRandom,
+                        hideMirror,
+                        setHideMirror,
                         seasons,
                         setSeasons,
                   }}

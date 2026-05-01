@@ -135,9 +135,10 @@ function getFullRaceNames(combo) {
  * @param {boolean} mainCircuitOnly - Whether to only include main circuit tournaments
  * @param {Array<string>|null} seasons - Array of season strings to filter by
  * @param {boolean} hideRandom - Whether to exclude Random race matchups from calculations
+ * @param {boolean} hideMirror - Whether to exclude mirror team matchups from calculations (PP, TT, ZZ, RR)
  * @returns {Promise<Object>} Object with rankings and matchHistory
  */
-export async function calculateTeamRaceRankings(mainCircuitOnly = false, seasons = null, hideRandom = false, options = {}) {
+export async function calculateTeamRaceRankings(mainCircuitOnly = false, seasons = null, hideRandom = false, hideMirror = false, options = {}) {
   const teamRaceStats = new Map(); // Key: matchup (e.g., "PT vs ZZ"), Value: stats object
   const allMatches = [];
   let includedTournamentCount = 0;
@@ -246,6 +247,7 @@ export async function calculateTeamRaceRankings(mainCircuitOnly = false, seasons
     let matchesWithRaces = 0;
     let matchesWithoutRaces = 0;
     let matchesSkippedRandom = 0;
+    let matchesSkippedMirror = 0;
 
     for (const match of allMatches) {
       // Get races from each team
@@ -272,6 +274,13 @@ export async function calculateTeamRaceRankings(mainCircuitOnly = false, seasons
 
       if (!team1Combo || !team2Combo) {
         matchesWithoutRaces++;
+        continue;
+      }
+
+      // Skip matches with mirror combos if hideMirror is enabled
+      // Mirror combos are teams where both players play the same race (PP, TT, ZZ, RR)
+      if (hideMirror && (team1Combo[0] === team1Combo[1] || team2Combo[0] === team2Combo[1])) {
+        matchesSkippedMirror++;
         continue;
       }
 
@@ -602,11 +611,13 @@ export async function calculateTeamRaceRankings(mainCircuitOnly = false, seasons
         matchesWithRaces,
         matchesWithoutRaces,
         matchesSkippedRandom,
+        matchesSkippedMirror,
         matchupCount: rankings.length,
         combinedStatsCount: combinedRankings.length,
         tournamentsIncluded: includedTournamentCount,
         playerDefaultsLoaded: Object.keys(playerDefaults).length,
         hideRandom,
+        hideMirror,
         logLevel: options?.logLevel || 'silent'
       }
     };
