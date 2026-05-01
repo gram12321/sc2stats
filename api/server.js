@@ -2090,11 +2090,12 @@ app.get('/api/race-rankings', async (req, res) => {
   try {
     const isMainCircuitOnly = req.query.mainCircuitOnly === 'true';
     const hideRandom = req.query.hideRandom === 'true';
+    const hideMirror = req.query.hideMirror === 'true';
     const seasons = req.query.seasons ? req.query.seasons.split(',') : null;
-    const { rankings, combinedRankings, matchHistory, summary } = await calculateRaceRankings(isMainCircuitOnly, seasons, hideRandom);
+    const { rankings, combinedRankings, matchHistory, summary } = await calculateRaceRankings(isMainCircuitOnly, seasons, hideRandom, hideMirror);
     const rankingsWithMovement = withRacePointMovement(rankings, combinedRankings, matchHistory);
     logApiSummary(req, startedAt, [
-      formatFilterSummary({ mainCircuitOnly: isMainCircuitOnly, seasons, hideRandom }),
+      formatFilterSummary({ mainCircuitOnly: isMainCircuitOnly, seasons, hideRandom, hideMirror }),
       formatRaceSummary(summary)
     ]);
     res.json({ ...rankingsWithMovement, matchHistory });
@@ -2110,8 +2111,9 @@ app.get('/api/race-matchup/:race1/:race2', async (req, res) => {
     const { race1, race2 } = req.params;
     const isMainCircuitOnly = req.query.mainCircuitOnly === 'true';
     const hideRandom = req.query.hideRandom === 'true';
+    const hideMirror = req.query.hideMirror === 'true';
     const seasons = req.query.seasons ? req.query.seasons.split(',') : null;
-    const { matchHistory } = await calculateRaceRankings(isMainCircuitOnly, seasons, hideRandom);
+    const { matchHistory } = await calculateRaceRankings(isMainCircuitOnly, seasons, hideRandom, hideMirror);
     const { matchHistory: teamMatchHistory } = await calculateTeamRankings(
       null,
       isMainCircuitOnly,
@@ -2169,8 +2171,9 @@ app.get('/api/race-combo/:race', async (req, res) => {
     const { race } = req.params;
     const isMainCircuitOnly = req.query.mainCircuitOnly === 'true';
     const hideRandom = req.query.hideRandom === 'true';
+    const hideMirror = req.query.hideMirror === 'true';
     const seasons = req.query.seasons ? req.query.seasons.split(',') : null;
-    const { matchHistory } = await calculateRaceRankings(isMainCircuitOnly, seasons, hideRandom);
+    const { matchHistory } = await calculateRaceRankings(isMainCircuitOnly, seasons, hideRandom, hideMirror);
     const { matchHistory: teamMatchHistory } = await calculateTeamRankings(
       null,
       isMainCircuitOnly,

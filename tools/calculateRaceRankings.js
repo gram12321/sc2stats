@@ -110,9 +110,10 @@ function getTeamRaces(team, playerDefaults = {}) {
  * @param {boolean} mainCircuitOnly - Whether to only include main circuit tournaments
  * @param {Array<string>|null} seasons - Array of season strings to filter by
  * @param {boolean} hideRandom - Whether to exclude Random race matchups from calculations
+ * @param {boolean} hideMirror - Whether to exclude matches where either team has a mirror combo (PP, TT, ZZ, RR)
  * @returns {Promise<Object>} Object with rankings and matchHistory
  */
-export async function calculateRaceRankings(mainCircuitOnly = false, seasons = null, hideRandom = false, options = {}) {
+export async function calculateRaceRankings(mainCircuitOnly = false, seasons = null, hideRandom = false, hideMirror = false, options = {}) {
   const raceStats = new Map(); // Key: race matchup (e.g., "PvZ"), Value: stats object
   const allMatches = [];
   let includedTournamentCount = 0;
@@ -221,6 +222,7 @@ export async function calculateRaceRankings(mainCircuitOnly = false, seasons = n
     let matchesWithRaces = 0;
     let matchesWithoutRaces = 0;
     let matchesSkippedRandom = 0;
+    let matchesSkippedMirror = 0;
 
     for (const match of allMatches) {
       // Get races from each team, applying player defaults if needed
@@ -238,6 +240,15 @@ export async function calculateRaceRankings(mainCircuitOnly = false, seasons = n
       const allRaces = [...team1Races, ...team2Races];
       if (hideRandom && allRaces.includes('Random')) {
         matchesSkippedRandom++;
+        continue;
+      }
+
+      // Skip matches where either team has a mirror combo (PP, TT, ZZ, RR) if hideMirror is enabled
+      if (hideMirror && (
+        (team1Races.length === 2 && team1Races[0] === team1Races[1]) ||
+        (team2Races.length === 2 && team2Races[0] === team2Races[1])
+      )) {
+        matchesSkippedMirror++;
         continue;
       }
 
@@ -460,36 +471,61 @@ export async function calculateRaceRankings(mainCircuitOnly = false, seasons = n
       });
     }
 
+    // Deduplicate: for each matchup pair (e.g., PvZ / ZvP), only show one entry.
+    // Always show the race with higher points first (the "winner").
+    const seenPairs = new Set();
+    const deduplicatedStats = [];
+    for (const stats of raceStats.values()) {
+      const abbr1 = getRaceAbbr(stats.race1);
+      const abbr2 = getRaceAbbr(stats.race2);
+      const pairKey = [abbr1, abbr2].sort().join('');
+      if (seenPairs.has(pairKey)) continue;
+      seenPairs.add(pairKey);
+
+      // Pick the direction with higher points; if tied, keep this entry
+      const inverseKey = `${abbr2}v${abbr1}`;
+      const inverseStats = raceStats.get(inverseKey);
+      if (inverseStats && inverseStats.points > stats.points) {
+        deduplicatedStats.push(inverseStats);
+      } else {
+        deduplicatedStats.push(stats);
+      }
+    }
+
     // Convert to array and sort using shared sorting function
-    const rankings = sortRankings(Array.from(raceStats.values()));
+    const rankings = sortRankings(deduplicatedStats);
 
     // Calculate combined race statistics (TvX, ZvX, PvX)
+    // Process BOTH race1 and race2 from each deduplicated matchup so all races are represented
     const combinedStats = new Map();
-    // Aggregate all matchups for each race
-    for (const matchup of rankings) {
-      const race1 = matchup.race1;
-      const raceAbbr1 = getRaceAbbr(race1);
-
-      const combinedKey = `${raceAbbr1}vX`;
-
+    const addToCombined = (raceName, matches, wins, losses, draws, points) => {
+      const abbr = getRaceAbbr(raceName);
+      const combinedKey = `${abbr}vX`;
       if (!combinedStats.has(combinedKey)) {
         combinedStats.set(combinedKey, {
           name: combinedKey,
-          race1: race1,
+          race1: raceName,
           race2: 'All',
           matches: 0,
           wins: 0,
           losses: 0,
+          draws: 0,
           points: 0
         });
       }
-
       const combined = combinedStats.get(combinedKey);
-      combined.matches += matchup.matches;
-      combined.wins += matchup.wins;
-      combined.losses += matchup.losses;
-      combined.draws = (combined.draws || 0) + (matchup.draws || 0);
-      combined.points += matchup.points;
+      combined.matches += matches;
+      combined.wins += wins;
+      combined.losses += losses;
+      combined.draws += draws;
+      combined.points += points;
+    };
+
+    for (const matchup of deduplicatedStats) {
+      // Add from race1's perspective (the "winner" direction)
+      addToCombined(matchup.race1, matchup.matches, matchup.wins, matchup.losses, matchup.draws || 0, matchup.points);
+      // Add from race2's perspective (the "loser" direction, swapped)
+      addToCombined(matchup.race2, matchup.matches, matchup.losses, matchup.wins, matchup.draws || 0, -matchup.points);
     }
 
     // Convert combined stats to array and sort
@@ -504,11 +540,13 @@ export async function calculateRaceRankings(mainCircuitOnly = false, seasons = n
         matchesWithRaces,
         matchesWithoutRaces,
         matchesSkippedRandom,
+        matchesSkippedMirror,
         matchupCount: rankings.length,
         combinedStatsCount: combinedRankings.length,
         tournamentsIncluded: includedTournamentCount,
         playerDefaultsLoaded: Object.keys(playerDefaults).length,
         hideRandom,
+        hideMirror,
         logLevel: options?.logLevel || 'silent'
       }
     };

@@ -120,14 +120,14 @@ export function RaceRankings({ }: RaceRankingsProps) {
   const [playerRankings, setPlayerRankings] = useState<Record<string, { rank: number; points: number; confidence: number }>>({});
   const [teamRankings, setTeamRankings] = useState<Record<string, { rank: number; points: number; confidence: number }>>({});
   const [playerRaces, setPlayerRaces] = useState<Record<string, Race>>({});
-  const { mainCircuitOnly, seasons, hideRandom, setHideRandom } = useRankingSettings();
+  const { mainCircuitOnly, seasons, hideRandom, setHideRandom, hideMirror, setHideMirror } = useRankingSettings();
 
   useEffect(() => {
     loadRankings();
     loadPlayerRankings();
     loadTeamRankings();
     loadAllPlayerRaces();
-  }, [mainCircuitOnly, seasons, hideRandom]);
+  }, [mainCircuitOnly, seasons, hideRandom, hideMirror]);
 
   const loadRankings = async () => {
     try {
@@ -137,6 +137,7 @@ export function RaceRankings({ }: RaceRankingsProps) {
       if (mainCircuitOnly) queryParams.append('mainCircuitOnly', 'true');
       if (seasons.length > 0) queryParams.append('seasons', seasons.join(','));
       if (hideRandom) queryParams.append('hideRandom', 'true');
+      if (hideMirror) queryParams.append('hideMirror', 'true');
       const response = await fetch(`/api/race-rankings?${queryParams.toString()}`);
       if (!response.ok) throw new Error('Failed to load race rankings');
       const data = await response.json();
@@ -242,6 +243,7 @@ export function RaceRankings({ }: RaceRankingsProps) {
       const queryParams = new URLSearchParams();
       if (mainCircuitOnly) queryParams.append('mainCircuitOnly', 'true');
       if (hideRandom) queryParams.append('hideRandom', 'true');
+      if (hideMirror) queryParams.append('hideMirror', 'true');
       if (seasons.length > 0) queryParams.append('seasons', seasons.join(','));
 
       if (isCombined) {
@@ -447,7 +449,19 @@ export function RaceRankings({ }: RaceRankingsProps) {
               className="h-4 w-4 rounded border-border bg-background text-primary focus:ring-primary"
             />
             <label htmlFor="hideRandom" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-              Hide Random
+              Ignore Random
+            </label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              id="hideMirror"
+              checked={hideMirror}
+              onChange={(e) => setHideMirror(e.target.checked)}
+              className="h-4 w-4 rounded border-border bg-background text-primary focus:ring-primary"
+            />
+            <label htmlFor="hideMirror" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+              Ignore Mirror teams
             </label>
           </div>
           <RankingFilters showMainCircuit={true} />
