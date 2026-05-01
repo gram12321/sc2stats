@@ -51,6 +51,89 @@ Use this exact structure for each entry:
 
 ---
 
+## Version 1.0010a - Individual race mirror filtering and race impact label fix
+**Date:** 2026-05-01 | **Commit(s):** 801ced13ec0dd05c23a158204fdb637632df1003 | **Stats:** +79 / -24
+
+### Summary
+- Extended the `hideMirror` filter to individual race rankings (was previously only team race rankings).
+- Race rankings now deduplicate symmetric matchup rows (PvZ and ZvP become one entry) and aggregate combined stats from both sides of each matchup.
+- Race impact labels in match history tooltips now use abbreviations (PvZ) instead of full race names.
+
+### Changes
+- `api/server.js` - Threaded `hideMirror` query parameter through `/api/race-rankings`, `/api/race-matchup/:race1/:race2`, and `/api/race-combo/:race` endpoints.
+- `src/pages/RaceRankings.tsx` - Added `hideMirror`/`setHideMirror` from the settings context; appended `hideMirror` to all fetch query strings; added "Ignore Mirror teams" checkbox to the page filter bar; re-triggers data load when `hideMirror` changes.
+- `src/components/MatchHistoryItem.tsx` - Race impact key labels now call `getRaceAbbr()` so they render as `PvZ` instead of `ProtosvZerg`.
+- `tools/calculateRaceRankings.js` - Added `hideMirror` parameter; added mirror-skip logic (skips any match where either team's two players share a race); added deduplication pass that keeps one canonical direction per matchup pair; fixed combined-stats aggregation to process both sides of each deduplicated matchup so `TvX`, `ZvX`, `PvX` totals are correct.
+
+### Notes
+- Deduplicated race ranking rows change the visible row count; previously symmetric pairs each had a separate entry.
+
+---
+
+## Version 1.0010 - Mirror match filter for team race rankings
+**Date:** 2026-05-01 | **Commit(s):** 18595843175da7feb5a9ee9f3e832fdaf4dbce25 | **Stats:** +71 / -25
+
+### Summary
+- Added a `hideMirror` toggle that excludes matches where either team runs a mirror race combo (PP, TT, ZZ, RR) from team race ranking calculations and display.
+- The setting is persisted via localStorage alongside the existing `hideRandom` preference.
+
+### Changes
+- `src/context/RankingSettingsContext.tsx` - Added `hideMirror` state (default `false`), `setHideMirror` setter, and `sc2stats_hide_mirror` localStorage key; exposed both through the context type and provider value.
+- `src/pages/TeamRaceRankings.tsx` - Consumes `hideMirror`/`setHideMirror` from context; appends `hideMirror=true` to fetch requests; adds "Ignore Mirror matchups" checkbox beside the existing "Ignore Random matchups" checkbox; re-fetches when `hideMirror` changes.
+- `tools/calculateTeamRaceRankings.js` - Added `hideMirror` parameter to `calculateTeamRaceRankings()`; skips any match where either team's combo is a mirror (PP, TT, ZZ, RR); increments `matchesSkippedMirror` counter.
+- `api/server.js` - Reads `hideMirror` query param and passes it to `calculateTeamRaceRankings()` in the rankings, matchup, and combo endpoints; adds `mirror-skip` to filter-summary log lines.
+
+### Notes
+- `package-lock.json` peer-dependency field changes are also included in this commit but are unrelated to the feature.
+
+---
+
+## Version 1.009 - Live match predictor panel
+**Date:** 2026-04-28 | **Commit(s):** 15333e24feea2cc3be8b3cd613c238a8d4f3df2c | **Stats:** +1102 / -9
+
+### Summary
+- Added a live match-prediction panel available from the Rankings section that calculates calibrated win probabilities and series outcome breakdowns for any two teams.
+- New `/api/match-predict` endpoint computes effective ratings (including intermediate team rating blend) for both known teams and unknown team combinations built from individual player ratings.
+- Minor fixes to `PredictionQuality` page and `calculateTeamRankings` exports.
+
+### Changes
+- **NEW FILE:** `src/components/MatchPredictorPanel.tsx` (747 lines) - Full prediction UI: two-team player input fields with datalist autocomplete, best-of selector, calibrated win-probability display, series-outcome probability table (e.g. 3-0, 2-1, 1-2, 0-3), ITR blend-weight badge, and team source indicator (`team-rating` vs `player-average`).
+- `api/server.js` - Added `/api/match-predict` GET endpoint; imports `getIntermediateBlendWeight`, `getIntermediateTeamRating` from `calculateTeamRankings`; imports `calculatePopulationStats`, `predictWinProbability`, `calibrateWinProbability` from `rankingCalculations`; added server-side helpers `resolveCanonicalPlayerName`, `parseCanonicalTeamKey`, `parseBestOf`, `clampProbability`, `resolveEffectiveTeamRating`, `buildPredictionTeam`, `getCombination`, `getExpectedSeriesOutcomes` to build and validate the prediction response.
+- `tools/calculateTeamRankings.js` - Exports `getIntermediateBlendWeight` and `getIntermediateTeamRating` for reuse by the predict endpoint.
+- `src/pages/PredictionQuality.tsx` - Minor fix (16 additions, matches commit stat).
+- `docs/data-specification.md` - Added 7-line entry describing the `match-predict` endpoint fields.
+- `README.md` - Corrected API server port reference from 3001 to 3002 and added Vite proxy note.
+
+### Notes
+- New teams (player pairs with no shared match history) are predicted using the intermediate team rating blend from player individual ratings; the team source is indicated in the response and UI.
+- The commit message tag reads "0.009" but follows 1.008 in sequence; logged here as 1.009.
+
+---
+
+## Version 1.008 - Prediction quality page and analysis tool
+**Date:** 2026-04-27 | **Commit(s):** 477bf3c0c41a4ec8d88cf458589a544772deaf83 | **Stats:** +1515 / -2
+
+### Summary
+- Added a Prediction Quality page and CLI tool that score the model's pre-match `expectedWin` values against actual outcomes using Brier score, log loss, calibration buckets, and settings-comparison tables.
+- New `/api/prediction-quality` endpoint surfaces the full calibration report to the frontend, respecting existing filter settings.
+- The `analyze-prediction-quality` npm script exposes the same analysis from the command line.
+
+### Changes
+- **NEW FILE:** `src/pages/PredictionQuality.tsx` (846 lines) - Full calibration dashboard: overall Brier score, log loss, favorite accuracy, calibration-bucket breakdown, settings-impact comparison table (seed on/off, ITR on/off, circuit scope, season scope), and most-confident misses list.
+- **NEW FILE:** `tools/analyzePredictionQuality.js` (507 lines) - CLI analysis tool reusing the chronological team-ranking pass; scores `expectedWin` values stored in `team_impacts`; reports overall metrics, calibration buckets, and breakdowns by best-of length, team maturity, and prediction source; supports `--use-seeds`, `--main-circuit-only`, `--season`, `--use-intermediate-team-rating`, `--write-json` flags.
+- `api/server.js` - Added `/api/prediction-quality` GET endpoint; passes `useSeeds`, `mainCircuitOnly`, `seasons`, and `teamOptions` from query params into `analyzePredictionQuality()`; logs Brier score and favorite accuracy in the API summary line.
+- `src/App.tsx` - Added `prediction-quality` to the `View` union type and renders `<PredictionQuality />` when active.
+- `src/components/Header.tsx` - Added `prediction-quality` view with a `Target` icon under the `info` section as "Predictions".
+- `package.json` - Added `analyze-prediction-quality` script.
+- `.gitignore` - Ignores `output/*_prediction_quality_report.json` and `output/prediction_quality_report.json` artifacts.
+- `docs/data-specification.md` - Added "Prediction Quality Analysis" section documenting CLI usage, metric definitions, and the Settings Impact table behavior.
+
+### Notes
+- Exact 50/50 predictions are included in probability-error metrics but excluded from favorite-side calibration rows.
+- The settings-comparison table in the UI keeps the current filters as the baseline and shows `dBrier` and `dAbs gap` deltas; negative values are improvements.
+
+---
+
 ## Version 1.007 - Established ranking dampening and K scenario analysis
 **Date:** 2026-04-26 | **Commit(s):** 6a9c0177d6ca6df38e14b6079fa50bd5762fcaca | **Stats:** +284 / -13
 

@@ -1165,6 +1165,167 @@ app.get('/api/map-recording-summary', async (req, res) => {
   }
 });
 
+function normalizeMapNameForLookup(mapName) {
+  return String(mapName || '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/\s+(?:LE|CE)$/i, '');
+}
+
+app.get('/api/map-details/:mapName', async (req, res) => {
+  try {
+    const requestedMap = normalizeMapNameForLookup(req.params.mapName);
+    if (!requestedMap) {
+      return res.status(400).json({ error: 'Map name is required' });
+    }
+
+    const tournaments = await loadAllTournamentData();
+
+    let fullName = requestedMap;
+    let totalPlays = 0;
+    let eligibleMatches = 0;
+    const tournamentAppearances = [];
+    const matchHistory = []; // { tournamentName, tournamentSlug, round, team1, team2, team1Score, team2Score, gameIndex, winner }
+
+    for (const tournament of tournaments) {
+      const pool = Array.isArray(tournament?.tournament?.maps) ? tournament.tournament.maps : [];
+      const poolNorm = new Set();
+      const originalNames = new Map();
+      for (const m of pool) {
+        const norm = normalizeMapNameForLookup(m);
+        if (!norm) continue;
+        poolNorm.add(norm);
+        if (!originalNames.has(norm)) originalNames.set(norm, m);
+      }
+
+      if (!poolNorm.has(requestedMap)) continue;
+
+      if (originalNames.has(requestedMap)) fullName = originalNames.get(requestedMap);
+
+      const tName = tournament?.tournament?.name || 'Unknown Tournament';
+      const tSlug = tournament?.tournament?.liquipedia_slug || null;
+      const tDate = tournament?.tournament?.date || null;
+
+      let tournamentPlays = 0;
+
+      const matches = Array.isArray(tournament?.matches) ? tournament.matches : [];
+      for (const match of matches) {
+        const earlyRound = /^Early\b/i.test(String(match?.round || '').trim());
+        const games = Array.isArray(match.games) ? match.games : [];
+
+        if (!earlyRound && games.length > 0) {
+          eligibleMatches += 1;
+        }
+
+        for (let gi = 0; gi < games.length; gi++) {
+          const game = games[gi];
+          const norm = normalizeMapNameForLookup(game?.map);
+          if (norm !== requestedMap) continue;
+          if (!earlyRound) {
+            tournamentPlays++;
+            totalPlays++;
+            matchHistory.push({
+              tournamentName: tName,
+              tournamentSlug: tSlug,
+              tournamentDate: tDate,
+              matchId: match.match_id || null,
+              round: match.round || null,
+              team1Player1: match?.team1?.player1?.name || match?.team1?.player1 || null,
+              team1Player2: match?.team1?.player2?.name || match?.team1?.player2 || null,
+              team2Player1: match?.team2?.player1?.name || match?.team2?.player1 || null,
+              team2Player2: match?.team2?.player2?.name || match?.team2?.player2 || null,
+              team1Score: match.team1_score ?? null,
+              team2Score: match.team2_score ?? null,
+              gameIndex: gi + 1,
+              totalGames: games.length,
+              winner: game.winner ?? null,
+            });
+          }
+        }
+      }
+
+      tournamentAppearances.push({
+        name: tName,
+        slug: tSlug,
+        date: tDate,
+        plays: tournamentPlays,
+      });
+    }
+
+    tournamentAppearances.sort((a, b) => {
+      if (a.date && b.date) return a.date > b.date ? -1 : a.date < b.date ? 1 : 0;
+      return 0;
+    });
+
+    const pickRate = eligibleMatches > 0
+      ? Number(((totalPlays / eligibleMatches) * 100).toFixed(1))
+      : null;
+
+    logApiSummary(req, Date.now(), [
+      `map:${requestedMap}`,
+      `plays:${totalPlays}`,
+      `tournaments:${tournamentAppearances.length}`,
+      `pickRate:${pickRate !== null ? pickRate + '%' : 'n/a'}`
+    ]);
+
+    res.json({
+      name: requestedMap,
+      fullName,
+      totalPlays,
+      eligibleMatches,
+      pickRate,
+      tournamentCount: tournamentAppearances.length,
+      tournaments: tournamentAppearances,
+      matchHistory,
+    });
+  } catch (err) {
+    console.error('Error building map details:', err);
+    res.status(500).json({ error: 'Failed to build map details' });
+  }
+});
+
+app.get('/api/match-detail/:tournamentSlug/:matchId', async (req, res) => {
+  try {
+    const { tournamentSlug, matchId } = req.params;
+    if (!tournamentSlug || !matchId) {
+      return res.status(400).json({ error: 'tournamentSlug and matchId are required' });
+    }
+
+    const tournaments = await loadAllTournamentData();
+    const tournament = tournaments.find(t => t?.tournament?.liquipedia_slug === tournamentSlug);
+    if (!tournament) {
+      return res.status(404).json({ error: 'Tournament not found' });
+    }
+
+    const matches = Array.isArray(tournament.matches) ? tournament.matches : [];
+    const match = matches.find(m => m.match_id === matchId);
+    if (!match) {
+      return res.status(404).json({ error: 'Match not found' });
+    }
+
+    const games = Array.isArray(match.games) ? match.games : [];
+
+    res.json({
+      matchId: match.match_id || null,
+      round: match.round || null,
+      team1Player1: match?.team1?.player1?.name || match?.team1?.player1 || null,
+      team1Player2: match?.team1?.player2?.name || match?.team1?.player2 || null,
+      team2Player1: match?.team2?.player1?.name || match?.team2?.player1 || null,
+      team2Player2: match?.team2?.player2?.name || match?.team2?.player2 || null,
+      team1Score: match.team1_score ?? null,
+      team2Score: match.team2_score ?? null,
+      games: games.map((g, i) => ({
+        gameIndex: i + 1,
+        map: g.map || null,
+        winner: g.winner ?? null,
+      })),
+    });
+  } catch (err) {
+    console.error('Error fetching match detail:', err);
+    res.status(500).json({ error: 'Failed to fetch match detail' });
+  }
+});
+
 app.get('/api/prediction-quality', async (req, res) => {
   const startedAt = Date.now();
 

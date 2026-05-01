@@ -35,7 +35,9 @@ function getValidPlayedMaps(match) {
 }
 
 export function summarizeMapRecording(tournaments) {
-  const mapCounts = new Map();
+  const mapCounts = new Map();              // non-early recorded plays per map
+  const mapPoolCounts = new Map();          // number of tournaments each map appeared in pool (for filtering)
+  const mapRecordedSlots = new Map();       // total recorded non-early games in tournaments where map was in pool
   let totalRecordedMapEntries = 0;
   let totalMatchesScanned = 0;
   let excludedEarlyRoundMatches = 0;
@@ -50,6 +52,15 @@ export function summarizeMapRecording(tournaments) {
   let includedNonEarlyMatchesWithInconsistentScores = 0;
 
   for (const tournament of tournaments) {
+    const pool = Array.isArray(tournament?.tournament?.maps) ? tournament.tournament.maps : [];
+    const poolSet = new Set();
+    for (const mapName of pool) {
+      const normalized = normalizeMapName(mapName);
+      if (!normalized || poolSet.has(normalized)) continue;
+      poolSet.add(normalized);
+      mapPoolCounts.set(normalized, (mapPoolCounts.get(normalized) || 0) + 1);
+    }
+
     const matches = Array.isArray(tournament?.matches) ? tournament.matches : [];
 
     for (const match of matches) {
@@ -79,6 +90,10 @@ export function summarizeMapRecording(tournaments) {
         matchesWithRecordedMapData += 1;
         if (!earlyRound) {
           matchesWithRecordedMapDataNonEarly += 1;
+          // Each pool map had exactly 1 selection slot in this match
+          for (const mapName of poolSet) {
+            mapRecordedSlots.set(mapName, (mapRecordedSlots.get(mapName) || 0) + 1);
+          }
         }
       }
 
@@ -89,18 +104,26 @@ export function summarizeMapRecording(tournaments) {
         totalRecordedMapEntries += 1;
         if (!earlyRound) {
           recordedMapEntriesNonEarly += 1;
+          mapCounts.set(mapName, (mapCounts.get(mapName) || 0) + 1);
         }
-        mapCounts.set(mapName, (mapCounts.get(mapName) || 0) + 1);
       }
     }
   }
 
-  const rows = Array.from(mapCounts.entries())
+  const allMapNames = new Set([...mapCounts.keys(), ...mapPoolCounts.keys()]);
+  const rows = Array.from(allMapNames)
+    .map(map => ({
+      map,
+      count: mapCounts.get(map) || 0,
+      eligibleMatches: mapRecordedSlots.get(map) || 0,
+      poolCount: mapPoolCounts.get(map) || 0,
+    }))
+    .filter(row => !(row.poolCount === 1 && row.count === 0))
     .sort((a, b) => {
-      if (b[1] !== a[1]) return b[1] - a[1];
-      return a[0].localeCompare(b[0]);
+      if (b.count !== a.count) return b.count - a.count;
+      return a.map.localeCompare(b.map);
     })
-    .map(([map, count]) => ({ map, count }));
+    .map(({ map, count, eligibleMatches }) => ({ map, count, eligibleMatches }));
 
   const matchLevelCoverageNonEarly = includedNonEarlyMatches > 0
     ? Number(((matchesWithRecordedMapDataNonEarly / includedNonEarlyMatches) * 100).toFixed(1))
