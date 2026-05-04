@@ -67,6 +67,13 @@ const getTeamKey = (team?: Match['team1']): string | null => {
   return names.join('+');
 };
 
+const getMatchTeamKeys = (match: Match): string[] => {
+  return Array.from(new Set(
+    [getTeamKey(match.team1), getTeamKey(match.team2)]
+      .filter((teamKey): teamKey is string => Boolean(teamKey))
+  ));
+};
+
 const normalizePlayerName = (name?: string): string => {
   return String(name || '').trim().toLowerCase();
 };
@@ -532,6 +539,29 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
   };
 
   const groupedEarlyRounds = useMemo(() => {
+    interface EarlyRoundSortKey {
+      primary: number;
+      secondary: number;
+    }
+
+    const getSortKeyFromTeamSlots = (
+      match: Match,
+      teamToSlot: Map<string, number>
+    ): EarlyRoundSortKey | null => {
+      const slots = getMatchTeamKeys(match)
+        .map(teamKey => teamToSlot.get(teamKey))
+        .filter((slot): slot is number => slot !== undefined);
+
+      if (slots.length === 0) {
+        return null;
+      }
+
+      return {
+        primary: Math.min(...slots),
+        secondary: Math.max(...slots)
+      };
+    };
+
     const groupedByRound = earlyRoundNames.reduce((acc, roundName) => {
       acc[roundName] = earlyRoundsMatches
         .filter(m => m.round === roundName)
@@ -554,35 +584,84 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
 
         const previousRoundName = sectionRounds[roundIndex - 1];
         const previousMatches = orderedByRound[previousRoundName] || [];
+        const nextRoundName = sectionRounds[roundIndex + 1];
+        const nextRoundMatches = nextRoundName ? groupedByRound[nextRoundName] || [] : [];
         const previousTeamToSlot = new Map<string, number>();
+        const currentMatchByTeamKey = new Map<string, Match>();
+        const nextRoundMatchByTeamKey = new Map<string, Match>();
+        const currentMatchTeamKeys = new Map<string, string[]>();
+        const resolvedSortKeys = new Map<string, EarlyRoundSortKey>();
 
         previousMatches.forEach((match, index) => {
-          const team1Key = getTeamKey(match.team1);
-          const team2Key = getTeamKey(match.team2);
-          if (team1Key) previousTeamToSlot.set(team1Key, index);
-          if (team2Key) previousTeamToSlot.set(team2Key, index);
+          getMatchTeamKeys(match).forEach(teamKey => {
+            previousTeamToSlot.set(teamKey, index);
+          });
         });
 
+        currentMatches.forEach((match) => {
+          const teamKeys = getMatchTeamKeys(match);
+          currentMatchTeamKeys.set(match.match_id, teamKeys);
+          teamKeys.forEach(teamKey => {
+            currentMatchByTeamKey.set(teamKey, match);
+          });
+
+          const directSortKey = getSortKeyFromTeamSlots(match, previousTeamToSlot);
+          if (directSortKey) {
+            resolvedSortKeys.set(match.match_id, directSortKey);
+          }
+        });
+
+        nextRoundMatches.forEach((match) => {
+          getMatchTeamKeys(match).forEach(teamKey => {
+            nextRoundMatchByTeamKey.set(teamKey, match);
+          });
+        });
+
+        if (nextRoundMatches.length > 0) {
+          let didResolveSiblingPlacement = true;
+
+          while (didResolveSiblingPlacement) {
+            didResolveSiblingPlacement = false;
+
+            currentMatches.forEach((match) => {
+              if (resolvedSortKeys.has(match.match_id)) return;
+
+              const matchTeamKeys = currentMatchTeamKeys.get(match.match_id) || [];
+              const nextRoundMatch = matchTeamKeys
+                .map(teamKey => nextRoundMatchByTeamKey.get(teamKey))
+                .find((candidate): candidate is Match => Boolean(candidate));
+
+              if (!nextRoundMatch) return;
+
+              const siblingSortKeys = getMatchTeamKeys(nextRoundMatch)
+                .filter(teamKey => !matchTeamKeys.includes(teamKey))
+                .map(teamKey => currentMatchByTeamKey.get(teamKey))
+                .filter((candidate): candidate is Match => candidate !== undefined)
+                .filter(candidate => candidate.match_id !== match.match_id)
+                .map(candidate => resolvedSortKeys.get(candidate.match_id))
+                .filter((sortKey): sortKey is EarlyRoundSortKey => Boolean(sortKey));
+
+              if (siblingSortKeys.length === 0) return;
+
+              resolvedSortKeys.set(match.match_id, {
+                primary: Math.min(...siblingSortKeys.map(sortKey => sortKey.primary)) + 0.5,
+                secondary: Math.max(...siblingSortKeys.map(sortKey => sortKey.secondary)) + 0.5
+              });
+              didResolveSiblingPlacement = true;
+            });
+          }
+        }
+
         orderedByRound[roundName] = [...currentMatches].sort((a, b) => {
-          const aTeam1 = getTeamKey(a.team1);
-          const aTeam2 = getTeamKey(a.team2);
-          const bTeam1 = getTeamKey(b.team1);
-          const bTeam2 = getTeamKey(b.team2);
-
-          const aSlots = [aTeam1, aTeam2]
-            .map(team => (team ? previousTeamToSlot.get(team) : undefined))
-            .filter((slot): slot is number => slot !== undefined);
-          const bSlots = [bTeam1, bTeam2]
-            .map(team => (team ? previousTeamToSlot.get(team) : undefined))
-            .filter((slot): slot is number => slot !== undefined);
-
-          const aMin = aSlots.length > 0 ? Math.min(...aSlots) : Number.POSITIVE_INFINITY;
-          const bMin = bSlots.length > 0 ? Math.min(...bSlots) : Number.POSITIVE_INFINITY;
+          const aSortKey = resolvedSortKeys.get(a.match_id);
+          const bSortKey = resolvedSortKeys.get(b.match_id);
+          const aMin = aSortKey?.primary ?? Number.POSITIVE_INFINITY;
+          const bMin = bSortKey?.primary ?? Number.POSITIVE_INFINITY;
 
           if (aMin !== bMin) return aMin - bMin;
 
-          const aMax = aSlots.length > 0 ? Math.max(...aSlots) : Number.POSITIVE_INFINITY;
-          const bMax = bSlots.length > 0 ? Math.max(...bSlots) : Number.POSITIVE_INFINITY;
+          const aMax = aSortKey?.secondary ?? Number.POSITIVE_INFINITY;
+          const bMax = bSortKey?.secondary ?? Number.POSITIVE_INFINITY;
 
           if (aMax !== bMax) return aMax - bMax;
 
@@ -620,8 +699,54 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
   const earlySectionLayouts = useMemo(() => {
     const MATCH_SPACING = 140;
     const MIN_VERTICAL_GAP = 110;
+    const JOINER_EXTRA_GAP = 44;
+    const SHARED_CONSUMER_GAP = MIN_VERTICAL_GAP + JOINER_EXTRA_GAP;
     const TOP_PADDING = 20;
     const BOTTOM_PADDING = 140;
+
+    const distributeTops = (desiredTops: number[], minGaps: number[]): number[] => {
+      const distributedTops: number[] = [];
+
+      desiredTops.forEach((top, index) => {
+        if (index === 0) {
+          distributedTops.push(top);
+          return;
+        }
+
+        const previousTop = distributedTops[index - 1];
+        distributedTops.push(Math.max(top, previousTop + (minGaps[index] ?? MIN_VERTICAL_GAP)));
+      });
+
+      return distributedTops;
+    };
+
+    const buildTeamToTopMap = (matches: Match[], roundTopMap: Map<string, number>): Map<string, number> => {
+      const teamToTop = new Map<string, number>();
+
+      matches.forEach((match) => {
+        const top = roundTopMap.get(match.match_id);
+        if (top === undefined) return;
+
+        getMatchTeamKeys(match).forEach((teamKey) => {
+          teamToTop.set(teamKey, top);
+        });
+      });
+
+      return teamToTop;
+    };
+
+    const getGapAfterMatch = (
+      currentMatchHasJoiner: boolean,
+      sharesConsumerWithPrevious: boolean
+    ): number => {
+      let gap = sharesConsumerWithPrevious ? SHARED_CONSUMER_GAP : MIN_VERTICAL_GAP;
+
+      if (currentMatchHasJoiner) {
+        gap += JOINER_EXTRA_GAP;
+      }
+
+      return gap;
+    };
 
     const sectionLayouts = new Map<EarlyRoundType, {
       minHeight: number;
@@ -633,66 +758,213 @@ export function BracketView({ data, filename, onDataChange }: BracketViewProps) 
       if (!section) return;
 
       const roundMatchTopById: Record<string, Map<string, number>> = {};
+      const roundMatchesByName = section.rounds.reduce((acc, roundName) => {
+        acc[roundName] = groupedEarlyRounds[roundName] || [];
+        return acc;
+      }, {} as Record<string, Match[]>);
       let previousTeamToTop = new Map<string, number>();
-      let sectionMaxTop = 0;
 
       section.rounds.forEach((roundName, roundIndex) => {
-        const matches = groupedEarlyRounds[roundName] || [];
+        const matches = roundMatchesByName[roundName] || [];
         const rawTops: number[] = [];
-        let fallbackTop = 0;
+        const roundMinGaps: number[] = [];
+        const roundHasJoinerFlags: boolean[] = [];
+        let fallbackTop = TOP_PADDING;
 
         matches.forEach((match, matchIndex) => {
-          if (roundIndex === 0) {
-            rawTops.push(matchIndex * MATCH_SPACING);
-            fallbackTop = (matchIndex + 1) * MATCH_SPACING;
-            return;
-          }
-
-          const feederTops = [getTeamKey(match.team1), getTeamKey(match.team2)]
-            .map(teamKey => (teamKey ? previousTeamToTop.get(teamKey) : undefined))
+          const teamKeys = getMatchTeamKeys(match);
+          const feederTops = (roundIndex === 0 ? [] : teamKeys)
+            .map(teamKey => previousTeamToTop.get(teamKey))
             .filter((top): top is number => top !== undefined);
+          const matchHasJoiner = roundIndex > 0 && teamKeys.some(teamKey => !previousTeamToTop.has(teamKey));
+          roundHasJoinerFlags.push(matchHasJoiner);
 
           if (feederTops.length > 0) {
             const averageTop = feederTops.reduce((sum, top) => sum + top, 0) / feederTops.length;
             rawTops.push(averageTop);
-            fallbackTop = Math.max(fallbackTop, averageTop + MATCH_SPACING);
+            roundMinGaps.push(
+              matchIndex === 0
+                ? 0
+                : getGapAfterMatch(matchHasJoiner, false)
+            );
+            fallbackTop = Math.max(
+              fallbackTop,
+              averageTop + MATCH_SPACING + (matchHasJoiner ? JOINER_EXTRA_GAP : 0)
+            );
           } else {
             rawTops.push(fallbackTop);
-            fallbackTop += MATCH_SPACING;
+            roundMinGaps.push(
+              matchIndex === 0
+                ? 0
+                : getGapAfterMatch(matchHasJoiner, true)
+            );
+            fallbackTop += MATCH_SPACING + JOINER_EXTRA_GAP * (matchHasJoiner ? 2 : 1);
           }
         });
 
-        const adjustedTops: number[] = [];
-        rawTops.forEach((top, index) => {
-          if (index === 0) {
-            adjustedTops.push(top);
-            return;
-          }
-
-          const previousTop = adjustedTops[index - 1];
-          adjustedTops.push(Math.max(top, previousTop + MIN_VERTICAL_GAP));
-        });
+        const adjustedTops = distributeTops(rawTops, roundMinGaps);
 
         const roundTopMap = new Map<string, number>();
         matches.forEach((match, index) => {
-          const absoluteTop = TOP_PADDING + (adjustedTops[index] ?? 0);
-          roundTopMap.set(match.match_id, absoluteTop);
-          sectionMaxTop = Math.max(sectionMaxTop, absoluteTop);
+          roundTopMap.set(match.match_id, adjustedTops[index] ?? TOP_PADDING);
         });
 
         roundMatchTopById[roundName] = roundTopMap;
+        previousTeamToTop = buildTeamToTopMap(matches, roundTopMap);
+      });
 
-        previousTeamToTop = new Map<string, number>();
-        matches.forEach((match) => {
-          const top = roundTopMap.get(match.match_id);
+      for (let roundIndex = section.rounds.length - 2; roundIndex >= 0; roundIndex -= 1) {
+        const roundName = section.rounds[roundIndex];
+        const nextRoundName = section.rounds[roundIndex + 1];
+        const matches = roundMatchesByName[roundName] || [];
+        const nextRoundMatches = roundMatchesByName[nextRoundName] || [];
+
+        if (matches.length === 0 || nextRoundMatches.length === 0) continue;
+
+        const currentRoundTopMap = roundMatchTopById[roundName] || new Map<string, number>();
+        const nextRoundTopMap = roundMatchTopById[nextRoundName] || new Map<string, number>();
+        const nextRoundInfoByTeamKey = new Map<string, { matchId: string; top: number }>();
+
+        nextRoundMatches.forEach((match) => {
+          const top = nextRoundTopMap.get(match.match_id);
           if (top === undefined) return;
 
-          const team1 = getTeamKey(match.team1);
-          const team2 = getTeamKey(match.team2);
-          if (team1) previousTeamToTop.set(team1, top);
-          if (team2) previousTeamToTop.set(team2, top);
+          getMatchTeamKeys(match).forEach((teamKey) => {
+            nextRoundInfoByTeamKey.set(teamKey, { matchId: match.match_id, top });
+          });
+        });
+
+        const desiredTops: number[] = [];
+        const reverseMinGaps: number[] = [];
+        const consumerMatchIds: string[] = [];
+        const reverseHasJoinerFlags: boolean[] = [];
+
+        matches.forEach((match, matchIndex) => {
+          const teamKeys = getMatchTeamKeys(match);
+          const consumers = teamKeys
+            .map((teamKey) => nextRoundInfoByTeamKey.get(teamKey))
+            .filter((consumer): consumer is { matchId: string; top: number } => consumer !== undefined);
+          const matchHasJoiner = consumers.length < teamKeys.length;
+          reverseHasJoinerFlags.push(matchHasJoiner);
+
+          const uniqueConsumers = Array.from(new Map(
+            consumers.map((consumer) => [consumer.matchId, consumer])
+          ).values());
+
+          if (uniqueConsumers.length > 0) {
+            const averageConsumerTop = uniqueConsumers.reduce((sum, consumer) => sum + consumer.top, 0) / uniqueConsumers.length;
+            desiredTops.push(averageConsumerTop);
+            consumerMatchIds.push(uniqueConsumers.map((consumer) => consumer.matchId).sort().join('|'));
+          } else {
+            desiredTops.push(currentRoundTopMap.get(match.match_id) ?? TOP_PADDING);
+            consumerMatchIds.push('');
+          }
+
+          const sharesConsumerWithPrevious = matchIndex > 0 && consumerMatchIds[matchIndex] !== '' && consumerMatchIds[matchIndex] === consumerMatchIds[matchIndex - 1];
+          reverseMinGaps.push(
+            matchIndex === 0
+              ? 0
+              : getGapAfterMatch(matchHasJoiner, sharesConsumerWithPrevious)
+          );
+        });
+
+        const redistributedTops = distributeTops(desiredTops, reverseMinGaps);
+        const redistributedRoundTopMap = new Map<string, number>();
+
+        matches.forEach((match, index) => {
+          redistributedRoundTopMap.set(match.match_id, redistributedTops[index] ?? TOP_PADDING);
+        });
+
+        roundMatchTopById[roundName] = redistributedRoundTopMap;
+      }
+
+      if (section.rounds.length > 1) {
+        const firstRoundName = section.rounds[0];
+        previousTeamToTop = buildTeamToTopMap(
+          roundMatchesByName[firstRoundName] || [],
+          roundMatchTopById[firstRoundName] || new Map<string, number>()
+        );
+
+        for (let roundIndex = 1; roundIndex < section.rounds.length; roundIndex += 1) {
+          const roundName = section.rounds[roundIndex];
+          const matches = roundMatchesByName[roundName] || [];
+          const currentRoundTopMap = roundMatchTopById[roundName] || new Map<string, number>();
+          const existingTops = matches
+            .map(match => currentRoundTopMap.get(match.match_id))
+            .filter((top): top is number => top !== undefined);
+          const rawTops: number[] = [];
+          const roundMinGaps: number[] = [];
+          const roundHasJoinerFlags: boolean[] = [];
+          let fallbackTop = existingTops.length > 0 ? Math.min(...existingTops) : TOP_PADDING;
+
+          matches.forEach((match, matchIndex) => {
+            const teamKeys = getMatchTeamKeys(match);
+            const feederTops = teamKeys
+              .map(teamKey => previousTeamToTop.get(teamKey))
+              .filter((top): top is number => top !== undefined);
+            const matchHasJoiner = teamKeys.some(teamKey => !previousTeamToTop.has(teamKey));
+            const preferredTop = currentRoundTopMap.get(match.match_id) ?? fallbackTop;
+
+            roundHasJoinerFlags.push(matchHasJoiner);
+
+            if (feederTops.length > 0) {
+              const averageTop = feederTops.reduce((sum, top) => sum + top, 0) / feederTops.length;
+              rawTops.push(averageTop);
+              roundMinGaps.push(
+                matchIndex === 0
+                  ? 0
+                  : getGapAfterMatch(matchHasJoiner, false)
+              );
+              fallbackTop = Math.max(
+                fallbackTop,
+                preferredTop,
+                averageTop + MATCH_SPACING + (matchHasJoiner ? JOINER_EXTRA_GAP : 0)
+              );
+            } else {
+              rawTops.push(Math.max(preferredTop, fallbackTop));
+              roundMinGaps.push(
+                matchIndex === 0
+                  ? 0
+                  : getGapAfterMatch(matchHasJoiner, true)
+              );
+              fallbackTop = Math.max(preferredTop, fallbackTop) + MATCH_SPACING + JOINER_EXTRA_GAP * (matchHasJoiner ? 2 : 1);
+            }
+          });
+
+          const adjustedTops = distributeTops(rawTops, roundMinGaps);
+          const reflownRoundTopMap = new Map<string, number>();
+
+          matches.forEach((match, index) => {
+            reflownRoundTopMap.set(match.match_id, adjustedTops[index] ?? TOP_PADDING);
+          });
+
+          roundMatchTopById[roundName] = reflownRoundTopMap;
+          previousTeamToTop = buildTeamToTopMap(matches, reflownRoundTopMap);
+        }
+      }
+
+      let sectionMinTop = Number.POSITIVE_INFINITY;
+      let sectionMaxTop = 0;
+      Object.values(roundMatchTopById).forEach((roundTopMap) => {
+        roundTopMap.forEach((top) => {
+          sectionMinTop = Math.min(sectionMinTop, top);
+          sectionMaxTop = Math.max(sectionMaxTop, top);
         });
       });
+
+      if (sectionMinTop !== Number.POSITIVE_INFINITY) {
+        const normalizeOffset = TOP_PADDING - sectionMinTop;
+
+        if (normalizeOffset !== 0) {
+          Object.values(roundMatchTopById).forEach((roundTopMap) => {
+            roundTopMap.forEach((top, matchId) => {
+              roundTopMap.set(matchId, top + normalizeOffset);
+            });
+          });
+
+          sectionMaxTop += normalizeOffset;
+        }
+      }
 
       sectionLayouts.set(type, {
         minHeight: Math.max(460, sectionMaxTop + BOTTOM_PADDING),

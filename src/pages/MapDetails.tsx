@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useMemo, useState } from 'react';
-import { Loader2, ArrowLeft, Map, Trophy, BarChart3, Calendar } from 'lucide-react';
+import { Loader2, ArrowLeft, Map, Trophy, BarChart3, BarChart2, Swords, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
 import { Badge } from '../components/ui/badge';
@@ -10,6 +10,7 @@ import { CountryFlag } from '../components/ui/CountryFlag';
 import { formatTournamentName } from '../lib/display';
 import { getPlayerDefaults } from '../lib/playerDefaults';
 import { getPlayerCountries } from '../lib/playerCountries';
+import { getRaceAbbr } from '../lib/utils';
 import { Race } from '../types/tournament';
 
 interface TournamentAppearance {
@@ -94,6 +95,11 @@ export function MapDetails({ mapName, onBack, onNavigateToPlayer, onNavigateToTe
   const [expandedMatches, setExpandedMatches] = useState<Set<string>>(new Set());
   const [matchDetailCache, setMatchDetailCache] = useState<Record<string, MatchDetail | null>>({});
   const [matchDetailLoading, setMatchDetailLoading] = useState<Set<string>>(new Set());
+  const [hideMirror, setHideMirror] = useState(false);
+  const [showAllHistory, setShowAllHistory] = useState(false);
+  const [showAllTournaments, setShowAllTournaments] = useState(false);
+  const [comboSort, setComboSort] = useState<{ col: 'total' | 'winRate'; dir: 'asc' | 'desc' }>({ col: 'total', dir: 'desc' });
+  const [h2hSort, setH2hSort] = useState<{ col: 'total' | 'c1WinRate'; dir: 'asc' | 'desc' }>({ col: 'total', dir: 'desc' });
 
   useEffect(() => {
     getPlayerDefaults().then(setPlayerRaces).catch(() => {});
@@ -109,6 +115,8 @@ export function MapDetails({ mapName, onBack, onNavigateToPlayer, onNavigateToTe
     setExpandedMatches(new Set());
     setMatchDetailCache({});
     setMatchDetailLoading(new Set());
+    setShowAllHistory(false);
+    setShowAllTournaments(false);
     fetch(`/api/map-details/${encodeURIComponent(mapName)}`)
       .then(r => {
         if (!r.ok) throw new Error('Failed to load map details');
@@ -148,6 +156,96 @@ export function MapDetails({ mapName, onBack, onNavigateToPlayer, onNavigateToTe
       return true;
     });
   }, [data, historyPlayer, historyTournament]);
+
+  function isMirrorCombo(races: Race[]): boolean {
+    const abbrs = races.map(r => getRaceAbbr(r));
+    return abbrs.length === 2 && abbrs[0] === abbrs[1];
+  }
+
+  const raceCompositionStats = useMemo(() => {
+    const stats: Record<string, { races: Race[]; wins: number; losses: number }> = {};
+    for (const entry of data?.matchHistory ?? []) {
+      if (entry.winner === null) continue;
+      const team1Won = entry.winner === 1;
+      const addTeam = (p1: string | null, p2: string | null, won: boolean) => {
+        const races = [p1, p2]
+          .filter((player): player is string => Boolean(player))
+          .map(player => playerRaces[player])
+          .filter((race): race is Race => Boolean(race));
+        const sorted = [...races].sort((a, b) => getRaceAbbr(a).localeCompare(getRaceAbbr(b)));
+        const key = sorted.map(race => getRaceAbbr(race)).join('');
+        if (!key) return;
+        const current = stats[key] ?? { races: sorted, wins: 0, losses: 0 };
+        if (won) current.wins += 1;
+        else current.losses += 1;
+        stats[key] = current;
+      };
+      addTeam(entry.team1Player1, entry.team1Player2, team1Won);
+      addTeam(entry.team2Player1, entry.team2Player2, !team1Won);
+    }
+    return Object.values(stats)
+      .map(record => ({
+        races: record.races,
+        wins: record.wins,
+        losses: record.losses,
+        total: record.wins + record.losses,
+        winRate: (record.wins / (record.wins + record.losses)) * 100,
+      }))
+      .filter(row => !hideMirror || !isMirrorCombo(row.races))
+      .sort((a, b) => {
+        const mul = comboSort.dir === 'asc' ? 1 : -1;
+        return (a[comboSort.col] - b[comboSort.col]) * mul;
+      });
+  }, [data?.matchHistory, playerRaces, hideMirror, comboSort]);
+
+  const comboMatchups = useMemo(() => {
+    const stats: Record<string, { combo1Key: string; combo2Key: string; combo1Races: Race[]; combo2Races: Race[]; combo1Wins: number; combo2Wins: number }> = {};
+    for (const entry of data?.matchHistory ?? []) {
+      if (entry.winner === null) continue;
+      const team1Won = entry.winner === 1;
+      const getCombo = (p1: string | null, p2: string | null): { key: string; races: Race[] } | null => {
+        const races = [p1, p2]
+          .filter((p): p is string => Boolean(p))
+          .map(p => playerRaces[p])
+          .filter((r): r is Race => Boolean(r));
+        const sorted = [...races].sort((a, b) => getRaceAbbr(a).localeCompare(getRaceAbbr(b)));
+        const key = sorted.map(r => getRaceAbbr(r)).join('');
+        return key ? { key, races: sorted } : null;
+      };
+      const c1 = getCombo(entry.team1Player1, entry.team1Player2);
+      const c2 = getCombo(entry.team2Player1, entry.team2Player2);
+      if (!c1 || !c2) continue;
+      // Skip same-combo matchups – wins would be arbitrary (team1 always "combo1")
+      if (c1.key === c2.key) continue;
+      const [keyCombo1, keyCombo2, races1, races2] = c1.key <= c2.key
+        ? [c1.key, c2.key, c1.races, c2.races]
+        : [c2.key, c1.key, c2.races, c1.races];
+      const key = `${keyCombo1}|${keyCombo2}`;
+      const current = stats[key] ?? { combo1Key: keyCombo1, combo2Key: keyCombo2, combo1Races: races1, combo2Races: races2, combo1Wins: 0, combo2Wins: 0 };
+      if (c1.key === keyCombo1) {
+        if (team1Won) current.combo1Wins += 1;
+        else current.combo2Wins += 1;
+      } else {
+        if (team1Won) current.combo2Wins += 1;
+        else current.combo1Wins += 1;
+      }
+      stats[key] = current;
+    }
+    return Object.values(stats)
+      .map(s => ({
+        ...s,
+        total: s.combo1Wins + s.combo2Wins,
+        c1WinRate: s.combo1Wins + s.combo2Wins > 0 ? (s.combo1Wins / (s.combo1Wins + s.combo2Wins)) * 100 : 50,
+      }))
+      .filter(row => {
+        if (!hideMirror) return true;
+        return !isMirrorCombo(row.combo1Races) && !isMirrorCombo(row.combo2Races);
+      })
+      .sort((a, b) => {
+        const mul = h2hSort.dir === 'asc' ? 1 : -1;
+        return (a[h2hSort.col] - b[h2hSort.col]) * mul;
+      });
+  }, [data?.matchHistory, playerRaces, hideMirror, h2hSort]);
 
   function toggleMatch(tournamentSlug: string, matchId: string) {
     const key = `${tournamentSlug}/${matchId}`;
@@ -280,71 +378,242 @@ export function MapDetails({ mapName, onBack, onNavigateToPlayer, onNavigateToTe
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {/* Tournament appearances */}
+      {/* Race Statistics */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        {/* Race Combo Win Rates */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Trophy className="h-5 w-5 text-primary" />
-              Tournament Appearances
-            </CardTitle>
-            <CardDescription>Tournaments where this map was in the pool.</CardDescription>
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <BarChart2 className="h-5 w-5 text-primary" />
+                  Race Combo Win Rates
+                </CardTitle>
+                <CardDescription className="mt-1">Win rate per race composition on this map.</CardDescription>
+              </div>
+              <label className="flex items-center gap-1.5 text-xs text-muted-foreground whitespace-nowrap pt-1 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={hideMirror}
+                  onChange={e => setHideMirror(e.target.checked)}
+                  className="h-3.5 w-3.5 rounded border-border"
+                />
+                Hide mirrors
+              </label>
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Tournament</TableHead>
-                    <TableHead className="text-right w-20">Plays</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {data.tournaments.map((t) => (
-                    <TableRow key={t.slug ?? t.name}>
-                      <TableCell className="text-sm">
-                        <div
-                          className={t.slug && onNavigateToTournament ? 'font-medium text-primary cursor-pointer hover:underline' : 'font-medium'}
-                          onClick={() => t.slug && onNavigateToTournament?.(t.slug)}
-                        >
-                          {formatTournamentName(t.name)}
-                        </div>
-                        {t.date && (
-                          <div className="text-xs text-muted-foreground flex items-center gap-1">
-                            <Calendar className="h-3 w-3" />
-                            {t.date}
-                          </div>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {t.plays > 0
-                          ? <Badge variant="secondary">{t.plays}</Badge>
-                          : <span className="text-muted-foreground text-xs">—</span>
-                        }
-                      </TableCell>
+            {raceCompositionStats.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-4">No race data available yet.</p>
+            ) : (
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Composition</TableHead>
+                      <TableHead
+                        className="text-right w-16 cursor-pointer select-none"
+                        onClick={() => setComboSort(s => ({ col: 'total', dir: s.col === 'total' ? (s.dir === 'desc' ? 'asc' : 'desc') : 'desc' }))}
+                      >
+                        <span className="inline-flex items-center justify-end gap-1">
+                          Games
+                          {comboSort.col === 'total' ? (comboSort.dir === 'desc' ? <ArrowDown className="h-3 w-3" /> : <ArrowUp className="h-3 w-3" />) : <ArrowUpDown className="h-3 w-3 text-muted-foreground/50" />}
+                        </span>
+                      </TableHead>
+                      <TableHead className="text-right w-12">W</TableHead>
+                      <TableHead className="text-right w-12">L</TableHead>
+                      <TableHead
+                        className="text-right w-20 cursor-pointer select-none"
+                        onClick={() => setComboSort(s => ({ col: 'winRate', dir: s.col === 'winRate' ? (s.dir === 'desc' ? 'asc' : 'desc') : 'desc' }))}
+                      >
+                        <span className="inline-flex items-center justify-end gap-1">
+                          Win%
+                          {comboSort.col === 'winRate' ? (comboSort.dir === 'desc' ? <ArrowDown className="h-3 w-3" /> : <ArrowUp className="h-3 w-3" />) : <ArrowUpDown className="h-3 w-3 text-muted-foreground/50" />}
+                        </span>
+                      </TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                  </TableHeader>
+                  <TableBody>
+                    {raceCompositionStats.map((row, i) => (
+                      <TableRow key={i}>
+                        <TableCell>
+                          <div className="flex items-center gap-1">
+                            {row.races.map((race, j) => (
+                              <RaceBadge key={j} race={race} className="h-5 px-1.5 text-xs shrink-0" />
+                            ))}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right text-muted-foreground">{row.total}</TableCell>
+                        <TableCell className="text-right text-green-600 dark:text-green-400 font-medium">{row.wins}</TableCell>
+                        <TableCell className="text-right text-muted-foreground">{row.losses}</TableCell>
+                        <TableCell className="text-right">
+                          <Badge variant={row.winRate >= 55 ? 'default' : row.winRate <= 45 ? 'destructive' : 'secondary'}>
+                            {formatPercent(row.winRate)}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
           </CardContent>
         </Card>
 
-        {/* Match history */}
-        <Card className="lg:col-span-2">
+        {/* Combo Head-to-Head */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Swords className="h-5 w-5 text-primary" />
+                  Combo Head-to-Head
+                </CardTitle>
+                <CardDescription className="mt-1">Wins when specific race combos face each other on this map.</CardDescription>
+              </div>
+              <label className="flex items-center gap-1.5 text-xs text-muted-foreground whitespace-nowrap pt-1 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={hideMirror}
+                  onChange={e => setHideMirror(e.target.checked)}
+                  className="h-3.5 w-3.5 rounded border-border"
+                />
+                Hide mirrors
+              </label>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {comboMatchups.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-4">No matchup data available yet.</p>
+            ) : (
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Matchup</TableHead>
+                      <TableHead
+                        className="text-right w-16 cursor-pointer select-none"
+                        onClick={() => setH2hSort(s => ({ col: 'total', dir: s.col === 'total' ? (s.dir === 'desc' ? 'asc' : 'desc') : 'desc' }))}
+                      >
+                        <span className="inline-flex items-center justify-end gap-1">
+                          Games
+                          {h2hSort.col === 'total' ? (h2hSort.dir === 'desc' ? <ArrowDown className="h-3 w-3" /> : <ArrowUp className="h-3 w-3" />) : <ArrowUpDown className="h-3 w-3 text-muted-foreground/50" />}
+                        </span>
+                      </TableHead>
+                      <TableHead className="text-right w-20">Score</TableHead>
+                      <TableHead
+                        className="text-right w-20 cursor-pointer select-none"
+                        onClick={() => setH2hSort(s => ({ col: 'c1WinRate', dir: s.col === 'c1WinRate' ? (s.dir === 'desc' ? 'asc' : 'desc') : 'desc' }))}
+                      >
+                        <span className="inline-flex items-center justify-end gap-1">
+                          Win%
+                          {h2hSort.col === 'c1WinRate' ? (h2hSort.dir === 'desc' ? <ArrowDown className="h-3 w-3" /> : <ArrowUp className="h-3 w-3" />) : <ArrowUpDown className="h-3 w-3 text-muted-foreground/50" />}
+                        </span>
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {comboMatchups.map((row, i) => (
+                      <TableRow key={i}>
+                        <TableCell>
+                          <div className="flex items-center gap-1 flex-wrap">
+                            {row.combo1Races.map((race, j) => (
+                              <RaceBadge key={j} race={race} className="h-5 px-1.5 text-xs shrink-0" />
+                            ))}
+                            <span className="text-muted-foreground text-xs mx-0.5">vs</span>
+                            {row.combo2Races.map((race, j) => (
+                              <RaceBadge key={j} race={race} className="h-5 px-1.5 text-xs shrink-0" />
+                            ))}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right text-muted-foreground">{row.total}</TableCell>
+                        <TableCell className="text-right">
+                          <span className="text-sm font-medium tabular-nums">
+                            <span className={row.c1WinRate > 50 ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'}>{row.combo1Wins}</span>
+                            <span className="text-muted-foreground mx-1">–</span>
+                            <span className={row.c1WinRate < 50 ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'}>{row.combo2Wins}</span>
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Badge variant={row.c1WinRate >= 55 ? 'default' : row.c1WinRate <= 45 ? 'destructive' : 'secondary'}>
+                            {formatPercent(row.c1WinRate)}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Tournament Appearances + Game History */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        {/* Tournament appearances */}
+        <Card className="flex flex-col">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Trophy className="h-5 w-5 text-primary" />
+                Tournament Appearances
+              </CardTitle>
+              <span className="text-xs text-muted-foreground">{data.tournamentCount} tournament{data.tournamentCount !== 1 ? 's' : ''}</span>
+            </div>
+          </CardHeader>
+          <CardContent className="flex-1">
+            <div className="rounded-md border divide-y">
+              {(showAllTournaments ? data.tournaments : data.tournaments.slice(0, 6)).map((t) => (
+                <div key={t.slug ?? t.name} className="flex items-center justify-between gap-2 py-2 px-3">
+                  <div className="min-w-0">
+                    <div
+                      className={`text-sm truncate ${t.slug && onNavigateToTournament ? 'font-medium text-primary cursor-pointer hover:underline' : 'font-medium'}`}
+                      onClick={() => t.slug && onNavigateToTournament?.(t.slug)}
+                    >
+                      {formatTournamentName(t.name)}
+                    </div>
+                    {t.date && (
+                      <div className="text-xs text-muted-foreground">{t.date}</div>
+                    )}
+                  </div>
+                  <div className="shrink-0">
+                    {t.plays > 0
+                      ? <Badge variant="secondary">{t.plays}</Badge>
+                      : <span className="text-muted-foreground text-xs">—</span>
+                    }
+                  </div>
+                </div>
+              ))}
+            </div>
+            {data.tournaments.length > 6 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full mt-2 text-muted-foreground"
+                onClick={() => setShowAllTournaments(v => !v)}
+              >
+                {showAllTournaments ? 'Show less' : `Show all ${data.tournaments.length} tournaments`}
+              </Button>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Game History */}
+        <Card className="flex flex-col">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
               <BarChart3 className="h-5 w-5 text-primary" />
               Game History
             </CardTitle>
             <CardDescription>
-              Recorded games played on this map ({data.matchHistory.length} total{filteredHistory.length !== data.matchHistory.length ? `, ${filteredHistory.length} shown` : ''}).
+              {data.matchHistory.length} game{data.matchHistory.length !== 1 ? 's' : ''} recorded{filteredHistory.length !== data.matchHistory.length ? ` · ${filteredHistory.length} shown` : ''}.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex flex-col sm:flex-row gap-2">
+          <CardContent className="flex-1 space-y-4">
+            <div className="flex flex-col gap-2">
               <Select value={historyPlayer} onValueChange={setHistoryPlayer}>
-                <SelectTrigger className="flex-1">
+                <SelectTrigger>
                   <SelectValue placeholder="All players" />
                 </SelectTrigger>
                 <SelectContent>
@@ -355,7 +624,7 @@ export function MapDetails({ mapName, onBack, onNavigateToPlayer, onNavigateToTe
                 </SelectContent>
               </Select>
               <Select value={historyTournament} onValueChange={setHistoryTournament}>
-                <SelectTrigger className="sm:w-56">
+                <SelectTrigger>
                   <SelectValue placeholder="All tournaments" />
                 </SelectTrigger>
                 <SelectContent>
@@ -366,12 +635,13 @@ export function MapDetails({ mapName, onBack, onNavigateToPlayer, onNavigateToTe
                 </SelectContent>
               </Select>
             </div>
-            {filteredHistory.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-4 text-center">
-                {data.matchHistory.length === 0 ? 'No recorded games yet.' : 'No games match the current filters.'}
-              </p>
-            ) : (
-              <div className="rounded-md border">
+          {filteredHistory.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-4 text-center">
+              {data.matchHistory.length === 0 ? 'No recorded games yet.' : 'No games match the current filters.'}
+            </p>
+          ) : (
+            <>
+            <div className="rounded-md border">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -381,7 +651,7 @@ export function MapDetails({ mapName, onBack, onNavigateToPlayer, onNavigateToTe
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredHistory.map((entry, i) => {
+                    {(showAllHistory ? filteredHistory : filteredHistory.slice(0, 5)).map((entry, i) => {
                       const team1Won = entry.winner === 1;
                       const team2Won = entry.winner === 2;
 
@@ -525,7 +795,18 @@ export function MapDetails({ mapName, onBack, onNavigateToPlayer, onNavigateToTe
                   </TableBody>
                 </Table>
               </div>
-            )}
+              {filteredHistory.length > 5 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full mt-2 text-muted-foreground"
+                  onClick={() => setShowAllHistory(v => !v)}
+                >
+                  {showAllHistory ? `Show less` : `Show all ${filteredHistory.length} games`}
+                </Button>
+              )}
+            </>
+          )}
           </CardContent>
         </Card>
       </div>
