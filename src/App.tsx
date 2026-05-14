@@ -12,6 +12,7 @@ import { TeamDetails } from './pages/TeamDetails';
 import { Info } from './pages/Info';
 import { Highlights } from './pages/Highlights';
 import { MapData } from './pages/MapData';
+import { MapDetails } from './pages/MapDetails';
 import { PredictionQuality } from './pages/PredictionQuality';
 import { Header, type HeaderNavView, type Section } from './components/Header';
 import { Footer } from './components/Footer';
@@ -25,6 +26,7 @@ type View =
   | 'team-race-rankings'
   | 'matches'
   | 'map-data'
+  | 'map-details'
   | 'highlights'
   | 'prediction-quality'
   | 'player-details'
@@ -39,6 +41,7 @@ interface NavigationState {
   playerName?: string;
   teamPlayer1?: string;
   teamPlayer2?: string;
+  mapName?: string;
   matchTournamentSlug?: string;
   matchId?: string;
 }
@@ -60,6 +63,7 @@ export function App() {
       playerName?: string;
       teamPlayer1?: string;
       teamPlayer2?: string;
+      mapName?: string;
       matchTournamentSlug?: string;
       matchId?: string;
     }
@@ -79,6 +83,7 @@ export function App() {
 
   const currentSection: Section = (() => {
     if (circuitViews.includes(navState.view as CircuitView)) return 'circuit';
+    if (navState.view === 'map-details') return 'circuit';
     if (rankingsViews.includes(navState.view as RankingsView) || navState.view === 'player-details' || navState.view === 'team-details') return 'rankings';
     return 'info';
   })();
@@ -89,7 +94,7 @@ export function App() {
     }
 
     if (view === 'map-data') {
-      return <MapData />;
+      return <MapData onNavigateToMap={(name) => navigate('map-details', { mapName: name })} />;
     }
 
     return <TournamentEditor />;
@@ -118,6 +123,16 @@ export function App() {
 
     if (navState.view === 'team-details' && navState.teamPlayer1 && navState.teamPlayer2) {
       return <TeamDetails player1={navState.teamPlayer1} player2={navState.teamPlayer2} onBack={() => navigate('team-rankings')} />;
+    }
+
+    if (navState.view === 'map-details' && navState.mapName) {
+      return <MapDetails
+        mapName={navState.mapName}
+        onBack={() => navigate('map-data')}
+        onNavigateToPlayer={(name) => navigate('player-details', { playerName: name })}
+        onNavigateToTeam={(p1, p2) => navigate('team-details', { teamPlayer1: p1, teamPlayer2: p2 })}
+        onNavigateToTournament={(slug) => navigate('matches', { matchTournamentSlug: slug })}
+      />;
     }
 
     if (rankingsViews.includes(navState.view as RankingsView)) {

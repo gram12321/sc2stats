@@ -1,12 +1,26 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Loader2, Map, Database, Layers3, CheckCircle2 } from 'lucide-react';
+import { Loader2, Map, Database, Layers3, CheckCircle2, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
 import { Badge } from '../components/ui/badge';
 
+type MapSortColumn = 'map' | 'eligibleMatches' | 'count' | 'pickRate';
+
+function MapSortIcon({ column, sortColumn, sortDirection }: {
+  column: MapSortColumn;
+  sortColumn: MapSortColumn;
+  sortDirection: 'asc' | 'desc';
+}) {
+  if (sortColumn !== column) return <ArrowUpDown className="ml-1 h-3 w-3 text-muted-foreground" />;
+  return sortDirection === 'asc'
+    ? <ArrowUp className="ml-1 h-3 w-3 text-primary" />
+    : <ArrowDown className="ml-1 h-3 w-3 text-primary" />;
+}
+
 interface MapCountRow {
   map: string;
   count: number;
+  eligibleMatches: number;
 }
 
 interface MapRecordingSummary {
@@ -36,7 +50,7 @@ function formatNumber(value: number) {
   return value.toLocaleString();
 }
 
-export function MapData() {
+export function MapData({ onNavigateToMap }: { onNavigateToMap?: (mapName: string) => void }) {
   const [summary, setSummary] = useState<MapRecordingSummary | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -63,6 +77,37 @@ export function MapData() {
 
     loadSummary();
   }, []);
+
+  const [mapSortColumn, setMapSortColumn] = useState<MapSortColumn>('count');
+  const [mapSortDirection, setMapSortDirection] = useState<'asc' | 'desc'>('desc');
+
+  const handleMapSort = (column: MapSortColumn) => {
+    if (mapSortColumn === column) {
+      setMapSortDirection(d => d === 'asc' ? 'desc' : 'asc');
+    } else {
+      setMapSortColumn(column);
+      setMapSortDirection(column === 'map' ? 'asc' : 'desc');
+    }
+  };
+
+  const sortedMapRows = useMemo(() => {
+    if (!summary) return [];
+    return [...summary.rows].sort((a, b) => {
+      let cmp = 0;
+      if (mapSortColumn === 'map') {
+        cmp = a.map.localeCompare(b.map);
+      } else if (mapSortColumn === 'eligibleMatches') {
+        cmp = a.eligibleMatches - b.eligibleMatches;
+      } else if (mapSortColumn === 'count') {
+        cmp = a.count - b.count;
+      } else {
+        const aRate = a.eligibleMatches > 0 ? a.count / a.eligibleMatches : -1;
+        const bRate = b.eligibleMatches > 0 ? b.count / b.eligibleMatches : -1;
+        cmp = aRate - bRate;
+      }
+      return mapSortDirection === 'asc' ? cmp : -cmp;
+    });
+  }, [summary, mapSortColumn, mapSortDirection]);
 
   const averageRecordedMapsPerMappedMatch = useMemo(() => {
     if (!summary || summary.matchesWithRecordedMapDataNonEarly === 0) return null;
@@ -162,16 +207,39 @@ export function MapData() {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-20">Rank</TableHead>
-                    <TableHead>Map Name</TableHead>
-                    <TableHead className="text-right">Recorded Count</TableHead>
+                    <TableHead className="cursor-pointer select-none" onClick={() => handleMapSort('map')}>
+                      <div className="flex items-center">Map Name<MapSortIcon column="map" sortColumn={mapSortColumn} sortDirection={mapSortDirection} /></div>
+                    </TableHead>
+                    <TableHead className="text-right cursor-pointer select-none" onClick={() => handleMapSort('eligibleMatches')}>
+                      <div className="flex items-center justify-end">Eligible Matches<MapSortIcon column="eligibleMatches" sortColumn={mapSortColumn} sortDirection={mapSortDirection} /></div>
+                    </TableHead>
+                    <TableHead className="text-right cursor-pointer select-none" onClick={() => handleMapSort('count')}>
+                      <div className="flex items-center justify-end">Times Played<MapSortIcon column="count" sortColumn={mapSortColumn} sortDirection={mapSortDirection} /></div>
+                    </TableHead>
+                    <TableHead className="text-right cursor-pointer select-none" onClick={() => handleMapSort('pickRate')}>
+                      <div className="flex items-center justify-end">Pick Rate<MapSortIcon column="pickRate" sortColumn={mapSortColumn} sortDirection={mapSortDirection} /></div>
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {summary.rows.map((row, index) => (
+                  {sortedMapRows.map((row, index) => (
                     <TableRow key={row.map}>
                       <TableCell className="font-medium text-muted-foreground">{index + 1}</TableCell>
-                      <TableCell className="font-medium">{row.map}</TableCell>
+                      <TableCell className="font-medium">
+                        {onNavigateToMap ? (
+                          <button
+                            onClick={() => onNavigateToMap(row.map)}
+                            className="text-left hover:text-primary hover:underline transition-colors"
+                          >
+                            {row.map}
+                          </button>
+                        ) : row.map}
+                      </TableCell>
+                      <TableCell className="text-right text-muted-foreground">{formatNumber(row.eligibleMatches)}</TableCell>
                       <TableCell className="text-right">{formatNumber(row.count)}</TableCell>
+                      <TableCell className="text-right">
+                        {row.eligibleMatches > 0 ? formatPercent(row.count / row.eligibleMatches * 100) : '—'}
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

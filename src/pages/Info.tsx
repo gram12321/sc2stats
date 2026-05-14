@@ -20,7 +20,7 @@ export function Info({}: InfoProps) {
             </p>
             <p>
               Filters are calculation filters, not display-only filters. Toggling Main Circuit, Seasons, Seeds,
-              Intermediate Team Rating (ITR), or Random handling changes which matches and inputs feed the run.
+              Intermediate Team Rating (ITR), Random, or Mirror handling changes which matches and inputs feed the run.
             </p>
             <p>
               Match history, detail pages, and highlights all read from the same recalculated model output and expose
@@ -52,16 +52,18 @@ export function Info({}: InfoProps) {
             <div className="bg-indigo-50 rounded-lg p-5 border border-indigo-100">
               <h3 className="text-lg font-bold text-indigo-900 mb-2">Race Statistics</h3>
               <p className="text-indigo-800 text-sm">
-                Directional race model (PvT differs from TvP). Mirror race compositions are treated as neutral and do
-                not create net rating movement for this track.
+                Directional race model, but each matchup pair is deduplicated into one canonical row (PvZ and ZvP
+                are shown as one entry, the direction with more points). Optional "Ignore Mirror" filter excludes
+                matches where either team runs a same-race combo (PP, TT, ZZ, RR).
               </p>
             </div>
 
             <div className="bg-orange-50 rounded-lg p-5 border border-orange-100">
               <h3 className="text-lg font-bold text-orange-900 mb-2">Team Race Statistics</h3>
               <p className="text-orange-800 text-sm">
-                Combo model (for example PT vs ZZ). Same-combo pairings are skipped. Matchups are normalized so
-                PT vs ZZ is the same pairing as ZZ vs PT.
+                Combo model (for example PT vs ZZ). Matchups are normalized so PT vs ZZ is the same pairing as
+                ZZ vs PT. Optional "Ignore Mirror" filter excludes matches where either team runs a mirror combo
+                (PP, TT, ZZ, RR).
               </p>
             </div>
 
@@ -92,7 +94,7 @@ export function Info({}: InfoProps) {
               <h3 className="font-bold text-gray-900 mb-2">Adjusted K (3 Layers)</h3>
               <div className="bg-gray-50 p-4 rounded-md space-y-2">
                 <div><strong>Adjusted K = Base K * Confidence Multiplier * Opponent-Newness Multiplier</strong></div>
-                <div><strong>Base K schedule:</strong> matches 1-2 = 80, 3-4 = 60, 5-8 = 50, then <code>min(50, 24 + 100/matches)</code>.</div>
+                <div><strong>Base K schedule:</strong> matches 1-2 = 60, 3-4 = 40, 5-8 = 25, then <code>min(50, 18 + 100/matches)</code>.</div>
                 <div><strong>Confidence multiplier:</strong> uses combined confidence of both sides (0.90x at 0%, 1.00x at 50%, 1.10x at 100%).</div>
                 <div>
                   <strong>Opponent-newness protection:</strong> strongest versus very new opponents, then fades with opponent match count.
@@ -181,6 +183,29 @@ export function Info({}: InfoProps) {
               <p>
                 The Maps page reports map-entry coverage from tournament JSON output, with early rounds excluded from
                 primary coverage metrics because map records are generally less complete there.
+              </p>
+            </div>
+
+            <div className="border-b border-gray-100 pb-4">
+              <h3 className="font-bold text-gray-900 mb-2">Match Predictor</h3>
+              <p>
+                The Match Predictor (under Rankings) calculates calibrated win probability and series outcome
+                distribution (e.g. 3-0, 2-1, 1-2, 0-3) for any two teams. Known teams use their stored team rating
+                with ITR blend applied if enabled. Unknown teams (no shared match history) are built from each
+                player's individual rating using the full intermediate blend weight. The predictor respects the
+                current Seeds, Main Circuit, Season, and ITR filter settings.
+              </p>
+            </div>
+
+            <div>
+              <h3 className="font-bold text-gray-900 mb-2">Prediction Quality</h3>
+              <p>
+                The Predictions page (under Stats &amp; Info) scores all pre-match <code>expectedWin</code> values
+                stored in the team impact history against actual outcomes. Metrics include Brier score, log loss,
+                favorite accuracy, and confidence-bucket calibration. A Settings Impact table compares nearby
+                setting variants (seeds on/off, ITR on/off, circuit scope, season scope) against the current
+                baseline using Brier delta and absolute-gap delta. The same analysis is available from the CLI
+                via <code>npm run analyze-prediction-quality</code>.
               </p>
             </div>
           </div>
@@ -280,6 +305,44 @@ export function Info({}: InfoProps) {
               <p className="text-gray-700">
                 Rankings are recalculated from the relevant filtered history when endpoints are requested.
                 Editing old matches can therefore change later ratings.
+              </p>
+            </div>
+
+            <div className="border-b border-gray-100 pb-4 last:border-0 last:pb-0">
+              <h3 className="font-bold text-gray-900 mb-2">What does the Match Predictor do for a team with no match history?</h3>
+              <p className="text-gray-700">
+                When a team has no recorded matches, the predictor builds an ad-hoc rating from the individual
+                player ratings of the two named players using a full intermediate blend weight (100% player-derived).
+                Both named players must be known in the current filter scope. The team source indicator in the
+                result shows "player-average" vs "team-rating" to distinguish the two cases.
+              </p>
+            </div>
+
+            <div className="border-b border-gray-100 pb-4 last:border-0 last:pb-0">
+              <h3 className="font-bold text-gray-900 mb-2">What does "Ignore Mirror matchups" do?</h3>
+              <p className="text-gray-700">
+                Enabling this filter excludes any match where either team runs a mirror race combo (both players on
+                the same race: PP, TT, ZZ, or RR) from race and team-race ranking calculations. It is off by default
+                and persisted in localStorage alongside the Random filter.
+              </p>
+            </div>
+
+            <div className="border-b border-gray-100 pb-4 last:border-0 last:pb-0">
+              <h3 className="font-bold text-gray-900 mb-2">What does Brier score mean on the Predictions page?</h3>
+              <p className="text-gray-700">
+                Brier score is the mean squared error between predicted win probability and actual outcome (1 for
+                win, 0 for loss). Lower is better; a random 50/50 predictor scores 0.25. Log loss penalises
+                overconfident wrong predictions more heavily. The Settings Impact table shows how much each
+                setting change moves these metrics relative to the current baseline.
+              </p>
+            </div>
+
+            <div className="border-b border-gray-100 pb-4 last:border-0 last:pb-0">
+              <h3 className="font-bold text-gray-900 mb-2">Why are Race Ranking rows deduplicated?</h3>
+              <p className="text-gray-700">
+                Each race matchup pair (PvZ and ZvP) is shown as a single canonical row — the direction with
+                more cumulative points. Combined stats (TvX, ZvX, PvX) aggregate from both sides of each
+                deduplicated pair so all matches are counted correctly.
               </p>
             </div>
           </div>

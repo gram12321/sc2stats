@@ -100,7 +100,7 @@ export function TeamRaceRankings({ }: TeamRaceRankingsProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const { mainCircuitOnly, seasons, hideRandom, setHideRandom } = useRankingSettings();
+  const { mainCircuitOnly, seasons, hideRandom, setHideRandom, hideMirror, setHideMirror } = useRankingSettings();
   const [selectedMatchup, setSelectedMatchup] = useState<TeamRaceRanking | null>(null);
   const [isCombinedStats, setIsCombinedStats] = useState(false);
   const [sortColumn, setSortColumn] = useState<keyof TeamRaceRanking | 'rank' | null>(null);
@@ -118,7 +118,7 @@ export function TeamRaceRankings({ }: TeamRaceRankingsProps) {
     loadPlayerRankings();
     loadTeamRankings();
     loadAllPlayerRaces();
-  }, [mainCircuitOnly, seasons, hideRandom]);
+  }, [mainCircuitOnly, seasons, hideRandom, hideMirror]);
 
   const loadRankings = async () => {
     try {
@@ -128,6 +128,7 @@ export function TeamRaceRankings({ }: TeamRaceRankingsProps) {
       if (mainCircuitOnly) queryParams.append('mainCircuitOnly', 'true');
       if (seasons.length > 0) queryParams.append('seasons', seasons.join(','));
       if (hideRandom) queryParams.append('hideRandom', 'true');
+      if (hideMirror) queryParams.append('hideMirror', 'true');
       const response = await fetch(`/api/team-race-rankings?${queryParams.toString()}`);
       if (!response.ok) throw new Error('Failed to load team race rankings');
       const data = await response.json();
@@ -154,6 +155,7 @@ export function TeamRaceRankings({ }: TeamRaceRankingsProps) {
       if (mainCircuitOnly) queryParams.append('mainCircuitOnly', 'true');
       if (seasons.length > 0) queryParams.append('seasons', seasons.join(','));
       if (hideRandom) queryParams.append('hideRandom', 'true');
+      if (hideMirror) queryParams.append('hideMirror', 'true');
 
       if (isCombined) {
         // For combined stats, fetch all matches involving this combo
@@ -457,14 +459,14 @@ export function TeamRaceRankings({ }: TeamRaceRankingsProps) {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto p-6">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
+        <div className="flex flex-col gap-3 mb-6">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Team Race Statistics</h1>
             <p className="text-gray-600 mt-1">
               Team race combination matchup statistics (PT vs ZZ, etc.)
             </p>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center gap-4">
             <label className="flex items-center gap-2 cursor-pointer">
               <input
                 type="checkbox"
@@ -472,7 +474,16 @@ export function TeamRaceRankings({ }: TeamRaceRankingsProps) {
                 onChange={(e) => setHideRandom(e.target.checked)}
                 className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
               />
-              <span className="text-sm text-gray-700">Hide Random matchups</span>
+              <span className="text-sm text-gray-700">Ignore Random matchups</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={hideMirror}
+                onChange={(e) => setHideMirror(e.target.checked)}
+                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+              />
+              <span className="text-sm text-gray-700">Ignore Mirror matchups</span>
             </label>
             <RankingFilters showMainCircuit={true} />
           </div>

@@ -9,7 +9,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { Checkbox } from '../components/ui/checkbox';
 import { Label } from '../components/ui/label';
 import { RaceBadge } from '../components/ui/RaceBadge';
+import { CountryFlag } from '../components/ui/CountryFlag';
 import { getPlayerDefaults } from '../lib/playerDefaults';
+import { getPlayerCountries } from '../lib/playerCountries';
 import { getRaceAbbr } from '../lib/utils';
 import { formatTournamentName } from '../lib/display';
 import { Race } from '../types/tournament';
@@ -121,6 +123,7 @@ function sortDate(a: string | null, b: string | null, direction: SortDirection):
 export function Highlights({ onNavigateToMatch, onNavigateToPlayer, onNavigateToTeam }: HighlightsProps) {
   const [matches, setMatches] = useState<MatchHistory[]>([]);
   const [playerDefaults, setPlayerDefaults] = useState<Record<string, Race>>({});
+  const [playerCountries, setPlayerCountries] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -135,6 +138,9 @@ export function Highlights({ onNavigateToMatch, onNavigateToPlayer, onNavigateTo
     getPlayerDefaults()
       .then(setPlayerDefaults)
       .catch(() => setPlayerDefaults({}));
+    getPlayerCountries()
+      .then(setPlayerCountries)
+      .catch(() => setPlayerCountries({}));
   }, []);
 
   useEffect(() => {
@@ -506,6 +512,26 @@ export function Highlights({ onNavigateToMatch, onNavigateToPlayer, onNavigateTo
     return rows;
   }, [highlights.peakTeamByCombo, comboSort]);
 
+  const renderPlayerInline = (playerName: string, race: string) => (
+    <span className="inline-flex items-center gap-1">
+      <CountryFlag country={playerCountries[playerName]} />
+      {playerName}
+      {race && <RaceBadge race={race} />}
+    </span>
+  );
+
+  const renderTeamInline = (team: Team) => {
+    const p1Race = resolveRaceAbbr(team.player1_race, team.player1);
+    const p2Race = resolveRaceAbbr(team.player2_race, team.player2);
+    return (
+      <span className="inline-flex items-center gap-1 flex-wrap">
+        {renderPlayerInline(team.player1, p1Race)}
+        <span className="text-muted-foreground mx-0.5">+</span>
+        {renderPlayerInline(team.player2, p2Race)}
+      </span>
+    );
+  };
+
   const renderTeamAndPlayersCompact = (team: Team) => {
     const p1Race = resolveRaceAbbr(team.player1_race, team.player1);
     const p2Race = resolveRaceAbbr(team.player2_race, team.player2);
@@ -515,24 +541,24 @@ export function Highlights({ onNavigateToMatch, onNavigateToPlayer, onNavigateTo
         <button
           type="button"
           onClick={() => onNavigateToTeam?.(team.player1, team.player2)}
-          className="text-xs font-medium text-foreground hover:text-primary transition-colors"
+          className="text-xs font-medium text-foreground hover:text-primary transition-colors inline-flex items-center gap-1 flex-wrap"
         >
-          {formatPlayerWithRace(team.player1, p1Race)} + {formatPlayerWithRace(team.player2, p2Race)}
+          {renderTeamInline(team)}
         </button>
         <div className="flex gap-2 flex-wrap">
           <button
             type="button"
             onClick={() => onNavigateToPlayer?.(team.player1)}
-            className="text-[11px] text-muted-foreground hover:text-primary transition-colors underline-offset-2 hover:underline"
+            className="text-[11px] text-muted-foreground hover:text-primary transition-colors underline-offset-2 hover:underline inline-flex items-center gap-1"
           >
-            {formatPlayerWithRace(team.player1, p1Race)}
+            {renderPlayerInline(team.player1, p1Race)}
           </button>
           <button
             type="button"
             onClick={() => onNavigateToPlayer?.(team.player2)}
-            className="text-[11px] text-muted-foreground hover:text-primary transition-colors underline-offset-2 hover:underline"
+            className="text-[11px] text-muted-foreground hover:text-primary transition-colors underline-offset-2 hover:underline inline-flex items-center gap-1"
           >
-            {formatPlayerWithRace(team.player2, p2Race)}
+            {renderPlayerInline(team.player2, p2Race)}
           </button>
         </div>
       </div>
@@ -582,7 +608,7 @@ export function Highlights({ onNavigateToMatch, onNavigateToPlayer, onNavigateTo
         <CardContent className="pt-0 space-y-2 text-xs">
           <div className="flex items-center justify-between gap-2">
             <div className="font-medium">
-              {winnerSide === 'team1' ? getTeamDisplayWithRaces(match.team1) : getTeamDisplayWithRaces(match.team2)}
+              {winnerSide === 'team1' ? renderTeamInline(match.team1) : renderTeamInline(match.team2)}
             </div>
             <Badge variant="secondary" className="text-[11px] px-2 py-0.5">{match.team1_score} - {match.team2_score}</Badge>
           </div>
@@ -636,7 +662,7 @@ export function Highlights({ onNavigateToMatch, onNavigateToPlayer, onNavigateTo
           <CardTitle className="text-base">Biggest Rating Gain</CardTitle>
         </CardHeader>
         <CardContent className="pt-0 space-y-1 text-xs">
-          <div><span className="text-muted-foreground">Team:</span> {getTeamDisplayWithRaces(winnerTeam)}</div>
+          <div className="inline-flex items-center gap-1 flex-wrap"><span className="text-muted-foreground">Team:</span> {renderTeamInline(winnerTeam)}</div>
           <div><span className="text-muted-foreground">Gain:</span> +{ratingGain.toFixed(2)}</div>
           <div><span className="text-muted-foreground">Date:</span> {formatDate(match.match_date || match.tournament_date)}</div>
           <div className="truncate" title={match.tournament_slug}><span className="text-muted-foreground">Event:</span> {formatTournamentName(match.tournament_slug)}</div>
@@ -730,11 +756,12 @@ export function Highlights({ onNavigateToMatch, onNavigateToPlayer, onNavigateTo
                           <TableRow key={`${peak.key}-${index}`}>
                             <TableCell className="p-2 text-xs">{index + 1}</TableCell>
                             <TableCell className="p-2 text-xs">
-                              <button type="button" onClick={() => onNavigateToPlayer?.(peak.key)} className="font-medium hover:text-primary transition-colors">
-                                {peak.label}
+                              <button type="button" onClick={() => onNavigateToPlayer?.(peak.key)} className="font-medium hover:text-primary transition-colors inline-flex items-center gap-1">
+                                <CountryFlag country={playerCountries[peak.key]} />
+                                {peak.key}
                               </button>
                             </TableCell>
-                            <TableCell className="p-2 text-xs">{peak.race || '—'}</TableCell>
+                            <TableCell className="p-2 text-xs"><RaceBadge race={peak.race} /></TableCell>
                             <TableCell className="p-2 text-xs text-right font-mono">{peak.rating.toFixed(2)}</TableCell>
                             <TableCell className="p-2 text-xs">{formatDate(peak.match.match_date || peak.match.tournament_date)}</TableCell>
                             <TableCell className="p-2 text-xs max-w-[18rem] truncate" title={peak.match.tournament_slug}>{formatTournamentName(peak.match.tournament_slug)}</TableCell>
@@ -769,8 +796,13 @@ export function Highlights({ onNavigateToMatch, onNavigateToPlayer, onNavigateTo
                             <TableRow key={`${peak.key}-${index}`}>
                               <TableCell className="p-2 text-xs">{index + 1}</TableCell>
                               <TableCell className="p-2 text-xs">
-                                <button type="button" onClick={() => onNavigateToTeam?.(p1, p2)} className="font-medium hover:text-primary transition-colors">
-                                  {peak.label}
+                                <button type="button" onClick={() => onNavigateToTeam?.(p1, p2)} className="font-medium hover:text-primary transition-colors inline-flex items-center gap-1 flex-wrap">
+                                  {(() => {
+                                    const team = [peak.match.team1, peak.match.team2].find(
+                                      t => normalizeTeamKey(t.player1, t.player2) === peak.key
+                                    );
+                                    return team ? renderTeamInline(team) : <span>{peak.label}</span>;
+                                  })()}
                                 </button>
                               </TableCell>
                               <TableCell className="p-2 text-xs text-right font-mono">{peak.rating.toFixed(2)}</TableCell>
@@ -806,8 +838,9 @@ export function Highlights({ onNavigateToMatch, onNavigateToPlayer, onNavigateTo
                           <TableRow key={`race-${entry.race}-${entry.key}`}>
                             <TableCell className="p-2 text-xs font-medium"><RaceBadge race={entry.race} /></TableCell>
                             <TableCell className="p-2 text-xs">
-                              <button type="button" onClick={() => onNavigateToPlayer?.(entry.key)} className="font-medium hover:text-primary transition-colors">
-                                {entry.label}
+                              <button type="button" onClick={() => onNavigateToPlayer?.(entry.key)} className="font-medium hover:text-primary transition-colors inline-flex items-center gap-1">
+                                <CountryFlag country={playerCountries[entry.key]} />
+                                {entry.key}
                               </button>
                             </TableCell>
                             <TableCell className="p-2 text-xs text-right font-mono">{entry.rating.toFixed(2)}</TableCell>
@@ -842,10 +875,19 @@ export function Highlights({ onNavigateToMatch, onNavigateToPlayer, onNavigateTo
                           const [p1 = '', p2 = ''] = entry.key.split('+');
                           return (
                             <TableRow key={`combo-${entry.combo}-${entry.key}`}>
-                              <TableCell className="p-2 text-xs font-medium">{entry.combo}</TableCell>
+                              <TableCell className="p-2 text-xs font-medium">
+                                <span className="inline-flex items-center gap-0.5">
+                                  {(entry.combo || '').split('').map((r, i) => <RaceBadge key={i} race={r} />)}
+                                </span>
+                              </TableCell>
                               <TableCell className="p-2 text-xs">
-                                <button type="button" onClick={() => onNavigateToTeam?.(p1, p2)} className="font-medium hover:text-primary transition-colors">
-                                  {entry.label}
+                                <button type="button" onClick={() => onNavigateToTeam?.(p1, p2)} className="font-medium hover:text-primary transition-colors inline-flex items-center gap-1 flex-wrap">
+                                  {(() => {
+                                    const team = [entry.match.team1, entry.match.team2].find(
+                                      t => normalizeTeamKey(t.player1, t.player2) === entry.key
+                                    );
+                                    return team ? renderTeamInline(team) : <span>{entry.label}</span>;
+                                  })()}
                                 </button>
                               </TableCell>
                               <TableCell className="p-2 text-xs text-right font-mono">{entry.rating.toFixed(2)}</TableCell>

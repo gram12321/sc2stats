@@ -1,10 +1,10 @@
 # SC2 2v2 Stats - StarCraft 2 2v2 Ranking System
 
-A tournament analysis platform for StarCraft 2 2v2 tournaments that scrapes data from Liquipedia and provides real-time data visualization through a modern React web interface.
+A tournament analysis platform for StarCraft 2 2v2 tournaments that scrapes data from Liquipedia and provides Elo-style ratings with a modern React web interface.
 
 ## Overview
 
-This project scrapes tournament data from Liquipedia using the **MediaWiki API**, extracts match results, and stores them in JSON format for analysis and visualization. The scraper focuses on reliable data extraction (matches, rounds, scores, players), with player races added manually through the UI.
+This project scrapes tournament data from Liquipedia using the **MediaWiki API**, extracts match results, and computes player/team ratings from the full match history. The scraper focuses on reliable data extraction (matches, rounds, scores, players), with player races added manually through the UI.
 
 ## Key Design Decisions
 
@@ -12,21 +12,20 @@ This project scrapes tournament data from Liquipedia using the **MediaWiki API**
 - ✅ **MediaWiki API**: Direct API access (not using npm packages)
 - ✅ **Simplified scraper**: Extracts matches, rounds, scores, and players reliably
 - ✅ **Manual race entry**: Player races are added/edited manually in the UI (more reliable than automated extraction)
-- ✅ **JSON export**: Data exported for review and import
+- ✅ **JSON storage**: All tournament data stored as JSON files in `output/`
+- ✅ **Stateless API**: Rankings computed on-demand from JSON files — no database required
 
 ## Technology Stack
 
 ### Frontend
 - React 18 + TypeScript + Vite
-- Tailwind CSS
-- Express.js API server for serving tournament data
+- Tailwind CSS + Radix UI components
+- Recharts for rating progression charts
 
 ### Backend
-- **API Server** - Express.js server to serve tournament JSON files
-- **MediaWiki API** - Direct API calls to Liquipedia
-- Wikitext parsing for data extraction
-- Extracts: matches, rounds, scores, players (no races - added manually in UI)
-- JSON export
+- **API Server** — Express.js server computing and serving rankings from JSON files
+- **MediaWiki API** — Direct API calls to Liquipedia for scraping
+- Deployed on Vercel (API as serverless function, output/ files bundled)
 
 ## Data Flow
 
@@ -75,32 +74,32 @@ node tools/scraper.js https://liquipedia.net/starcraft2/UThermal_2v2_Circuit/1
 1. Run the scraper to generate tournament JSON files in the `output/` directory
 2. Start both the API server (`npm run api`) and frontend dev server (`npm run dev`)
 3. Open the frontend URL (usually `http://localhost:5173`)
-4. Select a tournament from the list
-5. **Viewing Tournaments**:
-   - For tournaments with group stages, use tabs to switch between "Group Stage" and "Playoffs"
-   - Group stage matches are displayed in a grid layout grouped by group name
-   - Bracket matches show single or double-elimination format
-6. **Editing Matches**:
-   - Click on any match to open the match editor
-   - Edit player races using the dropdown menus
-   - Edit match scores using the number inputs (useful for correcting scraper errors)
-   - Changes save automatically when you click "Save" in the tournament view
-7. Download the edited JSON when done
+4. **Rankings** — Browse player, team, race, and team race combo rankings with filters for season, circuit, confidence, and race
+5. **Tournament Editor** — Select a tournament, view brackets/group stages, click matches to edit races and scores, then download the updated JSON
+6. **Player / Team Details** — View rating progression charts, match history, and race-specific matchup stats
+7. **Match Predictor** — Enter two teams for real-time series win probability breakdown
+8. **Player Manager** (localhost only) — Assign races, country flags, merge duplicate names
 
-## Current Status
+## Features
 
-- ✅ Frontend: React app with compact bracket view (Liquipedia-inspired)
-- ✅ API Server: Express server to serve tournament JSON files and player defaults
-- ✅ Scraper: Extracts matches, rounds, scores, and players reliably
-  - Supports single-elimination brackets
-  - Supports double-elimination brackets (upper/lower bracket separation)
-  - Supports group stage/round robin matches from Matchlist templates
-- ✅ Player Management: UI for setting default player races
-- ✅ Tournament Editor: 
-  - Compact bracket display with race editing
-  - Tab navigation for Group Stage vs Playoffs
-  - Score editing for correcting scraper errors
-- ✅ Data Export: JSON format for tournaments and player defaults
+### Rankings & Ratings
+- **Player Rankings** — Individual Elo-style ratings with rank changes, confidence, and season/circuit filters
+- **Team Rankings** — 2v2 team ratings with intermediate blend weight (smooth transition from player-average to standalone team rating)
+- **Race Rankings** — Per-matchup win rates and rating changes (PvZ, TvT, etc.)
+- **Team Race Rankings** — Race combo rankings for 2v2 (PP vs TZ, etc.)
+- **Seeded Rankings** — 3-pass initialization (forward → backward → seeded forward) for better cold-start accuracy
+
+### Analysis
+- **Player / Team Detail Pages** — Rating over time chart, full match history with per-match rating impact, race matchup breakdown
+- **Match Predictor** — Live win probability with series outcome distribution (e.g. 3-0, 2-1, 1-2, 0-3)
+- **Highlights** — Top upsets, biggest rating gainers, peak ratings, filtered by race/combo
+- **Prediction Quality** — Calibration metrics: Brier score, log loss, ECE, confidence buckets, upset tracking
+- **Map Coverage** — Recording statistics per tournament showing % of matches with map data
+
+### Tournament Management
+- **Scraper** — Extracts brackets (single/double elimination) and group stages from Liquipedia
+- **Tournament Editor** — Compact bracket display with inline race/score editing, auto-saves to JSON
+- **Player Manager** — Levenshtein-distance similar name detection, batch race/flag assignment, name merging
 
 ## Scraper Data Output
 
@@ -109,26 +108,24 @@ The scraper extracts the following data reliably:
 - **Bracket matches**: Round, match ID, teams (player pairs), scores, best-of format, date, individual games/maps
 - **Group stage matches**: Extracted from Matchlist templates, grouped by group name (Group A, Group B, etc.)
 
-**Note**: 
-- Player races are not extracted automatically. They can be added and edited manually through the React UI interface.
-- Match scores can be manually corrected in the Match Editor if the scraper missed or incorrectly extracted them.
+**Note**: Player races are not extracted automatically — they can be set and edited in the UI.
+
+## Rating System
+
+Elo-style ratings with a three-layer K-factor:
+
+1. **Base Newness K** — Higher early on for fast initial calibration, decreases with match count.
+2. **Confidence Multiplier** — Low combined confidence dampens updates; high confidence amplifies them.
+3. **New Opponent Protection** — Moderates large swings when facing very new opponents (moderated further when both sides are new so early movement still occurs).
+
+**Intermediate Team Rating**: New teams start from a blend of individual player ratings that fades toward a standalone team rating as the team accumulates matches (`weight = max(0, (fadeMatches - teamMatches) / fadeMatches)`).
+
+**Seeded Rankings**: A 3-pass process (forward → backward → seeded forward) produces better initial ratings for players/teams with few early matches.
 
 ## Documentation
 
 - [Data Specification](docs/data-specification.md) - Data structure and requirements
 
-## Rating System Notes
+## Future Ideas
 
-Current K-factor logic combines three layers:
-
-1. **Base Newness K** from match count (fast early calibration).
-2. **Confidence Multiplier** from combined confidence of both sides:
-   - low confidence dampens updates,
-   - high confidence amplifies updates.
-3. **Protection vs New Opponent** (applies to both wins/losses against new opponents).
-   - If both sides are very new, this protection is moderated so both can still move early.
-
-
-## Future ideas:
-
-We want to show the ranking/rating of the team/player at the time of a match in the matchhistories across the app. But this will likely require persistantcy per Xtime
+- Show player/team rating at time of match in match histories (requires per-match rating snapshots)

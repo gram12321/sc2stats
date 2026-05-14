@@ -995,7 +995,7 @@ export function MatchHistoryItem({
                 {match.race_impacts && Object.entries(match.race_impacts).map(([key, impact]) => (
                   <Tooltip key={key} content={getRatingChangeTooltip(impact, impact.race1, impact.race2, 'race')}>
                     <span className={cn("font-mono font-medium cursor-help hover:underline", impact.ratingChange >= 0 ? "text-emerald-500" : "text-rose-500")}>
-                      {impact.race1}v{impact.race2}: {impact.ratingChange >= 0 ? '+' : ''}{formatRankingPoints(impact.ratingChange)}
+                      {getRaceAbbr(impact.race1)}v{getRaceAbbr(impact.race2)}: {impact.ratingChange >= 0 ? '+' : ''}{formatRankingPoints(impact.ratingChange)}
                     </span>
                   </Tooltip>
                 ))}
