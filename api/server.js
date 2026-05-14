@@ -19,6 +19,7 @@ import {
 } from '../tools/rankingCalculations.js';
 import { summarizeMapRecording } from '../tools/mapRecordingSummary.js';
 import { getRaceAbbr } from '../tools/raceUtils.js';
+import { buildRankingRoundSnapshots } from './rankingSnapshots.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -2543,6 +2544,52 @@ app.get('/api/match-history', async (req, res) => {
   }
 });
 
+// Get player ranking snapshots after each tournament round
+app.get('/api/player/:playerName/ranking-snapshots', async (req, res) => {
+  const startedAt = Date.now();
+  try {
+    const playerName = decodeURIComponent(req.params.playerName);
+    const { useSeeds } = req.query;
+
+    let playerSeeds = null;
+    let teamSeeds = null;
+
+    if (useSeeds === 'true') {
+      const seeds = await loadSeeds();
+      playerSeeds = seeds.playerSeeds;
+      teamSeeds = seeds.teamSeeds;
+    }
+
+    const seasons = req.query.seasons ? req.query.seasons.split(',') : null;
+    const mainCircuitOnly = req.query.mainCircuitOnly === 'true';
+    const teamOptions = getTeamRatingOptions(req, playerSeeds);
+    const { rankings, matchHistory, summary } = await calculateRankings(playerSeeds, mainCircuitOnly, seasons);
+
+    const player = rankings.find(p => p.name === playerName);
+    if (!player) {
+      return res.status(404).json({ error: 'Player not found' });
+    }
+
+    const snapshots = buildRankingRoundSnapshots(matchHistory, {
+      selectedKey: player.name,
+      impactField: 'player_impacts'
+    });
+
+    logApiSummary(req, startedAt, [
+      formatFilterSummary({ mainCircuitOnly, seasons, useSeeds: useSeeds === 'true', teamOptions }),
+      formatSeedSummary(playerSeeds, teamSeeds),
+      `player:${player.name}`,
+      `snapshots:${snapshots.length}`,
+      formatPlayerSummary(summary)
+    ]);
+
+    res.json({ snapshots });
+  } catch (error) {
+    console.error('Error getting player ranking snapshots:', error);
+    res.status(500).json({ error: 'Failed to get player ranking snapshots' });
+  }
+});
+
 // Get player details with match history
 app.get('/api/player/:playerName', async (req, res) => {
   const startedAt = Date.now();
@@ -2652,6 +2699,60 @@ app.get('/api/player/:playerName', async (req, res) => {
   } catch (error) {
     console.error('Error getting player details:', error);
     res.status(500).json({ error: 'Failed to get player details' });
+  }
+});
+
+// Get team ranking snapshots after each tournament round
+app.get('/api/team/:player1/:player2/ranking-snapshots', async (req, res) => {
+  const startedAt = Date.now();
+  try {
+    const player1 = decodeURIComponent(req.params.player1);
+    const player2 = decodeURIComponent(req.params.player2);
+    const { useSeeds } = req.query;
+    const teamKey = normalizeTeamKey(player1, player2);
+
+    let playerSeeds = null;
+    let teamSeeds = null;
+
+    if (useSeeds === 'true') {
+      const seeds = await loadSeeds();
+      playerSeeds = seeds.playerSeeds;
+      teamSeeds = seeds.teamSeeds;
+    }
+
+    const seasons = req.query.seasons ? req.query.seasons.split(',') : null;
+    const mainCircuitOnly = req.query.mainCircuitOnly === 'true';
+    const teamOptions = getTeamRatingOptions(req, playerSeeds);
+    const { rankings, matchHistory, summary } = await calculateTeamRankings(
+      teamSeeds,
+      mainCircuitOnly,
+      seasons,
+      teamOptions
+    );
+
+    const team = rankings.find(t => normalizeTeamKey(t.player1, t.player2) === teamKey);
+    if (!team) {
+      return res.status(404).json({ error: 'Team not found' });
+    }
+
+    const canonicalTeamKey = normalizeTeamKey(team.player1, team.player2);
+    const snapshots = buildRankingRoundSnapshots(matchHistory, {
+      selectedKey: canonicalTeamKey,
+      impactField: 'team_impacts'
+    });
+
+    logApiSummary(req, startedAt, [
+      formatFilterSummary({ mainCircuitOnly, seasons, useSeeds: useSeeds === 'true', teamOptions }),
+      formatSeedSummary(playerSeeds, teamSeeds),
+      `team:${canonicalTeamKey}`,
+      `snapshots:${snapshots.length}`,
+      formatTeamSummary(summary)
+    ]);
+
+    res.json({ snapshots });
+  } catch (error) {
+    console.error('Error getting team ranking snapshots:', error);
+    res.status(500).json({ error: 'Failed to get team ranking snapshots' });
   }
 });
 

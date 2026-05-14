@@ -22,14 +22,25 @@ interface RatingPoint {
       opponent?: string;
       confidenceRange?: [number, number];
       confidence?: number;
+      round?: string;
+      playedInRound?: boolean;
+      ratingChangeInRound?: number;
+      rankChangeSincePreviousSnapshot?: number;
+      timelineMode?: 'matches' | 'rounds';
 }
 
 interface RatingChartProps {
       data: RatingPoint[];
       showRank?: boolean;
+      emptyMessage?: string;
 }
 
-export function RatingChart({ data, showRank = false }: RatingChartProps) {
+function formatSignedNumber(value: number): string {
+      const rounded = Math.round(value * 100) / 100;
+      return `${rounded > 0 ? '+' : ''}${rounded}`;
+}
+
+export function RatingChart({ data, showRank = false, emptyMessage }: RatingChartProps) {
       const [xAxisMode, setXAxisMode] = useState<'match' | 'date'>('date');
 
       const formattedData = useMemo(() => {
@@ -38,11 +49,12 @@ export function RatingChart({ data, showRank = false }: RatingChartProps) {
                   matchNum: i + 1
             }));
       }, [data]);
+      const isRoundTimeline = formattedData.some(point => point.timelineMode === 'rounds');
 
       if (formattedData.length === 0) {
             return (
                   <div className="h-64 flex items-center justify-center text-gray-400 bg-white border border-gray-200 rounded-lg">
-                        {showRank ? 'No rank history available' : 'No rating history available'}
+                        {emptyMessage || (showRank ? 'No rank history available' : 'No rating history available')}
                   </div>
             );
       }
@@ -89,13 +101,22 @@ export function RatingChart({ data, showRank = false }: RatingChartProps) {
       const CustomTooltip = ({ active, payload }: any) => {
             if (active && payload && payload.length) {
                   const dataPoint = payload[0].payload as RatingPoint;
+                  const isRoundSnapshot = dataPoint.timelineMode === 'rounds';
                   return (
                         <div className="bg-white p-3 border border-gray-200 shadow-lg rounded-md text-sm z-50">
                               <p className="font-semibold text-gray-900 mb-1">{dataPoint.dateLabel}</p>
                               {dataPoint.tournamentName && (
                                     <p className="text-gray-600 text-xs mb-1 truncate max-w-[200px] capitalize">{dataPoint.tournamentName}</p>
                               )}
-                              {dataPoint.opponent && (
+                              {isRoundSnapshot && dataPoint.round && (
+                                    <p className="text-gray-600 text-xs mb-1">{dataPoint.round}</p>
+                              )}
+                              {isRoundSnapshot && dataPoint.playedInRound !== undefined && (
+                                    <p className="text-gray-500 text-xs mb-2">
+                                          {dataPoint.playedInRound ? 'Played in this round' : 'Inactive this round'}
+                                    </p>
+                              )}
+                              {!isRoundSnapshot && dataPoint.opponent && (
                                     <p className="text-gray-600 text-xs mb-2">vs {dataPoint.opponent}</p>
                               )}
                               {dataPoint.confidence !== undefined && (
@@ -109,6 +130,16 @@ export function RatingChart({ data, showRank = false }: RatingChartProps) {
                                                 : 'N/A'
                                     }
                               </p>
+                              {isRoundSnapshot && !showRank && dataPoint.ratingChangeInRound !== undefined && (
+                                    <p className="text-gray-500 text-xs mt-1">
+                                          Round change: {formatSignedNumber(dataPoint.ratingChangeInRound)} pts
+                                    </p>
+                              )}
+                              {isRoundSnapshot && showRank && dataPoint.rankChangeSincePreviousSnapshot !== undefined && (
+                                    <p className="text-gray-500 text-xs mt-1">
+                                          Since previous: {formatSignedNumber(dataPoint.rankChangeSincePreviousSnapshot)} rank
+                                    </p>
+                              )}
                         </div>
                   );
             }
@@ -131,7 +162,9 @@ export function RatingChart({ data, showRank = false }: RatingChartProps) {
                   <div className="flex items-center justify-between mb-4 px-2">
                         <div className="flex items-center gap-2">
                               <h2 className="text-lg font-semibold text-gray-900">
-                                    {showRank ? 'Rank History' : 'Rating History'}
+                                    {showRank
+                                          ? (isRoundTimeline ? 'Global Rank History' : 'Rank History')
+                                          : (isRoundTimeline ? 'Global Rating History' : 'Rating History')}
                               </h2>
                               <div className="relative group">
                                     <svg className="w-4 h-4 text-gray-400 cursor-help" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -169,7 +202,7 @@ export function RatingChart({ data, showRank = false }: RatingChartProps) {
                                     className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${xAxisMode === 'match' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
                                           }`}
                               >
-                                    Match #
+                                    {isRoundTimeline ? 'Round #' : 'Match #'}
                               </button>
                         </div>
                   </div>

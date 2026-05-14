@@ -90,6 +90,24 @@ interface TeamDetails {
   matchHistory: TeamMatch[];
 }
 
+interface RankingSnapshotPoint {
+  tournamentSlug: string;
+  tournamentName?: string;
+  tournamentDate: string | null;
+  round: string;
+  date: string;
+  dateLabel: string;
+  label: string;
+  rating: number;
+  absoluteRank?: number;
+  rank?: number;
+  confidence?: number;
+  playedInRound: boolean;
+  ratingChangeInRound: number;
+  rankChangeSincePreviousSnapshot?: number;
+  snapshotKey: string;
+}
+
 interface TeamDetailsProps {
   player1: string;
   player2: string;
@@ -112,10 +130,14 @@ export function TeamDetails({ player1, player2, onBack }: TeamDetailsProps) {
   const [playerCountries, setPlayerCountries] = useState<Record<string, string>>({});
   const [comboRankings, setComboRankings] = useState<Record<string, { points: number }>>({});
   const [chartMode, setChartMode] = useState<'rating' | 'rank'>('rating');
+  const [chartTimelineMode, setChartTimelineMode] = useState<'matches' | 'rounds'>('matches');
+  const [rankingSnapshots, setRankingSnapshots] = useState<RankingSnapshotPoint[]>([]);
+  const [snapshotError, setSnapshotError] = useState<string | null>(null);
   const { seasons, mainCircuitOnly, useSeededRankings, useIntermediateTeamRating } = useRankingSettings();
 
   useEffect(() => {
     loadTeamDetails();
+    loadRankingSnapshots();
     loadPlayerRankings();
     loadTeamRankings();
     loadAllPlayerRaces();
@@ -146,6 +168,28 @@ export function TeamDetails({ player1, player2, onBack }: TeamDetailsProps) {
       setError(err instanceof Error ? err.message : 'Failed to load team details');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const loadRankingSnapshots = async () => {
+    try {
+      setSnapshotError(null);
+      const params = new URLSearchParams();
+      if (useSeededRankings) params.append('useSeeds', 'true');
+      if (mainCircuitOnly) params.append('mainCircuitOnly', 'true');
+      if (useIntermediateTeamRating) params.append('useIntermediateTeamRating', 'true');
+      if (seasons && seasons.length > 0) params.append('seasons', seasons.join(','));
+
+      const response = await fetch(`/api/team/${encodeURIComponent(player1)}/${encodeURIComponent(player2)}/ranking-snapshots?${params.toString()}`);
+      if (!response.ok) throw new Error('Failed to load global round history');
+
+      const data = await response.json();
+      setRankingSnapshots(Array.isArray(data.snapshots) ? data.snapshots : []);
+    } catch (err) {
+      console.error('Error loading team ranking snapshots:', err);
+      setRankingSnapshots([]);
+      setSnapshotError(err instanceof Error ? err.message : 'Failed to load global round history');
+      setChartTimelineMode('matches');
     }
   };
 
@@ -457,6 +501,30 @@ export function TeamDetails({ player1, player2, onBack }: TeamDetailsProps) {
     return dataPoints;
   }, [chronologicalMatchHistory, player1, player2, teamIsRankedMap, teamRankPrefixCounts, teamRankListSize, teamRankings, team?.points, team?.confidence]);
 
+  const snapshotChartData = useMemo(() => {
+    return rankingSnapshots.map((snapshot, index) => ({
+      date: snapshot.date || snapshot.tournamentDate || '',
+      dateLabel: formatDate(snapshot.date || snapshot.tournamentDate),
+      rating: snapshot.rating,
+      rank: snapshot.rank,
+      confidence: snapshot.confidence,
+      matchId: snapshot.snapshotKey,
+      matchNum: index + 1,
+      tournamentName: formatTournamentName(snapshot.tournamentSlug || snapshot.tournamentName),
+      round: snapshot.round,
+      playedInRound: snapshot.playedInRound,
+      ratingChangeInRound: snapshot.ratingChangeInRound,
+      rankChangeSincePreviousSnapshot: snapshot.rankChangeSincePreviousSnapshot,
+      timelineMode: 'rounds' as const
+    }));
+  }, [rankingSnapshots]);
+
+  const activeChartData = chartTimelineMode === 'rounds' ? snapshotChartData : chartData;
+  const effectiveChartMode = chartTimelineMode === 'rounds' ? 'rank' : chartMode;
+  const chartEmptyMessage = chartTimelineMode === 'rounds'
+    ? 'No global rank history available'
+    : undefined;
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -593,24 +661,56 @@ export function TeamDetails({ player1, player2, onBack }: TeamDetailsProps) {
 
         <div className="space-y-6">
           {/* Rating Chart */}
-          <div className="relative">
-            <div className="absolute top-4 right-4 z-10 flex bg-gray-100 rounded-lg p-1 border border-gray-200">
-              <button
-                onClick={() => setChartMode('rating')}
-                className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${chartMode === 'rating' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
-                  }`}
-              >
-                Rating
-              </button>
-              <button
-                onClick={() => setChartMode('rank')}
-                className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${chartMode === 'rank' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
-                  }`}
-              >
-                Rank
-              </button>
+          <div>
+            <div className="mb-2 flex flex-wrap items-center justify-end gap-2">
+              <div className="flex bg-gray-100 rounded-lg p-1 border border-gray-200">
+                <button
+                  onClick={() => setChartTimelineMode('matches')}
+                  className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${chartTimelineMode === 'matches' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                    }`}
+                >
+                  Matches
+                </button>
+                <button
+                  onClick={() => {
+                    setChartTimelineMode('rounds');
+                    setChartMode('rank');
+                  }}
+                  disabled={rankingSnapshots.length === 0}
+                  className={`px-3 py-1 text-xs font-medium rounded-md transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${chartTimelineMode === 'rounds' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                    }`}
+                >
+                  Global rounds
+                </button>
+              </div>
+              <div className="flex bg-gray-100 rounded-lg p-1 border border-gray-200">
+                <button
+                  onClick={() => setChartMode('rating')}
+                  disabled={chartTimelineMode === 'rounds'}
+                  className={`px-3 py-1 text-xs font-medium rounded-md transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${effectiveChartMode === 'rating' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                    }`}
+                >
+                  Rating
+                </button>
+                <button
+                  onClick={() => setChartMode('rank')}
+                  className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${effectiveChartMode === 'rank' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                    }`}
+                >
+                  Rank
+                </button>
+              </div>
             </div>
-            <RatingChart data={chartData} showRank={chartMode === 'rank'} />
+            {snapshotError && (
+              <div className="mb-2 text-xs text-amber-700">
+                {snapshotError}
+              </div>
+            )}
+            <RatingChart
+              data={activeChartData}
+              showRank={effectiveChartMode === 'rank'}
+              emptyMessage={chartEmptyMessage}
+            />
           </div>
 
           {/* Race Matchup Statistics */}
