@@ -1,0 +1,469 @@
+{
+  "tournament": {
+    "name": "uThermal 2v2 2026: Last Chance Qualifier",
+    "liquipedia_slug": "UThermal_2v2_Circuit/2026/Last_Chance_Qualifier",
+    "date": "2026-05-09",
+    "prize_pool": 100,
+    "format": "2v2 Playoffs",
+    "maps": [
+      "Fields of Death CE",
+      "Gemgarden",
+      "New Bed of Chaos",
+      "Reclamation LE",
+      "Rhoskallian",
+      "Rohana",
+      "Rust Bucket",
+      "Undercurrent",
+      "Yellowjacket"
+    ],
+    "is_main_circuit": true,
+    "season": 2026
+  },
+  "matches": [
+    {
+      "match_id": "R1M1",
+      "round": "Round 1",
+      "team1": {
+        "player1": {
+          "name": "ShoWTimE"
+        },
+        "player2": {
+          "name": "uThermal"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Cruiser",
+          "country": "RU"
+        },
+        "player2": {
+          "name": "ZimbelRatzel",
+          "country": "RU"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 0,
+      "best_of": 3,
+      "date": null,
+      "games": [],
+      "tournament_slug": "UThermal_2v2_Circuit/2026/Last_Chance_Qualifier"
+    },
+    {
+      "match_id": "R1M2",
+      "round": "Round 1",
+      "team1": {
+        "player1": {
+          "name": "ART"
+        },
+        "player2": {
+          "name": "iosup"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Tiger"
+        },
+        "player2": {
+          "name": "UltraMarine"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 1,
+      "best_of": 3,
+      "date": null,
+      "games": [],
+      "tournament_slug": "UThermal_2v2_Circuit/2026/Last_Chance_Qualifier"
+    },
+    {
+      "match_id": "R1M3",
+      "round": "Round 1",
+      "team1": {
+        "player1": {
+          "name": "GgMaChine"
+        },
+        "player2": {
+          "name": "Shameless"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Iba"
+        },
+        "player2": {
+          "name": "Sebesdes"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 0,
+      "best_of": 3,
+      "date": null,
+      "games": [],
+      "tournament_slug": "UThermal_2v2_Circuit/2026/Last_Chance_Qualifier"
+    },
+    {
+      "match_id": "R1M4",
+      "round": "Round 1",
+      "team1": {
+        "player1": {
+          "name": "MilkiCow"
+        },
+        "player2": {
+          "name": "YoungYakov"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Anticore"
+        },
+        "player2": {
+          "name": "Azura"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 0,
+      "best_of": 3,
+      "date": null,
+      "games": [],
+      "tournament_slug": "UThermal_2v2_Circuit/2026/Last_Chance_Qualifier"
+    },
+    {
+      "match_id": "R1M5",
+      "round": "Round 1",
+      "team1": {
+        "player1": {
+          "name": "DefMars"
+        },
+        "player2": {
+          "name": "ZaRDieNT"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Jonathan",
+          "country": "MY"
+        },
+        "player2": {
+          "name": "MechDonalds",
+          "country": "DE"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 1,
+      "best_of": 3,
+      "date": null,
+      "games": [],
+      "tournament_slug": "UThermal_2v2_Circuit/2026/Last_Chance_Qualifier"
+    },
+    {
+      "match_id": "R1M6",
+      "round": "Round 1",
+      "team1": {
+        "player1": {
+          "name": "MiniZergUA"
+        },
+        "player2": {
+          "name": "SickNess"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Gerald"
+        },
+        "player2": {
+          "name": "Nicoract"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 0,
+      "best_of": 3,
+      "date": null,
+      "games": [],
+      "tournament_slug": "UThermal_2v2_Circuit/2026/Last_Chance_Qualifier"
+    },
+    {
+      "match_id": "R1M7",
+      "round": "Round 1",
+      "team1": {
+        "player1": {
+          "name": "Maru"
+        },
+        "player2": {
+          "name": "sOs"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "GuGus"
+        },
+        "player2": {
+          "name": "hinO"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 0,
+      "best_of": 3,
+      "date": null,
+      "games": [],
+      "tournament_slug": "UThermal_2v2_Circuit/2026/Last_Chance_Qualifier"
+    },
+    {
+      "match_id": "R1M8",
+      "round": "Round 1",
+      "team1": {
+        "player1": {
+          "name": "Harstem"
+        },
+        "player2": {
+          "name": "Percival"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Fjant"
+        },
+        "player2": {
+          "name": "LetaleX"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 0,
+      "best_of": 3,
+      "date": null,
+      "games": [],
+      "tournament_slug": "UThermal_2v2_Circuit/2026/Last_Chance_Qualifier"
+    },
+    {
+      "match_id": "R2M1",
+      "round": "Round 2",
+      "team1": {
+        "player1": {
+          "name": "ShoWTimE"
+        },
+        "player2": {
+          "name": "uThermal"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "ART"
+        },
+        "player2": {
+          "name": "iosup"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 1,
+      "best_of": 3,
+      "date": null,
+      "games": [],
+      "tournament_slug": "UThermal_2v2_Circuit/2026/Last_Chance_Qualifier"
+    },
+    {
+      "match_id": "R2M2",
+      "round": "Round 2",
+      "team1": {
+        "player1": {
+          "name": "GgMaChine"
+        },
+        "player2": {
+          "name": "Shameless"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "MilkiCow"
+        },
+        "player2": {
+          "name": "YoungYakov"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 0,
+      "best_of": 3,
+      "date": null,
+      "games": [],
+      "tournament_slug": "UThermal_2v2_Circuit/2026/Last_Chance_Qualifier"
+    },
+    {
+      "match_id": "R2M3",
+      "round": "Round 2",
+      "team1": {
+        "player1": {
+          "name": "DefMars"
+        },
+        "player2": {
+          "name": "ZaRDieNT"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "MiniZergUA"
+        },
+        "player2": {
+          "name": "SickNess"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 1,
+      "best_of": 3,
+      "date": null,
+      "games": [],
+      "tournament_slug": "UThermal_2v2_Circuit/2026/Last_Chance_Qualifier"
+    },
+    {
+      "match_id": "R2M4",
+      "round": "Round 2",
+      "team1": {
+        "player1": {
+          "name": "Maru"
+        },
+        "player2": {
+          "name": "sOs"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Harstem"
+        },
+        "player2": {
+          "name": "Percival"
+        }
+      },
+      "team1_score": 2,
+      "team2_score": 0,
+      "best_of": 3,
+      "date": null,
+      "games": [],
+      "tournament_slug": "UThermal_2v2_Circuit/2026/Last_Chance_Qualifier"
+    },
+    {
+      "match_id": "R3M1",
+      "round": "Semifinals",
+      "team1": {
+        "player1": {
+          "name": "ShoWTimE"
+        },
+        "player2": {
+          "name": "uThermal"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "GgMaChine"
+        },
+        "player2": {
+          "name": "Shameless"
+        }
+      },
+      "team1_score": 0,
+      "team2_score": 3,
+      "best_of": 5,
+      "date": "2026-05-09 19:05",
+      "games": [
+        {
+          "map": "Reclamation",
+          "winner": 2
+        },
+        {
+          "map": "New Bed of Chaos",
+          "winner": 2
+        },
+        {
+          "map": "Undercurrent",
+          "winner": 2
+        }
+      ],
+      "tournament_slug": "UThermal_2v2_Circuit/2026/Last_Chance_Qualifier"
+    },
+    {
+      "match_id": "R3M2",
+      "round": "Semifinals",
+      "team1": {
+        "player1": {
+          "name": "DefMars"
+        },
+        "player2": {
+          "name": "ZaRDieNT"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Maru"
+        },
+        "player2": {
+          "name": "sOs"
+        }
+      },
+      "team1_score": 1,
+      "team2_score": 3,
+      "best_of": 3,
+      "date": "2026-05-09 18:45",
+      "games": [
+        {
+          "map": "Rust Bucket",
+          "winner": 2
+        },
+        {
+          "map": "Fields of Death",
+          "winner": 1
+        },
+        {
+          "map": "Rohana",
+          "winner": 2
+        },
+        {
+          "map": "Yellowjacket",
+          "winner": 2
+        }
+      ],
+      "tournament_slug": "UThermal_2v2_Circuit/2026/Last_Chance_Qualifier"
+    },
+    {
+      "match_id": "R4M1",
+      "round": "Grand Final",
+      "team1": {
+        "player1": {
+          "name": "GgMaChine"
+        },
+        "player2": {
+          "name": "Shameless"
+        }
+      },
+      "team2": {
+        "player1": {
+          "name": "Maru"
+        },
+        "player2": {
+          "name": "sOs"
+        }
+      },
+      "team1_score": 3,
+      "team2_score": 2,
+      "best_of": 3,
+      "date": "2026-05-09 20:15",
+      "games": [
+        {
+          "map": "Fields of Death",
+          "winner": 1
+        },
+        {
+          "map": "Yellowjacket",
+          "winner": 2
+        },
+        {
+          "map": "Reclamation",
+          "winner": 1
+        },
+        {
+          "map": "Undercurrent",
+          "winner": 2
+        },
+        {
+          "map": "Gemgarden",
+          "winner": 1
+        }
+      ],
+      "tournament_slug": "UThermal_2v2_Circuit/2026/Last_Chance_Qualifier"
+    }
+  ]
+}

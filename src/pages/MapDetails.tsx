@@ -100,6 +100,7 @@ export function MapDetails({ mapName, onBack, onNavigateToPlayer, onNavigateToTe
   const [showAllTournaments, setShowAllTournaments] = useState(false);
   const [comboSort, setComboSort] = useState<{ col: 'total' | 'winRate'; dir: 'asc' | 'desc' }>({ col: 'total', dir: 'desc' });
   const [h2hSort, setH2hSort] = useState<{ col: 'total' | 'c1WinRate'; dir: 'asc' | 'desc' }>({ col: 'total', dir: 'desc' });
+  const [raceSort, setRaceSort] = useState<{ col: 'total' | 'winRate'; dir: 'asc' | 'desc' }>({ col: 'total', dir: 'desc' });
 
   useEffect(() => {
     getPlayerDefaults().then(setPlayerRaces).catch(() => {});
@@ -197,6 +198,40 @@ export function MapDetails({ mapName, onBack, onNavigateToPlayer, onNavigateToTe
         return (a[comboSort.col] - b[comboSort.col]) * mul;
       });
   }, [data?.matchHistory, playerRaces, hideMirror, comboSort]);
+
+  const individualRaceStats = useMemo(() => {
+    const stats: Record<string, { race: Race; wins: number; losses: number }> = {};
+    for (const entry of data?.matchHistory ?? []) {
+      if (entry.winner === null) continue;
+      const team1Won = entry.winner === 1;
+      const addPlayer = (player: string | null, won: boolean) => {
+        if (!player) return;
+        const race = playerRaces[player];
+        if (!race) return;
+        const abbr = getRaceAbbr(race);
+        const current = stats[abbr] ?? { race, wins: 0, losses: 0 };
+        if (won) current.wins += 1;
+        else current.losses += 1;
+        stats[abbr] = current;
+      };
+      addPlayer(entry.team1Player1, team1Won);
+      addPlayer(entry.team1Player2, team1Won);
+      addPlayer(entry.team2Player1, !team1Won);
+      addPlayer(entry.team2Player2, !team1Won);
+    }
+    return Object.values(stats)
+      .map(record => ({
+        race: record.race,
+        wins: record.wins,
+        losses: record.losses,
+        total: record.wins + record.losses,
+        winRate: (record.wins / (record.wins + record.losses)) * 100,
+      }))
+      .sort((a, b) => {
+        const mul = raceSort.dir === 'asc' ? 1 : -1;
+        return (a[raceSort.col] - b[raceSort.col]) * mul;
+      });
+  }, [data?.matchHistory, playerRaces, raceSort]);
 
   const comboMatchups = useMemo(() => {
     const stats: Record<string, { combo1Key: string; combo2Key: string; combo1Races: Race[]; combo2Races: Race[]; combo1Wins: number; combo2Wins: number }> = {};
@@ -377,6 +412,71 @@ export function MapDetails({ mapName, onBack, onNavigateToPlayer, onNavigateToTe
           </CardContent>
         </Card>
       </div>
+
+      {/* Individual Race Win Rates */}
+      {individualRaceStats.length > 0 && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <BarChart2 className="h-5 w-5 text-primary" />
+                  Individual Race Win Rates
+                </CardTitle>
+                <CardDescription className="mt-1">How each race performs across all players on this map.</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Race</TableHead>
+                    <TableHead
+                      className="text-right w-16 cursor-pointer select-none"
+                      onClick={() => setRaceSort(s => ({ col: 'total', dir: s.col === 'total' ? (s.dir === 'desc' ? 'asc' : 'desc') : 'desc' }))}
+                    >
+                      <span className="inline-flex items-center justify-end gap-1">
+                        Games
+                        {raceSort.col === 'total' ? (raceSort.dir === 'desc' ? <ArrowDown className="h-3 w-3" /> : <ArrowUp className="h-3 w-3" />) : <ArrowUpDown className="h-3 w-3 text-muted-foreground/50" />}
+                      </span>
+                    </TableHead>
+                    <TableHead className="text-right w-12">W</TableHead>
+                    <TableHead className="text-right w-12">L</TableHead>
+                    <TableHead
+                      className="text-right w-20 cursor-pointer select-none"
+                      onClick={() => setRaceSort(s => ({ col: 'winRate', dir: s.col === 'winRate' ? (s.dir === 'desc' ? 'asc' : 'desc') : 'desc' }))}
+                    >
+                      <span className="inline-flex items-center justify-end gap-1">
+                        Win%
+                        {raceSort.col === 'winRate' ? (raceSort.dir === 'desc' ? <ArrowDown className="h-3 w-3" /> : <ArrowUp className="h-3 w-3" />) : <ArrowUpDown className="h-3 w-3 text-muted-foreground/50" />}
+                      </span>
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {individualRaceStats.map((row, i) => (
+                    <TableRow key={i}>
+                      <TableCell>
+                        <RaceBadge race={row.race} showName className="h-5 px-1.5 text-xs" />
+                      </TableCell>
+                      <TableCell className="text-right text-muted-foreground">{row.total}</TableCell>
+                      <TableCell className="text-right text-green-600 dark:text-green-400 font-medium">{row.wins}</TableCell>
+                      <TableCell className="text-right text-muted-foreground">{row.losses}</TableCell>
+                      <TableCell className="text-right">
+                        <Badge variant={row.winRate >= 55 ? 'default' : row.winRate <= 45 ? 'destructive' : 'secondary'}>
+                          {formatPercent(row.winRate)}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Race Statistics */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
