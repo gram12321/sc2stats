@@ -15,7 +15,9 @@
       "Rust Bucket",
       "Undercurrent",
       "Yellowjacket"
-    ]
+    ],
+    "is_main_circuit": true,
+    "season": 2026
   },
   "matches": [
     {
@@ -241,18 +243,22 @@
       "round": "Group A",
       "team1": {
         "player1": {
-          "name": "SHIN"
+          "name": "SHIN",
+          "race": "Zerg"
         },
         "player2": {
-          "name": "SKillous"
+          "name": "SKillous",
+          "race": "Protoss"
         }
       },
       "team2": {
         "player1": {
-          "name": "Clem"
+          "name": "Clem",
+          "race": "Protoss"
         },
         "player2": {
-          "name": "HeRoMaRinE"
+          "name": "HeRoMaRinE",
+          "race": "Terran"
         }
       },
       "team1_score": 0,
@@ -572,18 +578,22 @@
       "round": "Group A",
       "team1": {
         "player1": {
-          "name": "ByuN"
+          "name": "ByuN",
+          "race": "Terran"
         },
         "player2": {
-          "name": "Clem"
+          "name": "Clem",
+          "race": "Protoss"
         }
       },
       "team2": {
         "player1": {
-          "name": "Elazer"
+          "name": "Elazer",
+          "race": "Zerg"
         },
         "player2": {
-          "name": "Shameless"
+          "name": "Shameless",
+          "race": "Protoss"
         }
       },
       "team1_score": 2,
@@ -1674,18 +1684,22 @@
       "round": "Group Stage 3",
       "team1": {
         "player1": {
-          "name": "Clem"
+          "name": "Clem",
+          "race": "Terran"
         },
         "player2": {
-          "name": "Solar"
+          "name": "Solar",
+          "race": "Zerg"
         }
       },
       "team2": {
         "player1": {
-          "name": "Classic"
+          "name": "Classic",
+          "race": "Protoss"
         },
         "player2": {
-          "name": "Lambo"
+          "name": "Lambo",
+          "race": "Zerg"
         }
       },
       "team1_score": 2,
@@ -1783,18 +1797,22 @@
       "round": "Group Stage 3",
       "team1": {
         "player1": {
-          "name": "Clem"
+          "name": "Clem",
+          "race": "Protoss"
         },
         "player2": {
-          "name": "Cure"
+          "name": "Cure",
+          "race": "Terran"
         }
       },
       "team2": {
         "player1": {
-          "name": "Shameless"
+          "name": "Shameless",
+          "race": "Protoss"
         },
         "player2": {
-          "name": "Spirit"
+          "name": "Spirit",
+          "race": "Terran"
         }
       },
       "team1_score": 2,
@@ -1896,18 +1914,22 @@
       "round": "Group Stage 3",
       "team1": {
         "player1": {
-          "name": "Clem"
+          "name": "Clem",
+          "race": "Terran"
         },
         "player2": {
-          "name": "Serral"
+          "name": "Serral",
+          "race": "Zerg"
         }
       },
       "team2": {
         "player1": {
-          "name": "Classic"
+          "name": "Classic",
+          "race": "Protoss"
         },
         "player2": {
-          "name": "Solar"
+          "name": "Solar",
+          "race": "Zerg"
         }
       },
       "team1_score": 2,
@@ -2219,18 +2241,22 @@
       "round": "Group Stage 3",
       "team1": {
         "player1": {
-          "name": "Clem"
+          "name": "Clem",
+          "race": "Protoss"
         },
         "player2": {
-          "name": "Spirit"
+          "name": "Spirit",
+          "race": "Terran"
         }
       },
       "team2": {
         "player1": {
-          "name": "Lambo"
+          "name": "Lambo",
+          "race": "Zerg"
         },
         "player2": {
-          "name": "MaxPax"
+          "name": "MaxPax",
+          "race": "Protoss"
         }
       },
       "team1_score": 0,
@@ -2328,18 +2354,22 @@
       "round": "Group Stage 3",
       "team1": {
         "player1": {
-          "name": "Clem"
+          "name": "Clem",
+          "race": "Protoss"
         },
         "player2": {
-          "name": "HeRoMaRinE"
+          "name": "HeRoMaRinE",
+          "race": "Terran"
         }
       },
       "team2": {
         "player1": {
-          "name": "Serral"
+          "name": "Serral",
+          "race": "Zerg"
         },
         "player2": {
-          "name": "SHIN"
+          "name": "SHIN",
+          "race": "Zerg"
         }
       },
       "team1_score": 2,
